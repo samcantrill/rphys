@@ -1,0 +1,34 @@
+name: Scientific Review
+description: Track scientific review for a phase PR.
+title: "[Science Review] <component> p<n>"
+labels:
+  - scientific-review
+body:
+  - type: input
+    id: pr
+    attributes:
+      label: Pull request
+      description: Link to the PR under review.
+    validations:
+      required: true
+  - type: input
+    id: rfc
+    attributes:
+      label: RFC
+      description: Link to the accepted RFC.
+    validations:
+      required: true
+  - type: input
+    id: phase_plan
+    attributes:
+      label: Phase plan
+      description: Link to the phase plan.
+    validations:
+      required: true
+  - type: textarea
+    id: focus
+    attributes:
+      label: Review focus
+      description: Scientific contracts, edge cases, leakage risks, references, and tests that must be checked.
+    validations:
+      required: true

@@ -1,0 +1,48 @@
+name: Phase Implementation
+description: Track one implementation phase for an accepted component RFC.
+title: "[Phase] <component> p<n>: <summary>"
+labels:
+  - implementation
+body:
+  - type: input
+    id: rfc
+    attributes:
+      label: Accepted RFC
+      description: Link to the accepted RFC.
+    validations:
+      required: true
+  - type: input
+    id: phase_plan
+    attributes:
+      label: Phase plan
+      description: Link to the phase plan.
+    validations:
+      required: true
+  - type: input
+    id: branch
+    attributes:
+      label: Branch
+      description: Expected branch name using `agent/<issue>-<component>-p<n>-<slug>`.
+    validations:
+      required: true
+  - type: input
+    id: worktree
+    attributes:
+      label: Worktree
+      description: Expected worktree path under `/home/samcantrill/work/rphys-worktrees`.
+    validations:
+      required: true
+  - type: textarea
+    id: ownership
+    attributes:
+      label: Ownership boundaries
+      description: Files/modules this phase may edit and files/modules out of scope.
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: Required tests
+      description: Commands and behavioral scenarios required before PR review.
+    validations:
+      required: true

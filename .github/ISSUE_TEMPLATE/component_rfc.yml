@@ -1,0 +1,42 @@
+name: Component RFC
+description: Track an RFC for a ported or redesigned rphys research component.
+title: "[RFC] <component>"
+labels:
+  - rfc
+  - roadmap
+body:
+  - type: input
+    id: roadmap
+    attributes:
+      label: Roadmap entry
+      description: Link to the roadmap row or section.
+    validations:
+      required: true
+  - type: input
+    id: legacy
+    attributes:
+      label: Legacy evidence
+      description: Link to audit notes, legacy paths, or relevant symbols.
+    validations:
+      required: true
+  - type: textarea
+    id: intent
+    attributes:
+      label: Intent
+      description: What research workflow or reusable component should this RFC enable?
+    validations:
+      required: true
+  - type: textarea
+    id: contract
+    attributes:
+      label: Scientific contract
+      description: Inputs, outputs, units, shapes, sampling assumptions, normalization order, leakage risks, and failure behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation plan
+      description: Unit, behavioral, parity, integration, and gradient/backward checks where relevant.
+    validations:
+      required: true
