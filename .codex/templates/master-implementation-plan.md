@@ -9,6 +9,7 @@ Draft pass:
 Refine pass:
 Quality gate:
 Blockers:
+Implementation plan: `docs/implementation/<roadmap-slug>/implementation-plan.md`
 
 ## Summary
 
@@ -21,7 +22,8 @@ Describe the work package, why it belongs in the scaffold, and what successful c
 - Supported workflows:
 - Unsupported workflows:
 - Failure and stop behavior:
-- Resume behavior after context compaction:
+- Resume behavior after interruption or context loss:
+- Stage 3 operating model: one live implementation plan, sequential phases, automatic/admin merge after automated gates, no human-review merge gate.
 
 ## Goals
 
@@ -82,6 +84,8 @@ For each phase, record:
 - Reviewability:
 - Completion summary:
 
+Phase execution rule: implement one phase at a time. Phase `n + 1` may start only after phase `n` has merged and branch/worktree cleanup is complete.
+
 ## Pathway Guidance
 
 - Standard pathway phases:
@@ -100,7 +104,14 @@ For each phase, record:
 - Standard pathway code review focus:
 - Standard pathway scientific/workflow review focus:
 - Fast-path manager checklist:
-- Required review or checklist documents:
+- Review or checklist recording location: `implementation-plan.md` unless the maintainer explicitly asks for a separate document.
+
+## Merge Policy
+
+- Human review is not a default merge gate.
+- Merge automatically when validation and selected pathway gates pass.
+- If branch protection blocks solely on human review and available authority permits, approve, admin-merge, or otherwise force merge only after automated validation and pathway gates pass.
+- Do not merge known failing validation, wrong-target PRs, unresolved conflicts, unresolved implementation/review blockers, or changes outside this accepted plan.
 
 ## Discussion History
 
@@ -117,10 +128,11 @@ For each phase, record:
 - Gate result:
 - Blocking findings:
 - Accepted risks and revisit triggers:
+- Separate quality-gate documents created: no by default
 
 ## Blocker Policy
 
-The manager may attempt two automated blocker-fix and re-review cycles for the same blocker. PRs should be auto-merged after pathway gates pass. Stop for maintainer intervention only if the blocker remains, GitHub auth is invalid, branch protection blocks merge, repository-required review is enforced by repository policy, or the implementation would require changing accepted design decisions.
+The manager may attempt two automated blocker-fix and re-review cycles for the same blocker. PRs should be auto-merged after pathway gates pass. Human review is not a merge gate. If branch protection blocks solely on human review and available authority permits, approve, admin-merge, or otherwise force merge after automated gates pass. Stop for maintainer intervention only if the blocker remains, GitHub auth is invalid, branch protection blocks merge without available authority, validation is failing, conflicts remain unresolved, or the implementation would require changing accepted design decisions.
 
 ## Open Questions Or Accepted Assumptions
 

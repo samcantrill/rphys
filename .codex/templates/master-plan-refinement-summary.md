@@ -1,5 +1,7 @@
 # Master Plan Refinement Summary
 
+Legacy/exception-only template. By default, record refinement details in the `Master Plan Quality Gate` section of `docs/implementation/<roadmap-slug>/master-plan.md`.
+
 ## Metadata
 
 - Refined plan:

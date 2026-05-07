@@ -71,10 +71,11 @@ Run the narrowest relevant tests first, then broaden when touching shared behavi
 - Use roadmap and master-plan agents for planning support, but keep user acceptance as the gate between stages.
 - Keep workflows artifact-centered: `.codex/workflows/` are short entrypoints, `.codex/prompts/` are canonical role/action prompts, `.codex/templates/` are durable artifact schemas, and `.codex/agents/` define authority/model/sandbox.
 - Use implementation agents only after a roadmap work package is accepted, Stage 1 planning notes are complete, the master implementation plan is accepted, and the master-plan quality gate has passed.
-- Each implementation phase uses a planning worker followed by a coding worker. The manager may choose a standard pathway or fast pathway for each phase.
+- Keep planning direct: provide the maintainer with a concise context readout, then ask the concrete design questions needed to continue. Do not make the maintainer manage workflow mechanics or document proliferation.
+- Each implementation phase may use a planning worker followed by a coding worker. Record planning output, pathway decisions, fast-path checklists, validation evidence, review summaries, and PR facts in the live implementation plan instead of creating separate phase-planning documents by default.
 - Implementation agents must work inside their assigned worktree and branch.
 - Each subagent must return concise evidence: paths, decisions, commands run, risks, and open questions.
-- Durable handoffs must be written under `docs/implementation/<roadmap-slug>/` so later agents can resume from repository state.
+- Durable handoffs must be written under `docs/implementation/<roadmap-slug>/` so later agents can resume from repository state. Keep the default durable artifact set lean: `planning-notes.md`, the live `master-plan.md`, and the live `implementation-plan.md`. If a single implementation plan becomes unreviewably large, place phase-specific plans under `docs/implementation/<roadmap-slug>/implementation-plans/` and keep `implementation-plan.md` as the index and status ledger. Create other planning/review documents only when the maintainer asks for them or when a blocker cannot be understood from the lean artifacts.
 - The main agent must reconcile conflicting agent findings before implementation or merge.
 
 ## Required Gates
@@ -84,23 +85,23 @@ Before Stage 2 planning:
 - Scaffold roadmap work package is accepted.
 - Scope, success criteria, out-of-scope behavior, and validation goals are recorded.
 - Stage 1 planning notes exist under `docs/implementation/<roadmap-slug>/planning-notes.md`.
-- Functionality and behavior are confirmed, checkpointed, and followed by context compaction or reset before design-decision review.
-- The design-decision review queue has been reviewed with the maintainer.
+- Functionality, behavior, major design decisions, accepted assumptions, and validation goals are recorded in the planning notes.
+- The maintainer has answered the concrete design questions needed to start Stage 2, or explicit assumptions are recorded.
 
 Before Stage 3 implementation:
 
 - Master implementation plan is accepted.
-- Master plan has passed the quality gate: one review, one refinement pass if needed, and one confirmation review.
-- Phase 0 preflight has produced referenced execution playbooks for all planned phases.
+- Master plan has passed the quality gate: one review, one refinement pass if needed, and one confirmation review, with the result recorded in the master plan rather than separate review/refinement files by default.
+- Phase sections in the accepted master plan are implementation-ready, and any Phase 0 preflight has confirmed them or recorded blockers in the master plan or implementation plan.
 - Phase branch/worktree ownership is clear and disjoint.
 - GitHub authentication and worktree write access are verified or blockers are documented.
 
 Before merge:
 
-- Tests requested by the master plan and phase execution playbook have run or failures are documented.
+- Tests requested by the master plan and implementation plan have run or failures are documented.
 - The full repository test/check suite has run when available.
-- The pre-submit blocker gate has checked the phase plan, diff, public PR body, phase notes, validation evidence, scope boundaries, assumptions, and risks.
-- Standard pathway phases have completed code review and scientific/workflow review with no unresolved blocker.
-- Fast pathway phases have a documented manager checklist confirming narrow scope, low risk, no public-interface impact, and no scientific/workflow contract impact.
-- Public PR body summarizes implementation, tests, validation, assumptions, and risks. Internal phase notes record workflow details, budgets, commits, GitHub facts, blockers, and cleanup.
-- PRs are automatically squash-merged when validation and pathway gates pass. The manager may approve or use available admin merge authority only for review-requirement branch protection, not for failing validation, wrong target branches, unresolved conflicts, or known implementation/review blockers.
+- The pre-submit blocker gate has checked the implementation plan, diff, public PR body or PR summary, validation evidence, scope boundaries, assumptions, and risks.
+- Standard pathway phases have completed automated code review and automated scientific/workflow review with no unresolved blocker.
+- Fast pathway phases have a manager checklist in the implementation plan confirming narrow scope, low risk, no public-interface impact, and no scientific/workflow contract impact.
+- Public PR body summarizes implementation, tests, validation, assumptions, and risks. The implementation plan records workflow details, budgets, commits, GitHub facts, blockers, review summaries, and cleanup. A repository copy of the PR body is optional and should be created only when useful for offline review or blocked PR creation.
+- PRs are automatically squash-merged when validation and pathway gates pass. The manager may approve, admin-merge, or otherwise force merge only for human-review-requirement branch protection after automated gates pass, not for failing validation, wrong target branches, unresolved conflicts, changes outside the accepted plan, or known implementation/review blockers.

@@ -9,12 +9,13 @@ You refine one rphys master implementation plan after quality-gate review.
 You are not alone in the codebase. Do not revert or overwrite unrelated user or agent changes.
 
 Your job:
-- Read AGENTS.md, the accepted roadmap item, Stage 1 planning notes, the target master plan, the quality review findings, and .codex/templates/master-plan-refinement-summary.md.
-- Update only the assigned master plan and optional refinement-summary artifact.
+- Read AGENTS.md, the accepted roadmap item, Stage 1 planning notes, the target master plan, and the quality review findings.
+- Update only the assigned master plan unless the manager explicitly assigned another target path.
 - Resolve review findings that can be resolved safely.
 - Preserve accepted user decisions; do not invent new requirements or redesign without manager instruction.
 - Document accepted risks with revisit triggers.
 - Tighten behavior model, design decisions, phase scope, test strategy, pathway policy, reviewability, and stop conditions as needed.
+- Confirm the plan uses one live implementation plan, sequential phase implementation, and automatic/admin merge after automated gates without human review as a default gate.
 - Stop after one coherent refinement pass. Do not request another automated refinement pass.
 
 Return changed files, findings addressed, accepted risks, remaining blockers, and confirmation-review handoff.

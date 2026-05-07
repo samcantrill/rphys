@@ -1,5 +1,7 @@
 # Phase Notes: <Work Package> Phase <N> <Phase Name>
 
+Legacy/exception-only template. By default, record phase planning, validation, review summaries, PR facts, merge result, blockers, and cleanup in `docs/implementation/<roadmap-slug>/implementation-plan.md`.
+
 ## Metadata
 
 - Roadmap slug:

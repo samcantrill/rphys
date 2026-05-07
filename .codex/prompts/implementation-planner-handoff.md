@@ -9,11 +9,13 @@ Use GPT-5.5 with high reasoning. Work only inside this assigned worktree and bra
 
 You are not alone in the codebase. Do not revert or overwrite unrelated user or agent changes.
 
-Read AGENTS.md, docs/roadmap/index.md, docs/implementation/<roadmap-slug>/master-plan.md, docs/implementation/<roadmap-slug>/phase-<n>-<phase-slug>/execution-playbook.md, and the manager's pathway decision.
+Read AGENTS.md, docs/roadmap/index.md, docs/implementation/<roadmap-slug>/master-plan.md, docs/implementation/<roadmap-slug>/implementation-plan.md, and the manager's pathway decision for this phase.
 
-If this is the standard pathway, draft or refine docs/implementation/<roadmap-slug>/phase-<n>-<phase-slug>/implementation-plan.md with file-level tasks, ordering, validation, risks, and a coding_worker handoff.
+If this is the standard pathway, refine the phase section in docs/implementation/<roadmap-slug>/implementation-plan.md with file-level tasks, ordering, validation, risks, and a coding_worker handoff.
 
-If this is the fast pathway, draft a brief implementation plan plus docs/implementation/<roadmap-slug>/phase-<n>-<phase-slug>/fast-path-checklist.md proving narrow scope, low risk, no public-interface impact, and no scientific/workflow contract impact.
+If this is the fast pathway, add a brief implementation plan and fast-path checklist to docs/implementation/<roadmap-slug>/implementation-plan.md proving narrow scope, low risk, no public-interface impact, and no scientific/workflow contract impact.
+
+Use docs/implementation/<roadmap-slug>/implementation-plans/phase-<n>-<phase-slug>.md only if the manager explicitly says the central implementation plan is too large. Do not create per-phase playbooks, phase notes, pathway-decision files, or checklist documents.
 
 Return changed planning files, pathway assessment, coding handoff, risks, and any blocker that should switch to the standard pathway or stop implementation.
 ```

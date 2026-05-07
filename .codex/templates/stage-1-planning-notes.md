@@ -5,20 +5,19 @@
 - Roadmap slug: `<roadmap-slug>`
 - Source context:
 - Planning notes status: draft
-- Current discussion stage:
+- Current focus:
 - Related roadmap row:
 - Blockers:
 
-## Stage Gates
+## Planning Status
 
-| Stage | Status | Locked decisions | Defaults | Open questions | Next focus |
+| Area | Status | Decisions | Defaults | Open questions | Next focus |
 | --- | --- | --- | --- | --- | --- |
 | Roadmap framing | draft |  |  |  |  |
 | Intent discovery | draft |  |  |  |  |
 | Capability brainstorming | draft |  |  |  |  |
-| Functionality and behavior confirmation | draft |  |  |  |  |
-| Context compaction/reset checkpoint | draft |  |  |  |  |
-| Design-decision review | draft |  |  |  |  |
+| Functionality and behavior | draft |  |  |  |  |
+| Design decisions | draft |  |  |  |  |
 | Phase shaping | draft |  |  |  |  |
 | Handoff | draft |  |  |  |  |
 
@@ -98,14 +97,7 @@ Out-of-scope behavior:
 
 - TBD
 
-## Context Compaction Or Reset Checkpoint
-
-- Checkpoint status:
-- Notes path:
-- Resume instruction:
-- Functionality or behavior reopened after checkpoint:
-
-## Design-Decision Review Queue
+## Design Questions
 
 | Decision | Why it matters | User feedback needed | Status |
 | --- | --- | --- | --- |

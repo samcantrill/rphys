@@ -1,6 +1,8 @@
 # Summary
 
-Describe what this PR implements in one or two reviewer-facing paragraphs. Keep workflow metadata, commit lists, budget accounting, GitHub JSON, and long command output in phase notes instead of the public PR body.
+Legacy/exception-only template. By default, draft the PR body directly from `docs/implementation/<roadmap-slug>/implementation-plan.md` and do not create a repository PR-body file.
+
+Describe what this PR implements in one or two reviewer-facing paragraphs. Keep workflow metadata, commit lists, budget accounting, GitHub JSON, and long command output in the implementation plan instead of the public PR body.
 
 # Acceptance Criteria
 

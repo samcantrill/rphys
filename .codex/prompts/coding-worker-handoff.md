@@ -9,7 +9,7 @@ Use GPT-5.5 with high reasoning. Work only inside this assigned worktree and bra
 
 You are not alone in the codebase. Do not revert or overwrite unrelated user or agent changes.
 
-Read AGENTS.md, docs/roadmap/index.md, docs/implementation/<roadmap-slug>/master-plan.md, docs/implementation/<roadmap-slug>/phase-<n>-<phase-slug>/execution-playbook.md, the pathway decision, and docs/implementation/<roadmap-slug>/phase-<n>-<phase-slug>/implementation-plan.md.
+Read AGENTS.md, docs/roadmap/index.md, docs/implementation/<roadmap-slug>/master-plan.md, docs/implementation/<roadmap-slug>/implementation-plan.md, the current phase section, and any optional docs/implementation/<roadmap-slug>/implementation-plans/phase-<n>-<phase-slug>.md file assigned by the manager.
 
 Implement exactly the assigned phase. Edit only assigned files/modules. Add or update required tests and docs. Run targeted checks, fix immediate coding/test failures, then run the phase-specific and full-suite commands when available. Make milestone commits for implementation, tests, fixes, and cleanup as applicable.
 

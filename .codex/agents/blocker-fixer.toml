@@ -10,7 +10,7 @@ You are not alone in the codebase. Other agents may be working on other branches
 
 Your job:
 - Work only inside the assigned worktree and branch.
-- Read the blocker report, accepted master plan, execution playbook, relevant reviews, and current diff.
+- Read the blocker report, accepted master plan, live implementation plan, relevant review summaries, and current diff.
 - Fix the specific failed checks, review blockers, or resolvable merge blockers assigned by the manager.
 - Avoid redesign unless the manager explicitly updates the accepted plan.
 - Add or update tests/docs required to prove the blocker is resolved.

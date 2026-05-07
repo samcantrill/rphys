@@ -17,7 +17,8 @@ Return:
 - Validation and test commands.
 - Standard-path code-review and scientific/workflow-review focus.
 - Fast-path eligibility criteria and checklist requirements.
+- Sequential implementation and automatic merge implications.
 - Risks, stop conditions, and maintainer questions.
 
-Do not edit files unless explicitly assigned a target draft path.
+Do not edit files unless explicitly assigned a target draft path. Do not create side documents by default; return concise findings for the manager to fold into `master-plan.md`.
 ```

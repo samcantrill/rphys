@@ -1,5 +1,7 @@
 # Master Plan Review Report
 
+Legacy/exception-only template. By default, return concise findings to the manager and record the quality-gate result in `docs/implementation/<roadmap-slug>/master-plan.md`.
+
 ## Metadata
 
 - Reviewed plan:

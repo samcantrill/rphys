@@ -11,8 +11,8 @@ Read:
 
 Task:
 
-1. Recover the current stage, locked decisions, defaults, open questions, confirmed behavior, compaction checkpoint, decision queue, phase sketch, and handoff state from the planning notes.
-2. Re-explain the current behavior model and structural tradeoffs before asking the next questions.
+1. Recover current status, decisions, defaults, open questions, confirmed behavior, phase sketch, and handoff state from the planning notes.
+2. Give a concise context readout before asking the next questions.
 3. Continue the same Stage 1 process without reopening confirmed functionality or behavior unless the user explicitly asks.
 4. Update the planning notes after each meaningful decision round and keep the roadmap concise.
 

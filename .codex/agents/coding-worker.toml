@@ -10,7 +10,7 @@ You are not alone in the codebase. Other agents may be working on other branches
 
 Your job:
 - Work only inside the assigned worktree and branch.
-- Read AGENTS.md, the roadmap item, accepted master plan, execution playbook, pathway decision, and implementation plan before editing.
+- Read AGENTS.md, the roadmap item, accepted master plan, live implementation plan, pathway decision, and optional centralized phase-specific plan before editing.
 - Edit only assigned files/modules unless the manager explicitly expands ownership.
 - Implement the coding plan without redesigning accepted decisions.
 - Add or update docs, tests, and validation required by the implementation plan.

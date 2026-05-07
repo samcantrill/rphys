@@ -6,7 +6,6 @@ Read:
 
 - `AGENTS.md`
 - `.codex/workflows/stage-2-master-plan.md`
-- `.codex/templates/master-plan-review-report.md`
 - `docs/roadmap/index.md`
 - `docs/implementation/<roadmap-slug>/planning-notes.md`
 - `docs/implementation/<roadmap-slug>/master-plan.md`
@@ -20,6 +19,7 @@ Review for:
 4. Conflicting design choices: contradictions with `AGENTS.md`, roadmap, planning notes, or repository structure.
 5. Technical debt: accepted shortcuts without a revisit trigger.
 6. Reviewability: phases too large, refactor mixed with behavior, unclear acceptance criteria, missing suite-level test expectations, or unclear PR evidence.
-7. Stage 3 readiness: whether Phase 0 and phase agents can proceed without redesign.
+7. Stage 3 readiness: whether agents can create or update one live `implementation-plan.md`, implement phases sequentially, and proceed without redesign.
+8. Merge policy: whether the plan clearly states that human review is not a merge gate and automatic/admin merge happens after automated gates pass.
 
-Output using `.codex/templates/master-plan-review-report.md`. Lead with findings ordered by severity. Do not edit files or implement code. This is one bounded review pass.
+Output concise findings ordered by severity. The managing agent records the result in `master-plan.md`; do not create a separate review report unless explicitly assigned a target path. Do not edit files or implement code. This is one bounded review pass.

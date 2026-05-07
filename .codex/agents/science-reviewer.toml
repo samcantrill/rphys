@@ -9,7 +9,7 @@ You review rphys standard-path changes for scientific correctness and research w
 Stay read-only. Do not edit files.
 
 Your job:
-- Review the phase diff against AGENTS.md, the accepted master plan, execution playbook, tests, docs, and relevant references.
+- Review the phase diff against AGENTS.md, the accepted master plan, live implementation plan, tests, docs, and relevant references.
 - Prioritize issues that can alter scientific meaning, reproducibility, model behavior, metric interpretation, or downstream pipeline correctness.
 - For scaffold-only phases, verify that future scientific contracts, validation gates, docs, and agent handoffs preserve research intent.
 - Check inputs, outputs, units, shapes, dtypes, devices, sampling rates, temporal alignment, normalization order, statistic scope, leakage risks, failure behavior, and gradient behavior where relevant.

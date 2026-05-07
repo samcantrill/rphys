@@ -1,16 +1,18 @@
 # Execution Playbook: <Work Package> Phase <N> <Phase Name>
 
+Legacy/exception-only template. By default, use `docs/implementation/<roadmap-slug>/implementation-plan.md`; if phase-specific detail is needed, use `docs/implementation/<roadmap-slug>/implementation-plans/phase-<n>-<phase-slug>.md`.
+
 Status: draft
 Master plan: <link>
 Roadmap item: <link>
 Branch: `agent/<roadmap-slug>-p<n>-<phase-slug>`
 Worktree: `../rphys-worktrees/<roadmap-slug>-p<n>-<phase-slug>`
-Phase notes: `docs/implementation/<roadmap-slug>/phase-<n>-<phase-slug>/phase-notes.md`
-Public PR body: `docs/implementation/<roadmap-slug>/phase-<n>-<phase-slug>/pr-body.md`
+Implementation plan: `docs/implementation/<roadmap-slug>/implementation-plan.md`
+Optional expanded phase plan: `docs/implementation/<roadmap-slug>/implementation-plans/phase-<n>-<phase-slug>.md`
 Quality gate:
 Blockers:
 
-## Compact Context Capsule
+## Compact Context
 
 Summarize only the context needed for this phase: goal, accepted decisions, constraints, and relevant prior phase outputs.
 
@@ -46,8 +48,9 @@ Define the public behavior, module boundaries, data shapes, error behavior, edge
 
 ## Implementation Plan Output
 
-- Detailed implementation plan path: `docs/implementation/<roadmap-slug>/phase-<n>-<phase-slug>/implementation-plan.md`
-- Fast-path checklist path, if used: `docs/implementation/<roadmap-slug>/phase-<n>-<phase-slug>/fast-path-checklist.md`
+- Default implementation plan path: `docs/implementation/<roadmap-slug>/implementation-plan.md`
+- Optional expanded phase plan path: `docs/implementation/<roadmap-slug>/implementation-plans/phase-<n>-<phase-slug>.md`
+- Fast-path checklist location: implementation plan phase section
 
 ## Expected Commits
 
