@@ -6,8 +6,8 @@
 
 ## Core Engineering Rules
 
-- Prefer clean modern APIs over direct preservation of legacy structure.
-- Treat the legacy repository as evidence, not as the API contract.
+- Prefer clean modern APIs over direct preservation of earlier project structure.
+- Treat previous code, notes, and uploaded project context as evidence, not as the API contract.
 - Preserve scientific meaning over superficial code parity.
 - Keep code self-descriptive through names, types, docstrings, and tests.
 - Add comments for complex research logic, especially where processing order affects interpretation.
@@ -53,39 +53,54 @@ Run the narrowest relevant tests first, then broaden when touching shared behavi
 
 ## Git, GitHub, And Worktrees
 
-- Use `git` for version control and `gh` for GitHub issues/PRs when authenticated.
+- Use `git` for version control and `gh` for GitHub PRs when authenticated.
 - Use `/home/samcantrill/work/rphys` as the main foreground checkout.
 - Use `/home/samcantrill/work/rphys-worktrees` for isolated implementation worktrees.
 - Use one branch and one worktree per implementation phase.
-- Branch pattern: `agent/<issue>-<component>-p<n>-<slug>`.
-- Worktree pattern: `../rphys-worktrees/<issue>-<component>-p<n>-<slug>`.
+- Branch pattern: `agent/<roadmap-slug>-p<n>-<phase-slug>`.
+- Worktree pattern: `../rphys-worktrees/<roadmap-slug>-p<n>-<phase-slug>`.
 - Do not let multiple workers edit overlapping file sets.
-- Keep implementation PRs small enough for scientific and code review.
-- Default merge strategy is squash merge after review.
+- Keep implementation PRs small enough for the selected standard or fast implementation pathway.
+- Default merge strategy is automatic squash merge after pathway gates pass. Human review is not a default merge gate.
 - Remove the phase worktree after the PR is merged and the branch is deleted.
 
 ## Multi-Agent Workflow Rules
 
 - The main agent owns synthesis, user discussion, approvals, integration, and final judgment.
 - Use subagents explicitly for bounded tasks only.
-- Use read-only agents for legacy audit, RFC planning, phase planning, and scientific review.
-- Use implementation agents only after an RFC and phase plan are accepted.
+- Use roadmap and master-plan agents for planning support, but keep user acceptance as the gate between stages.
+- Keep workflows artifact-centered: `.codex/workflows/` are short entrypoints, `.codex/prompts/` are canonical role/action prompts, `.codex/templates/` are durable artifact schemas, and `.codex/agents/` define authority/model/sandbox.
+- Use implementation agents only after a roadmap work package is accepted, Stage 1 planning notes are complete, the master implementation plan is accepted, and the master-plan quality gate has passed.
+- Each implementation phase uses a planning worker followed by a coding worker. The manager may choose a standard pathway or fast pathway for each phase.
 - Implementation agents must work inside their assigned worktree and branch.
-- Each subagent must return concise evidence: paths, symbols, decisions, commands run, risks, and open questions.
+- Each subagent must return concise evidence: paths, decisions, commands run, risks, and open questions.
+- Durable handoffs must be written under `docs/implementation/<roadmap-slug>/` so later agents can resume from repository state.
 - The main agent must reconcile conflicting agent findings before implementation or merge.
 
 ## Required Gates
 
-Before implementation:
+Before Stage 2 planning:
 
-- Roadmap item exists.
-- Full component RFC is accepted.
-- Phase implementation plan is accepted.
-- Phase branch/worktree ownership is clear.
+- Scaffold roadmap work package is accepted.
+- Scope, success criteria, out-of-scope behavior, and validation goals are recorded.
+- Stage 1 planning notes exist under `docs/implementation/<roadmap-slug>/planning-notes.md`.
+- Functionality and behavior are confirmed, checkpointed, and followed by context compaction or reset before design-decision review.
+- The design-decision review queue has been reviewed with the maintainer.
+
+Before Stage 3 implementation:
+
+- Master implementation plan is accepted.
+- Master plan has passed the quality gate: one review, one refinement pass if needed, and one confirmation review.
+- Phase 0 preflight has produced referenced execution playbooks for all planned phases.
+- Phase branch/worktree ownership is clear and disjoint.
+- GitHub authentication and worktree write access are verified or blockers are documented.
 
 Before merge:
 
-- Tests requested by the phase plan have run or failures are documented.
-- Code review has checked correctness, maintainability, API quality, and test coverage.
-- Scientific review has checked the RFC, legacy evidence, pipeline implications, and relevant references.
-- PR description links the RFC, phase plan, issue, and verification evidence.
+- Tests requested by the master plan and phase execution playbook have run or failures are documented.
+- The full repository test/check suite has run when available.
+- The pre-submit blocker gate has checked the phase plan, diff, public PR body, phase notes, validation evidence, scope boundaries, assumptions, and risks.
+- Standard pathway phases have completed code review and scientific/workflow review with no unresolved blocker.
+- Fast pathway phases have a documented manager checklist confirming narrow scope, low risk, no public-interface impact, and no scientific/workflow contract impact.
+- Public PR body summarizes implementation, tests, validation, assumptions, and risks. Internal phase notes record workflow details, budgets, commits, GitHub facts, blockers, and cleanup.
+- PRs are automatically squash-merged when validation and pathway gates pass. The manager may approve or use available admin merge authority only for review-requirement branch protection, not for failing validation, wrong target branches, unresolved conflicts, or known implementation/review blockers.

@@ -1,33 +1,29 @@
-# rphys Roadmap
+# rphys Scaffold Roadmap
 
-This roadmap is the canonical planning document for porting and redesigning the legacy rphys codebase. GitHub issues and PRs should link back here and to the relevant RFC.
+This roadmap is the canonical planning document for scaffold work in `rphys`. Roadmap items are work packages: coherent capabilities such as package layout, validation infrastructure, documentation structure, CI, extension points, and reusable project conventions.
+
+Stage 1 keeps this file current while uploaded project context and maintainer discussion are converted into accepted work packages. Stage 2 turns one accepted work package into a master implementation plan. Stage 3 implements the accepted plan through managed worktree phases.
 
 ## Status Values
 
-- `candidate`: identified by audit, not yet accepted for RFC.
-- `RFC`: RFC is being drafted or reviewed.
-- `planned`: RFC accepted and phase plan pending or accepted.
+- `draft`: under discussion during Stage 1.
+- `accepted`: accepted as a scaffold work package and ready for Stage 2.
+- `planning`: master implementation plan is being drafted or reviewed.
 - `implementing`: phase PRs are active.
-- `reviewing`: implementation is waiting for code/scientific review.
+- `reviewing`: implementation is in automated review, fast-path checklist, or merge checks.
 - `merged`: accepted into `main`.
 - `deferred`: valid but intentionally postponed.
 - `dropped`: not planned for the modern library.
 
-## Components
+## Work Packages
 
-| Component | Status | Legacy Evidence | Target Direction | Validation Needs | Issue |
+| Work Package | Status | Context Evidence | Target Direction | Validation Needs | Implementation |
 | --- | --- | --- | --- | --- | --- |
-| Datasets and data interfaces | candidate | Pending `LEGACY_REPO_PATH` audit | External raw data, documented dataset interfaces, synthetic fixtures | Loader contract tests, fixture behavior, provenance checks | Pending |
-| Signal representations | candidate | Pending `LEGACY_REPO_PATH` audit | Explicit signal containers or typed arrays with units, sampling rate, and shape contracts | Shape/unit tests, NaN/flat/short-signal behavior | Pending |
-| Preprocessing | candidate | Pending `LEGACY_REPO_PATH` audit | Composable transforms with explicit ordering and statistic scope | Behavioral tests for filtering, normalization, masking, resampling, leakage | Pending |
-| Models | candidate | Pending `LEGACY_REPO_PATH` audit | Modular model components with clear tensor contracts | Shape/device tests, gradient checks, minimal training smoke tests | Pending |
-| Training | candidate | Pending `LEGACY_REPO_PATH` audit | Reusable training utilities, not experiment scripts | Determinism, checkpoint, scheduler, loss integration tests | Pending |
-| Evaluation and metrics | candidate | Pending `LEGACY_REPO_PATH` audit | Explicit aggregation and benchmark semantics | Metric edge cases, confidence interval assumptions, parity checks | Pending |
-| Analysis utilities | candidate | Pending `LEGACY_REPO_PATH` audit | Reusable analysis components with clear statistical assumptions | Statistical behavior tests and reference examples | Pending |
+| Workflow automation scaffold | draft | Initial maintainer workflow discussion | Three-stage roadmap, master-plan, and managed-implementation workflow with durable agent handoffs | Link/reference checks, TOML validation, stale-workflow search | Pending |
 
 ## Next Actions
 
-1. Provide `LEGACY_REPO_PATH`.
-2. Run the legacy audit workflow.
-3. Replace candidate rows with evidence-backed roadmap items.
-4. Draft the first component RFC.
+1. Upload or paste project context for Stage 1.
+2. Use `.codex/workflows/stage-1-roadmap.md` to start the roadmap discussion.
+3. Keep this roadmap updated during discussion.
+4. Select one accepted work package and use `.codex/workflows/stage-2-master-plan.md` to draft the master implementation plan.
