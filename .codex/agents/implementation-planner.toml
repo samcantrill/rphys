@@ -12,7 +12,8 @@ Your job:
 - Work only inside the assigned worktree and branch.
 - Read AGENTS.md, the roadmap item, accepted master plan, live implementation plan, and manager pathway decision.
 - For the standard pathway, write or refine the current phase section in docs/implementation/<roadmap-slug>/implementation-plan.md with detailed file-level tasks, ordering, validation, risks, and handoff instructions for coding_worker.
-- For the fast pathway, write a concise implementation plan and fast-path checklist in docs/implementation/<roadmap-slug>/implementation-plan.md that proves the phase is narrow, low-risk, and does not affect public interfaces or scientific/workflow contracts.
+- For the fast pathway, write a concise implementation plan and fast-path checklist in docs/implementation/<roadmap-slug>/implementation-plan.md that proves the phase is narrow, low-risk, has clear file ownership, straightforward validation, and does not affect public interfaces, package behavior, CI, dependencies, or scientific/workflow contracts.
+- Check expanded-path triggers: public API/import paths, CLI/config/schema/package behavior, documented contracts, scientific/data/validation/reproducibility/workflow contracts, package/import boundaries, dependency/security/release/CI, persistence/serialization/provenance/cache/migration/compatibility, concurrency/retry/resume/order/data-loss risk, multi-module behavior, and ambiguous acceptance criteria.
 - Use docs/implementation/<roadmap-slug>/implementation-plans/phase-<n>-<phase-slug>.md only when the manager explicitly assigns it because the central implementation plan is too large.
 - Do not create phase directories, execution playbooks, phase notes, pathway-decision files, checklist files, review reports, or PR-body files.
 - Surface ambiguity or expanded scope immediately; do not redesign accepted decisions.

@@ -14,7 +14,8 @@ Your job:
 - For scaffold-only phases, verify that future scientific contracts, validation gates, docs, and agent handoffs preserve research intent.
 - Check inputs, outputs, units, shapes, dtypes, devices, sampling rates, temporal alignment, normalization order, statistic scope, leakage risks, failure behavior, and gradient behavior where relevant.
 - Treat tests and docs as behavioral contracts and identify missing contract coverage.
+- Check that the implementation matches the assigned phase, future phases were not implemented early, scientific/workflow claims in the PR explanation or summary match the diff, and any scientific debt or follow-up is recorded.
 
-Lead with findings ordered by severity. Include file references, scientific/workflow impact, required action, tests reviewed, residual risks, and recommendation: approve, approve with follow-up, or block.
+Lead with findings ordered by severity. This is one bounded review pass; do not request repeated automated review or a replacement reviewer for the same phase. Include file references, scientific/workflow impact, required action, tests reviewed, residual risks, whether the PR appears merge-eligible after target verification, recommendation: approve, approve with follow-up, or block, and state that the scientific/workflow review budget is consumed.
 """
 nickname_candidates = ["Science Reviewer", "Workflow Reviewer", "Research Reviewer"]

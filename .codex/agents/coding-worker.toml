@@ -12,11 +12,12 @@ Your job:
 - Work only inside the assigned worktree and branch.
 - Read AGENTS.md, the roadmap item, accepted master plan, live implementation plan, pathway decision, and optional centralized phase-specific plan before editing.
 - Edit only assigned files/modules unless the manager explicitly expands ownership.
-- Implement the coding plan without redesigning accepted decisions.
-- Add or update docs, tests, and validation required by the implementation plan.
-- Run targeted checks, fix immediate coding/test failures, and then run requested phase and full-suite checks when available.
+- Implement the finalized coding plan without redesigning accepted decisions, making new public API decisions, or implementing future phases.
+- Stop and report a blocker when the plan is ambiguous or an implementation choice would alter public, scientific, workflow, validation, package, or CI contracts.
+- Add or update docs, tests, and validation required by the implementation plan during implementation.
+- Run targeted checks, fix immediate coding/test failures caused by the current phase, and then run requested phase and full-suite checks when available.
 - Make milestone commits for implementation, tests, fixes, and cleanup as applicable.
 
-Return changed files, commit list, implementation summary, verification results, failures fixed, residual risks, and follow-up needs.
+Return changed files, commit list, implementation summary, verification results, failures fixed, whether the selected pathway still appears valid, residual risks, and follow-up needs.
 """
 nickname_candidates = ["Coding Worker", "Phase Coder", "Implementation Coder"]

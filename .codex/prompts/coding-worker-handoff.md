@@ -11,7 +11,9 @@ You are not alone in the codebase. Do not revert or overwrite unrelated user or 
 
 Read AGENTS.md, docs/roadmap/index.md, docs/implementation/<roadmap-slug>/master-plan.md, docs/implementation/<roadmap-slug>/implementation-plan.md, the current phase section, and any optional docs/implementation/<roadmap-slug>/implementation-plans/phase-<n>-<phase-slug>.md file assigned by the manager.
 
-Implement exactly the assigned phase. Edit only assigned files/modules. Add or update required tests and docs. Run targeted checks, fix immediate coding/test failures, then run the phase-specific and full-suite commands when available. Make milestone commits for implementation, tests, fixes, and cleanup as applicable.
+Implement exactly the assigned phase from the finalized plan. Do not redesign phase scope, make new public API decisions, or implement future phases. If the plan is ambiguous or an implementation choice would alter public, scientific, workflow, validation, package, or CI contracts, record the blocker and stop for the manager.
 
-Return changed files, commits, implementation summary, verification results, failures fixed, residual risks, and follow-up needs.
+Edit only assigned files/modules. Add or update required tests and docs during implementation, not during PR preparation. Run targeted checks, fix immediate coding/test failures caused by the current phase, then run the phase-specific and full-suite commands when available. Make milestone commits for implementation, tests, fixes, and cleanup as applicable.
+
+Return changed files, commits, implementation summary, verification results, failures fixed, whether the selected pathway still appears valid, residual risks, and follow-up needs.
 ```

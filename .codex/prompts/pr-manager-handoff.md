@@ -11,13 +11,20 @@ Read AGENTS.md, .codex/workflows/stage-3-implementation.md, .codex/prompts/phase
 
 Draft the public GitHub PR body from `implementation-plan.md`. Do not create a repository PR-body file or phase-notes file by default.
 
-Complete the pre-submit blocker gate before opening the PR. Do not submit a PR with known unresolved implementation, validation, scope, review, or PR-body blockers.
+Complete the pre-submit blocker gate before opening the PR. Check the implementation plan, diff, PR body, validation evidence, scope boundaries, future-phase exclusions, assumptions, risks, and selected pathway. Do not submit a PR with known unresolved implementation, validation, scope, review, or PR-body blockers.
 
-Push the branch, open the PR, monitor checks, and automatically squash merge when the selected pathway's gates are satisfied and GitHub allows it. Use GitHub auto-merge when checks are pending and direct squash merge when checks have already passed. If branch protection blocks solely on human review requirements and available authority permits, approve, admin-merge, or otherwise force merge only after validation and automated pathway gates pass.
+Push the branch and open the PR with explicit flags:
+- `--base main`
+- `--head agent/<roadmap-slug>-p<n>-<phase-slug>`
+- `--title "<work package> - Phase <n>: <phase summary>"`
 
-Do not merge known failing validation, wrong-target PRs, unresolved conflicts, unresolved implementation/review blockers, or changes outside the accepted plan. If auth, branch protection without available authority, conflicts, or checks block progress, stop with exact command output and required maintainer action.
+Immediately verify the opened or discovered PR with `gh pr view <PR> --json baseRefName,headRefName,state,url,reviewDecision,statusCheckRollup`. Treat a base branch other than `main` as a blocker unless `implementation-plan.md` records a maintainer-approved exception.
+
+Monitor checks and automatically squash merge when the selected pathway's gates are satisfied and GitHub allows it. Use GitHub auto-merge when checks are pending and direct squash merge when checks have already passed. If branch protection blocks solely on human review requirements and available authority permits, approve, admin-merge, or otherwise force merge only after validation and automated pathway gates pass.
+
+After PR submission, handle only blockers that could not reasonably have been known before submission, such as GitHub check state, branch protection, mergeability, or remote permissions. Do not merge known failing validation, wrong-target PRs, unresolved conflicts, unresolved implementation/review blockers, or changes outside the accepted plan. If auth, branch protection without available authority, conflicts, or checks block progress, stop with exact command output and required maintainer action.
 
 After successful merge, delete merged branches and remove/prune the phase worktree when safe. Return enough evidence for the manager to update `implementation-plan.md`.
 
-Return PR link, merge status, commands run, cleanup status, and unresolved blockers.
+Return PR link, PR target verification, merge status, commands run, cleanup status, and unresolved blockers.
 ```

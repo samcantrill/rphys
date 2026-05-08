@@ -6,7 +6,7 @@ Convert a large body of uploaded project context and maintainer discussion into 
 
 The roadmap stays concise during Stage 1. The detailed discussion record lives in `docs/implementation/<roadmap-slug>/planning-notes.md`, using `.codex/templates/stage-1-planning-notes.md`. The roadmap should capture coherent work packages, not tiny PR tasks and not vague themes. A good work package is specific enough to plan in Stage 2 and broad enough to produce a meaningful slice of the scaffold.
 
-Stage 1 is direct context-to-questions work. The agent gives the maintainer a compact readout of the relevant context, asks the next concrete questions, records decisions, and moves toward an accepted roadmap work package. Do not make the maintainer manage workflow mechanics.
+Stage 1 is direct context-to-questions work. The agent gives the maintainer a comprehensive startup briefing, invites clarifying questions, asks the next concrete questions, records decisions, and moves toward an accepted roadmap work package. Do not make the maintainer manage workflow mechanics.
 
 ## Inputs
 
@@ -22,14 +22,21 @@ Stage 1 is direct context-to-questions work. The agent gives the maintainer a co
 1. Read `AGENTS.md`, `.codex/workflows/README.md`, and `docs/roadmap/index.md`.
 2. Create or update `docs/implementation/<roadmap-slug>/planning-notes.md`.
 3. Summarize the uploaded context into durable themes, constraints, desired behaviors, validation needs, and unresolved decisions.
-4. Give a concise context readout before asking questions: what appears true, what is uncertain, and which decisions affect implementation.
-5. Ask one to three high-impact questions per round. Each question should clarify intent, expose a tradeoff, test an assumption, or choose between meaningful structural alternatives.
-6. Explain consequences only where a decision needs context. Keep the explanation tied to implementation, validation, maintainability, extensibility, and scientific workflow safety.
-7. Maintain `planning-notes.md` as the decision ledger. Record accepted decisions, rejected alternatives, open questions, assumptions, and why the choice matters.
-8. Use `roadmap_planner` agents only for bounded synthesis tasks when parallel context analysis is useful; fold their output into planning notes instead of creating side documents.
-9. Update `docs/roadmap/index.md` when work-package status or summary changes.
-10. Keep roadmap items at work-package granularity.
-11. Mark a work package `accepted` only after explicit maintainer acceptance.
+4. Start with a comprehensive briefing before asking the maintainer to confirm functionality, behavior, or design direction. Cover what the work package is, why it exists, what it impacts or links to, likely public/scientific/workflow surfaces, durable artifacts, structure rationale, visible constraints, assumptions, and risks.
+5. Explicitly invite clarifying questions about the briefing. Answer from repository evidence where possible, and record resolved clarifications in `planning-notes.md` before moving on.
+6. Ask one to three high-impact questions per round. Each question should clarify intent, expose a tradeoff, test an assumption, or choose between meaningful structural alternatives.
+7. Before each material functionality, behavior, or design-principle question, give a short decision brief: what is being decided, why it matters, expected impact, relevant tradeoffs, and the recommended default when repository evidence supports one.
+8. Maintain `planning-notes.md` as the decision ledger. Record accepted decisions, rejected alternatives, open questions, assumptions, risks, defaults, and why the choice matters.
+9. After functionality and behavior are confirmed, record a complete context checkpoint in `planning-notes.md` before starting design-decision review. Compact or reset context only when the conversation is large enough that doing so improves reliability.
+10. Draft a design-decision review queue limited to choices that could materially affect maintainability, extensibility, public/scientific/workflow contracts, durable artifact structure, validation strategy, or agent behavior.
+11. Classify each candidate decision before discussing it:
+    - `recorded recommendation`: meaningful impact, but repository evidence gives a clear default. Record the recommendation, rationale, rejected alternatives, debt, and revisit trigger without asking the maintainer to decide it individually.
+    - `needs discussion`: high impact and no strong repository-supported default. Discuss it with the maintainer before marking it confirmed.
+    - `implementation detail`: low maintainability and extensibility impact. Omit it from the user-facing queue or record it as a non-blocking implementation detail.
+12. Use `roadmap_planner` agents only for bounded synthesis tasks when parallel context analysis is useful; fold their output into planning notes instead of creating side documents.
+13. Update `docs/roadmap/index.md` when work-package status or summary changes.
+14. Keep roadmap items at work-package granularity.
+15. Mark a work package `accepted` only after explicit maintainer acceptance.
 
 ## Discussion Requirements
 
@@ -46,6 +53,7 @@ The Stage 1 agent must repeatedly cover:
 For each substantial decision, document:
 
 - Decision.
+- Classification as `recorded recommendation`, `needs discussion`, or `implementation detail` when the decision appears in the design-decision review queue.
 - Alternatives considered.
 - Rationale.
 - Impact on maintainability and extensibility.
@@ -73,12 +81,13 @@ Stage 1 planning notes should include:
 
 - Current status.
 - Roadmap extraction and context evidence.
+- Startup briefing, visible assumptions, and resolved clarification questions.
 - User intent, success criteria, non-goals, and constraints.
 - Stage readbacks after each meaningful exchange.
 - Brainstormed capabilities marked include, maybe, defer, or out of scope.
 - Confirmed functionality, user-visible behavior, defaults, failure behavior, and explicit deferrals.
-- Functionality, behavior, defaults, failure behavior, explicit deferrals, and out-of-scope behavior.
-- Design decisions with statuses.
+- Context checkpoint after functionality and behavior confirmation.
+- Design-decision review queue with classification and status.
 - Confirmed design decisions with rejected alternatives, maintainability/extensibility impact, accepted debt, and revisit triggers.
 - Phase sketch and handoff inputs for Stage 2.
 
@@ -86,7 +95,8 @@ Stage 1 planning notes should include:
 
 - At least one roadmap work package is accepted.
 - The accepted item has enough scope, goals, non-goals, behavioral expectations, structural rationale, validation expectations, and constraints to start Stage 2.
-- The maintainer has been shown the expected system behavior and tradeoffs needed to make an informed acceptance decision.
+- The maintainer has received a startup briefing, had a chance to ask clarifying questions, and has been shown the expected system behavior and tradeoffs needed to make an informed acceptance decision.
 - Major alternatives and their maintainability/extensibility implications are documented.
+- The design-decision queue is complete enough that Stage 2 can distinguish accepted design decisions from implementation details.
 - Functionality, behavior, major design decisions, assumptions, and validation goals are recorded.
 - Deferred or dropped ideas are recorded when they would otherwise be rediscovered.

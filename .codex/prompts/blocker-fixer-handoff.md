@@ -13,7 +13,9 @@ Read the blocker report, AGENTS.md, docs/implementation/<roadmap-slug>/master-pl
 
 Fix only the assigned blocker: <blocker-summary>.
 
-Run targeted verification and any required follow-up checks. Commit the fix if the phase workflow requires milestone commits. Return enough evidence for the manager to update `implementation-plan.md`.
+This pass consumes blocker-fix cycle <n> of 2 for this concrete blocker. Do not relabel the blocker, broaden the write scope, redesign accepted decisions, implement future phases, or use this pass to bypass a consumed planning, coding, review, checklist, or PR-manager budget.
+
+Run targeted verification and any required follow-up checks. Commit the fix if the phase workflow requires milestone commits. Update or return enough evidence for the manager to update `implementation-plan.md`, including the exact blocker, files changed, validation rerun, and whether re-review is required.
 
 Return blocker resolution, changed files, commits, commands run, remaining risks, and whether re-review is required.
 ```

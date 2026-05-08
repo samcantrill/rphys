@@ -11,7 +11,7 @@ Stage 3 should not wait for human review. Human input is needed only for missing
 - Roadmap work package is accepted.
 - `docs/implementation/<roadmap-slug>/master-plan.md` is accepted.
 - The master-plan quality gate is recorded as passed in the current `master-plan.md`.
-- `gh auth status` passes if PR creation or merge will be attempted.
+- `gh auth status` passes with network access if PR creation or merge will be attempted.
 - `/home/samcantrill/work/rphys-worktrees` exists and is writable.
 - `main` is the foreground branch and tracks the intended upstream, or the deviation is documented.
 
@@ -25,7 +25,7 @@ Use one live implementation plan:
 
 `docs/implementation/<roadmap-slug>/implementation-plan.md`
 
-This file is the Stage 3 ledger for all phases: phase plan, pathway decisions, fast-path checklist, coding handoff, validation evidence, review summaries, PR facts, blocker history, merge result, cleanup, and current status.
+This file is the Stage 3 ledger for all phases: startup preflight, GitHub/auth status, phase plan, pathway decisions, gate-budget use, fast-path checklist, coding handoff, validation evidence, review summaries, PR facts, blocker history, merge result, cleanup, and current status.
 
 If the single file becomes unreviewably large, move phase-specific plans under:
 
@@ -50,7 +50,16 @@ Implement phases strictly in master-plan order.
 
 Before each phase, the manager records the pathway in `implementation-plan.md`.
 
-Use the standard pathway when a phase touches public interfaces, package structure, dependency/configuration behavior, CI behavior, tests used as public contracts, scientific/workflow contracts, multi-module behavior, or any design decision with meaningful downstream impact.
+Use the standard pathway when any expanded-path trigger applies:
+
+- Public import path, API, CLI, config, schema, package behavior, or documented contract changes.
+- Scientific, data, validation, reproducibility, or workflow contract changes.
+- Tests that act as public contracts or materially change downstream expectations.
+- Package structure, source-tree boundary, import-boundary, dependency, security, release, or CI behavior changes.
+- Persistence, serialization, provenance, cache, migration, or compatibility behavior.
+- Concurrency, locking, retry, resume, ordering, or data-loss risk.
+- Multi-module behavior, cross-cutting refactors, or changes that are hard to review as one narrow diff.
+- Ambiguous acceptance criteria, unresolved implementation-plan tradeoffs, or any design decision with meaningful downstream impact.
 
 Use the fast pathway only when all of these are true:
 
@@ -62,24 +71,26 @@ Use the fast pathway only when all of these are true:
 - Verification is straightforward and can be completed with targeted checks plus the available full suite.
 - The manager can state why separate automated review agents would not materially reduce risk.
 
-If any criterion is uncertain, use the standard pathway.
+If any criterion is uncertain, use the standard pathway. Fast-path status must be revoked and replaced with the standard pathway if implementation, validation, or PR preparation surfaces a blocker, ambiguity, expanded scope, or contract impact.
 
 ## Process
 
-1. Verify repository status, GitHub auth, accepted roadmap item, accepted master plan, quality-gate status, and worktree root.
+1. Verify repository status, GitHub auth, accepted roadmap item, accepted master plan, quality-gate status, and worktree root. If `gh auth status` fails with a likely sandbox or network restriction, rerun it with approved network access before treating credentials as unavailable. If `gh` is authenticated but git remote operations fail through SSH, run or ask to run `gh auth setup-git`, then record whether the remote can fetch and push.
 2. Create or update `implementation-plan.md` from the accepted master plan. Include all phases, ownership, pathway defaults, validation commands, review/checklist requirements, stop conditions, PR plan, and merge policy.
 3. For each planned phase, in order:
    - Create or update the phase branch/worktree from current `main`.
    - Refresh only that phase section in `implementation-plan.md`.
+   - Record phase gate-budget state before assigning work: planning pass, coding pass, pre-submit blocker gate, standard-path reviews or fast-path checklist, blocker-fix cycles used, PR manager pass, merge attempt, branch cleanup, and worktree cleanup.
    - Choose standard or fast pathway and record the decision.
    - Use `implementation_planner` only when the phase needs additional file-level planning; the planner edits `implementation-plan.md` or the optional centralized `implementation-plans/phase-*.md` file.
    - Use `coding_worker` to implement exactly the current phase, add or update tests/docs, run checks, and fix immediate coding/test failures.
    - Run phase-specific checks first, then the full available repository suite.
    - Complete the pre-submit blocker gate against the implementation plan, diff, PR summary, validation evidence, scope boundaries, assumptions, and risks.
+   - Resolve known implementation, validation, scope, review, and PR-body blockers before PR submission. Do not open a PR to let GitHub review or CI rediscover known local blockers.
    - Standard pathway: run `code_reviewer` and `science_reviewer` as automated review gates. Record summaries and blocker status in `implementation-plan.md`.
    - Fast pathway: complete the manager checklist in `implementation-plan.md`. If risk surfaces, switch to the standard pathway before merge.
-   - Use `blocker_fixer` for failed checks, review blockers, fast-path checklist blockers, or resolvable PR/merge blockers. Allow two automated blocker-fix/re-review cycles for the same blocker.
-   - Use `pr_manager` to draft the GitHub PR body from the implementation plan, open the PR, monitor checks, automatically squash-merge when gates pass, and clean up after merge.
+   - Use `blocker_fixer` for failed checks, review blockers, fast-path checklist blockers, or resolvable PR/merge blockers. Allow two automated blocker-fix/re-review cycles for the same concrete blocker. Do not relabel the same blocker or switch agent names to bypass a consumed budget.
+   - Use `pr_manager` to draft the GitHub PR body from the implementation plan, open the PR with explicit `--base main`, `--head agent/<roadmap-slug>-p<n>-<phase-slug>`, and title flags, verify the opened PR target with `gh pr view`, monitor checks, automatically squash-merge when gates pass, and clean up after merge.
    - Update `implementation-plan.md`, `master-plan.md` status, and `docs/roadmap/index.md` as needed.
    - Delete the remote/local phase branch and remove the phase worktree after merge.
 4. Continue to the next phase only after the previous phase is merged and cleaned up.
@@ -93,7 +104,8 @@ All pathways require:
 - Phase-specific checks have run.
 - The full repository suite has run when available.
 - The pre-submit blocker gate has passed.
-- The PR body summarizes the roadmap item, master plan, implementation plan, implementation, validation evidence, assumptions, and risks.
+- The PR targets `main`; wrong-target PRs are blockers and must be closed or recreated before merge.
+- The public PR body summarizes the roadmap item, master plan, implementation, validation evidence, assumptions, and risks without exposing workflow internals.
 - `implementation-plan.md` records workflow details, budget use, commits, GitHub facts, blocker history, review summaries or fast-path checklist, merge result, and cleanup status.
 - GitHub allows squash merge or available authority can bypass only a human-review requirement.
 
@@ -106,6 +118,8 @@ Fast pathway additionally requires:
 
 - The manager's fast-path checklist confirms that no separate automated review agent is needed.
 - No blocker, ambiguity, or expanded scope surfaced during implementation or verification.
+
+After PR submission, handle only blockers that could not reasonably have been known before submission, such as GitHub check state, branch protection, mergeability, or remote permissions. Locally knowable implementation, validation, scope, and PR-body blockers must have been resolved before submission.
 
 The PR manager should use auto-merge when checks are pending and direct squash merge when checks have already passed. If branch protection blocks solely on human review requirements and the managing account has available approval or admin authority, approve, admin-merge, or otherwise force the merge after automated review and validation gates pass. Do not merge known failing validation, wrong-target PRs, unresolved conflicts, unresolved implementation/review blockers, or changes outside the accepted plan.
 
