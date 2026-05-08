@@ -4,15 +4,15 @@
 
 - Roadmap slug: `public-architecture-contracts`
 - Plan number: `01`
-- Status: accepted
+- Status: implemented
 - Source context:
   - `docs/rphys_architecture_plan_v3.md`
   - `docs/implementation/00-field-centric-architecture-scaffold/planning-notes.md`
   - `docs/roadmap/index.md`
 - Master plan: `docs/implementation/01-public-architecture-contracts/master-plan.md`
 - Implementation plan: `docs/implementation/01-public-architecture-contracts/implementation-plan.md`
-- Current focus: ready for sequential Stage 3 implementation
-- Blocker: GitHub CLI authentication is invalid for `samcantrill`, blocking PR creation and merge until refreshed.
+- Current focus: completed and committed to `main`/`origin/main`
+- Blocker: none for this completed work package. GitHub CLI authentication remains invalid for `samcantrill` and should be refreshed before future PR-based workflows.
 
 ## Context Readout
 
