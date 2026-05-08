@@ -1,6 +1,6 @@
 # Stage 3 Implementation Plan: Field Runtime Core
 
-Status: Phase 1 committed; pre-submit blocker gate pending
+Status: Phase 1 pre-submit blocker gate passed; PR creation pending
 Roadmap slug: `field-runtime-core`
 Master plan: `docs/implementation/02-field-runtime-core/master-plan.md`
 Current phase: Phase 1 active
@@ -80,7 +80,7 @@ Current blocker: none
 
 ## Phase 1 Plan
 
-- Status: committed; pre-submit blocker gate pending.
+- Status: pre-submit blocker gate passed; PR creation pending.
 - Pathway decision:
   - Standard pathway.
   - Reason: Phase 1 introduces public runtime contracts, public imports, docs, dependency-boundary tests, and stability-label obligations.
@@ -94,6 +94,7 @@ Current blocker: none
   - The accepted Phase 1 planning artifacts were copied into the phase worktree before code implementation began.
 - Commit:
   - Phase implementation commit: `1d57d93` (`Add field runtime keys and values`).
+  - Ledger status commit: `1a402ba` (`Record Phase 1 commit status`).
 - Implementation summary:
   - Added `src/rphys/data/keys.py` with validated `DataKey(str)`, reserved namespace constants, custom-key validation, and value-based key semantics.
   - Added `src/rphys/data/fields.py` with minimal `FieldSpec` and identity-equality `FieldValue`.
@@ -118,8 +119,16 @@ Current blocker: none
 - Review summaries:
   - Code review completed. Findings: the branch had no committed diff because Phase 1 files were untracked, and `CollatePolicy.LIST` copy/deep-copy behavior lacked direct tests. Resolution: all Phase 1 files were staged, staged whitespace was checked, and `CollatePolicy.LIST` copy, deep-copy, equality, hash, and value construction assertions were added.
   - Scientific/workflow review completed. Findings: runtime docs overclaimed schema-token validation, and `CollatePolicy.LIST` copy/equality/hash behavior was under-tested. Resolution: runtime docs now describe the actual permissive schema rule, and the enum behavior tests were added.
+- Pre-submit blocker gate:
+  - Status: passed.
+  - Diff scope: accepted Phase 1 files only: `src/rphys/data/keys.py`, `src/rphys/data/fields.py`, `src/rphys/data/collation.py`, `src/rphys/data/__init__.py`, runtime docs, public contract docs, roadmap/implementation ledger updates, and focused key/field/import/dependency/doc tests.
+  - Future-phase exclusions verified: no `Sample`, `Batch`, `DataObjectBase`, `CollateContext`, `collate_samples`, IO refs, modality classes, or policies beyond `LIST`.
+  - Review blockers: none unresolved after manager follow-up fixes.
+  - Validation evidence: required targeted tests, public contract docs test, lock check, committed-diff whitespace check, and full suite passed after follow-up fixes.
+  - Public PR summary is ready: Phase 1 adds validated field keys, minimal field specs, loaded field values, explicit `LIST` policy, runtime docs, and focused public-contract tests.
+  - Residual risks: schema identifiers remain intentionally permissive strings after narrow non-string/blank/padded checks; richer schema grammar and scientific metadata are deferred to specialized specs, data objects, sample contracts, or later plans.
 - Current local risks:
-  - Pre-submit blocker gate remains required before PR creation.
+  - PR creation, target verification, remote checks, merge, and cleanup remain.
 - Scope:
   - `DataKey`, reserved namespaces, custom key rule.
   - Minimal `FieldSpec`.
@@ -193,7 +202,7 @@ Current blocker: none
 | Startup preflight | manager-owned | Used once; passed after temporary SSH agent setup. |
 | Phase planning | one manager/planner pass per phase | Manager setup pass used to create and document the Phase 1 branch/worktree; no implementation-planner pass started. |
 | Phase coding | one coding-worker pass per phase | Manager-local implementation completed; coding-worker subagent pass not started. |
-| Pre-submit blocker gate | one manager/PR-manager pass per phase | Pending after standard-path reviews. |
+| Pre-submit blocker gate | one manager/PR-manager pass per phase | Completed for Phase 1; passed with no unresolved local blocker. |
 | Standard code review | one code review per phase | Completed for Phase 1; follow-ups fixed by manager. |
 | Standard scientific/workflow review | one science review per phase | Completed for Phase 1; follow-ups fixed by manager. |
 | Blocker fixing | two cycles for same concrete blocker | No blocker-fixer subagent used; manager applied review follow-up fixes. |

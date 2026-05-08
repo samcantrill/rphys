@@ -8,10 +8,10 @@
   - `docs/implementation/00-field-centric-architecture-scaffold/planning-notes.md`
   - `docs/roadmap/index.md`
 - Planning notes status: accepted for Stage 2
-- Current discussion stage: Stage 3 Phase 1 committed; pre-submit blocker gate pending
+- Current discussion stage: Stage 3 Phase 1 pre-submit blocker gate passed; PR creation pending
 - Related roadmap row: `Field runtime core`
 - Blockers:
-  - None. Pre-submit gate remains before PR creation.
+  - None. PR creation remains.
 
 ## Stage Gates
 
