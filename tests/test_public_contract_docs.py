@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "docs" / "architecture" / "public-contracts.md"
+RUNTIME_CORE = ROOT / "docs" / "data" / "runtime-core.md"
 README = ROOT / "README.md"
 LICENSE = ROOT / "LICENSE"
 
@@ -67,6 +68,24 @@ def test_contract_preserves_io_future_concepts() -> None:
     assert "`FieldRef`, `TemporalIndexSlice`, and `FieldView` are future `rphys.io`" in text
     assert "lazy requests" in lower_text
     assert "external field payloads" in lower_text
+
+
+def test_runtime_core_doc_covers_phase_1_public_contracts() -> None:
+    text = RUNTIME_CORE.read_text(encoding="utf-8")
+
+    for phrase in (
+        "Stable: `DataKey`",
+        "Stable: `FieldSpec`",
+        "Stable: `FieldValue`",
+        "Stable for the exposed member: `CollatePolicy.LIST`",
+        "Runtime And IO Boundary",
+        "`FieldRef`, `TemporalIndexSlice`, and `FieldView` remain future `rphys.io`",
+        "does not include `description`, `runtime_type`, coordinate frames",
+        "Equality is object identity",
+        "absent policy must fail",
+        "RemotePhysDataError",
+    ):
+        assert phrase in text
 
 
 def test_contract_defines_scientific_obligations() -> None:
