@@ -1,6 +1,6 @@
 # Stage 3 Implementation Plan: Field Runtime Core
 
-Status: Phase 1 pre-submit blocker gate passed; PR creation pending
+Status: Phase 1 PR open; merge pending
 Roadmap slug: `field-runtime-core`
 Master plan: `docs/implementation/02-field-runtime-core/master-plan.md`
 Current phase: Phase 1 active
@@ -73,14 +73,14 @@ Current blocker: none
 
 | Phase | Slug | Status | Branch | Worktree | Pathway | Ownership | Required outcome |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `keys-fields-and-docs` | implemented and validated; reviews pending | `agent/field-runtime-core-p1-keys-fields-and-docs` | `../rphys-worktrees/field-runtime-core-p1-keys-fields-and-docs` | standard, xhigh where configurable | `src/rphys/data/keys.py`, `src/rphys/data/fields.py`, `src/rphys/data/collation.py` for `CollatePolicy` only, `src/rphys/data/__init__.py`, runtime docs, key/field tests | `DataKey`, minimal `FieldSpec`, narrow `FieldValue`, `CollatePolicy.LIST`, initial docs, and public exports land. |
+| 1 | `keys-fields-and-docs` | PR open; merge pending | `agent/field-runtime-core-p1-keys-fields-and-docs` | `../rphys-worktrees/field-runtime-core-p1-keys-fields-and-docs` | standard, xhigh where configurable | `src/rphys/data/keys.py`, `src/rphys/data/fields.py`, `src/rphys/data/collation.py` for `CollatePolicy` only, `src/rphys/data/__init__.py`, runtime docs, key/field tests | `DataKey`, minimal `FieldSpec`, narrow `FieldValue`, `CollatePolicy.LIST`, initial docs, and public exports land. |
 | 2 | `sample-batch-containers` | pending | `agent/field-runtime-core-p2-sample-batch-containers` | `../rphys-worktrees/field-runtime-core-p2-sample-batch-containers` | standard | `src/rphys/data/samples.py`, relevant exports, sample/batch tests | Mutable `Sample` and `Batch` field APIs land. |
 | 3 | `objects-contracts-and-collation` | pending | `agent/field-runtime-core-p3-objects-contracts-and-collation` | `../rphys-worktrees/field-runtime-core-p3-objects-contracts-and-collation` | standard | `src/rphys/data/objects.py`, `src/rphys/data/contracts.py`, `src/rphys/data/collation.py` after Phase 1 merge, relevant tests | Backend-agnostic data object hooks, sample contracts, and explicit collation land. |
 | 4 | `contract-validation-closeout` | pending | `agent/field-runtime-core-p4-contract-validation-closeout` | `../rphys-worktrees/field-runtime-core-p4-contract-validation-closeout` | standard | public import tests, dependency-boundary tests, public-contract docs, implementation ledger | Full validation, docs alignment, and boundary checks are reconciled. |
 
 ## Phase 1 Plan
 
-- Status: pre-submit blocker gate passed; PR creation pending.
+- Status: PR open; merge pending.
 - Pathway decision:
   - Standard pathway.
   - Reason: Phase 1 introduces public runtime contracts, public imports, docs, dependency-boundary tests, and stability-label obligations.
@@ -128,7 +128,7 @@ Current blocker: none
   - Public PR summary is ready: Phase 1 adds validated field keys, minimal field specs, loaded field values, explicit `LIST` policy, runtime docs, and focused public-contract tests.
   - Residual risks: schema identifiers remain intentionally permissive strings after narrow non-string/blank/padded checks; richer schema grammar and scientific metadata are deferred to specialized specs, data objects, sample contracts, or later plans.
 - Current local risks:
-  - PR creation, target verification, remote checks, merge, and cleanup remain.
+  - Remote merge and cleanup remain.
 - Scope:
   - `DataKey`, reserved namespaces, custom key rule.
   - Minimal `FieldSpec`.
@@ -157,6 +157,12 @@ Current blocker: none
   - Head: `agent/field-runtime-core-p1-keys-fields-and-docs`
   - Title: `Field runtime core - Phase 1: Keys, fields, and runtime docs`
   - Verify opened PR with `gh pr view <PR> --json baseRefName,headRefName,state,url,reviewDecision,statusCheckRollup`.
+- PR facts:
+  - URL: `https://github.com/samcantrill/rphys/pull/1`
+  - Number: `1`
+  - Opened with explicit `--base main`, `--head agent/field-runtime-core-p1-keys-fields-and-docs`, and title flags.
+  - Verification command: `gh pr view 1 --json baseRefName,headRefName,state,url,reviewDecision,statusCheckRollup,mergeable,isDraft`.
+  - Verification result: base `main`, head `agent/field-runtime-core-p1-keys-fields-and-docs`, state `OPEN`, draft `false`, mergeable `MERGEABLE`, status checks `[]`.
 
 ## Phase 2 Plan
 
@@ -206,7 +212,7 @@ Current blocker: none
 | Standard code review | one code review per phase | Completed for Phase 1; follow-ups fixed by manager. |
 | Standard scientific/workflow review | one science review per phase | Completed for Phase 1; follow-ups fixed by manager. |
 | Blocker fixing | two cycles for same concrete blocker | No blocker-fixer subagent used; manager applied review follow-up fixes. |
-| PR manager | one PR-manager pass plus remote-only blocker handling | Not started. |
+| PR manager | one PR-manager pass plus remote-only blocker handling | Manager-local PR creation and target verification completed; PR-manager subagent not used. |
 
 ## Blocker Log
 

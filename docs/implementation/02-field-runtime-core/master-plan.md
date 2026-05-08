@@ -7,10 +7,10 @@ Plan number: `02`
 Planning notes: `docs/implementation/02-field-runtime-core/planning-notes.md`
 Implementation plan: `docs/implementation/02-field-runtime-core/implementation-plan.md`
 Quality gate: passed on 2026-05-08
-Stage 3 status: Phase 1 pre-submit blocker gate passed; PR creation pending
+Stage 3 status: Phase 1 PR open; merge pending
 Blockers:
 
-- None. Phase 1 implementation, validation, standard-path review follow-ups, and pre-submit gate are complete; PR creation remains.
+- None. Phase 1 implementation, validation, standard-path review follow-ups, pre-submit gate, and PR creation are complete; merge remains.
 
 ## Summary
 
