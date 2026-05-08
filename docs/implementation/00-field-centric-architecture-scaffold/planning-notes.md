@@ -130,12 +130,12 @@ The broad `Field-centric architecture scaffold` proposal has been split before a
 
 | Split package | Planning notes | Primary scope | Depends on |
 | --- | --- | --- | --- |
-| Public architecture contracts | `docs/implementation/public-architecture-contracts/planning-notes.md` | `loom`/`rphys` boundary, public contract inventory, package skeleton, error taxonomy, registry policy, dependency policy | None |
-| Field runtime core | `docs/implementation/field-runtime-core/planning-notes.md` | `DataKey`, `FieldSpec`, `FieldValue`, data objects, `Sample`, `Batch`, mutability, collation | Public architecture contracts, if planned first |
-| Dataset IO and index core | `docs/implementation/dataset-io-index-core/planning-notes.md` | `DatasetRef`, `RecordRef`, `FieldRef`, `TemporalIndexSlice`, `FieldView`, `IndexItem`, `SampleSpec`, `SampleBuilder`, filters, codec contracts | Field runtime core |
-| Runtime transforms and materialization | `docs/implementation/runtime-transforms-materialization/planning-notes.md` | Ops boundary, `SampleTransform`, augmentation, checks, pipelines, exporters, materialization lifecycle | Field runtime core; Dataset IO and index core |
-| Learning evaluation core | `docs/implementation/learning-evaluation-core/planning-notes.md` | Method/model/learner/trainer boundaries, adapters, losses, predictions, metrics, aggregation, evaluation protocols | Field runtime core |
-| Extension docs and validation scaffold | `docs/implementation/extension-docs-validation-scaffold/planning-notes.md` | Extension guides, synthetic fixtures, docs checks, recipe/stage examples, validation strategy | Accepted contracts from the other packages |
+| Public architecture contracts | `docs/implementation/01-public-architecture-contracts/planning-notes.md` | `loom`/`rphys` boundary, public contract inventory, package skeleton, error taxonomy, registry policy, dependency policy | None |
+| Field runtime core | `docs/implementation/02-field-runtime-core/planning-notes.md` | `DataKey`, `FieldSpec`, `FieldValue`, data objects, `Sample`, `Batch`, mutability, collation | Public architecture contracts, if planned first |
+| Dataset IO and index core | `docs/implementation/03-dataset-io-index-core/planning-notes.md` | `DatasetRef`, `RecordRef`, `FieldRef`, `TemporalIndexSlice`, `FieldView`, `IndexItem`, `SampleSpec`, `SampleBuilder`, filters, codec contracts | Field runtime core |
+| Runtime transforms and materialization | `docs/implementation/04-runtime-transforms-materialization/planning-notes.md` | Ops boundary, `SampleTransform`, augmentation, checks, pipelines, exporters, materialization lifecycle | Field runtime core; Dataset IO and index core |
+| Learning evaluation core | `docs/implementation/05-learning-evaluation-core/planning-notes.md` | Method/model/learner/trainer boundaries, adapters, losses, predictions, metrics, aggregation, evaluation protocols | Field runtime core |
+| Extension docs and validation scaffold | `docs/implementation/06-extension-docs-validation-scaffold/planning-notes.md` | Extension guides, synthetic fixtures, docs checks, recipe/stage examples, validation strategy | Accepted contracts from the other packages |
 
 Current split recommendation:
 
@@ -211,7 +211,7 @@ Out-of-scope behavior:
 ## Context Compaction Or Reset Checkpoint
 
 - Checkpoint status: not reached
-- Notes path: `docs/implementation/field-centric-architecture-scaffold/planning-notes.md`
+- Notes path: `docs/implementation/00-field-centric-architecture-scaffold/planning-notes.md`
 - Resume instruction: After functionality and behavior are confirmed, compact or reset context, then resume with `.codex/prompts/stage-1-planning-notes-resume.md` and reload this planning notes file before beginning design-decision review.
 - Functionality or behavior reopened after checkpoint: none
 

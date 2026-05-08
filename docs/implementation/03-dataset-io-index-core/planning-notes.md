@@ -5,7 +5,7 @@
 - Roadmap slug: `dataset-io-index-core`
 - Source context:
   - `docs/rphys_architecture_plan_v3.md`
-  - `docs/implementation/field-centric-architecture-scaffold/planning-notes.md`
+  - `docs/implementation/00-field-centric-architecture-scaffold/planning-notes.md`
   - `docs/roadmap/index.md`
 - Planning notes status: draft
 - Current discussion stage: roadmap framing
@@ -130,7 +130,7 @@ Out-of-scope behavior:
 ## Context Compaction Or Reset Checkpoint
 
 - Checkpoint status: not reached
-- Notes path: `docs/implementation/dataset-io-index-core/planning-notes.md`
+- Notes path: `docs/implementation/03-dataset-io-index-core/planning-notes.md`
 - Resume instruction: After functionality and behavior are confirmed, compact or reset context, then resume with `.codex/prompts/stage-1-planning-notes-resume.md` and reload this planning notes file before design-decision review.
 - Functionality or behavior reopened after checkpoint: none
 
