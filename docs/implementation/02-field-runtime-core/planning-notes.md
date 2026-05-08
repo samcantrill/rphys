@@ -7,26 +7,24 @@
   - `docs/rphys_architecture_plan_v3.md`
   - `docs/implementation/00-field-centric-architecture-scaffold/planning-notes.md`
   - `docs/roadmap/index.md`
-- Planning notes status: draft
-- Current discussion stage: roadmap framing
+- Planning notes status: accepted for Stage 2
+- Current discussion stage: Stage 3 Phase 1 committed; pre-submit blocker gate pending
 - Related roadmap row: `Field runtime core`
 - Blockers:
-  - Split boundaries have not been confirmed by the maintainer.
-  - Runtime behavior has not been confirmed.
-  - Design-decision review has not started.
+  - None. Pre-submit gate remains before PR creation.
 
 ## Stage Gates
 
 | Stage | Status | Locked decisions | Defaults | Open questions | Next focus |
 | --- | --- | --- | --- | --- | --- |
-| Roadmap framing | draft | Broad architecture is split; this package owns runtime field containers | Data layer before dataset IO and transforms | Should this depend on the public architecture package first? | Confirm package order |
-| Intent discovery | draft | None yet | Prioritize stable runtime API for every later package | How rich should initial typed data objects be? | Clarify first user workflows |
-| Capability brainstorming | draft | None yet | Include keys, specs, values, Samples, Batches, mutability, collation | Which modality objects are initial versus documented placeholders? | Mark include/defer |
-| Functionality and behavior confirmation | not started | None yet | Mutable Samples, strict collation, explicit metadata | None yet | Confirm behavior |
-| Context compaction/reset checkpoint | not started | None yet | Stop with resume instruction if direct compaction is unavailable | None | Record checkpoint |
-| Design-decision review | not started | None yet | Review queue below | None yet | Review decisions |
-| Phase shaping | not started | None yet | Keep core focused and test-heavy | None yet | Sketch phases |
-| Handoff | not started | None yet | Carry accepted runtime contracts into dataset/transform packages | None yet | Prepare Stage 2 inputs |
+| Roadmap framing | accepted | This package owns loaded runtime field containers; IO/dataset/transform behavior is deferred | Data layer before dataset IO and transforms | None | Carry boundary into Stage 2 quality gate |
+| Intent discovery | accepted | Prioritize stable runtime API for every later package | Keep the initial API narrow and strict | None | Carry accepted intent into implementation plan |
+| Capability brainstorming | accepted | Include keys, specs, values, Samples, Batches, contracts, backend-light data hooks, explicit list collation | Defer concrete modality objects and backend-specific stack/pad behavior | None | Preserve deferrals |
+| Functionality and behavior confirmation | accepted | Mutable Samples, explicit shallow/deep copy, strict absent-policy collation failure, minimal FieldSpec | Fail loudly for ambiguity | None | Preserve accepted behavior in master plan |
+| Context compaction/reset checkpoint | accepted | This file and the master plan are the durable resume context | Reload these artifacts after interruption | None | Continue from master-plan gate status |
+| Design-decision review | accepted | D1-D7 decisions documented in the master plan | Discuss only important/impactful/unclear decisions | None | Quality gate review |
+| Phase shaping | accepted | Four sequential standard-pathway phases | Phase 1 uses xhigh where configurable | None | Confirm phase readiness |
+| Handoff | accepted | Accepted runtime contracts move into Stage 3 after master-plan acceptance | Use one branch/worktree per phase | None | Phase 1 branch/worktree setup |
 
 ## Context Extraction
 
@@ -37,7 +35,7 @@ Baseline outcome:
 Constraints:
 
 - Video is a standard field, not a privileged special case.
-- Field metadata must capture scientific meaning where needed.
+- Field metadata must capture scientific meaning where needed, but the base `FieldSpec` should stay minimal until specialized specs or contracts need stricter semantics.
 - Samples are mutable by default for hot-path efficiency.
 - Batch should expose the same field access API as Sample.
 - Collation must be field-level and explicit.
@@ -52,7 +50,7 @@ Deferred or out-of-scope ideas:
 
 Scientific workflow obligations:
 
-- Runtime objects must document shapes, units, dtypes, device behavior, temporal axes, coordinate frames, and failure behavior.
+- Runtime docs must document payload wrapper semantics, dtype/device expectations for backend-agnostic hooks, explicit deferrals for shapes/units/axes/coordinate frames/sample rates, and failure behavior.
 - Collation must not silently pad, truncate, drop fields, or accept missing fields unless policy permits it.
 
 ## User Intent
@@ -87,45 +85,45 @@ Operational constraints:
 
 | Capability | Decision | Rationale | Notes |
 | --- | --- | --- | --- |
-| `DataKey` | include, pending confirmation | Stable logical field identity | Grammar reviewed in public architecture or here |
-| `FieldSpec` | include, pending confirmation | Declares meaning and metadata expectations | Used by datasets and contracts |
-| `FieldValue` | include, pending confirmation | Separates payload from field metadata | Wraps typed or custom payloads |
-| `DataObjectBase` | include, pending confirmation | Standard validation, tensor traversal, device movement, collation hooks | Torch dependency question remains |
-| Standard modality object skeletons | maybe | Useful for docs and tests | Full implementations can be deferred |
-| `Sample` | include, pending confirmation | Central mutable runtime container | `Sample -> Sample` transforms depend on it |
-| `Batch` | include, pending confirmation | Same field API for batched data | Inheritance undecided |
-| Mutability rules | include, pending confirmation | Avoids hidden copy behavior | Branching requires explicit copy |
-| Field-level collation | include, pending confirmation | Prevents ambiguous shape/missing handling | Exact policy list can start small |
+| `DataKey` | include, accepted | Stable logical field identity | `DataKey(str)`, lowercase ASCII dot-separated tokens, reserved namespaces, and `custom.<project>.<field...>` extension keys |
+| `FieldSpec` | include, accepted | Declares broad field identity without pretending to model every modality | Minimal strict base: `key`, `data_type`, optional `schema`; no coordinate frame, temporal axis, units, layout, generic `runtime_type`, or `description` in Phase 1 |
+| `FieldValue` | include, accepted | Separates payload from field metadata | Narrow wrapper: `value`, optional `schema`, shallow-copied `metadata`, optional `collate_policy`; no duplicated `data_type` |
+| `DataObjectBase` | include, accepted | Standard validation, tensor traversal, and device movement hooks | Base remains dependency-free and duck-typed; optional torch submodule is allowed later only if import-gated |
+| Standard modality object skeletons | defer | Avoids public placeholders and unused contracts | Future tensor/video/signal specs or data objects should land when concrete packages need them |
+| `Sample` | include, accepted | Central mutable runtime container | Domain container, not `MutableMapping`; `field` returns wrapper, `get`/`require` return payload |
+| `Batch` | include, accepted | Same field API for batched data | Subclass `Sample` initially; revisit if semantics diverge |
+| Mutability rules | include, accepted | Avoids hidden copy behavior | Mutation is explicit; shallow/deep copy are explicit; branching should deep-copy |
+| Field-level collation | include, accepted | Prevents ambiguous shape/missing handling | Only explicit `LIST` initially; absent policy, stack, padding, custom, missing-field, and object-delegated policies fail |
 
 ## Confirmed Functionality And Behavior
 
 Included functionality:
 
-- Pending maintainer confirmation. Proposed scope includes runtime keys/specs/values, data object base, Sample/Batch API, metadata rules, mutability semantics, and collation policy hooks.
+- Implement loaded runtime keys/specs/values, backend-agnostic data object hooks, `Sample`/`Batch` API, minimal explicit `SampleContract`, and strict explicit `LIST` collation.
 
 User-visible behavior:
 
-- Pending maintainer confirmation. Users access fields by key, require typed payloads explicitly, mutate Samples intentionally, and get deterministic collation errors when policies are absent.
+- Users access fields by key, wrap payloads in `FieldValue`, mutate Samples intentionally, use explicit shallow/deep copies, require payloads explicitly, and get deterministic errors when collation policies are absent.
 
 Agent-visible behavior:
 
-- Pending maintainer confirmation. Later agents should treat this package as the runtime contract source.
+- Later agents should treat this package as the runtime contract source for field access, sample mutation, sample contracts, and batching.
 
 Default behavior:
 
-- Pending maintainer confirmation. Samples are mutable; fields are arbitrary; collation is strict; metadata remains explicit and deterministic.
+- Samples are mutable; fields are arbitrary under validated keys; `FieldSpec` is minimal; collation is strict; metadata remains explicit and deterministic.
 
 Failure behavior and diagnostics:
 
-- Pending maintainer confirmation. Missing fields, wrong payload type, schema mismatch, collation ambiguity, and invalid metadata fail loudly.
+- Invalid keys, unknown non-custom namespaces, missing fields, wrong payload type, schema mismatch, absent collation policies, unsupported collation, and padding/stack ambiguity fail loudly.
 
 Explicit deferrals:
 
-- Pending maintainer confirmation. Full modality implementations, heavy tensor backend integration, and dataset IO are deferred.
+- Full modality implementations, specialized tensor/video/signal specs, heavy tensor backend integration, object-delegated collation, stack/padding behavior, and dataset IO are deferred.
 
 Out-of-scope behavior:
 
-- Pending maintainer confirmation. Dataset references, codecs, transforms, methods, losses, metrics, and stages.
+- Dataset references, codecs, sample builders, transforms, methods, losses, metrics, evaluation, recipes, and stages.
 
 ## Context Compaction Or Reset Checkpoint
 
@@ -138,25 +136,31 @@ Out-of-scope behavior:
 
 | Decision | Why it matters | User feedback needed | Status |
 | --- | --- | --- | --- |
-| `DataKey` grammar ownership | Affects every field and extension | Confirm whether grammar is locked here | draft |
-| Minimum `FieldSpec` fields | Balances scientific clarity against early burden | Confirm required versus optional metadata | draft |
-| Data object base dependency model | Controls torch/lightweight core boundary | Confirm whether tensor traversal is backend-agnostic initially | draft |
-| Sample mutability default | Affects transform behavior and debugging | Confirm mutable default and copy rules | draft |
-| Batch implementation style | Affects type clarity and code reuse | Choose subclassing or same API without inheritance | draft |
-| Initial collation policies | Affects training data behavior | Confirm strict default and first policies | draft |
-| Metadata collation behavior | Affects reporting and reproducibility | Confirm list-based deterministic default | draft |
+| `DataKey` grammar ownership | Affects every field and extension | Confirm whether grammar is locked here | accepted |
+| Minimum `FieldSpec` fields | Balances scientific clarity against early burden | Confirm required versus optional metadata | accepted: minimal `key`, `data_type`, optional `schema` |
+| Data object base dependency model | Controls torch/lightweight core boundary | Confirm whether tensor traversal is backend-agnostic initially | accepted: dependency-free base, optional import-gated torch submodule later |
+| Sample mutability default | Affects transform behavior and debugging | Confirm mutable default and copy rules | accepted |
+| Batch implementation style | Affects type clarity and code reuse | Choose subclassing or same API without inheritance | accepted: subclass `Sample` initially |
+| Initial collation policies | Affects training data behavior | Confirm strict default and first policies | accepted: explicit `LIST` only |
+| Metadata collation behavior | Affects reporting and reproducibility | Confirm list-based deterministic default | accepted |
 
 ## Design Decisions
 
 | Decision | Selected approach | User feedback | Alternatives rejected | Rationale | Maintainability impact | Extensibility and expansion impact | Validation/documentation obligation | Debt and revisit trigger |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| None confirmed yet | Pending review | Pending maintainer feedback | Pending review | Stage 1 has not reached design-decision review | Avoids premature runtime API lock-in | Keeps field model adaptable | Review required | Revisit after behavior confirmation |
+| Runtime ownership boundary | `rphys.data` owns loaded runtime contracts only | Approved | Putting lazy `FieldRef`/views here | Preserves `rphys.io` lazy-reference boundary | Keeps IO and runtime mutation independent | Later IO builds on runtime containers | Docs/import tests must show boundary | Revisit only if public architecture boundary changes |
+| `DataKey` grammar | `DataKey(str)` with reserved namespaces and `custom.<project>.<field...>` | Approved | Plain strings only; registry-first keys | Ergonomic mapping key with validation | Stable field identity | Custom fields avoid core edits | Key parsing and invalid-key tests | Revisit before broad standard key catalog |
+| Base `FieldSpec` | `key`, `data_type`, optional `schema` only | Approved | Rich metadata schema; generic `runtime_type`; `description` | Avoids unused data-specific contract fields | Small stable base API | Specialized specs/contracts can add concrete semantics later | FieldSpec tests and docs for deferrals | Revisit when concrete modality specs land |
+| `FieldValue` | `value`, optional `schema`, shallow-copied `metadata`, optional `collate_policy` | Approved | Raw payloads only; duplicate data type | Preserves payload/metadata separation without drift | Generic wrapper remains small | Data-specific validation can be layered later | Wrapping/copy/schema/policy tests | Revisit if serialization contract is added |
+| `Sample`/`Batch` API | Domain container, explicit mutation/copy, `Batch(Sample)` initially | Approved | `MutableMapping`, immutable sample, separate batch API | Keeps wrapper/payload access explicit | Downstream code gets one access API | Can revisit batch composition if semantics diverge | Mutation/copy/access/error tests | Revisit before broad downstream use if subclassing hurts |
+| `SampleContract` | Explicit-call validation of required/optional fields, payload type, and schema | Approved | Automatic validation; rich scientific schema | Useful shared runtime check without surprising mutation | Narrow contract avoids dataset schema duplication | Later contracts can add shape/unit/axis checks | Explicit-call and diagnostics tests | Revisit when specialized contracts exist |
+| Collation | Explicit `LIST` only; absent policy fails; exact field sets required | Approved | Default list; early stack/pad/custom/object policies | Prevents silent scientific changes | Backend-free and strict | Richer collation can be added by accepted plan | Empty/inconsistent/absent/unsupported/list metadata tests | Revisit when concrete backend objects exist |
 
 ## Practical Design Notes
 
 Public API or documentation surface:
 
-- Proposed public contracts: `DataKey`, `FieldSpec`, `FieldValue`, `DataObjectBase`, `Sample`, `Batch`, `CollatePolicy`, `SampleContract`, and modality data object names.
+- Proposed public contracts: `DataKey`, `FieldSpec`, `FieldValue`, `DataObjectBase`, `Sample`, `Batch`, `CollatePolicy`, `CollateContext`, `collate_samples`, and `SampleContract`.
 
 Workflow and artifact surface:
 
@@ -164,7 +168,7 @@ Workflow and artifact surface:
 
 Failure modes and diagnostics:
 
-- Missing fields, wrong types, schema mismatch, invalid metadata, and collation errors.
+- Invalid keys, missing fields, wrong types, schema mismatch, absent collation policy, unsupported policy, and collation ambiguity.
 
 Extension points and flexibility boundaries:
 
@@ -182,56 +186,66 @@ Accepted debt:
 
 | Debt | Reason accepted | Revisit trigger |
 | --- | --- | --- |
-| None accepted yet | Design review has not started | Confirm during design-decision review |
+| Standard key catalog remains small | Avoids freezing standard field names before concrete packages need them | A downstream package needs stable cross-package field constants |
+| Full modality object library is deferred | Avoids public placeholders and backend-specific contracts without implementation pressure | Tensor/video/signal package work needs concrete object behavior |
+| Stack, padding, custom, missing-field, and object-delegated collation are deferred | Prevents silent scientific changes and backend leakage in the base runtime | Concrete backend objects or training/evaluation batches require richer collation |
+| `Batch` subclasses `Sample` initially | Keeps the first access API small and identical | Batch semantics diverge from sample semantics before broad downstream use |
 
 ## Phase Sketch
 
-### Phase 1 - Runtime Field Containers
+### Phase 1 - Keys, Fields, And Runtime Docs
 
 Goal:
 
-- Implement and test the runtime data core.
+- Implement and test field identity plus narrow loaded field wrappers.
 
 Scope:
 
-- Keys, specs, field values, Sample, Batch, data object base, collation policies, metadata behavior.
+- `DataKey`, minimal `FieldSpec`, narrow `FieldValue`, `CollatePolicy.LIST`, public exports, and runtime docs.
 
 Out of scope:
 
-- IO, transforms, learning, and stages.
+- `Sample`, `Batch`, `DataObjectBase`, `CollateContext`, `collate_samples`, IO, transforms, learning, and stages.
 
 Acceptance criteria:
 
-- Synthetic Samples and Batches can store, require, mutate, copy, and collate arbitrary fields with strict diagnostics.
+- Keys validate deterministically, field wrappers preserve accepted narrow metadata, and docs state the runtime/IO boundary.
 
 Test expectations:
 
 - Package: import checks.
-- Unit: key/spec/value/sample/batch/collation tests.
-- Contract: missing/wrong field and collation failure tests.
-- Integration: synthetic multi-field batch.
+- Unit: key/spec/value tests.
+- Contract: no heavy imports and no lazy IO concepts exported from `rphys.data`.
+- Integration: none.
 - E2E: none.
-- Opt-in: tensor backend tests if dependency accepted.
+- Opt-in: none.
 
 Design impact:
 
-- Locks the runtime object model.
+- Locks the field naming and wrapper baseline.
 
 Future compatibility:
 
-- Enables dataset, transform, and evaluation packages.
+- Enables dataset schemas and transforms to refer to shared key/spec/value types.
 
 Reviewability:
 
-- Focused API-heavy diff.
+- Focused API-heavy diff; use xhigh reasoning where configurable.
+
+### Later Phases
+
+- Phase 2: implement mutable `Sample`/`Batch` containers, explicit mutation, explicit shallow/deep copy, and shared access behavior.
+- Phase 3: implement backend-agnostic `DataObjectBase`, explicit-call `SampleContract`, `CollateContext`, `collate_samples`, deterministic metadata lists, and explicit `LIST` collation.
+- Phase 4: reconcile public docs, import tests, dependency-boundary checks, and implementation-plan evidence.
 
 ## Open Questions
 
 | Question | Affects | Current default | Status |
 | --- | --- | --- | --- |
-| Should torch be optional for `DataObjectBase` from day one? | Dependencies and tests | Keep core backend-light | open |
-| Which modality data objects need real implementations first? | Scope | Define names and minimal synthetic behavior | open |
-| Should `Batch` inherit from `Sample`? | API and typing | Same API is required; inheritance undecided | open |
+| Should torch be optional for `DataObjectBase` from day one? | Dependencies and tests | Keep base runtime dependency-free | resolved: optional import-gated submodule allowed later only if needed |
+| Which modality data objects need real implementations first? | Scope | Defer concrete modality objects | deferred to later package plans |
+| Should `Batch` inherit from `Sample`? | API and typing | Same API is required | resolved: subclass `Sample` initially |
+| Are there blocking design questions before Stage 2 quality gate? | Master-plan acceptance | No unresolved design blocker after D1-D7 | resolved; formal quality gate still pending |
 
 ## Handoff Notes
 

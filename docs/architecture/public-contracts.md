@@ -31,7 +31,8 @@ The first stable import homes are:
 
 - `rphys`: lightweight package marker.
 - `rphys.errors`: broad package error bases.
-- `rphys.data`: future home for in-memory field-centric sample and batch data.
+- `rphys.data`: home for in-memory field keys, minimal field specs, loaded
+  field values, and future sample and batch data.
 - `rphys.io`: future home for external field access, lazy field references, and
   codecs.
 - `rphys.datasets`: future home for dataset discovery, filtering, indexing, and
