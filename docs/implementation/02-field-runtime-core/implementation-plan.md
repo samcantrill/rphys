@@ -93,7 +93,7 @@ Current blocker: none
   - Remote behavior has been verified with temporary SSH agent socket `/tmp/ssh-d7VZAWyTrTNv/agent.2475198`.
   - The accepted Phase 1 planning artifacts were copied into the phase worktree before code implementation began.
 - Commit:
-  - Phase implementation commit: `1853bdc` (`Add field runtime keys and values`).
+  - Phase implementation commit: `1d57d93` (`Add field runtime keys and values`).
 - Implementation summary:
   - Added `src/rphys/data/keys.py` with validated `DataKey(str)`, reserved namespace constants, custom-key validation, and value-based key semantics.
   - Added `src/rphys/data/fields.py` with minimal `FieldSpec` and identity-equality `FieldValue`.
