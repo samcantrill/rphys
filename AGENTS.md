@@ -22,8 +22,8 @@ downstream repositories.
 
 - Package code lives under `src/rphys`.
 - Tests live under `tests`.
-- Public architecture policy: `docs/architecture/public-contracts.md`.
-- Focused domain docs: `docs/data/` and similar topic directories.
+- Canonical roadmap and architecture policy:
+  `docs/rphys_implementation_roadmap.md`.
 - Current Codex workflow assets: `.codex/`.
 - Historical workflow reference only: `.codex-archive/`.
 
@@ -55,7 +55,7 @@ evaluation, or analysis code, document enough for results to be interpretable:
   masks, invalid sampling rates, dtype/device mismatches, and unsupported
   temporal slices.
 
-- Follow the stability labels in `docs/architecture/public-contracts.md`:
+- Follow the stability labels in `docs/rphys_implementation_roadmap.md`:
   stable, provisional, and private/internal.
 - Do not add placeholder modules, registries, re-exports, or classes just to
   reserve names.

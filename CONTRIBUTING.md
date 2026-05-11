@@ -25,8 +25,8 @@ make check
 ## Public Contracts
 
 Public behavior needs code, docs, and tests before downstream projects rely on
-it. Use the stability labels in `docs/architecture/public-contracts.md`:
-stable, provisional, and private/internal.
+it. Use the stability labels in `docs/rphys_implementation_roadmap.md`: stable,
+provisional, and private/internal.
 
 Do not add placeholder public modules, classes, registries, or re-exports just
 to reserve future names. Future areas such as methods, models, training, losses,
