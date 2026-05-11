@@ -7,8 +7,3 @@ This repository is being rebuilt as a clean base library for reproducible resear
 Start with:
 
 - `AGENTS.md` for Codex and contributor instructions.
-- `docs/architecture/public-contracts.md` for the current public package contract.
-- `.codex/workflows/README.md` for the three-stage scaffold workflow.
-- `.codex/prompts/` for reusable role/action prompts.
-- `.codex/templates/` for durable workflow artifact templates.
-- `docs/roadmap/index.md` for the canonical scaffold roadmap.
