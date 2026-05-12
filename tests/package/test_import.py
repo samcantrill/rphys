@@ -81,6 +81,8 @@ STAGE_1_DATA_MODULES = {
 
 STAGE_2_DATA_EXPORTS = [
     "Batch",
+    "CollateContext",
+    "CollatePolicy",
     "CompositeDataObjectBase",
     "DataObjectBase",
     "FieldRequirement",
@@ -88,6 +90,7 @@ STAGE_2_DATA_EXPORTS = [
     "FieldValue",
     "Sample",
     "SampleContract",
+    "collate_samples",
 ]
 
 STAGE_2_ERROR_NAMES = [

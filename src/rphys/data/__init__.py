@@ -1,5 +1,6 @@
 """Runtime data vocabulary, field containers, contracts, and collation."""
 
+from .collation import CollateContext, CollatePolicy, collate_samples
 from .containers import Batch, Sample
 from .contracts import FieldRequirement, SampleContract
 from .fields import FieldSpec, FieldValue
@@ -7,6 +8,8 @@ from .objects import CompositeDataObjectBase, DataObjectBase
 
 __all__ = [
     "Batch",
+    "CollateContext",
+    "CollatePolicy",
     "CompositeDataObjectBase",
     "DataObjectBase",
     "FieldRequirement",
@@ -14,4 +17,5 @@ __all__ = [
     "FieldValue",
     "Sample",
     "SampleContract",
+    "collate_samples",
 ]
