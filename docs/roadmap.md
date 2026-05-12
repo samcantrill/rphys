@@ -10,6 +10,10 @@ planning notes, implementation ledgers, and feature documents that previously
 lived under `docs/`. After this cleanup, this file is the only documentation
 source of truth in the repository.
 
+For a contributor-facing vocabulary summary derived from this roadmap and
+code-backed contracts, see `docs/GLOSSARY.md`. That glossary is a guide for
+consistent wording and does not override this roadmap.
+
 ## 1. Purpose and Boundary
 
 `rphys` is a Python package for remote physiological measurement research. It

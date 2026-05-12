@@ -12,6 +12,7 @@ workflows belong in downstream repositories.
 - Tests live under `tests`.
 - Documentation lives under `docs`.
 - Canonical roadmap and architecture policy: `docs/roadmap.md`.
+- Repository glossary and vocabulary guide: `docs/GLOSSARY.md`.
 - Current Codex workflow assets live under `.codex/`, including workflows,
   prompts, templates, and specialist-agent definitions.
 - Use Python 3.12 and `uv`.

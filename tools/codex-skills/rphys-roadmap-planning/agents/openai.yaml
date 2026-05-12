@@ -1,0 +1,4 @@
+interface:
+  display_name: "rphys Roadmap Planning"
+  short_description: "Route rphys roadmap stage planning"
+  default_prompt: "Use $rphys-roadmap-planning to turn one rphys roadmap stage into approved planning and implementation-plan artifacts."
