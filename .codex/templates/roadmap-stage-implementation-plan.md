@@ -3,6 +3,8 @@
 Status: draft
 Roadmap version: `v<N>`
 Planning document: `docs/roadmap/stage-<N>/planning.md`
+Workflow: `.codex/workflows/roadmap-version-implementation.md`
+Target branch: `develop`
 Current phase:
 Blockers:
 
@@ -16,11 +18,21 @@ Blockers:
 - Source plan quality gate:
 - Out of scope:
 
+## Implementation Workflow State
+
+- Implementation-plan quality gate: pending
+- Review pass:
+- Refinement pass:
+- Confirmation review:
+- Automatic merge mode: enabled
+- Worktree root: `/home/samcantrill/work/rphys-worktrees`
+- Phase status vocabulary: `pending`, `in_progress`, `pr_open`, `approved`, `merged`, `blocked`
+
 ## Phase Index
 
-| Phase | Slug | Status | Ownership | Goal | Validation | Examples |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1 | `<phase-slug>` | pending |  |  |  |  |
+| Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | `<phase-slug>` | pending | `agent/<roadmap-slug>-p1-<phase-slug>` | pending |  |  |  |  |
 
 ## Implementation Readiness Blockers
 
@@ -32,6 +44,12 @@ Blockers:
 
 Status: pending
 Slug: `<phase-slug>`
+Branch: `agent/<roadmap-slug>-p<n>-<phase-slug>`
+Worktree: `/home/samcantrill/work/rphys-worktrees/<roadmap-slug>-p<n>-<phase-slug>`
+PR: pending
+Base branch: `develop`
+Target branch: `develop`
+Workflow path: fast path / expanded path
 
 ### Scope
 
@@ -45,7 +63,7 @@ Slug: `<phase-slug>`
 
 ### Tasks
 
-- 
+-
 
 ### Validation
 
@@ -59,12 +77,31 @@ Slug: `<phase-slug>`
 - Design-decision evidence:
 - Example/demo evidence:
 - Documentation evidence:
+- Scientific contract evidence:
+
+### Phase Workflow State
+
+- Phase execution plan:
+- Planning/refinement budget:
+- Implementation/refinement budget:
+- PR review budget:
+- Blocker-resolution budget:
+- Pre-submit blocker gate:
+- Merge record:
 
 ### Risks And Stop Conditions
 
 - Risks:
 - Stop conditions:
 - Assumptions:
+
+### Completion Summary
+
+- Implementation:
+- Validation:
+- PR:
+- Merge:
+- Follow-up:
 
 ## Cross-Phase Validation
 
@@ -79,6 +116,13 @@ Slug: `<phase-slug>`
 | Finding | Severity | Resolution | Status |
 | --- | --- | --- | --- |
 |  | blocker / concern / note |  | pending |
+
+Gate result:
+
+- Status: pending
+- Review evidence:
+- Accepted risks:
+- Revisit triggers:
 
 ## Final Approval
 

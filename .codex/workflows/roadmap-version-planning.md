@@ -3,7 +3,7 @@
 Use this entrypoint as:
 
 ```text
-@.codex/workflow/roadmap-version-plan.md | @docs/roadmap.md v<N>
+@.codex/workflows/roadmap-version-planning.md | @docs/roadmap.md v<N>
 ```
 
 `v<N>` maps to `docs/roadmap/stage-<N>/`.
