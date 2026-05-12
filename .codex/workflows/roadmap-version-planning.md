@@ -36,12 +36,22 @@ Keep discussion records, approvals, defaults, concerns, validation findings, exa
 - The managing agent owns synthesis, maintainer discussion, approvals, conflict resolution, and final judgment.
 - Subagents are bounded helpers with sequential write ownership. Do not let two subagents edit `planning.md` at the same time.
 - Each subagent must follow its prompt exactly and return concise evidence: files read, files changed, decisions, risks, open questions, and recommended next gate.
+- Required specialist passes are hard gates. The managing agent may synthesize,
+  reconcile, and challenge specialist output, but must not replace a required
+  specialist pass with manager-only analysis.
+- A required specialist pass may be skipped only when the maintainer explicitly
+  approves an override and the override is recorded in `planning.md` with the
+  reason, accepted risk, and next gate affected.
 - Update `planning.md` after each meaningful discussion round, including a `Stage Readbacks` row for every completed decision gate.
 - Record every material functional requirement, design decision, validation concern, phase-shaping concern, default, assumption, and deferral in `planning.md`; discussion is narrower than recording.
 - Raise only items with an ambiguous choice, unresolved blocker, or material trade-off that requires maintainer judgment. Ambiguity includes product/scientific intent, public API or durable artifact shape, workflow semantics, downstream compatibility, meaningful future-refactor risk, or insufficient repository evidence for a clear default.
 - Do not walk the maintainer through deterministic or evidence-backed items one by one. Record the default or recommendation, then summarize those items as a group at the relevant gate.
 - Ask maintainer questions one at a time. For each raised item, explain what the item is, why it matters, the options or trade-off, the recommendation, the impact or residual risk, and the exact decision requested.
 - After each maintainer answer, immediately record the decision, rationale, default or deferral, and any follow-up in `planning.md` before raising the next item.
+- Recording a decision as `pending approval`, `ready for approval`, or
+  `needs maintainer discussion` is not approval. If maintainer judgment is
+  required, the managing agent must raise the decision packet in conversation
+  before moving to the next gate.
 - Auto-approved design decisions must still be recorded. They may skip individual maintainer discussion only when they are low impact, clearly recommended by repository evidence and rphys design principles, and pass adversarial review with no meaningful refactor risk.
 - Treat user workflow feedback as process input. Route reusable workflow feedback to `.codex` workflow/prompt/template/agent artifacts; route current-session facilitation preferences to `planning.md`; keep both separate from product requirements.
 - Do not implement code in this workflow.
@@ -62,6 +72,39 @@ Use these role prompts and agent definitions:
 | Validation and phase shaping | `roadmap_stage_validation_planner` | `.codex/prompts/roadmap-stage-validation-planner.md` | `planning.md` |
 | Plan quality review | `roadmap_stage_plan_quality_reviewer` | `.codex/prompts/roadmap-stage-plan-quality-reviewer.md` | `planning.md` |
 | Implementation planning | `roadmap_stage_implementation_planner` | `.codex/prompts/roadmap-stage-implementation-planner.md` | `implementation-plan.md` |
+
+## Required Specialist Evidence And Hard Gates
+
+The following evidence is mandatory unless a maintainer-approved override is
+recorded in `planning.md`:
+
+- A completed handoff from each required specialist pass listed in Agent Passes.
+- `Stage Readbacks` rows updated for completed gates, including locked
+  decisions, defaults, open questions, and next focus.
+- `Design Decision Triage` final classifications after design implication
+  review, not only after design proposal.
+- `Functionality And Decision Audit` evidence that all included capabilities
+  map to requirements, design decisions, examples, and validation needs.
+- `Plan Quality Gate` evidence that unresolved ambiguity, blockers,
+  `needs maintainer discussion` rows, and missing specialist evidence were
+  checked.
+
+Hard gate rules:
+
+- Design decision discussion must not begin until both the design proposal and
+  design implication/coherence audit/example passes have completed, and their
+  findings are recorded in `planning.md`.
+- Design approval must remain blocked while any design decision is `blocked`,
+  `needs maintainer discussion`, or materially ambiguous after specialist
+  review.
+- Validation and phase shaping must not be treated as approved while design
+  decisions are unresolved.
+- Plan quality review must block when required specialist evidence is missing,
+  stale, manager-authored only, or inconsistent with the current
+  `planning.md`.
+- Implementation planning must not create phases while plan quality has not
+  passed, specialist evidence is missing, decision packets are unresolved, or
+  any approval gate is only recorded as pending or ready for approval.
 
 Fallback roles remain available when a stage is unusually broad or risky:
 
@@ -149,6 +192,11 @@ The subagent must:
    - low future refactor risk and no meaningful downstream extension consequence
 7. Record options, recommendation, adversarial assumptions considered, validation/documentation obligation, residual risk, and whether maintainer escalation is actually needed in `planning.md`.
 
+The managing agent must treat design-proposer classifications as provisional.
+Do not ask for design approval and do not downgrade `needs maintainer
+discussion` decisions until the design implication, coherence audit, and
+examples pass has reviewed them.
+
 ### 5. Design Implication, Coherence Audit, And Examples
 
 Spawn `roadmap_stage_design_implication_reviewer`.
@@ -167,10 +215,18 @@ The subagent must:
 10. Classify audit findings and example choices as recorded concern, needs maintainer decision, or blocker.
 11. Update `planning.md` with findings, recommended revisions, recorded defaults, audit/example evidence, and only the packets that need maintainer discussion because they remain ambiguous, blocked, or materially risky.
 
+Hard gate: this pass is mandatory before design decision discussion. If it is
+missing, manager-authored only, stale relative to the current proposed design,
+or fails to reclassify design decisions, design approval is blocked.
+
 ### 6. Design Decision Discussion
 
 The managing agent reconciles the design proposal and implication review, then raises only design decisions that remain `needs maintainer discussion`, `blocked`, or have a material unresolved trade-off after review.
 Summarize `auto-approved` decisions and clear `recorded recommendation` defaults as a group rather than asking for individual approval.
+
+Before raising decisions, verify that the design implication review handoff is
+complete and recorded. If the handoff is missing, return to Stage 5 rather than
+asking the maintainer to approve manager-only analysis.
 
 Use this packet shape for one raised design decision at a time:
 
@@ -188,7 +244,10 @@ Use this packet shape for one raised design decision at a time:
 
 Record each answer immediately in `planning.md` before raising the next design decision.
 
-Decision gate: design decisions approved, with no unresolved `blocked` decisions and no unresolved `needs maintainer discussion` decisions. This is the required explicit design approval point.
+Decision gate: design decisions approved, with no unresolved `blocked`
+decisions, no unresolved `needs maintainer discussion` decisions, no missing
+specialist review evidence, and no material design trade-off that has only been
+recorded as pending. This is the required explicit design approval point.
 
 Checkpoint: update `planning.md` with a resume note, then compact context or ask for a fresh-chat continuation if compaction is unavailable.
 
@@ -217,7 +276,9 @@ The subagent must:
 
 1. Review `planning.md` for traceability from roadmap extraction through capabilities, requirements, design decisions, examples, validation, and phase shaping.
 2. Check extensibility, maintainability, scientific/workflow contract clarity, plan reviewability, unresolved ambiguity, unresolved `blocked` decisions, and unresolved `needs maintainer discussion` decisions.
-3. Record pass/block findings in `planning.md`.
+3. Check that required specialist pass handoffs are present, current, and not replaced by manager-only analysis.
+4. Check that every `needs maintainer discussion` decision packet was actually raised to the maintainer and resolved, not merely recorded as pending approval.
+5. Record pass/block findings in `planning.md`.
 
 Decision gate: plan quality gate passed or blockers explicitly returned to earlier planning stages. Raise only quality-gate blockers or ambiguous return-to-planning choices.
 
@@ -229,7 +290,7 @@ The subagent must:
 
 1. Read the approved `planning.md` and implementation-plan template.
 2. Create or update `implementation-plan.md`.
-3. Refuse to create phases if the validation and phase-shaping decision gate is unresolved, the plan quality gate has not passed, any design decision is `blocked`, any `needs maintainer discussion` decision is unresolved, or any auto-approved decision lacks traceability and adversarial review evidence.
+3. Refuse to create phases if the validation and phase-shaping decision gate is unresolved, the plan quality gate has not passed, any required specialist evidence is missing or stale, any design decision is `blocked`, any `needs maintainer discussion` decision is unresolved, any approval-worthy decision was recorded but not raised to the maintainer, or any auto-approved decision lacks traceability and adversarial review evidence.
 4. Convert functionality, design decisions, examples, and validation into sequential phases.
 5. Identify likely file/module ownership, dependencies, tests/checks, risks, assumptions, and stop conditions.
 6. Keep phases small and implementation-ready.
