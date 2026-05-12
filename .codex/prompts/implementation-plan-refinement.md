@@ -13,8 +13,9 @@ Read:
 Task:
 
 1. Resolve only concrete blockers or concerns found by the review.
-2. Preserve approved functionality, design decisions, validation strategy,
-   phase shaping, assumptions, and deferrals from `planning.md`.
+2. Preserve the resolved functionality-agreement queue, behavior confirmation,
+   the resolved design-agreement queue, approved design decisions, validation
+   strategy, phase shaping, assumptions, and deferrals from `planning.md`.
 3. Keep phases small and reviewable.
 4. Add or clarify ownership, acceptance criteria, validation expectations,
    scientific contract obligations, stop conditions, and revisit triggers.
@@ -29,5 +30,6 @@ Rules:
   assigns another workflow artifact.
 - Do not implement code.
 - Do not add another automated review loop.
-- If a blocker requires changing approved planning decisions, record it as
-  blocked and stop for the manager.
+- If a blocker requires changing approved functionality or design agreement,
+  record which agreement queue must reopen, mark the plan blocked, and stop for
+  the manager.

@@ -10,6 +10,10 @@ Each major workflow stage leaves one durable artifact. Multiple agents or prompt
 passes may work on the same artifact, but the artifact is the stage boundary.
 Per-phase artifacts live under `docs/roadmap/stage-<N>/phases/`.
 
+Roadmap-stage planning keeps stage gates, stage readbacks, the
+functionality-agreement queue, and the design-agreement queue inside one
+planning artifact rather than splitting them across multiple durable files.
+
 ## Template Map
 
 | Workflow stage or handoff | Template | Typical destination |

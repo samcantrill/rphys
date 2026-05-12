@@ -11,8 +11,13 @@ Blockers:
 ## Summary
 
 - Goal:
+- Source functionality-agreement gate:
 - Approved behavior:
+- Source behavior confirmation:
 - Key design constraints:
+- Source design-agreement gate:
+- Source functionality-agreement queue:
+- Source design-agreement queue:
 - Examples covered:
 - Source phase shaping:
 - Source plan quality gate:
@@ -38,7 +43,7 @@ Blockers:
 
 | Blocker | Source | Required resolution | Status |
 | --- | --- | --- | --- |
-|  | blocked / unresolved design decision / missing traceability / missing adversarial review |  | pending |
+|  | blocked / unresolved functionality queue / unresolved design queue / queue reopened / missing traceability / missing adversarial review |  | pending |
 
 ## Phase <N>: <Name>
 

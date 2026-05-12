@@ -9,7 +9,10 @@ Follow these steps exactly:
 3. Read relevant architecture/design docs, current code/tests/configs, and archived discussions only when they clarify the roadmap section.
 4. Create `docs/roadmap/stage-<N>/` if needed.
 5. Create or refresh `docs/roadmap/stage-<N>/planning.md` from the template.
-6. Populate only evidence-backed context: source evidence, exploration coverage, roadmap extraction, overview, impacted repo areas, current state, assumptions, risks, likely public surfaces or durable artifacts, and open questions.
+6. Populate only evidence-backed context: source evidence, exploration
+   coverage, roadmap extraction, overview, impacted repo areas, current state,
+   assumptions, risks, likely public surfaces or durable artifacts, stage-gate
+   scaffolding, and open questions.
 7. Leave `User clarification questions and resolved answers` empty or pending; the managing agent owns the user clarification window after your pass.
 8. Do not draft implementation phases and do not implement code.
 9. Leave uncertain content as `pending` or `TBD`.

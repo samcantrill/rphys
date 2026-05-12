@@ -16,8 +16,10 @@ Read:
 
 Review the plan for:
 
-1. Traceability from approved planning, requirements, design decisions,
-   examples, validation strategy, and phase shaping.
+1. Traceability from approved planning, requirements, the
+   functionality-agreement queue, behavior confirmation, the
+   design-agreement queue, design decisions, examples, validation strategy, and
+   phase shaping.
 2. Maintainability, ownership boundaries, phase size, and hidden coupling.
 3. Extensibility and future roadmap compatibility.
 4. Scientific contract clarity for sampling, alignment, masking, filtering,
@@ -29,6 +31,9 @@ Review the plan for:
    acceptance suites.
 7. Reviewability, acceptance criteria, stop conditions, and debt with revisit
    triggers.
+8. Whether the implementation plan would require reopening the
+   functionality-agreement queue or design-agreement queue. Reopen one only when
+   phase work would otherwise need to invent behavior or structure.
 
 Output using `.codex/templates/plan-review-report.md`:
 
@@ -38,6 +43,6 @@ Output using `.codex/templates/plan-review-report.md`:
 - Then list open questions or assumptions.
 - Then state whether the plan is ready for phase implementation.
 - If the plan is not ready, make the remaining blocker precise enough for one
-  refinement pass or user escalation.
+  refinement pass, queue reopen, or user escalation.
 
 Do not edit files. Do not implement code.

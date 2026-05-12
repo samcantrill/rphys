@@ -43,28 +43,33 @@ Implementation plan: `docs/roadmap/stage-<N>/implementation-plan.md`
 - User clarification questions and resolved answers:
 - Planning priority or optimization target:
 
-## Approvals
+## Stage Gates
 
-| Gate | Status | Date/round | Notes |
-| --- | --- | --- | --- |
-| Roadmap briefing and intent decisions resolved | pending |  |  |
-| Functionality and behavior decisions resolved | pending |  |  |
-| Design decisions approved | pending |  |  |
-| Validation and phase shaping decisions resolved | pending |  |  |
-| Plan quality gate passed | pending |  |  |
-| Implementation plan approved | pending |  |  |
+| Gate | Required inputs | Current blockers or queue items | Status | Date/round | Notes |
+| --- | --- | --- | --- | --- | --- |
+| Roadmap briefing and intent | roadmap extraction, overview |  | pending / in_progress / passed / blocked |  |  |
+| Capability triage and candidate requirements | capability triage, module behavior map, functional requirements |  | pending / in_progress / passed / blocked |  |  |
+| Functionality-agreement review | functionality-agreement queue |  | pending / in_progress / passed / blocked |  |  |
+| Behavior confirmation | resolved functionality-agreement queue |  | pending / in_progress / passed / blocked |  |  |
+| Context checkpoint if applicable | resume checkpoint, refreshed context if needed |  | pending / in_progress / passed / blocked / not needed |  |  |
+| Design-agreement review | proposed implementation shape, design decisions, design-agreement queue, design implication review |  | pending / in_progress / passed / blocked |  |  |
+| Validation and phase shaping | validation strategy, phase shaping |  | pending / in_progress / passed / blocked |  |  |
+| Plan quality gate | traceability review, specialist evidence check |  | pending / in_progress / passed / blocked |  |  |
+| Implementation plan approved | implementation-plan review and approval |  | pending / in_progress / passed / blocked |  |  |
 
 ## Stage Readbacks
 
-| Stage | Locked decisions | Defaults | Open questions | Next focus |
-| --- | --- | --- | --- | --- |
-| Roadmap briefing and intent |  |  |  |  |
-| Functionality and behavior |  |  |  |  |
-| Design implication, audit, and examples |  |  |  |  |
-| Design decision approval |  |  |  |  |
-| Validation and phase shaping |  |  |  |  |
-| Plan quality gate |  |  |  |  |
-| Implementation-plan handoff |  |  |  |  |
+| Stage | Gate result | Locked decisions | Defaults and recommendations | Open questions or blockers | Next focus |
+| --- | --- | --- | --- | --- | --- |
+| Roadmap briefing and intent |  |  |  |  |  |
+| Capability triage and candidate requirements |  |  |  |  |  |
+| Functionality-agreement review |  |  |  |  |  |
+| Behavior confirmation |  |  |  |  |  |
+| Context checkpoint if applicable |  |  |  |  |  |
+| Design-agreement review |  |  |  |  |  |
+| Validation and phase shaping |  |  |  |  |  |
+| Plan quality gate |  |  |  |  |  |
+| Implementation-plan handoff |  |  |  |  |  |
 
 ## Capability Triage
 
@@ -78,13 +83,19 @@ Implementation plan: `docs/roadmap/stage-<N>/implementation-plan.md`
 | --- | --- | --- | --- | --- | --- |
 |  |  |  |  |  | draft |
 
+## Functionality Agreement Queue
+
+| Queue ID | Related requirement IDs | Depends on | Impact | What is being locked | Why it matters | Recommended answer | Trade-offs or rejected branches | Repo evidence or direct resolution | Exact feedback needed | State |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| FQ-1 | FR-1 |  | high / medium / low |  |  |  |  |  |  | pending triage / repo-resolved / needs maintainer discussion / blocked / locked / deferred |
+
 ## Functional Requirements
 
-| ID | Requirement | What | Why | Scope | User-visible behavior | Agent/system behavior | Codebase capability enabled | Impact | Out of scope | Validation | Recommendation | Decision/status |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| FR-1 |  |  |  |  |  |  |  |  |  |  |  | pending |
+| ID | Requirement | Depends on | Agreement queue | What | Why | Scope | User-visible behavior | Agent/system behavior | Codebase capability enabled | Impact | Out of scope | Validation | Recommendation | Decision/status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| FR-1 |  |  | FQ-1 |  |  |  |  |  |  |  |  |  |  | pending |
 
-## Behavior Baseline
+## Behavior Confirmation
 
 - Included behavior:
 - Default behavior:
@@ -93,6 +104,7 @@ Implementation plan: `docs/roadmap/stage-<N>/implementation-plan.md`
 - Resume/interruption behavior:
 - Downstream implications:
 - Explicit deferrals:
+- Why this behavior is locked:
 
 ## Proposed Implementation Shape
 
@@ -104,21 +116,28 @@ Implementation plan: `docs/roadmap/stage-<N>/implementation-plan.md`
 - Extension points:
 - Compatibility constraints:
 
+## Design Agreement Queue
+
+| Queue ID | Related decision IDs | Depends on | Impact | What is being locked | Why it matters | Recommended answer | Trade-offs or rejected branches | Repo evidence or direct resolution | Exact feedback needed | State |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| DQ-1 | DD-1 |  | high / medium / low |  |  |  |  |  |  | pending triage / repo-resolved / needs maintainer discussion / blocked / locked / deferred |
+
 ## Design Decisions
 
-| ID | Decision | Classification | What | Why | Proposed implementation shape | Impact | Options | Recommendation | Pros/cons | Limitation or trade-off | Validation/documentation obligation | Residual risk | Decision/status |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| DD-1 |  | auto-approved candidate / recorded recommendation / needs maintainer discussion / blocked |  |  |  |  |  |  |  |  |  |  | pending |
+| ID | Decision | Depends on | Agreement queue | Classification | What | Why | Proposed implementation shape | Impact | Options | Recommendation | Pros/cons | Limitation or trade-off | Validation/documentation obligation | Residual risk | Decision/status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| DD-1 |  | FR- | DQ-1 | auto-approved candidate / recorded recommendation / needs maintainer discussion / blocked |  |  |  |  |  |  |  |  |  |  | pending |
 
 ## Design Decision Triage
 
 | Decision ID | Final classification | Auto-approval rationale | Adversarial examples considered | Reviewer objections | Traceability | Manager action | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| DD-1 | auto-approved / recorded recommendation / needs maintainer discussion / blocked |  |  |  | FR- | summarize / discuss / block | pending |
+| DD-1 | auto-approved / recorded recommendation / needs maintainer discussion / blocked |  |  |  | FR- | summarize / discuss / block / reopen functionality queue | pending |
 
 Auto-approval criteria:
 
-- No public API, import-path, schema, config, scientific/workflow, dependency, serialization, persistence, or compatibility impact.
+- No public API, import-path, schema, config, scientific/workflow, dependency,
+  serialization, persistence, or compatibility impact.
 - Localized implementation choice with straightforward validation.
 - Consistent with approved behavior and rphys design principles.
 - Low future refactor risk and no meaningful downstream extension consequence.
@@ -127,9 +146,9 @@ Auto-approval criteria:
 
 ## Design Implication Review
 
-| Finding | Affected decision or requirement | Maintainability/extensibility impact | Recommended revision | Status |
-| --- | --- | --- | --- | --- |
-|  |  |  |  | pending |
+| Finding | Affected decision or requirement | Maintainability/extensibility impact | Recommended revision | Queue action | Status |
+| --- | --- | --- | --- | --- | --- |
+|  |  |  |  | record / reopen functionality queue / reopen design queue | pending |
 
 ## Functionality And Decision Audit
 
@@ -159,6 +178,9 @@ Auto-approval criteria:
 
 | Check | Evidence | Result | Required action |
 | --- | --- | --- | --- |
+| Functionality-agreement queue resolved |  | pass / block |  |
+| Behavior confirmation locked |  | pass / block |  |
+| Design-agreement queue resolved |  | pass / block |  |
 | Roadmap-to-requirement traceability |  | pass / block |  |
 | Requirement-to-design traceability |  | pass / block |  |
 | Design-to-example traceability |  | pass / block |  |
@@ -184,15 +206,17 @@ Gate result:
 
 ## Resume Checkpoints
 
-### After Functionality And Behavior
+### After Functionality Agreement
 
-- Baseline locked:
+- Queue state:
+- Behavior confirmation status:
 - Open questions:
 - Next step:
 
-### After Design Decisions
+### After Design Agreement
 
-- Decisions locked:
+- Queue state:
+- Implementation shape locked:
 - Open questions:
 - Next step:
 

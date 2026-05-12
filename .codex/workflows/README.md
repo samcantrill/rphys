@@ -14,13 +14,19 @@ Do not put role authority, model, or sandbox policy here; that belongs in
 
 | Entrypoint | Use when | Canonical prompts |
 | --- | --- | --- |
-| `roadmap-version-planning.md` | The user wants to convert one roadmap stage into approved planning and an implementation plan | `roadmap-stage-*.md` planning prompts |
+| `roadmap-version-planning.md` | The user wants to convert one roadmap stage into approved planning and an implementation plan | `roadmap-stage-*.md` planning prompts, including the internal functionality-agreement and design-agreement facilitation prompts |
 | `roadmap-version-implementation.md` | An approved roadmap-stage implementation plan exists and Codex should execute phases through PRs and automated merges | `phase-loop-management.md` plus phase/PR prompts |
 
 ## Typical Path
 
 ```text
 roadmap-version planning
+capability triage and candidate requirements
+functionality-agreement review
+behavior confirmation
+context checkpoint if applicable
+design-agreement review
+validation and phase shaping
 approved stage implementation plan
 automatic implementation-plan quality gate
 phase execution plan
