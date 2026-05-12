@@ -65,7 +65,7 @@ Implementation plan: `docs/roadmap/stage-1/implementation-plan.md`
 | Roadmap briefing and intent decisions resolved | approved | 2026-05-12 / R2 | Maintainer approved context scaffold briefing, target audience, user-visible outcome, and compact Stage 1 optimization target. |
 | Functionality and behavior decisions resolved | approved | 2026-05-12 / R5 | Capability triage and FR-1 through FR-6 are resolved as the Stage 1 functionality and behavior baseline. |
 | Design decisions approved | approved | 2026-05-12 / R12 | DD-1 through DD-9 are approved; audit/examples are complete; the `DataType` typed-error gap is resolved by adding `InvalidDataTypeError`. |
-| Validation and phase shaping decisions resolved | ready | 2026-05-12 / R16 | Validation strategy approved in R15; phase shaping proposed in R16 and ready for the plan quality gate. |
+| Validation and phase shaping decisions resolved | approved | 2026-05-12 / R17 | Maintainer approved validation strategy and five-phase implementation sketch; ready for the plan quality gate. |
 | Plan quality gate passed | pending |  |  |
 | Implementation plan approved | pending |  |  |
 
@@ -77,7 +77,7 @@ Implementation plan: `docs/roadmap/stage-1/implementation-plan.md`
 | Functionality and behavior | Included capabilities and FR-1 through FR-6 are approved: `DataKey`, `FieldRole`/`FieldLocator`, `SchemaName`/`DataType`, `MetadataKey`/`SplitName`, semantic diagnostics, and import/public-surface guardrails. | Strict lowercase ASCII validation, stdlib-only implementation, typed diagnostics with context, no root re-exports, no registries, no runtime containers, no serialization/config integration, and no optional dependencies. | Public surface shape, module exports, constants, helper methods, and semantic error list resolved by design approval. | Design proposal. |
 | Design implication, audit, and examples | Design review and audit are complete; DD-8 remains constrained auto-approved; DD-9 remains a recorded recommendation; capability traceability and examples are recorded; `InvalidDataTypeError` closes the audit-discovered typed-error gap. | Preserve planning-only scope and keep examples demonstrative rather than runtime implementations. | None. | Validation and phase shaping. |
 | Design decision approval | Approved DD-1 through DD-9. `DataType` belongs in dedicated `rphys.data.types`; metadata constants are grouped into generic/core and rphys domain-context sets; Stage 1 errors are validator-specific; private helpers stay lexical only; validation includes unit, package, and narrow contract coverage. | Validated `str` subclasses for extensible names; closed `FieldRole(StrEnum)`; frozen `FieldLocator.parse()`; strict lowercase ASCII/no normalization; submodule-only imports with empty root and `rphys.data` exports. | None for design. | Validation and phase shaping. |
-| Validation and phase shaping | Validation strategy approved; implementation phase sketch proposed. | Required validation covers unit, package, contract, documentation/static, integration-boundary, and scientific/workflow-contract coverage. Phases should keep diagnostics/key grammar, metadata/splits, schemas/types, locators, and final contract/package/docs hardening reviewable as separate units. | No blocking test-design or phase-shaping detail remains; exact error-message prose/context keys and edge grammar debates remain implementation details within approved scope. | Plan quality gate. |
+| Validation and phase shaping | Validation strategy and five-phase implementation sketch approved. | Required validation covers unit, package, contract, documentation/static, integration-boundary, and scientific/workflow-contract coverage. Phases keep diagnostics/key grammar, metadata/splits, schemas/types, locators, and final contract/package/docs hardening reviewable as separate units. | No blocking test-design or phase-shaping detail remains; exact error-message prose/context keys and edge grammar debates remain implementation details within approved scope. | Plan quality gate. |
 | Plan quality gate | pending |  |  |  |
 | Implementation-plan handoff | pending |  |  |  |
 
@@ -402,7 +402,7 @@ Gate result:
 ### After Validation And Phase Shaping
 
 - Validation baseline locked: approved in R15 with required unit, package, contract, documentation/static, integration-boundary, and scientific/workflow-contract coverage.
-- Phase sketch proposed: five-phase sequence: diagnostic/`DataKey` foundation; metadata/split vocabularies; schema/type vocabularies; roles/locators; contract/package/docs hardening.
+- Phase sketch locked: five-phase sequence approved: diagnostic/`DataKey` foundation; metadata/split vocabularies; schema/type vocabularies; roles/locators; contract/package/docs hardening.
 - Open questions: no blocking test-design or phase-shaping detail remains; exact error-message prose/context keys and any edge grammar debates should be finalized during implementation without expanding scope.
 - Next step: plan quality gate.
 
@@ -438,3 +438,4 @@ Gate result:
 | 2026-05-12 / R14 | Recorded planning workflow refinement: conservative specialist consolidation, decision-only maintainer gates, and continuation from combined validation/phase shaping without replaying completed design or audit work. |
 | 2026-05-12 / R15 | Recorded maintainer approval of the Stage 1 validation strategy; phase shaping remains pending under the combined validation/phase-shaping gate. |
 | 2026-05-12 / R16 | Proposed Stage 1 implementation phase sketch with five reviewable phases, explicit dependencies, acceptance criteria, test expectations, risks, and phase-shaping blockers cleared. |
+| 2026-05-12 / R17 | Recorded maintainer approval of the validation strategy and five-phase implementation sketch; ready for plan quality gate. |
