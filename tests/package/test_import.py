@@ -41,6 +41,19 @@ BROAD_ERROR_NAMES = [
     "RemotePhysTrainingError",
 ]
 
+STAGE_1_ERROR_NAMES = [
+    "InvalidDataKeyError",
+    "InvalidDataTypeError",
+    "InvalidFieldLocatorError",
+    "InvalidMetadataKeyError",
+    "InvalidSchemaNameError",
+    "InvalidSplitNameError",
+]
+
+STAGE_1_DATA_MODULES = {
+    "rphys.data.keys": ["DataKey", "RESERVED_NAMESPACES"],
+}
+
 
 def test_import_rphys() -> None:
     import rphys
@@ -57,10 +70,14 @@ def test_planned_package_homes_import_with_empty_public_surfaces() -> None:
         assert package.__all__ == []
 
 
-def test_errors_import_and_expose_only_broad_error_categories() -> None:
+def test_errors_import_and_expose_approved_error_categories() -> None:
     from rphys import errors
 
-    assert errors.__all__ == ["RemotePhysError", *BROAD_ERROR_NAMES]
+    assert errors.__all__ == [
+        "RemotePhysError",
+        *STAGE_1_ERROR_NAMES,
+        *BROAD_ERROR_NAMES,
+    ]
 
     for error_name in errors.__all__:
         error_type = getattr(errors, error_name)
@@ -72,5 +89,25 @@ def test_root_package_does_not_reexport_error_classes() -> None:
     import rphys
 
     assert not hasattr(rphys, "RemotePhysError")
-    for error_name in BROAD_ERROR_NAMES:
+    for error_name in [*BROAD_ERROR_NAMES, *STAGE_1_ERROR_NAMES]:
         assert not hasattr(rphys, error_name)
+
+
+def test_stage_1_data_modules_import_with_intentional_public_surfaces() -> None:
+    for module_name, expected_all in STAGE_1_DATA_MODULES.items():
+        module = importlib.import_module(module_name)
+
+        assert module.__doc__
+        assert module.__all__ == expected_all
+
+        for public_name in expected_all:
+            assert hasattr(module, public_name)
+
+
+def test_data_package_does_not_reexport_stage_1_vocabulary() -> None:
+    import rphys.data
+
+    for public_name in {
+        name for expected_all in STAGE_1_DATA_MODULES.values() for name in expected_all
+    }:
+        assert not hasattr(rphys.data, public_name)
