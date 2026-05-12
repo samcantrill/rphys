@@ -135,8 +135,11 @@ Keep this file stable and lean. Put detailed and evolving agent process in
 
 Workflow assets:
 
-- Use `.codex/workflow/roadmap-version-plan.md` when the maintainer asks for a
-  roadmap-stage planning workflow.
+- Use `.codex/workflows/roadmap-version-planning.md` when the maintainer asks
+  for a roadmap-stage planning workflow.
+- Use `.codex/workflows/roadmap-version-implementation.md` when an approved
+  roadmap-stage implementation plan should be implemented through phase
+  worktrees, validation, PRs, and automated merge.
 - Treat `.codex/templates/`, `.codex/prompts/`, and `.codex/agents/` as the
   current workflow schema and specialist-agent definitions.
 - Record approvals, assumptions, validation evidence, review notes, and open
