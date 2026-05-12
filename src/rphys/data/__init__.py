@@ -1,3 +1,8 @@
-"""Package home for data keys, runtime containers, and collation contracts."""
+"""Runtime data vocabulary, field containers, contracts, and collation."""
 
-__all__: list[str] = []
+from .fields import FieldSpec, FieldValue
+
+__all__ = [
+    "FieldSpec",
+    "FieldValue",
+]
