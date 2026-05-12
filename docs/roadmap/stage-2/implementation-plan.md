@@ -36,7 +36,7 @@ Blockers: none
 | 2 | `data-object-base` | merged | `agent/stage-2-p2-data-object-base` | [#11](https://github.com/samcantrill/rphys/pull/11) | `rphys.data.objects`, focused unit tests | Add backend-free `DataObjectBase` and `CompositeDataObjectBase` hooks | Unit, package import boundary | Synthetic tensor-like leaf and child-object traversal |
 | 3 | `sample-batch-contracts` | merged | `agent/stage-2-p3-sample-batch-contracts` | [#12](https://github.com/samcantrill/rphys/pull/12) | `rphys.data.containers`, `rphys.data.contracts`, unit/contract tests | Add `Sample`, `Batch`, `FieldRequirement`, and `SampleContract` | Unit, contract, package | BVP target access and sample validation |
 | 4 | `list-collation` | merged | `agent/stage-2-p4-list-collation` | [#13](https://github.com/samcantrill/rphys/pull/13) | `rphys.data.collation`, collation unit/contract/integration tests | Add `CollatePolicy.LIST`, `CollateContext`, and `collate_samples` | Unit, contract, integration if useful | Homogeneous sample collation and unsupported policy rejection |
-| 5 | `runtime-core-hardening` | in_progress | `agent/stage-2-p5-runtime-core-hardening` | pending | package tests, contract tests, docs/docstrings, cross-phase fixes | Finalize public runtime surface and validation evidence | `make test-unit`, `make test-package`, `make test-contract`, optional integration, `uv lock --check`, `git diff --check` | Full Stage 2 public contract |
+| 5 | `runtime-core-hardening` | pr_open | `agent/stage-2-p5-runtime-core-hardening` | [#14](https://github.com/samcantrill/rphys/pull/14) | package tests, contract tests, docs/docstrings, cross-phase fixes | Finalize public runtime surface and validation evidence | `make test-unit`, `make test-package`, `make test-contract`, optional integration, `uv lock --check`, `git diff --check` | Full Stage 2 public contract |
 
 ## Implementation Readiness Blockers
 
@@ -329,7 +329,7 @@ Status: in_progress
 Slug: `runtime-core-hardening`
 Branch: `agent/stage-2-p5-runtime-core-hardening`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-2-p5-runtime-core-hardening`
-PR: pending
+PR: [#14](https://github.com/samcantrill/rphys/pull/14)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -390,7 +390,7 @@ Workflow path: fast path
 
 - Implementation: in progress; records phase PR sequence, validates final public runtime surface, and preserves scope deferrals.
 - Validation: `make test-unit`, `make test-package`, `make test-contract`, `make test-integration`, `make validate-pr`, and `git diff --check` passed in the phase worktree.
-- PR: pending.
+- PR: [#14](https://github.com/samcantrill/rphys/pull/14).
 - Merge: pending.
 - Follow-up: pending final validation.
 
@@ -410,7 +410,7 @@ Workflow path: fast path
 | Phase 2 PR | merged | [#11](https://github.com/samcantrill/rphys/pull/11), squash merge `13c3cae` |
 | Phase 3 PR | merged | [#12](https://github.com/samcantrill/rphys/pull/12), squash merge `456d150` |
 | Phase 4 PR | merged | [#13](https://github.com/samcantrill/rphys/pull/13), squash merge `f9fd766` |
-| Phase 5 PR | pending | `agent/stage-2-p5-runtime-core-hardening` |
+| Phase 5 PR | open | [#14](https://github.com/samcantrill/rphys/pull/14), `agent/stage-2-p5-runtime-core-hardening` |
 | `make test-unit` | passed | 186 passed |
 | `make test-package` | passed | 13 passed |
 | `make test-contract` | passed | 12 passed |
