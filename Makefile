@@ -1,18 +1,18 @@
-.PHONY: sync lock lock-check test check diff-check
+UV_CACHE_DIR ?= /tmp/uv-cache
+export UV_CACHE_DIR
 
-sync:
-	uv sync
+.DEFAULT_GOAL := help
 
-lock:
-	uv lock
+.PHONY: help
 
-lock-check:
-	uv lock --check
+help:
+	@printf 'rphys make targets\n'
+	@printf '\n'
+	@printf 'Target groups:\n'
+	@printf '  make setup-help    List setup and dependency targets\n'
+	@printf '  make dev-help      List development, validation, and build targets\n'
+	@printf '  make test-help     List test run and summary targets\n'
 
-test:
-	uv run pytest
-
-check: lock-check test diff-check
-
-diff-check:
-	git diff --check
+include make/setup/*.mk
+include make/dev/*.mk
+include make/test/*.mk

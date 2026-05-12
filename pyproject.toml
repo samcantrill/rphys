@@ -20,13 +20,36 @@ dependencies = []
 
 [dependency-groups]
 dev = [
+  "coverage>=7.0",
   "pytest>=8.0",
 ]
 
+[tool.coverage.run]
+source = [
+  "src/rphys",
+]
+
+[tool.coverage.report]
+skip_empty = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = [
+  ".",
+  "src",
+]
 addopts = [
   "--strict-config",
   "--strict-markers",
+]
+markers = [
+  "package: package import, metadata, public API, and import-boundary tests",
+  "unit: source-mirrored tests for code under src/rphys",
+  "contract: executable public contracts for extension points and semantics",
+  "integration: tests that combine multiple rphys components",
+  "e2e: full behavior tests through public APIs",
+  "acceptance: optional checks that may require real datasets, hardware, GPU, network services, or long runtimes",
+  "network: tests that require network access",
+  "optional_dependency: tests that require optional dependency groups or extras",
+  "slow: tests that are too slow for the default local suite",
 ]
