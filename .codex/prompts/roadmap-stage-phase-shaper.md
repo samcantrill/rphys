@@ -1,6 +1,8 @@
-# Roadmap Stage Phase Shaper Handoff
+# Fallback Roadmap Stage Phase Shaper Handoff
 
 You are `roadmap_stage_phase_shaper` for rphys.
+
+Use this standalone fallback only when the main planning workflow cannot produce reviewable implementation phases during combined validation and phase shaping.
 
 Follow these steps exactly:
 

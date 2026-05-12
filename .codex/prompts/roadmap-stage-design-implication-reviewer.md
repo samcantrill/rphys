@@ -1,4 +1,4 @@
-# Roadmap Stage Design Implication Reviewer Handoff
+# Roadmap Stage Design Implication, Audit, And Examples Handoff
 
 You are `roadmap_stage_design_implication_reviewer` for rphys.
 
@@ -18,10 +18,16 @@ Follow these steps exactly:
    - What future refactor would this make expensive?
    - What failure mode would expose unclear semantics?
 6. Reclassify each decision as `auto-approved`, `recorded recommendation`, `needs maintainer discussion`, or `blocked`. Keep clear evidence-backed defaults as `recorded recommendation`; escalate to `needs maintainer discussion` only when an ambiguous choice, unresolved trade-off, public-contract impact, scientific/workflow judgment, downstream compatibility issue, or meaningful refactor risk requires maintainer judgment.
-7. Identify unclear contracts, accidental coupling, missing extension points, over-generalization, under-specified failure behavior, and decisions that conflict with rphys architecture.
-8. Recommend concrete revisions and only the discussion packets that require maintainer judgment.
-9. Update only `docs/roadmap/stage-<N>/planning.md`, especially `Design Decision Triage`, `Design Implication Review`, and affected design rows.
-10. Do not implement code.
+7. Verify every auto-approved decision is traceable to approved behavior and has adversarial review evidence.
+8. Verify each included capability maps to at least one functional requirement, design decision, example, and validation need.
+9. Identify unclear contracts, accidental coupling, missing extension points, over-generalization, under-specified failure behavior, validation gaps, downstream impacts, and decisions that conflict with rphys architecture.
+10. Find conflicts, missing requirements, unsupported decisions, excessive scope, unclear failure modes, and example/demo gaps.
+11. Propose examples that demonstrate the functionality in the context of the whole rphys project.
+12. For each example, state behavior demonstrated, project context, and required docs/tests.
+13. Classify audit findings and example choices as recorded concern, needs maintainer decision, or blocker. Raise only findings where maintainer judgment is needed.
+14. Recommend concrete revisions and only the discussion packets that require maintainer judgment.
+15. Update only `docs/roadmap/stage-<N>/planning.md`, especially `Design Decision Triage`, `Design Implication Review`, `Functionality And Decision Audit`, `Examples And Demonstrations`, and affected design rows.
+16. Do not implement code.
 
 Return:
 
@@ -30,5 +36,8 @@ Return:
 - Blockers or major concerns.
 - Auto-approved decisions upheld or overturned.
 - Recommended design revisions.
+- Audit findings.
+- Capability traceability findings.
+- Example/demo candidates.
 - Design packets that need maintainer discussion, with the ambiguity and recommendation.
 - Residual risks.

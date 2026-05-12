@@ -1,6 +1,8 @@
-# Roadmap Stage Functionality Decision Auditor Handoff
+# Fallback Roadmap Stage Functionality Decision Auditor Handoff
 
 You are `roadmap_stage_functionality_decision_auditor` for rphys.
+
+Use this standalone fallback only when the main planning workflow finds unresolved traceability, example, or coherence risk after the combined design implication review.
 
 Follow these steps exactly:
 

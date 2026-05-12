@@ -47,29 +47,22 @@ Implementation plan: `docs/roadmap/stage-<N>/implementation-plan.md`
 
 | Gate | Status | Date/round | Notes |
 | --- | --- | --- | --- |
-| Roadmap briefing and clarification window completed | pending |  |  |
-| Intent and optimization target confirmed | pending |  |  |
-| Capability triage approved for functionality discussion | pending |  |  |
-| Functionality and behavior baseline approved | pending |  |  |
+| Roadmap briefing and intent decisions resolved | pending |  |  |
+| Functionality and behavior decisions resolved | pending |  |  |
 | Design decisions approved | pending |  |  |
-| Planning document and examples approved for validation planning | pending |  |  |
-| Validation strategy approved | pending |  |  |
-| Phase shaping approved | pending |  |  |
+| Validation and phase shaping decisions resolved | pending |  |  |
 | Plan quality gate passed | pending |  |  |
 | Implementation plan approved | pending |  |  |
 
 ## Stage Readbacks
 
 | Stage | Locked decisions | Defaults | Open questions | Next focus |
-| --- | --- | --- | --- |
-| Roadmap briefing and clarification |  |  |  |  |
-| Intent and optimization target |  |  |  |  |
-| Capability triage |  |  |  |  |
+| --- | --- | --- | --- | --- |
+| Roadmap briefing and intent |  |  |  |  |
 | Functionality and behavior |  |  |  |  |
-| Design decision review |  |  |  |  |
-| Audit and examples |  |  |  |  |
-| Validation strategy |  |  |  |  |
-| Phase shaping |  |  |  |  |
+| Design implication, audit, and examples |  |  |  |  |
+| Design decision approval |  |  |  |  |
+| Validation and phase shaping |  |  |  |  |
 | Plan quality gate |  |  |  |  |
 | Implementation-plan handoff |  |  |  |  |
 
@@ -203,14 +196,9 @@ Gate result:
 - Open questions:
 - Next step:
 
-### After Validation Strategy
+### After Validation And Phase Shaping
 
 - Validation baseline locked:
-- Open questions:
-- Next step:
-
-### After Phase Shaping
-
 - Phase sketch locked:
 - Open questions:
 - Next step:
