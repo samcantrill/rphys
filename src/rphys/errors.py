@@ -4,6 +4,12 @@ from __future__ import annotations
 
 __all__ = [
     "RemotePhysError",
+    "InvalidDataKeyError",
+    "InvalidDataTypeError",
+    "InvalidFieldLocatorError",
+    "InvalidMetadataKeyError",
+    "InvalidSchemaNameError",
+    "InvalidSplitNameError",
     "RemotePhysAnalysisError",
     "RemotePhysCodecError",
     "RemotePhysCollateError",
@@ -99,3 +105,27 @@ class RemotePhysNameError(RemotePhysError):
 
 class RemotePhysMetadataError(RemotePhysError):
     """Base error for metadata key, value, and availability failures."""
+
+
+class InvalidDataKeyError(RemotePhysNameError, RemotePhysDataError):
+    """Raised when an intrinsic field identity violates the data-key grammar."""
+
+
+class InvalidFieldLocatorError(RemotePhysFieldError, RemotePhysNameError):
+    """Raised when a role-qualified field locator cannot be parsed."""
+
+
+class InvalidSchemaNameError(RemotePhysNameError, RemotePhysDataError):
+    """Raised when a schema identity violates the versioned schema grammar."""
+
+
+class InvalidDataTypeError(RemotePhysNameError, RemotePhysDataError):
+    """Raised when a backend-agnostic data category label is invalid."""
+
+
+class InvalidMetadataKeyError(RemotePhysMetadataError, RemotePhysNameError):
+    """Raised when a descriptive metadata key violates the metadata grammar."""
+
+
+class InvalidSplitNameError(RemotePhysNameError, RemotePhysDataSourceError):
+    """Raised when a split label violates the split-name grammar."""

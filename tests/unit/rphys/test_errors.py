@@ -4,6 +4,35 @@ import pytest
 
 from rphys import errors
 
+BROAD_ERROR_NAMES = [
+    "RemotePhysAnalysisError",
+    "RemotePhysCodecError",
+    "RemotePhysCollateError",
+    "RemotePhysDataError",
+    "RemotePhysDataSourceError",
+    "RemotePhysDependencyError",
+    "RemotePhysEvaluationError",
+    "RemotePhysFieldError",
+    "RemotePhysIOError",
+    "RemotePhysLearningError",
+    "RemotePhysMetadataError",
+    "RemotePhysMethodError",
+    "RemotePhysNameError",
+    "RemotePhysOperationError",
+    "RemotePhysPipelineError",
+    "RemotePhysSliceError",
+    "RemotePhysTrainingError",
+]
+
+STAGE_1_ERROR_NAMES = [
+    "InvalidDataKeyError",
+    "InvalidDataTypeError",
+    "InvalidFieldLocatorError",
+    "InvalidMetadataKeyError",
+    "InvalidSchemaNameError",
+    "InvalidSplitNameError",
+]
+
 
 def test_remote_phys_error_preserves_message_args_and_context() -> None:
     exc = errors.RemotePhysError(
@@ -40,25 +69,7 @@ def test_remote_phys_error_allows_empty_context() -> None:
 
 @pytest.mark.parametrize(
     "error_name",
-    [
-        "RemotePhysAnalysisError",
-        "RemotePhysCodecError",
-        "RemotePhysCollateError",
-        "RemotePhysDataError",
-        "RemotePhysDataSourceError",
-        "RemotePhysDependencyError",
-        "RemotePhysEvaluationError",
-        "RemotePhysFieldError",
-        "RemotePhysIOError",
-        "RemotePhysLearningError",
-        "RemotePhysMetadataError",
-        "RemotePhysMethodError",
-        "RemotePhysNameError",
-        "RemotePhysOperationError",
-        "RemotePhysPipelineError",
-        "RemotePhysSliceError",
-        "RemotePhysTrainingError",
-    ],
+    BROAD_ERROR_NAMES,
 )
 def test_broad_error_categories_inherit_base_behavior(error_name: str) -> None:
     error_type = getattr(errors, error_name)
@@ -67,3 +78,39 @@ def test_broad_error_categories_inherit_base_behavior(error_name: str) -> None:
     assert isinstance(exc, errors.RemotePhysError)
     assert str(exc) == "category failure"
     assert exc.context == {"locator": "inputs/video.rgb"}
+
+
+def test_stage_1_errors_are_exported() -> None:
+    for error_name in STAGE_1_ERROR_NAMES:
+        assert error_name in errors.__all__
+
+
+@pytest.mark.parametrize("error_name", STAGE_1_ERROR_NAMES)
+def test_stage_1_errors_preserve_base_message_and_context(error_name: str) -> None:
+    error_type = getattr(errors, error_name)
+
+    exc = error_type("invalid vocabulary", actual="Video.RGB", expected="lowercase")
+
+    assert isinstance(exc, errors.RemotePhysError)
+    assert isinstance(exc, errors.RemotePhysNameError)
+    assert str(exc) == "invalid vocabulary"
+    assert exc.args == ("invalid vocabulary",)
+    assert exc.message == "invalid vocabulary"
+    assert exc.context == {
+        "actual": "Video.RGB",
+        "expected": "lowercase",
+    }
+
+
+def test_stage_1_errors_map_to_broad_categories() -> None:
+    assert issubclass(errors.InvalidDataKeyError, errors.RemotePhysDataError)
+    assert issubclass(errors.InvalidDataTypeError, errors.RemotePhysDataError)
+    assert issubclass(errors.InvalidFieldLocatorError, errors.RemotePhysFieldError)
+    assert issubclass(errors.InvalidMetadataKeyError, errors.RemotePhysMetadataError)
+    assert issubclass(errors.InvalidSchemaNameError, errors.RemotePhysDataError)
+    assert issubclass(errors.InvalidSplitNameError, errors.RemotePhysDataSourceError)
+
+
+def test_deferred_runtime_errors_are_not_defined() -> None:
+    assert not hasattr(errors, "MissingMetadataError")
+    assert not hasattr(errors, "FieldSchemaError")
