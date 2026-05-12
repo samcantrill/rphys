@@ -9,6 +9,14 @@
 - Implementation plan:
 - Scientific review:
 
+# Phase Isolation
+
+- Branch:
+- Worktree:
+- Base branch: `develop`
+- Head branch:
+- Scope statement: this PR contains one roadmap implementation phase only.
+
 # Scientific Contract
 
 - Inputs/outputs:

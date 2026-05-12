@@ -60,13 +60,26 @@ Manager responsibilities:
   `.codex/workflows/README.md`, and `.codex/templates/README.md`.
 - Perform the implementation-plan quality gate before phase selection or
   implementation.
-- Select one phase at a time; do not start a later phase until the prior phase
-  is merged or explicitly blocked.
-- Use `/home/samcantrill/work/rphys-worktrees` for phase worktrees.
+- Enforce phase isolation: every implementation phase must be completed on its
+  own branch, inside its own worktree under
+  `/home/samcantrill/work/rphys-worktrees`, and submitted as its own PR to
+  `develop`.
+- Select one phase at a time; do not start planning, coding, validation, PR
+  preparation, or merge work for a later phase until the prior phase PR is
+  merged to `develop` or explicitly marked `blocked`.
+- Treat branch, worktree, push, PR creation, PR verification, CI polling, and
+  merge capability as required workflow infrastructure. If any of these cannot
+  be completed, mark the phase blocked and stop instead of implementing the
+  phase in the control checkout or combining phases.
+- Never use the control checkout for phase implementation. The control checkout
+  may be used only for workflow metadata after a phase PR has merged, or for a
+  dedicated workflow/documentation change outside the phase loop.
 - Use fast path unless expanded-path triggers apply.
 - Run or record relevant targeted checks plus `make validate-pr` and
   `make test-summary` before PR submission unless unavailable.
-- Open phase PRs with explicit base/head/title and target `develop`.
+- Open exactly one phase PR per phase with explicit base/head/title and target
+  `develop`; do not bundle multiple phases into one PR, stack routine phase
+  branches, or record local-only implementation as phase completion.
 - Poll CI and merge eligible phase PRs into `develop` without waiting for human
   GitHub approval; use admin merge authority only for review-only branch
   protection when automated gates pass.

@@ -16,6 +16,8 @@
 - Target branch: `develop`
 - Merge eligibility: eligible after automated review, local validation, and CI pass
 - Workflow path: fast path / expanded path
+- Phase isolation: one dedicated branch, one dedicated worktree, one PR to
+  `develop`; local-only completion is not allowed
 - Plan quality gate:
 - Draft pass:
 - Refine pass:
@@ -43,6 +45,15 @@ work that must remain out of scope.
 - Existing files or modules that constrain this phase:
 - Existing tests or harness behavior:
 - Import-boundary or dependency constraints:
+
+## Phase Isolation State
+
+- Control checkout dirty-state review:
+- Dedicated branch/worktree status:
+- Current `develop` base:
+- Earlier phase dependency status:
+- Push/PR infrastructure status:
+- Stop condition if isolation cannot be maintained:
 
 ## In-Scope Work
 
