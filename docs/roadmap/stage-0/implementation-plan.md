@@ -5,7 +5,7 @@ Roadmap version: `v0`
 Planning document: `docs/roadmap/stage-0/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: pending
+Current phase: Phase 2 pending
 Blockers: none
 
 ## Summary
@@ -32,7 +32,7 @@ Blockers: none
 
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `core-skeleton-errors` | pending | `agent/stage-0-p1-core-skeleton-errors` | pending | `src/rphys/**`, error unit tests, focused import tests | Add planned package homes and base error hierarchy. | `make test-package`, `make test-unit` | Namespace smoke path; structured base error diagnostics. |
+| 1 | `core-skeleton-errors` | merged | `agent/stage-0-p1-core-skeleton-errors` | [#2](https://github.com/samcantrill/rphys/pull/2) | `src/rphys/**`, error unit tests, focused import tests | Add planned package homes and base error hierarchy. | `make test-package`, `make test-unit` | Namespace smoke path; structured base error diagnostics. |
 | 2 | `governance-guardrails` | pending | `agent/stage-0-p2-governance-guardrails` | pending | `tests/package/**`, metadata/import-boundary checks | Make import, API, metadata, and no-runtime guardrails executable. | `make test-package`, `uv lock --check` | Lightweight import guardrail; private metadata guardrail; no-runtime boundary. |
 | 3 | `readme-final-validation` | pending | `agent/stage-0-p3-readme-final-validation` | pending | `README.md`, final validation evidence | Add compact README governance handoff and run final checks. | `make test-package`, `make test-unit`, `uv lock --check`, `git diff --check` | Balanced README handoff; final validation. |
 
@@ -44,11 +44,11 @@ Blockers: none
 
 ## Phase 1: Core Skeleton And Base Errors
 
-Status: pending
+Status: merged
 Slug: `core-skeleton-errors`
 Branch: `agent/stage-0-p1-core-skeleton-errors`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-0-p1-core-skeleton-errors`
-PR: pending
+PR: [#2](https://github.com/samcantrill/rphys/pull/2)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -105,11 +105,11 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation:
-- Validation:
-- PR:
-- Merge:
-- Follow-up:
+- Implementation: added planned package homes with empty `__all__`, broad `RemotePhysError` hierarchy, focused package import tests, and source-mirrored unit tests for error context behavior.
+- Validation: `make test-package` passed; `make test-unit` passed; `git diff --check` passed.
+- PR: [#2](https://github.com/samcantrill/rphys/pull/2), base `develop`, head `agent/stage-0-p1-core-skeleton-errors`.
+- Merge: squash-merged to `develop` at `f8c5038` on 2026-05-12; GitHub reported no configured status checks.
+- Follow-up: Phase 2 should harden metadata, import-boundary, public API, and no-runtime guardrails.
 
 ## Phase 2: Governance Guardrail Tests
 

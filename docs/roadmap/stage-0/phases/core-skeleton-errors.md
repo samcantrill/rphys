@@ -88,6 +88,6 @@ git diff --check
 - Pre-submit blocker gate: passed; no scope, validation, or scientific-contract blockers found.
 - PR preparation: PR body draft recorded in `docs/roadmap/stage-0/phases/core-skeleton-errors-pr-body.md`.
 - Automated review: manager-local review passed before PR submission.
-- Merge result: pending.
-- Cleanup: pending.
+- Merge result: squash-merged through PR #2 into `develop` at `f8c5038`.
+- Cleanup: remote branch deleted by GitHub merge; local branch cleanup pending final workflow cleanup.
 - Remaining blockers: none.
