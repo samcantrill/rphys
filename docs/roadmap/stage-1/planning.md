@@ -66,8 +66,8 @@ Implementation plan: `docs/roadmap/stage-1/implementation-plan.md`
 | Functionality and behavior decisions resolved | approved | 2026-05-12 / R5 | Capability triage and FR-1 through FR-6 are resolved as the Stage 1 functionality and behavior baseline. |
 | Design decisions approved | approved | 2026-05-12 / R12 | DD-1 through DD-9 are approved; audit/examples are complete; the `DataType` typed-error gap is resolved by adding `InvalidDataTypeError`. |
 | Validation and phase shaping decisions resolved | approved | 2026-05-12 / R17 | Maintainer approved validation strategy and five-phase implementation sketch; ready for the plan quality gate. |
-| Plan quality gate passed | pending |  |  |
-| Implementation plan approved | pending |  |  |
+| Plan quality gate passed | approved | 2026-05-12 / R18 | Plan quality review passed with no blocking findings; implementation-plan drafting may proceed when requested. |
+| Implementation plan approved | approved | 2026-05-12 / R19 | Manager review found no implementation-readiness blockers; maintainer approved the five-phase implementation plan. |
 
 ## Stage Readbacks
 
@@ -78,8 +78,8 @@ Implementation plan: `docs/roadmap/stage-1/implementation-plan.md`
 | Design implication, audit, and examples | Design review and audit are complete; DD-8 remains constrained auto-approved; DD-9 remains a recorded recommendation; capability traceability and examples are recorded; `InvalidDataTypeError` closes the audit-discovered typed-error gap. | Preserve planning-only scope and keep examples demonstrative rather than runtime implementations. | None. | Validation and phase shaping. |
 | Design decision approval | Approved DD-1 through DD-9. `DataType` belongs in dedicated `rphys.data.types`; metadata constants are grouped into generic/core and rphys domain-context sets; Stage 1 errors are validator-specific; private helpers stay lexical only; validation includes unit, package, and narrow contract coverage. | Validated `str` subclasses for extensible names; closed `FieldRole(StrEnum)`; frozen `FieldLocator.parse()`; strict lowercase ASCII/no normalization; submodule-only imports with empty root and `rphys.data` exports. | None for design. | Validation and phase shaping. |
 | Validation and phase shaping | Validation strategy and five-phase implementation sketch approved. | Required validation covers unit, package, contract, documentation/static, integration-boundary, and scientific/workflow-contract coverage. Phases keep diagnostics/key grammar, metadata/splits, schemas/types, locators, and final contract/package/docs hardening reviewable as separate units. | No blocking test-design or phase-shaping detail remains; exact error-message prose/context keys and edge grammar debates remain implementation details within approved scope. | Plan quality gate. |
-| Plan quality gate | pending |  |  |  |
-| Implementation-plan handoff | pending |  |  |  |
+| Plan quality gate | Traceability from roadmap extraction through capability triage, requirements, behavior, design decisions, examples, validation, and phase shaping is complete. | Remaining edge details are implementation-level and constrained by approved behavior. | None. | Implementation-plan draft. |
+| Implementation-plan handoff | Implementation plan is approved for the five-phase sequence: diagnostic/`DataKey` foundation; metadata/split vocabularies; schema/type vocabularies; roles/locators; contract/package/docs hardening. | Manager review found no blockers, no hidden scope expansion, and validation alignment with the approved planning record. | None. | Implementation workflow. |
 
 ## Capability Triage
 
@@ -347,22 +347,22 @@ Auto-approval criteria:
 
 | Check | Evidence | Result | Required action |
 | --- | --- | --- | --- |
-| Roadmap-to-requirement traceability | pending | pending | pending |
-| Requirement-to-design traceability | pending | pending | pending |
-| Design-to-example traceability | pending | pending | pending |
-| Example-to-validation traceability | pending | pending | pending |
-| Phase-shaping readiness | Phase table defines five bounded implementation slices with explicit dependencies, acceptance criteria, test expectations, design impact, future compatibility, risks, and review boundaries. | ready for plan quality gate | Use the phase sketch as the basis for the plan quality gate; do not create `implementation-plan.md` until the gate passes and the maintainer requests implementation planning. |
-| Extensibility and maintainability readiness | pending | pending | pending |
-| Scientific/workflow contract clarity | pending | pending | pending |
-| Reviewability and phase granularity | pending | pending | pending |
-| Unresolved ambiguity or blockers | Functionality and decision audit found a `DataType` typed-error gap and a locator component-error default; maintainer resolved the error gap by approving `InvalidDataTypeError`. | pending | No design or phase-shaping blocker remains; keep locator parse errors whole-locator by default unless implementation finds a concrete contradiction with approved behavior. |
+| Roadmap-to-requirement traceability | Roadmap extraction identifies Milestone 1 shared vocabulary, naming, locator, schema, metadata, split, and diagnostic obligations. Capability triage maps included capabilities to FR-1 through FR-6 and defers runtime containers, IO, datasources, operations, models, metrics, workflow, artifacts, registries, serialization/config integration, convenience re-exports, and optional dependencies. | pass | Carry FR-1 through FR-6 into implementation-plan drafting as the complete Stage 1 requirement set. |
+| Requirement-to-design traceability | DD-1 through DD-9 cover every approved requirement: validated `str` subclasses for extensible names; closed `FieldRole(StrEnum)` and frozen `FieldLocator.parse()`; strict lowercase ASCII/no normalization; submodule-only imports with empty root and `rphys.data` exports; dedicated `rphys.data.types`; grouped metadata constants; validator-specific errors including `InvalidDataTypeError` and `InvalidSplitNameError`; private lexical helpers only; source-mirrored unit, package, and narrow contract coverage. | pass | Implementation plan must preserve all approved DD constraints and avoid reopening public API choices unless a concrete contradiction appears. |
+| Design-to-example traceability | Examples cover each public behavior family: canonical rPPG `DataKey` values and invalid forms; role-qualified locators and component preservation; schema/type separation; metadata and split context; typed diagnostics and import guardrails. | pass | Use the recorded examples as contract-test seeds, not as invitations to add runtime lookup, payload schemas, or datasource behavior. |
+| Example-to-validation traceability | Validation strategy maps examples to unit files, package/API checks, contract tests, documentation/static checks, integration-boundary checks, and scientific/workflow-contract assertions. Required coverage includes no normalization, typed errors, empty root/data exports, no duplicate vocabularies, no runtime/config/workflow/artifact coupling, and unchanged runtime dependencies. | pass | Implementation plan should assign these validation obligations to phases and require final `make test-unit`, `make test-package`, `make test-contract`, `uv lock --check`, and `git diff --check` evidence. |
+| Phase-shaping readiness | Phase table defines five bounded implementation slices with explicit dependencies, acceptance criteria, test expectations, design impact, future compatibility, risks, and review boundaries: diagnostic/`DataKey` foundation; metadata/split vocabularies; schema/type vocabularies; roles/locators; contract/package/docs hardening. | pass | Use the approved five-phase sketch as the basis for implementation-plan drafting; do not create `implementation-plan.md` until the maintainer requests implementation planning. |
+| Extensibility and maintainability readiness | Extensibility is explicit where intended (`custom.<project>...`, validated metadata/split/datatype construction) and closed where approved (`FieldRole`). Maintainability constraints block broad helper abstractions, registries, root/data re-exports, duplicated vocabularies, hidden normalization, dependency drift, runtime container behavior, and config/serialization hooks. | pass | Keep extension through importable values and constructors; return to planning if implementation requires registries, public helper APIs, broad base classes, or new dependencies. |
+| Scientific/workflow contract clarity | Stage 1 explicitly preserves scientific/workflow meaning by naming only vocabulary contracts: schema names do not validate shapes, units, coordinate frames, sample rates, or payload layouts; data types do not inspect backend dtypes; metadata/splits do not implement leakage checks, grouping algorithms, missing-value policy, split construction, trainer modes, workflow artifacts, or `loom` behavior. | pass | Document these exclusions in module docstrings/docs and lock them with contract/package checks. |
+| Reviewability and phase granularity | The five phases are small enough to review independently and ordered around real dependencies. Phases 2 and 3 can remain independent after Phase 1; Phase 4 depends on metadata selectors from Phase 2; Phase 5 is restricted to contract/package/docs hardening and should not add new public behavior. | pass | Implementation plan should keep phase write scopes bounded and require separate planning discussion if hardening uncovers new API behavior. |
+| Unresolved ambiguity or blockers | Prior audit blockers are resolved: `InvalidDataTypeError` is approved, split constants live in `rphys.data.splits`, and `FieldLocator.parse()` defaults to `InvalidFieldLocatorError` for whole-locator syntax/component failures. Remaining details are non-blocking: exact diagnostic prose/context keys, schema-version edge behavior such as `v0`, and split-name dot handling. No unresolved `blocked` or `needs maintainer discussion` decisions remain. | pass | Resolve remaining edge details during implementation within approved strict grammar; return to planning only if a required behavior conflicts with the approved requirements or design decisions. |
 
 Gate result:
 
-- Status: pending
-- Blocking findings: pending
-- Accepted risks: pending
-- Revisit triggers: pending
+- Status: pass; implementation-plan drafting is unblocked when the maintainer requests it.
+- Blocking findings: none.
+- Accepted risks: exact diagnostic prose and final high-value context-key names remain implementation details; strict grammar edge cases such as schema `v0` and split-name dots must be resolved without expanding scope; validated `str` subclass behavior, closed `FieldRole`, grouped metadata constants, and narrow contract coverage are intentional compatibility choices; Phase 5 may reveal small contract/documentation fixes but must not add new public behavior without returning to planning.
+- Revisit triggers: implementation needs runtime containers, registries, root or `rphys.data` convenience exports, public normalization/canonicalization helpers, optional/runtime dependencies, serialization/config integration, workflow/artifact scope, datasource/IO/operation/model/loss/metric/training/evaluation behavior, broader scientific semantics, or a contradiction between approved examples and validators.
 
 ## Accepted Assumptions And Deferrals
 
@@ -408,9 +408,9 @@ Gate result:
 
 ### After Plan Quality Gate
 
-- Gate result: pending.
-- Open questions: pending.
-- Next step: implementation-plan draft if gate passes.
+- Gate result: pass; implementation-plan drafting is unblocked when the maintainer requests it.
+- Open questions: none blocking; accepted risks are recorded in the gate result.
+- Next step: implementation-plan draft.
 
 ## Workflow Feedback Routing
 
@@ -439,3 +439,5 @@ Gate result:
 | 2026-05-12 / R15 | Recorded maintainer approval of the Stage 1 validation strategy; phase shaping remains pending under the combined validation/phase-shaping gate. |
 | 2026-05-12 / R16 | Proposed Stage 1 implementation phase sketch with five reviewable phases, explicit dependencies, acceptance criteria, test expectations, risks, and phase-shaping blockers cleared. |
 | 2026-05-12 / R17 | Recorded maintainer approval of the validation strategy and five-phase implementation sketch; ready for plan quality gate. |
+| 2026-05-12 / R18 | Completed plan quality gate; traceability, extensibility, maintainability, scientific/workflow contracts, validation, and phase shaping pass with no blocking findings. |
+| 2026-05-12 / R19 | Created and manager-reviewed `docs/roadmap/stage-1/implementation-plan.md`; maintainer approved the implementation plan with accepted implementation-level risks. |

@@ -217,6 +217,39 @@ Use semantic names when lifecycle or scientific meaning differs. Do not collapse
 generic callable. They may share lower-level `Operation` machinery, but their
 contracts, side effects, and scientific responsibilities differ.
 
+### Training Performance Objective
+
+Domain-agnostic training performance is governed by one objective:
+
+```text
+maximize valid experiment decisions per unit cost
+```
+
+Samples per second, GPU utilization, and benchmark throughput are diagnostic
+signals, not isolated goals. The system should minimize time spent on work that
+does not advance a training step, validate a contract, or produce a decision
+about an experiment.
+
+Training-time code should mostly:
+
+```text
+read a prepared batch
+apply only necessary runtime randomness
+move the batch to device
+compute forward, backward, and update
+record minimal metrics
+```
+
+Deterministic work that can be done once and saved should move out of the
+training loop. That includes raw parsing, expensive normalization, format
+conversion, indexing, metadata lookup, validation, filtering, fixed
+transforms, static feature construction, and schema conversion.
+
+Optimizations must attach to measured bottlenecks. Better throughput is useful
+only when it improves decision quality, decision latency, or experiment cost
+without weakening scientific contracts, provenance, restartability, or
+reproducibility.
+
 ## 6. Package Boundaries
 
 Initial package homes:
@@ -255,11 +288,12 @@ io
 
 datasources
   DataSourceSpec, DataSourceRef, RecordRef, validation reports, views, filters,
-  groups, splits, indexes, index codecs, Torch adapters, and datasource-owned
-  caches.
+  groups, splits, indexes, index codecs, Torch adapters, datasource-owned
+  caches, and prepared training-data manifests that reference approved fields
+  and sources.
 
 ops
-  Operation contracts, functional kernels, SampleOps, transforms,
+  Operation contracts, functional kernels, SampleOps, BatchOps, transforms,
   augmentations, checks, routing, pipelines, export/save ops, and provenance.
 
 methods/models/nn
@@ -274,6 +308,8 @@ learning/training
   Learners define step semantics. Trainers define loop mechanics, devices,
   gradient mode, optimizers, schedulers, checkpointing, distributed context, and
   optional stage-friendly callable entrypoints such as experimental run_train.
+  Training also owns native profiling spans, training events, callbacks, sinks,
+  and optional framework adapter contracts.
 
 prediction/evaluation/analysis
   Thin helpers over field containers, result datasources, metric/report
@@ -1000,9 +1036,11 @@ They accept payloads, parameter objects, and explicit metadata values.
 Operation classes wrap kernels when contracts, context, provenance, declared
 randomness, mutation policy, or pipeline composition are needed.
 
-Batch-level composition uses Operation[Batch, Batch] initially. Do not add a
-public BatchOperator, BatchProgram, or BatchOpPipeline until repeated concrete
-needs justify it.
+Batch-level composition starts as Operation[Batch, Batch] until Sample, Batch,
+and Operation contracts are stable. After those contracts are finalized,
+Milestone 7 may introduce provisional BatchOp contracts for vectorized,
+batch-level, or fused processing. Do not add a broad BatchProgram or universal
+batch execution language until repeated concrete needs justify it.
 ```
 
 Definition of done:
@@ -1016,18 +1054,19 @@ No concrete CHROM/POS/model-specific preprocessing kernels are required in this
 milestone.
 ```
 
-## 15. Milestone 7: SampleOps, Transforms, Augmentations, Checks, And Pipelines
+## 15. Milestone 7: SampleOps, BatchOps, Transforms, Augmentations, Checks, And Pipelines
 
 Goal:
 
 ```text
-Implement composable runtime operations over Samples.
+Implement composable runtime operations over Samples and Batches.
 ```
 
 Primary packages:
 
 ```text
 rphys.ops.sample
+rphys.ops.batch
 rphys.ops.pipelines
 ```
 
@@ -1038,8 +1077,12 @@ SampleOp
 SampleTransform
 SampleAugmentation
 SampleCheck
+BatchOp
+BatchTransform
+BatchAugmentation
 SampleOpPipeline
 SampleContext
+BatchContext
 PipelineContext
 AugmentationParams
 SampleDecision
@@ -1060,6 +1103,35 @@ fields.
 Datasource/index filters remain separate when decisions can be made before
 loading. Sample-level filtering/routing is an explicit SampleOp when decisions
 depend on loaded data or earlier operations.
+
+SampleOps remain the correctness and provenance reference path for operations
+whose behavior is naturally per sample.
+
+BatchOps are provisional optimization contracts for processing collated fields
+in batches. They may replace Python-heavy per-sample transforms when they can
+preserve the same scientific meaning, field addressing, masking, alignment,
+and provenance.
+
+BatchOps declare read, write, delete, mutation, randomness, device, dtype, and
+side-effect behavior over Batch fields. They must not assume model-specific
+input layouts, parse selectors in hot loops, build DataLoaders, scan
+datasources, export fields, or hide device movement.
+
+When a BatchOp is intended to replace one or more SampleOps, its equivalence
+contract must define what remains identical, what is allowed to differ
+numerically, and how per-sample diagnostics or provenance can be recovered.
+
+Transform placement follows the training performance objective. Deterministic
+transforms that can be materialized should be represented so they can run
+before training and be saved through export/materialization flows. Runtime
+SampleOps and BatchOps should do only work that depends on loaded context,
+epoch/state, stochastic augmentation, or a non-materialized experimental
+choice.
+
+The batch should become the primary runtime unit where possible. Prefer bulk
+reads, batched collation, batched transforms, vectorized kernels, and
+precomputed indices over one parser, metadata lookup, transform pipeline,
+allocation-heavy object, or file open per sample.
 ```
 
 Stochastic augmentation:
@@ -1072,6 +1144,8 @@ index, operation name, and view name when relevant.
 Global random, numpy default RNG, and torch default RNG are not used directly.
 Synchronized augmentations apply one parameter object consistently to linked
 fields.
+BatchAugmentation may sample one batch-level parameter object or per-sample
+parameter objects, but the choice must be explicit and replayable.
 ```
 
 Self-supervised and contrastive initial path:
@@ -1093,8 +1167,10 @@ Contract checks catch missing or malformed fields.
 Undeclared mutation fails.
 Augmentation replay and deterministic-policy behavior are tested.
 SampleFields load only when an operation accesses payload data.
-SampleOpPipeline does not scan datasources, choose splits, export fields, or
-hide raw numerical kernels.
+SampleOpPipeline and BatchOps do not scan datasources, choose splits, export
+fields, or hide raw numerical kernels.
+BatchOp equivalence, RNG replay, synchronized-field behavior, and provenance
+are tested where batch-level execution replaces sample-level behavior.
 ```
 
 ## 16. Milestone 8: Save/Export Ops And Derived DataSources
@@ -1206,6 +1282,20 @@ CacheEntry
 CacheManifest
 CacheContext
 DistributedCacheCoordinator
+OptimizedDataPlan
+MaterializationPlan
+MaterializationManifest
+ShardManifest
+ChunkMetadata
+AccessPatternPlan
+RecordLayoutMetadata
+BatchCostMetadata
+BatchSamplerPlan
+BatchShapePolicy
+StreamingReadPlan
+DataLoaderState
+DataPathProfile
+DataPathBenchmark
 ```
 
 Adapter rules:
@@ -1217,6 +1307,9 @@ __getitem__ resolves an integer position to an IndexItem, derives context,
 builds a Sample, applies optional pipelines, and returns a Sample.
 It does not scan directories, choose splits, build indexes, export fields, or
 format model inputs.
+__getitem__ must not become a hidden preprocessing pipeline. Expensive
+deterministic work should be moved into materialized training data when it can
+be done once and saved.
 
 BatchCollater delegates to generic Batch and CollatePolicy behavior. It
 preserves FieldLocator keys and per-item metadata. It does not hard-code
@@ -1231,6 +1324,80 @@ Cache keys include index item identity, FieldView/resource fingerprints, codec
 version, optional deterministic operation fingerprints, relevant run context,
 and software versions where needed.
 Cache reuse must preserve scientific data flow and provenance.
+Cache invalidation keys must include the inputs that affect correctness, such
+as raw data version, preprocessing code version, configuration, schema, split
+definition, random seed when relevant, and library/tool versions where they can
+change outputs.
+Prepared training data and expensive intermediate caches should be immutable by
+version. Do not mutate a training data product in place during experimentation.
+```
+
+Optimized data layout planning:
+
+```text
+Prepared training data is a derived, immutable, manifest-backed data product
+over approved datasource, IO, codec, cache, and operation contracts. It is not
+a generic artifact runtime, a second datasource discovery path, or a bypass
+around FieldRef, FieldView, SampleBuilder, and provenance rules.
+
+Materialization plans describe which fields, temporal slices, deterministic
+operations, shard/chunk boundaries, compression choices, cache limits, and
+metadata are written for fast training. If an operation produces the same
+result every time and can be saved, the plan should make it eligible for
+offline materialization rather than training-loop execution.
+
+Materialization manifests record source identity, raw data version,
+preprocessing version, schema, dtypes, record/unit counts, field fingerprints,
+operation fingerprints, split definitions, group metadata, shard/chunk list,
+offsets/lengths for variable-size records, checksums, compression, runtime
+assumptions, software versions, and invalidation inputs.
+
+AccessPatternPlan records how training consumes the data: random indexed reads,
+sequential streaming, fixed-size contiguous arrays, memory-mapped layouts,
+variable-size offset tables, bucketing, packing, or dynamic batch sizing.
+
+RecordLayoutMetadata and BatchCostMetadata may include length, size, shape,
+number of elements, estimated memory footprint, estimated compute cost, shard
+assignment, split assignment, optional bucket id, and optional quality/filter
+flags. The loader should not need to inspect raw content to know how to batch
+records.
+
+Streaming read plans and resumable DataLoader state may be introduced only as
+explicit contracts. They must preserve deterministic split/rank/worker
+behavior and expose what was skipped, resumed, cached, or re-read.
+```
+
+Batch planning rules:
+
+```text
+Batch construction is a first-class optimization surface. Dataset/index objects
+describe where prepared data lives; sampler plans decide which records form a
+batch; collators turn records into Batch fields; BatchOps apply runtime
+transforms; device movers transfer whole batches; learners consume whole
+batches.
+
+BatchSamplerPlan should support fixed-size batches, cost-aware buckets,
+dynamic batch sizing, packing and padding policies, drop/remainder policy,
+batch ordering, shuffle granularity, and physical versus effective batch size
+metadata.
+
+Batch by training cost when count-based batches create high variance.
+Controlled variation is acceptable; unbounded shape, memory, or cost variance
+that creates stragglers or compiler/allocator churn should be visible in
+metadata and benchmark reports.
+```
+
+LitData is relevant prior art for this milestone:
+
+```text
+Consider LitData-style ideas such as optimized chunked storage, raw and
+optimized streaming, local and remote sources, cache-size limits, compression,
+parallel data preparation, shared work queues, distributed-aware streaming,
+and resumable dataloader state.
+
+Use these ideas to shape rphys contracts and benchmarks first. Do not add a
+LitData runtime dependency or public adapter until the rphys materialization,
+cache, and loading contracts are stable enough to evaluate that integration.
 ```
 
 Implementation order for cache:
@@ -1239,7 +1406,9 @@ Implementation order for cache:
 1. Deterministic CacheKey and CachePolicy.
 2. Local CacheStore with atomic temp-write then commit/rename semantics.
 3. Manifest metadata, hit/miss reporting, and invalidation tests.
-4. Distributed coordination only after local semantics are stable.
+4. Format-agnostic materialization and shard/chunk manifest contracts.
+5. Streaming/resumable loader state contracts.
+6. Distributed coordination only after local semantics are stable.
 ```
 
 DDP-safe coordination must eventually support rank/world/worker context,
@@ -1257,6 +1426,14 @@ practical.
 Collation remains FieldLocator-aware.
 Cache primitives are deterministic, provenance-aware, invalidation-aware, and
 atomic for local stores.
+Optimized data layout contracts can represent shard/chunk manifests,
+compression metadata, cache limits, resumable loader state, and benchmark
+summaries without committing to a concrete storage format.
+Prepared training data manifests cover source/preprocessing versions, schema,
+dtypes, counts, splits, checksums, offsets/lengths, cost metadata, and runtime
+assumptions.
+Batch planning can use precomputed layout and cost metadata without inspecting
+raw content at runtime.
 DDP cache behavior is not labeled stable until rank-safe coordination tests
 exist.
 ```
@@ -1443,6 +1620,10 @@ OptimizerSpec
 SchedulerSpec
 CheckpointMetadata
 DistributedContext
+TrainingProfiler
+TrainingEvent
+TrainingEventSink
+TrainingCallback
 run_train, experimental
 ```
 
@@ -1453,11 +1634,36 @@ Learner owns mode-specific step semantics and composes Method + optional
 Objective + Metrics.
 Trainer owns iteration, device movement, grad/no-grad mode, backward, gradient
 accumulation, optimizer/scheduler stepping, clipping, precision policy,
-distributed context, checkpoint hooks, loop logging, and callbacks.
+distributed context, checkpoint hooks, loop logging, callbacks, and default
+profiling spans.
 Learner does not call optimizer.step, scheduler.step, checkpoint writers,
 dataloader builders, SampleBuilder, datasource adapters, or export ops.
 Trainer does not parse input/target/prediction locators, compute scientific
 losses, build IndexItems, export outputs, or assume supervised learning.
+```
+
+Profiling and callback rules:
+
+```text
+Trainer-owned profiling is the default path when it is sufficient to diagnose
+training-loop bottlenecks. It records structured spans for dataloader wait,
+device transfer, forward, objective/loss, backward, optimizer step,
+callbacks/logging, checkpointing, and whole-step timing.
+
+TrainingEvent, TrainingEventSink, TrainingCallback, and TrainingProfiler form a
+cohesive observer boundary for native rphys Trainer and framework-backed
+execution. Sinks and callbacks consume events; they do not control learner
+semantics, parse field selectors, choose data splits, or force a logger or
+profiler backend.
+
+PyTorch Lightning Trainer integration is a first-class design target but an
+optional dependency. A Lightning adapter should map Lightning loop hooks into
+the same rphys event schema and profiling records as the native Trainer,
+without making Lightning the canonical training runtime.
+
+Profiler implementations must make synchronization behavior explicit. Default
+CPU timing must not hide CUDA synchronization; synchronized device timings are
+opt-in and reported as measurement overhead where relevant.
 ```
 
 `LoopMode` describes active execution semantics:
@@ -1502,8 +1708,9 @@ hard-coded fields or supervised-only assumptions.
 Trainer backpropagates only StepOutput.objective.
 SupervisedLearner works with configured Method, Objective, and Metrics.
 Prediction works without objective or targets.
-No framework-specific Lightning/Fabric/accelerator integration is part of the
-core milestone.
+Native Trainer and Lightning-backed execution can expose the same provisional
+event/profiling schema without making Lightning, Fabric, accelerator, or logger
+packages core dependencies.
 ```
 
 ## 21. Milestone 13: Prediction, Evaluation, Analysis, And Reports
@@ -1642,6 +1849,8 @@ operation deterministic context and stochastic replay
 SaveOp-derived datasource round trip
 Method/Loss/Objective/Metric/Learner/Trainer boundaries
 cache key determinism and invalidation
+prepared training data manifests and batch-cost metadata
+debug/smoke/signal tiers using the same loader path
 public import and dependency boundaries
 ```
 
@@ -1664,7 +1873,189 @@ synthetic scan
 The default smoke path must run on CPU without external data, network access,
 GPUs, heavy optional dependencies, workflow tooling, or private project code.
 
-## 23. Critical Path
+## 23. Milestone 15: Training Performance Profiling And Data-Path Optimization
+
+Goal:
+
+```text
+Make training performance diagnosable and optimize the data path without
+weakening scientific contracts, provenance, or import boundaries. The objective
+is valid experiment decisions per unit cost, not raw throughput in isolation.
+```
+
+Primary packages:
+
+```text
+rphys.training
+rphys.datasources.torch
+rphys.datasources.cache
+rphys.ops.batch
+rphys.io
+```
+
+Key interfaces:
+
+```text
+TrainingProfiler
+TrainingEvent
+TrainingEventSink
+TrainingCallback
+TrainingStepProfile
+ResourceSample
+RunDecisionMetrics
+PrecisionPolicy
+CompilePolicy
+KernelPolicy
+DataPathProfile
+DataPathBenchmark
+MaterializationPlan
+MaterializationManifest
+ShardManifest
+ChunkMetadata
+StreamingReadPlan
+DataLoaderState
+ExperimentTierSpec
+RestartState
+BatchOp
+BatchTransform
+BatchAugmentation
+```
+
+Profiling rules:
+
+```text
+Trainer-owned profiling is preferred when it can identify the relevant
+bottleneck. It should report step_time, dataloader_wait, device_transfer_time,
+forward_time, objective_or_loss_time, backward_time, optimizer_step_time,
+callback_or_logging_time, checkpoint_time, validation_time, records/sec,
+units/sec, useful_units/sec, memory allocated/reserved, CPU utilization, GPU
+utilization, unavailable probes, and measurement overhead where applicable.
+
+TrainingEvent sinks and callbacks extend observability when trainer-local spans
+are insufficient or when a framework adapter such as Lightning supplies loop
+events. Native Trainer and Lightning-backed execution should produce the same
+event schema for equivalent phases.
+
+Profiling must avoid hidden CPU-GPU synchronization on the hot path. Any
+synchronized timing, memory snapshot, or utilization probe that may perturb
+training must be opt-in and documented in the resulting profile.
+
+M15 profiling has four levels:
+
+1. always-on run metrics for coarse timing, useful units, memory, validation,
+   checkpointing, and decision cost;
+2. data-pipeline benchmarks independent of the model for read time, batch
+   construction, transform time, queue wait, worker utilization, and loader
+   throughput;
+3. optional framework-level profiling for operator timelines, CPU/GPU overlap,
+   allocation, kernel time, synchronization points, and shape-dependent
+   slowdowns;
+4. optional system-level profiling for GPU, CPU, disk, network, host memory,
+   shared memory, PCIe/device transfer bandwidth, and process contention.
+```
+
+Data-path optimization rules:
+
+```text
+Optimized training data is created through explicit materialization plans and
+manifests, not implicit caches or datasource adapter side effects.
+
+Materialized layouts should help avoid millions of small files, redundant
+decoding, expensive random per-sample IO, and repeated deterministic
+preprocessing while preserving source identity, FieldView semantics,
+operation fingerprints, split/group metadata, and invalidation inputs.
+
+Data-path benchmarks should use the same loader and prepared-data path that
+training uses. Small debug or smoke runs may scale down record counts, shards,
+or steps, but they should not switch to a simplified data path that hides
+throughput or shape problems.
+
+LitData remains prior art, not a dependency in this milestone. Evaluate its
+ideas for chunked optimized storage, raw and optimized streaming, cache-size
+limits, compression, parallel data preparation, shared queues,
+distributed-aware streaming, and resumable dataloader state before choosing any
+concrete rphys storage format or optional adapter.
+```
+
+Execution optimization rules:
+
+```text
+BatchOps are the preferred path for avoiding Python-heavy per-sample transforms
+inside __getitem__ when batch-level, vectorized, or fused execution preserves
+the operation contract.
+
+Mixed precision, torch.compile, fused kernels, and backend-specific fast paths
+must be represented as explicit policies with fallback behavior, unsupported
+case diagnostics, and numerical/scientific equivalence expectations.
+
+Compile and precision policies must not hide dtype/device conversions,
+masking/alignment changes, or silent graph breaks that affect interpretation.
+
+Optimization order should normally be: remove offline work from training,
+improve prepared-data layout, batch/vectorize transforms, tune loader
+parallelism and prefetch, reduce padding/waste/variance, remove synchronization,
+improve device transfer, improve compute kernels/precision/compilation, scale
+devices, then introduce advanced distributed/sharded systems.
+
+Every optimization must be attached to a measured bottleneck. Data wait points
+to storage, workers, prefetch, or preprocessing; transfer time points to pinned
+memory, batch format, asynchronous copies, dtype, or size; forward/backward time
+points to kernels, precision, shapes, or batch size; optimizer time points to
+optimizer implementation or update frequency; checkpoint or validation time
+points to cadence, async writes, subsets, or separate evaluation paths.
+```
+
+Experiment tiers and restartability:
+
+```text
+Support fast experiment tiers through scale over the same data path: debug for
+code and shape errors, smoke for end-to-end training, signal for promising
+ideas, comparison for fair ablations, and full for final confirmation.
+
+Downstream projects or loom own experiment managers, cost dashboards, and
+workflow orchestration. rphys should expose enough typed profiles, prepared-data
+metadata, and tier-compatible selectors for those systems to compute
+cost-to-decision without adding a generic workflow runtime.
+
+Training systems should assume interruption. Prepared-data writes, shard
+generation, logging, checkpointing, and data iteration should support
+idempotency, atomic completion markers, partial-shard detection, artifact
+version pinning, deterministic splits, restart-safe logging, and resumable
+iteration.
+```
+
+Observability overhead rules:
+
+```text
+Normal training should avoid per-step blocking scalar extraction, printing,
+host copies, full validation, expensive logging, large artifact writing, and
+debug assertions over full batches. Aggregate, sample, or move expensive
+diagnostics to profiling runs when possible.
+```
+
+Definition of done:
+
+```text
+Synthetic CPU smoke profiles produce structured timing records without optional
+GPU, Lightning, logger, or profiler dependencies.
+Optional GPU/profile acceptance checks can report utilization, memory, and
+synchronized timings with explicit measurement overhead.
+Native Trainer and Lightning-backed execution share a provisional event schema.
+Data-path benchmarks report dataloader wait, cache hit/miss, materialization,
+streaming, queue wait, worker utilization, batch construction time, transform
+time, and throughput summaries without machine-specific CI thresholds.
+BatchOp tests cover equivalence, replay, provenance, masking, and failure
+behavior for optimized transforms.
+Batch planning tests cover cost metadata, bucketing, dynamic sizing, controlled
+shape variation, packing/padding policy, physical/effective batch size, and
+restartable iteration.
+Debug, smoke, signal, comparison, and full tiers can share the same prepared
+data and loader path while scaling data volume or step count.
+AMP, torch.compile, and fused-kernel pathways are documented as policies with
+fallback and diagnostic behavior.
+```
+
+## 24. Critical Path
 
 ```text
 M0 skeleton and governance
@@ -1679,9 +2070,10 @@ M0 skeleton and governance
               -> M12 learners/trainers
                 -> M13 prediction/evaluation/analysis/reports
                   -> M14 synthetic contract and smoke hardening
+                    -> M15 training performance profiling and data-path optimization
 
 M6 operation foundations
-  -> M7 SampleOps and pipelines
+  -> M7 SampleOps, BatchOps, and pipelines
     -> M8 export and derived DataSources
       -> M13 prediction/evaluation/analysis/reports
 ```
@@ -1691,7 +2083,7 @@ Testing support grows continuously after M1.
 Concrete datasources, codecs, algorithms, models, losses, metrics, and learners
 should wait until their public contract layer and synthetic tests are stable.
 
-## 24. First Vertical Slice
+## 25. First Vertical Slice
 
 The first complete vertical slice should be synthetic:
 
@@ -1713,7 +2105,7 @@ SyntheticDataSourceAdapter
 Success means the architecture composes without real data, concrete rPPG
 algorithms, trainers, workflow engines, or project configuration.
 
-## 25. Real Datasource Sequence
+## 26. Real Datasource Sequence
 
 After the synthetic flow works:
 
@@ -1731,7 +2123,7 @@ After the synthetic flow works:
 Do not start with a full preprocessing pipeline for a real datasource. First
 make it discoverable, referenceable, indexable, and lazily loadable.
 
-## 26. Deferred Decisions
+## 27. Deferred Decisions
 
 These should not block core implementation:
 
@@ -1750,7 +2142,10 @@ plugin discovery through Python entry points
 public testing-helper package
 advanced cache backends
 broad optimizer/scheduler factory library
-framework-specific distributed, accelerator, profiler, logger adapters
+concrete optimized training-data storage format
+optional LitData adapter or dependency
+advanced framework-specific distributed, accelerator, and logger adapters beyond
+the native profiling/event contracts and first-class Lightning event mapping
 project configuration systems, workflow engines, and CLIs
 worked examples and downstream template projects
 advanced publication/report generation
@@ -1759,12 +2154,14 @@ advanced UI/dashboard tooling
 
 The roadmap should leave room for these without freezing their APIs early.
 
-## 27. Anti-Patterns
+## 28. Anti-Patterns
 
 Do not:
 
 ```text
 let a Torch Dataset scan raw directories
+do raw parsing, disk metadata scans, format conversion, fixed normalization, or
+expensive validation inside the training loop when it can be done once
 put formatting under datasource adapters
 add a separate offline-output subsystem
 let IndexItem contain transforms or augmentations
@@ -1776,6 +2173,12 @@ put concrete algorithms into the base operation layer
 put optimizer, scheduler, checkpoint, distributed, profiler, or logger behavior
 inside Model or Method
 put learning-style logic inside Trainer
+hide training profiling exclusively inside a logger or callback when the Trainer
+can own the relevant timing span directly
+force CUDA synchronization or expensive utilization probes on the hot path
+without explicit opt-in profiling policy
+optimize for raw samples/sec, GPU utilization, or benchmark throughput without
+checking whether valid experiment decisions per unit cost improved
 put datasource logic inside Learner
 let Method, Learner, Trainer, Loss, Objective, or Metric write prediction
 artifacts implicitly
@@ -1783,12 +2186,19 @@ make Prediction objects waveform-only
 require users to edit rphys internals for extensions
 let visualization or analysis write ad hoc files from loaded attributes
 add implicit caches
+materialize optimized training data without shard/chunk manifests, source
+fingerprints, operation fingerprints, split/group metadata, and invalidation
+inputs
+keep Python-heavy per-sample transforms in __getitem__ when an equivalent
+BatchOp can preserve semantics, replay, provenance, and diagnostics
+use a separate simplified data path for debug or smoke tiers that hides
+throughput, batching, shape, or restartability failures from the real path
 introduce project-level configuration or workflow orchestration inside rphys
 add generic Stage, ArtifactRef, ArtifactContract, StageContext, BatchProgram, or
 universal BatchOperator APIs before concrete repeated library needs justify them
 ```
 
-## 28. Release Readiness Gates
+## 29. Release Readiness Gates
 
 Internal alpha:
 
@@ -1809,6 +2219,10 @@ Synthetic end-to-end library flow works without real data.
 SaveOp can export a derived DataSourceRef and reload it.
 Base Method, Loss, Objective, Metric, Learner, SupervisedLearner, and Trainer
 contracts have tests.
+Trainer profiling/event contracts and optional Lightning event mapping are
+documented as provisional extension points.
+Prepared training data manifest and batch-planning contracts are documented as
+provisional extension points.
 Dependency-boundary and public API checks pass.
 ```
 
@@ -1821,6 +2235,10 @@ Subject-disjoint split and index construction work.
 Export works for at least one common field format through codecs.
 Prediction fields can be exported, reloaded, grouped, and scored by metrics.
 Synthetic smoke pipeline runs in CI.
+Synthetic training profiles and data-path benchmark summaries can identify
+dataloader wait, cache behavior, and step timing without external data.
+Debug and smoke tiers use the same prepared-data and loader path as larger
+training tiers.
 ```
 
 Stable public API:
@@ -1833,9 +2251,13 @@ Public API/import-boundary checks pass.
 Optional dependency extras and import boundaries are documented and tested.
 Stable public API excludes undocumented deep helpers by default.
 Scientific edge-case coverage is documented.
+Performance profiling, optimized materialization, BatchOp, precision, compile,
+and fast-kernel contracts have documented failure and fallback behavior.
+Cost-to-decision metrics, restart/resume behavior, and strict cache
+invalidation are documented for training-facing contracts.
 ```
 
-## 29. Immediate Implementation Order
+## 30. Immediate Implementation Order
 
 Recommended next actions:
 
@@ -1853,21 +2275,31 @@ Recommended next actions:
 7. Implement synthetic DataSourceAdapter, view/filter/group/split builders,
    DataSourceIndex, and index manifest round trip.
 8. Implement Operation, SampleOp, SampleOpPipeline, deterministic context, and
-   augmentation replay.
+   augmentation replay; introduce provisional BatchOp contracts only after
+   Sample, Batch, and Operation behavior is stable.
 9. Implement SaveOp and derived DataSourceRef round trip.
-10. Implement index-backed Torch adapter and explicit local cache primitives.
+10. Implement index-backed Torch adapter, explicit local cache primitives, and
+    format-agnostic prepared-data manifests, access-pattern plans, and
+    cost-aware batch-planning metadata.
 11. Implement base Method/Model, Loss/Objective/Metric, Learner/Trainer, and
-    prediction/evaluation/analysis contracts.
+    prediction/evaluation/analysis contracts, including provisional
+    training-event and profiling contracts.
 12. Build the synthetic lazy-load-to-batch-to-export-to-reload smoke test.
+13. Harden training performance through M15 profiling, data-path benchmarks,
+    BatchOp optimization, AMP/compile/fused-kernel policies, and CPU-GPU sync
+    audits across debug, smoke, signal, comparison, and full tiers.
 ```
 
 This order proves the public object model before concrete research components
 arrive.
 
-## 30. Final Strategy
+## 31. Final Strategy
 
 Start with contracts, synthetic refs, lazy samples, and export round trips. Do
 not start with a real datasource, a model, a trainer, or a workflow system.
+Training-performance work should optimize valid experiment decisions per unit
+cost by shortening the critical path, moving deterministic work offline,
+batching runtime work, and measuring bottlenecks before adding complexity.
 
 The target architecture is:
 
@@ -1878,6 +2310,7 @@ operation pipeline and export round trip third
 index-backed framework adapter and explicit cache fourth
 method/loss/objective/metric/learner/trainer contracts fifth
 prediction-as-derived-datasource evaluation and analysis sixth
+training performance and optimized data-path hardening seventh
 real datasources and concrete research components later
 ```
 
