@@ -61,7 +61,21 @@ STAGE_1_DATA_MODULES = {
         "SPLIT",
         "SUBJECT_ID",
     ],
+    "rphys.data.schemas": ["SchemaName"],
     "rphys.data.splits": ["SplitName", "PREDICT", "TEST", "TRAIN", "VALID"],
+    "rphys.data.types": [
+        "DataType",
+        "ANNOTATION",
+        "EMBEDDING",
+        "LABEL",
+        "LANDMARKS",
+        "MASK",
+        "METADATA",
+        "QUALITY",
+        "SIGNAL",
+        "TIMESTAMPS",
+        "VIDEO",
+    ],
 }
 
 
