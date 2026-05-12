@@ -80,6 +80,8 @@ STAGE_1_DATA_MODULES = {
 }
 
 STAGE_2_DATA_EXPORTS = [
+    "CompositeDataObjectBase",
+    "DataObjectBase",
     "FieldSpec",
     "FieldValue",
 ]

@@ -26,6 +26,7 @@ LIGHTWEIGHT_IMPORTS = [
     "rphys.data.keys",
     "rphys.data.locators",
     "rphys.data.metadata",
+    "rphys.data.objects",
     "rphys.data.schemas",
     "rphys.data.splits",
     "rphys.data.types",
