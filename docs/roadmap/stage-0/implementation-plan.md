@@ -34,7 +34,7 @@ Blockers: none
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `core-skeleton-errors` | merged | `agent/stage-0-p1-core-skeleton-errors` | [#2](https://github.com/samcantrill/rphys/pull/2) | `src/rphys/**`, error unit tests, focused import tests | Add planned package homes and base error hierarchy. | `make test-package`, `make test-unit` | Namespace smoke path; structured base error diagnostics. |
 | 2 | `governance-guardrails` | merged | `agent/stage-0-p2-governance-guardrails` | [#3](https://github.com/samcantrill/rphys/pull/3) | `tests/package/**`, metadata/import-boundary checks | Make import, API, metadata, and no-runtime guardrails executable. | `make test-package`, `uv lock --check` | Lightweight import guardrail; private metadata guardrail; no-runtime boundary. |
-| 3 | `readme-final-validation` | pending | `agent/stage-0-p3-readme-final-validation` | pending | `README.md`, final validation evidence | Add compact README governance handoff and run final checks. | `make test-package`, `make test-unit`, `uv lock --check`, `git diff --check` | Balanced README handoff; final validation. |
+| 3 | `readme-final-validation` | in_progress | `agent/stage-0-p3-readme-final-validation` | pending | `README.md`, final validation evidence | Add compact README governance handoff and run final checks. | `make test-package`, `make test-unit`, `uv lock --check`, `git diff --check` | Balanced README handoff; final validation. |
 
 ## Implementation Readiness Blockers
 
@@ -183,7 +183,7 @@ Workflow path: fast path
 
 ## Phase 3: README Handoff And Final Validation
 
-Status: pending
+Status: in_progress
 Slug: `readme-final-validation`
 Branch: `agent/stage-0-p3-readme-final-validation`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-0-p3-readme-final-validation`
@@ -246,11 +246,11 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation:
-- Validation:
-- PR:
-- Merge:
-- Follow-up:
+- Implementation: updated `README.md` with compact Milestone 0 status, API/import governance, orchestration boundary, and current rights status.
+- Validation: `make test-package`, `make test-unit`, `uv lock --check`, `git diff --check`, `make test-summary`, and `make validate-pr` passed locally before PR preparation.
+- PR: pending.
+- Merge: pending.
+- Follow-up: keep README concise and defer detailed policy changes to `docs/roadmap.md`.
 
 ## Cross-Phase Validation
 
