@@ -5,7 +5,7 @@ Roadmap version: `v0`
 Planning document: `docs/roadmap/stage-0/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 2 pending
+Current phase: Phase 3 pending
 Blockers: none
 
 ## Summary
@@ -33,7 +33,7 @@ Blockers: none
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `core-skeleton-errors` | merged | `agent/stage-0-p1-core-skeleton-errors` | [#2](https://github.com/samcantrill/rphys/pull/2) | `src/rphys/**`, error unit tests, focused import tests | Add planned package homes and base error hierarchy. | `make test-package`, `make test-unit` | Namespace smoke path; structured base error diagnostics. |
-| 2 | `governance-guardrails` | pending | `agent/stage-0-p2-governance-guardrails` | pending | `tests/package/**`, metadata/import-boundary checks | Make import, API, metadata, and no-runtime guardrails executable. | `make test-package`, `uv lock --check` | Lightweight import guardrail; private metadata guardrail; no-runtime boundary. |
+| 2 | `governance-guardrails` | merged | `agent/stage-0-p2-governance-guardrails` | [#3](https://github.com/samcantrill/rphys/pull/3) | `tests/package/**`, metadata/import-boundary checks | Make import, API, metadata, and no-runtime guardrails executable. | `make test-package`, `uv lock --check` | Lightweight import guardrail; private metadata guardrail; no-runtime boundary. |
 | 3 | `readme-final-validation` | pending | `agent/stage-0-p3-readme-final-validation` | pending | `README.md`, final validation evidence | Add compact README governance handoff and run final checks. | `make test-package`, `make test-unit`, `uv lock --check`, `git diff --check` | Balanced README handoff; final validation. |
 
 ## Implementation Readiness Blockers
@@ -113,11 +113,11 @@ Workflow path: fast path
 
 ## Phase 2: Governance Guardrail Tests
 
-Status: pending
+Status: merged
 Slug: `governance-guardrails`
 Branch: `agent/stage-0-p2-governance-guardrails`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-0-p2-governance-guardrails`
-PR: pending
+PR: [#3](https://github.com/samcantrill/rphys/pull/3)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -175,11 +175,11 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation:
-- Validation:
-- PR:
-- Merge:
-- Follow-up:
+- Implementation: added fresh-interpreter optional-stack import checks, metadata/private-rights checks, `LICENSE` rights-status checks, and no workflow/artifact runtime negative checks.
+- Validation: `make test-package` passed; `uv lock --check` passed; `git diff --check` passed.
+- PR: [#3](https://github.com/samcantrill/rphys/pull/3), base `develop`, head `agent/stage-0-p2-governance-guardrails`.
+- Merge: squash-merged to `develop` at `c504d56` on 2026-05-12; GitHub reported no configured status checks.
+- Follow-up: Phase 3 should align README handoff and run final focused validation.
 
 ## Phase 3: README Handoff And Final Validation
 
