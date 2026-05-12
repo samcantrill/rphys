@@ -12,8 +12,9 @@ Follow these steps exactly:
 6. Explain what the roadmap section should do, why it exists, and what higher-level codebase capability it unlocks.
 7. Break included capabilities into a small set of concrete functional requirements.
 8. For each requirement, record what, why, scope, user-visible behavior, agent/system behavior, capability enabled, impact, out-of-scope behavior, validation idea, and recommended default.
-9. Update only `docs/roadmap/stage-<N>/planning.md`.
-10. Do not ask the maintainer questions and do not implement code.
+9. Classify each requirement as `recommended default`, `needs maintainer decision`, or `blocked`. Use `needs maintainer decision` only when there is a real ambiguous choice about product/scientific intent, public behavior, workflow semantics, downstream compatibility, scope, or acceptance criteria. If repository evidence clearly supports one option, record it as a recommended default and do not invent a question.
+10. Update only `docs/roadmap/stage-<N>/planning.md`.
+11. Do not ask the maintainer questions and do not implement code.
 
 Return:
 
@@ -22,5 +23,6 @@ Return:
 - Module behavior map summary.
 - Capability triage summary.
 - Functional requirements drafted.
-- Requirements that need maintainer decision.
+- Requirements recorded as recommended defaults.
+- Requirements that need maintainer decision, with the ambiguity and recommendation.
 - Risks and open questions.

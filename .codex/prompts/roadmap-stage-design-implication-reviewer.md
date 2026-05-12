@@ -17,9 +17,9 @@ Follow these steps exactly:
    - Is the abstraction too narrow, too broad, or premature?
    - What future refactor would this make expensive?
    - What failure mode would expose unclear semantics?
-6. Reclassify each decision as `auto-approved`, `recorded recommendation`, `needs maintainer discussion`, or `blocked`.
+6. Reclassify each decision as `auto-approved`, `recorded recommendation`, `needs maintainer discussion`, or `blocked`. Keep clear evidence-backed defaults as `recorded recommendation`; escalate to `needs maintainer discussion` only when an ambiguous choice, unresolved trade-off, public-contract impact, scientific/workflow judgment, downstream compatibility issue, or meaningful refactor risk requires maintainer judgment.
 7. Identify unclear contracts, accidental coupling, missing extension points, over-generalization, under-specified failure behavior, and decisions that conflict with rphys architecture.
-8. Recommend concrete revisions or discussion packets for the managing agent.
+8. Recommend concrete revisions and only the discussion packets that require maintainer judgment.
 9. Update only `docs/roadmap/stage-<N>/planning.md`, especially `Design Decision Triage`, `Design Implication Review`, and affected design rows.
 10. Do not implement code.
 
@@ -30,5 +30,5 @@ Return:
 - Blockers or major concerns.
 - Auto-approved decisions upheld or overturned.
 - Recommended design revisions.
-- Design packets that need maintainer discussion.
+- Design packets that need maintainer discussion, with the ambiguity and recommendation.
 - Residual risks.
