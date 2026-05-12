@@ -80,10 +80,14 @@ STAGE_1_DATA_MODULES = {
 }
 
 STAGE_2_DATA_EXPORTS = [
+    "Batch",
     "CompositeDataObjectBase",
     "DataObjectBase",
+    "FieldRequirement",
     "FieldSpec",
     "FieldValue",
+    "Sample",
+    "SampleContract",
 ]
 
 STAGE_2_ERROR_NAMES = [
