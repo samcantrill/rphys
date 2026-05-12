@@ -16,17 +16,53 @@ uv run pytest
 Useful wrappers:
 
 ```bash
+make setup-help
+make dev-help
+make test-help
 make sync
 make lock-check
 make test
+make test-summary
+make validate-pr
 make check
 ```
+
+## Testing Structure
+
+Tests are grouped by intent. See `tests/README.md` for the full structure.
+
+- `tests/package`: package import, public API, metadata, and import-boundary
+  tests.
+- `tests/unit/rphys`: source-mirrored tests for isolated code under
+  `src/rphys`.
+- `tests/contracts`: executable public contracts for extension points and
+  scientific semantics.
+- `tests/integration`: tests that combine multiple `rphys` components using
+  synthetic or tiny license-safe fixtures.
+- `tests/e2e`: full behavior tests through public APIs.
+- `tests/acceptance`: optional real-dataset, hardware, GPU, network, or
+  long-running checks excluded from default validation.
+- `tests/support`: trusted test-only helpers, fixtures, and synthetic
+  generators; not a runnable suite by itself.
+
+Use `make test-package`, `make test-unit`, `make test-contract`,
+`make test-integration`, `make test-e2e`, and `make test-acceptance` for focused
+suite runs. `make test` runs the default local suite and excludes tests marked
+`slow`, `network`, `optional_dependency`, or `acceptance`.
+
+Test execution and summary reporting are implemented in `tools/test_harness`.
+Summary targets write Markdown reports and supporting artifacts under
+`build/test-summary/`; use these reports as validation evidence in PR bodies.
+
+Make targets are split by concern under `make/setup`, `make/dev`, and
+`make/test`. Keep new targets in the relevant included file rather than growing
+the root `Makefile`.
 
 ## Public Contracts
 
 Public behavior needs code, docs, and tests before downstream projects rely on
-it. Use the stability labels in `docs/rphys_implementation_roadmap.md`: stable,
-provisional, and private/internal.
+it. Use the stability labels in `docs/roadmap.md`: stable, provisional, and
+private/internal.
 
 Do not add placeholder public modules, classes, registries, or re-exports just
 to reserve future names. Future areas such as methods, models, training, losses,
