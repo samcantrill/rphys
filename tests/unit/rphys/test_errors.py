@@ -33,6 +33,13 @@ STAGE_1_ERROR_NAMES = [
     "InvalidSplitNameError",
 ]
 
+STAGE_2_ERROR_NAMES = [
+    "CollatePolicyError",
+    "FieldSchemaError",
+    "FieldTypeError",
+    "MissingFieldError",
+]
+
 
 def test_remote_phys_error_preserves_message_args_and_context() -> None:
     exc = errors.RemotePhysError(
@@ -85,6 +92,11 @@ def test_stage_1_errors_are_exported() -> None:
         assert error_name in errors.__all__
 
 
+def test_stage_2_runtime_errors_are_exported() -> None:
+    for error_name in STAGE_2_ERROR_NAMES:
+        assert error_name in errors.__all__
+
+
 @pytest.mark.parametrize("error_name", STAGE_1_ERROR_NAMES)
 def test_stage_1_errors_preserve_base_message_and_context(error_name: str) -> None:
     error_type = getattr(errors, error_name)
@@ -111,6 +123,16 @@ def test_stage_1_errors_map_to_broad_categories() -> None:
     assert issubclass(errors.InvalidSplitNameError, errors.RemotePhysDataSourceError)
 
 
+def test_stage_2_errors_map_to_runtime_categories() -> None:
+    assert issubclass(errors.MissingFieldError, errors.RemotePhysFieldError)
+    assert issubclass(errors.MissingFieldError, errors.RemotePhysDataError)
+    assert issubclass(errors.FieldTypeError, errors.RemotePhysFieldError)
+    assert issubclass(errors.FieldTypeError, errors.RemotePhysDataError)
+    assert issubclass(errors.FieldSchemaError, errors.RemotePhysFieldError)
+    assert issubclass(errors.FieldSchemaError, errors.RemotePhysDataError)
+    assert issubclass(errors.CollatePolicyError, errors.RemotePhysCollateError)
+
+
 def test_deferred_runtime_errors_are_not_defined() -> None:
     assert not hasattr(errors, "MissingMetadataError")
-    assert not hasattr(errors, "FieldSchemaError")
+    assert not hasattr(errors, "ShapeMismatchError")

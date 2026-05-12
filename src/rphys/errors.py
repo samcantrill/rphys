@@ -10,6 +10,10 @@ __all__ = [
     "InvalidMetadataKeyError",
     "InvalidSchemaNameError",
     "InvalidSplitNameError",
+    "CollatePolicyError",
+    "FieldSchemaError",
+    "FieldTypeError",
+    "MissingFieldError",
     "RemotePhysAnalysisError",
     "RemotePhysCodecError",
     "RemotePhysCollateError",
@@ -129,3 +133,19 @@ class InvalidMetadataKeyError(RemotePhysMetadataError, RemotePhysNameError):
 
 class InvalidSplitNameError(RemotePhysNameError, RemotePhysDataSourceError):
     """Raised when a split label violates the split-name grammar."""
+
+
+class MissingFieldError(RemotePhysFieldError, RemotePhysDataError):
+    """Raised when a runtime field container lacks a required field."""
+
+
+class FieldTypeError(RemotePhysFieldError, RemotePhysDataError):
+    """Raised when a runtime field payload or declaration has the wrong type."""
+
+
+class FieldSchemaError(RemotePhysFieldError, RemotePhysDataError):
+    """Raised when a runtime field schema does not match a requirement."""
+
+
+class CollatePolicyError(RemotePhysCollateError):
+    """Raised when runtime collation cannot apply the requested policy."""

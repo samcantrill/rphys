@@ -79,6 +79,18 @@ STAGE_1_DATA_MODULES = {
     ],
 }
 
+STAGE_2_DATA_EXPORTS = [
+    "FieldSpec",
+    "FieldValue",
+]
+
+STAGE_2_ERROR_NAMES = [
+    "CollatePolicyError",
+    "FieldSchemaError",
+    "FieldTypeError",
+    "MissingFieldError",
+]
+
 
 def test_import_rphys() -> None:
     import rphys
@@ -87,8 +99,10 @@ def test_import_rphys() -> None:
     assert rphys.__all__ == []
 
 
-def test_planned_package_homes_import_with_empty_public_surfaces() -> None:
+def test_deferred_package_homes_import_with_empty_public_surfaces() -> None:
     for package_name in PLANNED_PACKAGE_NAMES:
+        if package_name == "rphys.data":
+            continue
         package = importlib.import_module(package_name)
 
         assert package.__doc__
@@ -101,6 +115,7 @@ def test_errors_import_and_expose_approved_error_categories() -> None:
     assert errors.__all__ == [
         "RemotePhysError",
         *STAGE_1_ERROR_NAMES,
+        *STAGE_2_ERROR_NAMES,
         *BROAD_ERROR_NAMES,
     ]
 
@@ -136,3 +151,11 @@ def test_data_package_does_not_reexport_stage_1_vocabulary() -> None:
         name for expected_all in STAGE_1_DATA_MODULES.values() for name in expected_all
     }:
         assert not hasattr(rphys.data, public_name)
+
+
+def test_data_package_reexports_only_code_backed_stage_2_runtime_names() -> None:
+    import rphys.data
+
+    assert rphys.data.__all__ == STAGE_2_DATA_EXPORTS
+    for public_name in STAGE_2_DATA_EXPORTS:
+        assert hasattr(rphys.data, public_name)
