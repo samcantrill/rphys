@@ -1,11 +1,11 @@
 # Roadmap Stage 2 Implementation Plan
 
-Status: approved for execution
+Status: implementation PR sequence in progress
 Roadmap version: `v2`
 Planning document: `docs/roadmap/stage-2/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: pending
+Current phase: Phase 5 runtime-core hardening
 Blockers: none
 
 ## Summary
@@ -21,9 +21,9 @@ Blockers: none
 ## Implementation Workflow State
 
 - Implementation-plan quality gate: approved
-- Review pass: pending
-- Refinement pass: pending
-- Confirmation review: pending
+- Review pass: completed during planning; no blocking finding remains.
+- Refinement pass: not required.
+- Confirmation review: completed by accepted implementation-plan baseline.
 - Automatic merge mode: enabled
 - Worktree root: `/home/samcantrill/work/rphys-worktrees`
 - Phase status vocabulary: `pending`, `in_progress`, `pr_open`, `approved`, `merged`, `blocked`
@@ -32,11 +32,11 @@ Blockers: none
 
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `runtime-fields-errors` | pending | `agent/stage-2-p1-runtime-fields-errors` | pending | `rphys.errors`, `rphys.data.fields`, `rphys.data.__init__`, unit/package/contract seeds | Add Stage 2 runtime errors, `FieldSpec`, and `FieldValue` | Unit, package, contract seed, `git diff --check` | Loaded video field and identity-safe payload wrapper |
-| 2 | `data-object-base` | pending | `agent/stage-2-p2-data-object-base` | pending | `rphys.data.objects`, focused unit tests | Add backend-free `DataObjectBase` and `CompositeDataObjectBase` hooks | Unit, package import boundary | Synthetic tensor-like leaf and child-object traversal |
-| 3 | `sample-batch-contracts` | pending | `agent/stage-2-p3-sample-batch-contracts` | pending | `rphys.data.containers`, `rphys.data.contracts`, unit/contract tests | Add `Sample`, `Batch`, `FieldRequirement`, and `SampleContract` | Unit, contract, package | BVP target access and sample validation |
-| 4 | `list-collation` | pending | `agent/stage-2-p4-list-collation` | pending | `rphys.data.collation`, collation unit/contract/integration tests | Add `CollatePolicy.LIST`, `CollateContext`, and `collate_samples` | Unit, contract, integration if useful | Homogeneous sample collation and unsupported policy rejection |
-| 5 | `runtime-core-hardening` | pending | `agent/stage-2-p5-runtime-core-hardening` | pending | package tests, contract tests, docs/docstrings, cross-phase fixes | Finalize public runtime surface and validation evidence | `make test-unit`, `make test-package`, `make test-contract`, optional integration, `uv lock --check`, `git diff --check` | Full Stage 2 public contract |
+| 1 | `runtime-fields-errors` | merged | `agent/stage-2-p1-runtime-fields-errors` | [#10](https://github.com/samcantrill/rphys/pull/10) | `rphys.errors`, `rphys.data.fields`, `rphys.data.__init__`, unit/package/contract seeds | Add Stage 2 runtime errors, `FieldSpec`, and `FieldValue` | Unit, package, contract seed, `git diff --check` | Loaded video field and identity-safe payload wrapper |
+| 2 | `data-object-base` | merged | `agent/stage-2-p2-data-object-base` | [#11](https://github.com/samcantrill/rphys/pull/11) | `rphys.data.objects`, focused unit tests | Add backend-free `DataObjectBase` and `CompositeDataObjectBase` hooks | Unit, package import boundary | Synthetic tensor-like leaf and child-object traversal |
+| 3 | `sample-batch-contracts` | merged | `agent/stage-2-p3-sample-batch-contracts` | [#12](https://github.com/samcantrill/rphys/pull/12) | `rphys.data.containers`, `rphys.data.contracts`, unit/contract tests | Add `Sample`, `Batch`, `FieldRequirement`, and `SampleContract` | Unit, contract, package | BVP target access and sample validation |
+| 4 | `list-collation` | merged | `agent/stage-2-p4-list-collation` | [#13](https://github.com/samcantrill/rphys/pull/13) | `rphys.data.collation`, collation unit/contract/integration tests | Add `CollatePolicy.LIST`, `CollateContext`, and `collate_samples` | Unit, contract, integration if useful | Homogeneous sample collation and unsupported policy rejection |
+| 5 | `runtime-core-hardening` | pr_open | `agent/stage-2-p5-runtime-core-hardening` | [#14](https://github.com/samcantrill/rphys/pull/14) | package tests, contract tests, docs/docstrings, cross-phase fixes | Finalize public runtime surface and validation evidence | `make test-unit`, `make test-package`, `make test-contract`, optional integration, `uv lock --check`, `git diff --check` | Full Stage 2 public contract |
 
 ## Implementation Readiness Blockers
 
@@ -47,11 +47,11 @@ Blockers: none
 
 ## Phase 1: Runtime Fields And Errors
 
-Status: pending
+Status: merged
 Slug: `runtime-fields-errors`
 Branch: `agent/stage-2-p1-runtime-fields-errors`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-2-p1-runtime-fields-errors`
-PR: pending
+PR: [#10](https://github.com/samcantrill/rphys/pull/10)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -93,13 +93,13 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: covered by approved implementation plan and Phase 1 PR body.
 - Planning/refinement budget: standard
 - Implementation/refinement budget: standard
 - PR review budget: standard
 - Blocker-resolution budget: return to planning if `rphys.data` export policy or field wrapper semantics change.
 - Pre-submit blocker gate: no optional dependencies, no serialization contract, no rich schema fields.
-- Merge record: pending
+- Merge record: PR [#10](https://github.com/samcantrill/rphys/pull/10), squash merge `8a9c040`.
 
 ### Risks And Stop Conditions
 
@@ -109,19 +109,19 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: complete; added Stage 2 typed runtime errors, `FieldSpec`, `FieldValue`, and initial code-backed `rphys.data` exports.
+- Validation: `make test-unit`, `make test-package`, `make validate-pr`, and `git diff --check` passed in the phase worktree.
+- PR: [#10](https://github.com/samcantrill/rphys/pull/10).
+- Merge: squash merged to `develop` as `8a9c040`.
+- Follow-up: none for Phase 1 scope.
 
 ## Phase 2: Data Object Bases
 
-Status: pending
+Status: merged
 Slug: `data-object-base`
 Branch: `agent/stage-2-p2-data-object-base`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-2-p2-data-object-base`
-PR: pending
+PR: [#11](https://github.com/samcantrill/rphys/pull/11)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -162,13 +162,13 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: covered by approved implementation plan and Phase 2 PR body.
 - Planning/refinement budget: standard
 - Implementation/refinement budget: standard
 - PR review budget: standard
 - Blocker-resolution budget: return to planning if concrete payload behavior or base-level scientific alignment validation is needed.
 - Pre-submit blocker gate: no optional backend imports, registry hooks, arbitrary attribute walking, sibling-field links, parent-sample links, or alignment validation.
-- Merge record: pending
+- Merge record: PR [#11](https://github.com/samcantrill/rphys/pull/11), squash merge `13c3cae`.
 
 ### Risks And Stop Conditions
 
@@ -178,19 +178,19 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: complete; added backend-free `DataObjectBase` and `CompositeDataObjectBase` with declared tensor and child traversal.
+- Validation: `make test-unit`, `make test-package`, `make validate-pr`, and `git diff --check` passed in the phase worktree.
+- PR: [#11](https://github.com/samcantrill/rphys/pull/11).
+- Merge: squash merged to `develop` as `13c3cae`.
+- Follow-up: none for Phase 2 scope.
 
 ## Phase 3: Sample, Batch, And SampleContract
 
-Status: pending
+Status: merged
 Slug: `sample-batch-contracts`
 Branch: `agent/stage-2-p3-sample-batch-contracts`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-2-p3-sample-batch-contracts`
-PR: pending
+PR: [#12](https://github.com/samcantrill/rphys/pull/12)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -231,13 +231,13 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: covered by approved implementation plan and Phase 3 PR body.
 - Planning/refinement budget: standard
 - Implementation/refinement budget: standard
 - PR review budget: standard
 - Blocker-resolution budget: return to planning if approved accessor return shapes or contract declaration shapes need redesign.
 - Pre-submit blocker gate: no collation behavior, no IO refs, no rich scientific schema checks.
-- Merge record: pending
+- Merge record: PR [#12](https://github.com/samcantrill/rphys/pull/12), squash merge `456d150`.
 
 ### Risks And Stop Conditions
 
@@ -247,19 +247,19 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: complete; added `Sample`, `Batch`, private field-entry storage, read-only role views, `FieldRequirement`, and `SampleContract`.
+- Validation: `make test-unit`, `make test-contract`, `make test-package`, `make validate-pr`, and `git diff --check` passed in the phase worktree.
+- PR: [#12](https://github.com/samcantrill/rphys/pull/12).
+- Merge: squash merged to `develop` as `456d150`.
+- Follow-up: none for Phase 3 scope.
 
 ## Phase 4: LIST Collation
 
-Status: pending
+Status: merged
 Slug: `list-collation`
 Branch: `agent/stage-2-p4-list-collation`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-2-p4-list-collation`
-PR: pending
+PR: [#13](https://github.com/samcantrill/rphys/pull/13)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -301,13 +301,13 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: covered by approved implementation plan and Phase 4 PR body.
 - Planning/refinement budget: standard
 - Implementation/refinement budget: standard
 - PR review budget: standard
 - Blocker-resolution budget: return to planning if metadata collation semantics are rejected.
 - Pre-submit blocker gate: no stack/pad/missing/custom policy implementation.
-- Merge record: pending
+- Merge record: PR [#13](https://github.com/samcantrill/rphys/pull/13), squash merge `f9fd766`.
 
 ### Risks And Stop Conditions
 
@@ -317,19 +317,19 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: complete; added `CollatePolicy.LIST`, minimal `CollateContext`, LIST-only `collate_samples`, missing-aware metadata rendering, contract coverage, and a narrow integration test.
+- Validation: `make test-unit`, `make test-contract`, `make test-integration`, `make test-package`, `make validate-pr`, and `git diff --check` passed in the phase worktree.
+- PR: [#13](https://github.com/samcantrill/rphys/pull/13).
+- Merge: squash merged to `develop` as `f9fd766`.
+- Follow-up: none for Phase 4 scope.
 
 ## Phase 5: Runtime Core Hardening
 
-Status: pending
+Status: in_progress
 Slug: `runtime-core-hardening`
 Branch: `agent/stage-2-p5-runtime-core-hardening`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-2-p5-runtime-core-hardening`
-PR: pending
+PR: [#14](https://github.com/samcantrill/rphys/pull/14)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -372,13 +372,13 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: covered by approved implementation plan and this hardening PR.
 - Planning/refinement budget: standard
 - Implementation/refinement budget: standard
 - PR review budget: standard
 - Blocker-resolution budget: return to planning for public-surface changes outside approved baseline.
 - Pre-submit blocker gate: no unapproved new behavior.
-- Merge record: pending
+- Merge record: pending Phase 5 PR merge.
 
 ### Risks And Stop Conditions
 
@@ -388,11 +388,11 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: in progress; records phase PR sequence, validates final public runtime surface, and preserves scope deferrals.
+- Validation: `make test-unit`, `make test-package`, `make test-contract`, `make test-integration`, `make validate-pr`, and `git diff --check` passed in the phase worktree.
+- PR: [#14](https://github.com/samcantrill/rphys/pull/14).
+- Merge: pending.
+- Follow-up: pending final validation.
 
 ## Cross-Phase Validation
 
@@ -401,6 +401,29 @@ Workflow path: fast path
 - Scientific/workflow contract checks: verify no IO refs, datasource scanning, operation/model/training behavior, workflow/artifact runtime, stack/pad collation, or optional backend import enters `rphys.data`.
 - Example/demo checks: loaded field example, sample target access, sample contract validation, LIST collation, rejected implicit collation, synthetic data-object traversal, and synthetic composite data-object traversal.
 - Manual review focus: public import surface, copy/equality semantics, typed diagnostics context, metadata collation behavior, and deferral boundaries.
+
+## Implementation Completion Evidence
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Phase 1 PR | merged | [#10](https://github.com/samcantrill/rphys/pull/10), squash merge `8a9c040` |
+| Phase 2 PR | merged | [#11](https://github.com/samcantrill/rphys/pull/11), squash merge `13c3cae` |
+| Phase 3 PR | merged | [#12](https://github.com/samcantrill/rphys/pull/12), squash merge `456d150` |
+| Phase 4 PR | merged | [#13](https://github.com/samcantrill/rphys/pull/13), squash merge `f9fd766` |
+| Phase 5 PR | open | [#14](https://github.com/samcantrill/rphys/pull/14), `agent/stage-2-p5-runtime-core-hardening` |
+| `make test-unit` | passed | 186 passed |
+| `make test-package` | passed | 13 passed |
+| `make test-contract` | passed | 12 passed |
+| `make test-integration` | passed | 1 passed |
+| `uv lock --check` | passed | included in `make validate-pr` |
+| `make validate-pr` | passed | summary generation, build, and diff check completed |
+| `git diff --check` | passed | no whitespace errors |
+
+Notes:
+
+- Phases 1 through 4 were implemented in dedicated worktrees and merged through separate PRs to `develop`.
+- Phase 5 records the final phase evidence and reran the full Stage 2 validation gate.
+- No optional backend, IO, datasource, operation, model, training, serialization, stack, or pad behavior was added.
 
 ## Implementation Plan Review
 
