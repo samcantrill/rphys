@@ -52,6 +52,7 @@ STAGE_1_ERROR_NAMES = [
 
 STAGE_1_DATA_MODULES = {
     "rphys.data.keys": ["DataKey", "RESERVED_NAMESPACES"],
+    "rphys.data.locators": ["FieldLocator", "FieldRole"],
     "rphys.data.metadata": [
         "MetadataKey",
         "GROUP",
