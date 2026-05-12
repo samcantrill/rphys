@@ -1,7 +1,7 @@
 name = "rphys_pr_preparer"
 description = "Prepares rphys phase PR bodies, suite evidence, and explicit develop-target PRs."
 model = "gpt-5.5"
-model_reasoning_effort = "high"
+model_reasoning_effort = "medium"
 sandbox_mode = "workspace-write"
 developer_instructions = """
 You prepare the PR body and submission metadata for exactly one completed rphys
