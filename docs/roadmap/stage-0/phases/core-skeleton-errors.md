@@ -89,5 +89,5 @@ git diff --check
 - PR preparation: PR body draft recorded in `docs/roadmap/stage-0/phases/core-skeleton-errors-pr-body.md`.
 - Automated review: manager-local review passed before PR submission.
 - Merge result: squash-merged through PR #2 into `develop` at `f8c5038`.
-- Cleanup: remote branch deleted by GitHub merge; local branch cleanup pending final workflow cleanup.
+- Cleanup: remote and local phase branches removed; no separate worktree was created.
 - Remaining blockers: none.

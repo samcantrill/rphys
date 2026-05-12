@@ -89,13 +89,13 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: recorded in `docs/roadmap/stage-0/phases/core-skeleton-errors.md`
 - Planning/refinement budget: one focused pass
 - Implementation/refinement budget: one implementation pass plus one blocker-fix pass if tests expose gaps
 - PR review budget: one review pass
 - Blocker-resolution budget: stop for maintainer input if package homes or public error names need redesign
 - Pre-submit blocker gate: package/unit tests pass
-- Merge record: pending
+- Merge record: recorded in `docs/roadmap/stage-0/phases/core-skeleton-errors-merge-record.md`
 
 ### Risks And Stop Conditions
 
@@ -159,13 +159,13 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: recorded in `docs/roadmap/stage-0/phases/governance-guardrails.md`
 - Planning/refinement budget: one focused pass
 - Implementation/refinement budget: one implementation pass plus one blocker-fix pass if isolation checks are brittle
 - PR review budget: one review pass
 - Blocker-resolution budget: stop for maintainer input if metadata policy must change
 - Pre-submit blocker gate: package tests and lock check pass
-- Merge record: pending
+- Merge record: recorded in `docs/roadmap/stage-0/phases/governance-guardrails-merge-record.md`
 
 ### Risks And Stop Conditions
 
@@ -230,7 +230,7 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: recorded in `docs/roadmap/stage-0/phases/readme-final-validation.md`
 - Planning/refinement budget: one focused pass
 - Implementation/refinement budget: one docs/final-validation pass plus one blocker-fix pass if checks fail
 - PR review budget: one review pass
