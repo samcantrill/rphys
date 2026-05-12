@@ -10,15 +10,15 @@
 - Merge result: merged
 - Merge commit: `eaf9c62`
 - Branch cleanup: remote branch deleted by GitHub merge
-- Worktree cleanup: no separate phase worktree was created; local branch cleanup pending final workflow cleanup
+- Worktree cleanup: no separate phase worktree was created
 
 ## Completion Summary
 
-- Behavior implemented: README handoff for Stage 0 status, public API governance, lightweight imports, orchestration boundary, and current rights status.
+- Behavior implemented: README handoff for Milestone 0 status, canonical roadmap policy, API stability, lightweight imports, rights status, and orchestration boundary.
 - Tests and validation: `make test-package`, `make test-unit`, `uv lock --check`, `git diff --check`, `make test-summary`, and `make validate-pr` passed before PR submission.
-- Documentation: phase execution plan and PR body were added under `docs/roadmap/stage-0/phases/`.
+- Documentation: README and phase execution/PR artifacts were updated.
 - Scientific contract implications: no scientific operation, data contract, sampling, alignment, masking, filtering, normalization, aggregation, or leakage behavior was introduced.
-- Follow-up notes for later phases: Stage 0 is complete; Milestone 1 can start from the naming, locator, schema, metadata, and error contracts.
+- Follow-up notes for later phases: keep detailed policy in `docs/roadmap.md`; update README and guardrails deliberately when license or dependency policy changes.
 
 ## Implementation Plan Update
 
@@ -26,4 +26,4 @@
 - Completion summary recorded: yes
 - Validation evidence recorded: yes
 - Remaining blockers: none
-- Metadata commit: pending
+- Metadata commit: final Stage 0 metadata commit after PR #4

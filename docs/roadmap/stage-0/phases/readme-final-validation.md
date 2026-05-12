@@ -90,6 +90,6 @@ make validate-pr
 - Pre-submit blocker gate: passed; no scope, validation, or scientific-contract blockers found.
 - PR preparation: PR body draft recorded in `docs/roadmap/stage-0/phases/readme-final-validation-pr-body.md`.
 - Automated review: manager-local review passed before PR submission.
-- Merge result: pending.
-- Cleanup: pending.
+- Merge result: squash-merged through PR #4 into `develop` at `eaf9c62`.
+- Cleanup: remote branch deleted by GitHub merge; no separate worktree was created.
 - Remaining blockers: none.
