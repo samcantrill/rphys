@@ -5,7 +5,7 @@ Roadmap version: `v0`
 Planning document: `docs/roadmap/stage-0/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 3 pending
+Current phase: complete
 Blockers: none
 
 ## Summary
@@ -34,7 +34,7 @@ Blockers: none
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `core-skeleton-errors` | merged | `agent/stage-0-p1-core-skeleton-errors` | [#2](https://github.com/samcantrill/rphys/pull/2) | `src/rphys/**`, error unit tests, focused import tests | Add planned package homes and base error hierarchy. | `make test-package`, `make test-unit` | Namespace smoke path; structured base error diagnostics. |
 | 2 | `governance-guardrails` | merged | `agent/stage-0-p2-governance-guardrails` | [#3](https://github.com/samcantrill/rphys/pull/3) | `tests/package/**`, metadata/import-boundary checks | Make import, API, metadata, and no-runtime guardrails executable. | `make test-package`, `uv lock --check` | Lightweight import guardrail; private metadata guardrail; no-runtime boundary. |
-| 3 | `readme-final-validation` | in_progress | `agent/stage-0-p3-readme-final-validation` | pending | `README.md`, final validation evidence | Add compact README governance handoff and run final checks. | `make test-package`, `make test-unit`, `uv lock --check`, `git diff --check` | Balanced README handoff; final validation. |
+| 3 | `readme-final-validation` | merged | `agent/stage-0-p3-readme-final-validation` | [#4](https://github.com/samcantrill/rphys/pull/4) | `README.md`, final validation evidence | Add compact README governance handoff and run final checks. | `make test-package`, `make test-unit`, `uv lock --check`, `git diff --check` | Balanced README handoff; final validation. |
 
 ## Implementation Readiness Blockers
 
@@ -183,11 +183,11 @@ Workflow path: fast path
 
 ## Phase 3: README Handoff And Final Validation
 
-Status: in_progress
+Status: merged
 Slug: `readme-final-validation`
 Branch: `agent/stage-0-p3-readme-final-validation`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-0-p3-readme-final-validation`
-PR: pending
+PR: [#4](https://github.com/samcantrill/rphys/pull/4)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -236,7 +236,7 @@ Workflow path: fast path
 - PR review budget: one review pass
 - Blocker-resolution budget: stop for maintainer input if README needs to duplicate or change roadmap policy
 - Pre-submit blocker gate: required final checks pass or residual risks are recorded
-- Merge record: pending
+- Merge record: recorded in `docs/roadmap/stage-0/phases/readme-final-validation-merge-record.md`
 
 ### Risks And Stop Conditions
 
@@ -248,8 +248,8 @@ Workflow path: fast path
 
 - Implementation: updated `README.md` with compact Milestone 0 status, API/import governance, orchestration boundary, and current rights status.
 - Validation: `make test-package`, `make test-unit`, `uv lock --check`, `git diff --check`, `make test-summary`, and `make validate-pr` passed locally before PR preparation.
-- PR: pending.
-- Merge: pending.
+- PR: [#4](https://github.com/samcantrill/rphys/pull/4), base `develop`, head `agent/stage-0-p3-readme-final-validation`.
+- Merge: squash-merged to `develop` at `eaf9c62` on 2026-05-12; GitHub reported no configured status checks.
 - Follow-up: keep README concise and defer detailed policy changes to `docs/roadmap.md`.
 
 ## Cross-Phase Validation
