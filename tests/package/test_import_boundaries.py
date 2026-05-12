@@ -95,3 +95,36 @@ def test_rphys_does_not_define_generic_workflow_or_artifact_runtime_packages() -
 
     for package_name in forbidden_packages:
         assert importlib.util.find_spec(package_name) is None
+
+
+def test_deferred_packages_do_not_define_duplicate_vocabulary_surfaces() -> None:
+    deferred_packages = [
+        "rphys.analysis",
+        "rphys.datasources",
+        "rphys.evaluation",
+        "rphys.io",
+        "rphys.learning",
+        "rphys.losses",
+        "rphys.methods",
+        "rphys.metrics",
+        "rphys.models",
+        "rphys.nn",
+        "rphys.objectives",
+        "rphys.ops",
+        "rphys.prediction",
+        "rphys.training",
+    ]
+    vocabulary_names = [
+        "DataKey",
+        "FieldLocator",
+        "FieldRole",
+        "SchemaName",
+        "DataType",
+        "MetadataKey",
+        "SplitName",
+    ]
+
+    for package_name in deferred_packages:
+        package = __import__(package_name, fromlist=["__all__"])
+        for vocabulary_name in vocabulary_names:
+            assert not hasattr(package, vocabulary_name)
