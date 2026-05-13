@@ -5,7 +5,7 @@ Roadmap version: `v3`
 Planning document: `docs/roadmap/stage-3/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 3 pending
+Current phase: Phase 4 pending
 Blockers: none
 
 ## Summary
@@ -59,7 +59,7 @@ Readiness result: passed. No implementation readiness blocker prevents phase cre
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `public-surface-errors` | merged | `agent/stage-3-p1-public-surface-errors` | [#16](https://github.com/samcantrill/rphys/pull/16) | `rphys.errors`, package import-boundary expectations, package/error tests | Establish typed diagnostics and public-surface guardrails | `make test-package`; focused error unit tests; `git diff --check` | EX-5 coupling/import exclusions |
 | 2 | `io-descriptors-indexes` | merged | `agent/stage-3-p2-io-descriptors-indexes` | [#17](https://github.com/samcantrill/rphys/pull/17) | `src/rphys/io/`, IO unit tests, IO contract examples | Implement resource, field, index, slice, and view descriptors | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-1, EX-4, EX-5 |
-| 3 | `datasource-refs-schemas` | pending | `agent/stage-3-p3-datasource-refs-schemas` | pending | datasource refs/schema modules and tests | Implement datasource provenance and declaration-only schema descriptors | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-2, EX-4, EX-5 |
+| 3 | `datasource-refs-schemas` | merged | `agent/stage-3-p3-datasource-refs-schemas` | [#18](https://github.com/samcantrill/rphys/pull/18) | datasource refs/schema modules and tests | Implement datasource provenance and declaration-only schema descriptors | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-2, EX-4, EX-5 |
 | 4 | `index-item-composition` | pending | `agent/stage-3-p4-index-item-composition` | pending | `src/rphys/datasources/index_items.py`, index-item tests, contract example updates | Implement role-qualified lazy item composition | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-3, EX-4, EX-5 |
 | 5 | `lazy-reference-hardening` | pending | `agent/stage-3-p5-lazy-reference-hardening` | pending | contract tests, docs/docstrings, package boundary checks, final validation evidence | Prove the full Stage 3 chain and exclusions | focused suites plus `make test`, `make test-summary`, `make validate-pr`, `uv lock --check`, `git diff --check` | EX-1 through EX-5 |
 
@@ -214,11 +214,11 @@ Workflow path: expanded path
 
 ## Phase 3: Datasource Refs And Schema Descriptors
 
-Status: pending
+Status: merged
 Slug: `datasource-refs-schemas`
 Branch: `agent/stage-3-p3-datasource-refs-schemas`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-3-p3-datasource-refs-schemas`
-PR: pending
+PR: [#18](https://github.com/samcantrill/rphys/pull/18)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -262,7 +262,7 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: complete in `docs/roadmap/stage-3/phases/datasource-refs-schemas.md`
 - Planning/refinement budget: standard
 - Implementation/refinement budget: standard
 - PR review budget: expanded because provenance and schema scope affect later datasource stages.
@@ -278,11 +278,11 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added `DataSourceRef`, `RecordRef`, and `DataSourceSchema`; added exercised datasource/schema/record errors; updated datasource package exports and unit/contract/package coverage.
+- Validation: `make test-unit`, `make test-contract`, `make test-package`, and `git diff --check` passed before PR submission.
+- PR: [#18](https://github.com/samcantrill/rphys/pull/18) opened against `develop`.
+- Merge: merged into `develop` as `d8c68f5` at 2026-05-13T06:04:57Z.
+- Follow-up: P4 owns `IndexItem`; later datasource stages own scans, filters, validation reports, manifests, fingerprints, expected/observed schema evidence, and stable identity.
 
 ## Phase 4: Role-Qualified IndexItem Composition
 
