@@ -1,11 +1,11 @@
 # Roadmap Stage 2 Implementation Plan
 
-Status: implementation PR sequence in progress
+Status: implemented
 Roadmap version: `v2`
 Planning document: `docs/roadmap/stage-2/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 5 runtime-core hardening
+Current phase: complete
 Blockers: none
 
 ## Summary
@@ -36,7 +36,7 @@ Blockers: none
 | 2 | `data-object-base` | merged | `agent/stage-2-p2-data-object-base` | [#11](https://github.com/samcantrill/rphys/pull/11) | `rphys.data.objects`, focused unit tests | Add backend-free `DataObjectBase` and `CompositeDataObjectBase` hooks | Unit, package import boundary | Synthetic tensor-like leaf and child-object traversal |
 | 3 | `sample-batch-contracts` | merged | `agent/stage-2-p3-sample-batch-contracts` | [#12](https://github.com/samcantrill/rphys/pull/12) | `rphys.data.containers`, `rphys.data.contracts`, unit/contract tests | Add `Sample`, `Batch`, `FieldRequirement`, and `SampleContract` | Unit, contract, package | BVP target access and sample validation |
 | 4 | `list-collation` | merged | `agent/stage-2-p4-list-collation` | [#13](https://github.com/samcantrill/rphys/pull/13) | `rphys.data.collation`, collation unit/contract/integration tests | Add `CollatePolicy.LIST`, `CollateContext`, and `collate_samples` | Unit, contract, integration if useful | Homogeneous sample collation and unsupported policy rejection |
-| 5 | `runtime-core-hardening` | pr_open | `agent/stage-2-p5-runtime-core-hardening` | [#14](https://github.com/samcantrill/rphys/pull/14) | package tests, contract tests, docs/docstrings, cross-phase fixes | Finalize public runtime surface and validation evidence | `make test-unit`, `make test-package`, `make test-contract`, optional integration, `uv lock --check`, `git diff --check` | Full Stage 2 public contract |
+| 5 | `runtime-core-hardening` | merged | `agent/stage-2-p5-runtime-core-hardening` | [#14](https://github.com/samcantrill/rphys/pull/14) | package tests, contract tests, docs/docstrings, cross-phase fixes | Finalize public runtime surface and validation evidence | `make test-unit`, `make test-package`, `make test-contract`, optional integration, `uv lock --check`, `git diff --check` | Full Stage 2 public contract |
 
 ## Implementation Readiness Blockers
 
@@ -325,7 +325,7 @@ Workflow path: expanded path
 
 ## Phase 5: Runtime Core Hardening
 
-Status: in_progress
+Status: merged
 Slug: `runtime-core-hardening`
 Branch: `agent/stage-2-p5-runtime-core-hardening`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-2-p5-runtime-core-hardening`
@@ -378,7 +378,7 @@ Workflow path: fast path
 - PR review budget: standard
 - Blocker-resolution budget: return to planning for public-surface changes outside approved baseline.
 - Pre-submit blocker gate: no unapproved new behavior.
-- Merge record: pending Phase 5 PR merge.
+- Merge record: PR [#14](https://github.com/samcantrill/rphys/pull/14), squash merge `b86a94f8ddebaf95ca39d43bf42818dd6226e6a2`.
 
 ### Risks And Stop Conditions
 
@@ -388,11 +388,11 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: in progress; records phase PR sequence, validates final public runtime surface, and preserves scope deferrals.
+- Implementation: complete; records phase PR sequence, validates final public runtime surface, and preserves scope deferrals.
 - Validation: `make test-unit`, `make test-package`, `make test-contract`, `make test-integration`, `make validate-pr`, and `git diff --check` passed in the phase worktree.
 - PR: [#14](https://github.com/samcantrill/rphys/pull/14).
-- Merge: pending.
-- Follow-up: pending final validation.
+- Merge: squash merged to `develop` on 2026-05-12 as `b86a94f8ddebaf95ca39d43bf42818dd6226e6a2`.
+- Follow-up: collate-policy normalization test hardening was merged through PR [#15](https://github.com/samcantrill/rphys/pull/15) as `8e0c847a0eafe45663b68729e9e3cef25aaf5cf4`.
 
 ## Cross-Phase Validation
 
@@ -410,7 +410,8 @@ Workflow path: fast path
 | Phase 2 PR | merged | [#11](https://github.com/samcantrill/rphys/pull/11), squash merge `13c3cae` |
 | Phase 3 PR | merged | [#12](https://github.com/samcantrill/rphys/pull/12), squash merge `456d150` |
 | Phase 4 PR | merged | [#13](https://github.com/samcantrill/rphys/pull/13), squash merge `f9fd766` |
-| Phase 5 PR | open | [#14](https://github.com/samcantrill/rphys/pull/14), `agent/stage-2-p5-runtime-core-hardening` |
+| Phase 5 PR | merged | [#14](https://github.com/samcantrill/rphys/pull/14), squash merge `b86a94f8ddebaf95ca39d43bf42818dd6226e6a2` |
+| Collate-policy test hardening PR | merged | [#15](https://github.com/samcantrill/rphys/pull/15), squash merge `8e0c847a0eafe45663b68729e9e3cef25aaf5cf4` |
 | `make test-unit` | passed | 186 passed |
 | `make test-package` | passed | 13 passed |
 | `make test-contract` | passed | 12 passed |
@@ -421,7 +422,8 @@ Workflow path: fast path
 
 Notes:
 
-- Phases 1 through 4 were implemented in dedicated worktrees and merged through separate PRs to `develop`.
+- Phases 1 through 5 were implemented in dedicated worktrees and merged through separate PRs to `develop`.
+- PR [#15](https://github.com/samcantrill/rphys/pull/15) preserved the relevant follow-up test-hardening evidence for collate-policy normalization.
 - Phase 5 records the final phase evidence and reran the full Stage 2 validation gate.
 - No optional backend, IO, datasource, operation, model, training, serialization, stack, or pad behavior was added.
 
@@ -442,7 +444,7 @@ Gate result:
 
 ## Final Approval
 
-- Approval status: pending.
+- Approval status: complete; implementation merged through PRs [#10](https://github.com/samcantrill/rphys/pull/10)-[#15](https://github.com/samcantrill/rphys/pull/15).
 - Approved scope: Milestone 2 runtime core as defined by Phases 1-5 in this plan.
 - Accepted risks: `DataObjectBase`, `CompositeDataObjectBase`, public `FieldRequirement`, `CollateContext`, and LIST metadata semantics may need additive refinement in later stages; LIST provenance strictness should expand via a new policy rather than reinterpretation of existing LIST behavior.
 - Deferred items: serialization, IO/lazy refs, datasource scans, operations/transforms, method/model/loss/metric behavior, training/evaluation/analysis, stack/pad/custom collation, optional backend helpers, rich scientific schema validation, and workflow/artifact runtime.

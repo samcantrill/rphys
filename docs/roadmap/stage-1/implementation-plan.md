@@ -24,13 +24,13 @@ Blockers: none
 - Review pass: passed 2026-05-12
 - Refinement pass: not required
 - Confirmation review: not required
-- Automatic merge mode: enabled; this retrofit completed through local phase branches and worktrees, then merged to `develop`
+- Automatic merge mode: enabled; this retrofit completed through phase branches and worktrees, then merged to `develop` through PRs [#5](https://github.com/samcantrill/rphys/pull/5)-[#9](https://github.com/samcantrill/rphys/pull/9)
 - Worktree root: `/home/samcantrill/work/rphys-worktrees`
 - Phase status vocabulary: `pending`, `in_progress`, `pr_open`, `approved`, `merged`, `blocked`
 - Execution note: phases 1-5 were implemented sequentially in dedicated
-  phase worktrees under `/home/samcantrill/work/rphys-worktrees`. No remote
-  GitHub PRs were opened in this local retrofit; each phase has a named branch,
-  validation evidence, and a merge record into local `develop`.
+  phase worktrees under `/home/samcantrill/work/rphys-worktrees`. Each phase has
+  a named branch, a remote GitHub PR, validation evidence, and a merge record
+  into `develop`.
 
 ## Phase Index
 
@@ -115,8 +115,8 @@ Workflow path: fast path
   helpers, `DataKey`, reserved namespace grammar, and focused tests.
 - Validation: phase worktree `make test-unit`, `make test-package`, and
   `git diff --check` passed; final validation also passed after all merges.
-- PR: no remote PR opened; local branch was used for the phase.
-- Merge: merged to local `develop`.
+- PR: [#5](https://github.com/samcantrill/rphys/pull/5), base `develop`, head `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-1-diagnostic-datakey-foundation`.
+- Merge: merged to `develop` on 2026-05-12 as `94f1c2082bc83145f4e5c211cf12f4465b88998f`.
 - Follow-up: none.
 
 ## Phase 2: Metadata And Split Vocabularies
@@ -186,8 +186,8 @@ Workflow path: fast path
   `SplitName`, split constants, docstrings, and focused tests.
 - Validation: phase worktree `make test-unit`, `make test-package`, and
   `git diff --check` passed; final validation also passed after all merges.
-- PR: no remote PR opened; local branch was used for the phase.
-- Merge: merged to local `develop`.
+- PR: [#6](https://github.com/samcantrill/rphys/pull/6), base `develop`, head `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-2-metadata-split-vocabularies`.
+- Merge: merged to `develop` on 2026-05-12 as `2752e7ad9c78e8a3e95a141385b20dde8ab6ecf4`.
 - Follow-up: none.
 
 ## Phase 3: Schema And Data Type Vocabularies
@@ -257,8 +257,8 @@ Workflow path: fast path
   schema/type docstrings, and tests for version and backend-dtype separation.
 - Validation: phase worktree `make test-unit`, `make test-package`, and
   `git diff --check` passed; final validation also passed after all merges.
-- PR: no remote PR opened; local branch was used for the phase.
-- Merge: merged to local `develop`.
+- PR: [#9](https://github.com/samcantrill/rphys/pull/9), base `develop`, head `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-3-schema-type-vocabularies`.
+- Merge: merged to `develop` on 2026-05-12 as `694183952fecf2aab5c4c330e2f0ff378992bc39`.
 - Follow-up: none.
 
 ## Phase 4: Field Roles And Locators
@@ -330,8 +330,8 @@ Workflow path: fast path
   and locator tests.
 - Validation: phase worktree `make test-unit`, `make test-package`, and
   `git diff --check` passed; final validation also passed after all merges.
-- PR: no remote PR opened; local branch was used for the phase.
-- Merge: merged to local `develop`.
+- PR: [#7](https://github.com/samcantrill/rphys/pull/7), base `develop`, head `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-4-field-role-locators`.
+- Merge: merged to `develop` on 2026-05-12 as `6c7cf0af8895a474e1b8a51592b6c756d95cdece`.
 - Follow-up: none.
 
 ## Phase 5: Contract, Package, And Documentation Hardening
@@ -408,8 +408,8 @@ Workflow path: expanded path
 - Validation: `make test-unit`, `make test-package`, `make test-contract`,
   `make test`, `make test-summary`, `make validate-pr`, `uv lock --check`,
   and `git diff --check` passed.
-- PR: no remote PR opened; local branch was used for the phase.
-- Merge: merged to local `develop`.
+- PR: [#8](https://github.com/samcantrill/rphys/pull/8), base `develop`, head `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-5-contract-package-docs-hardening`.
+- Merge: merged to `develop` on 2026-05-12 as `bd8781bf32566bf84f8d41c5df7fe2f824797794`.
 - Follow-up: none.
 
 ## Cross-Phase Validation
