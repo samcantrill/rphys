@@ -51,11 +51,8 @@ STAGE_3_IO_ERROR_NAMES = [
 STAGE_3_DATASOURCE_ERROR_NAMES = [
     "InvalidDataSourceRefError",
     "InvalidDataSourceSchemaError",
-    "InvalidRecordRefError",
-]
-
-DEFERRED_STAGE_3_DATASOURCE_ERROR_NAMES = [
     "InvalidIndexItemError",
+    "InvalidRecordRefError",
 ]
 
 
@@ -126,12 +123,6 @@ def test_stage_2_runtime_errors_are_exported() -> None:
         assert error_name in errors.__all__
 
 
-def test_stage_3_datasource_errors_are_deferred_until_exercised() -> None:
-    for error_name in DEFERRED_STAGE_3_DATASOURCE_ERROR_NAMES:
-        assert error_name not in errors.__all__
-        assert not hasattr(errors, error_name)
-
-
 @pytest.mark.parametrize("error_name", STAGE_1_ERROR_NAMES)
 def test_stage_1_errors_preserve_base_message_and_context(error_name: str) -> None:
     error_type = getattr(errors, error_name)
@@ -190,6 +181,8 @@ def test_stage_3_datasource_errors_map_to_approved_categories() -> None:
     assert issubclass(errors.InvalidDataSourceRefError, errors.RemotePhysDataSourceError)
     assert issubclass(errors.InvalidRecordRefError, errors.RemotePhysDataSourceError)
     assert issubclass(errors.InvalidRecordRefError, errors.RemotePhysFieldError)
+    assert issubclass(errors.InvalidIndexItemError, errors.RemotePhysDataSourceError)
+    assert issubclass(errors.InvalidIndexItemError, errors.RemotePhysFieldError)
 
 
 def test_deferred_runtime_errors_are_not_defined() -> None:

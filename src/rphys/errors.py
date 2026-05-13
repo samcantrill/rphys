@@ -16,6 +16,7 @@ __all__ = [
     "MissingFieldError",
     "InvalidDataSourceRefError",
     "InvalidDataSourceSchemaError",
+    "InvalidIndexItemError",
     "InvalidRecordRefError",
     "InvalidFieldIndexError",
     "InvalidFieldRefError",
@@ -189,3 +190,7 @@ class InvalidDataSourceRefError(RemotePhysDataSourceError):
 
 class InvalidRecordRefError(RemotePhysDataSourceError, RemotePhysFieldError):
     """Raised when a lazy datasource record descriptor is invalid."""
+
+
+class InvalidIndexItemError(RemotePhysDataSourceError, RemotePhysFieldError):
+    """Raised when a role-qualified lazy index item descriptor is invalid."""
