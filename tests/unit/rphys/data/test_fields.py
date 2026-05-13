@@ -4,6 +4,7 @@ import copy
 
 import pytest
 
+from rphys.data.collation import CollatePolicy
 from rphys.data.fields import FieldSpec, FieldValue
 from rphys.data.keys import DataKey
 from rphys.data.metadata import MetadataKey
@@ -58,7 +59,7 @@ def test_field_value_uses_identity_equality_and_copies_metadata() -> None:
         payload,
         schema="video.rgb.v1",
         metadata=metadata,
-        collate_policy="list",
+        collate_policy=CollatePolicy.LIST,
     )
 
     assert field_value is not equivalent
@@ -67,7 +68,7 @@ def test_field_value_uses_identity_equality_and_copies_metadata() -> None:
     assert field_value.schema == SchemaName("video.rgb.v1")
     assert field_value.metadata == {MetadataKey("source_id"): {"path": "fixture"}}
     assert field_value.metadata is not metadata
-    assert field_value.collate_policy == "list"
+    assert field_value.collate_policy is CollatePolicy.LIST
 
     metadata["source_id"] = {"path": "mutated"}
     assert field_value.metadata[MetadataKey("source_id")] == {"path": "fixture"}
