@@ -68,13 +68,16 @@ section disagrees with this file, the code-backed contract and roadmap win.
 | Lazy IO | The phase and object family that describe what to load without loading payloads yet. | Not runtime processing and not transform or augmentation logic. |
 | Runtime | The in-memory phase after payloads are loaded or wrapped and before operations, methods, losses, metrics, or analysis consume them. | Distinct from datasource discovery and lazy reference construction. |
 | Record | A stable logical record before windowing. | Distinguish from `Sample`, which is a runtime item and may represent one whole record or one view or window from it. |
+| `DataSourceRef` | The lazy descriptor for datasource identity, optional source resource, optional declaration schema, and datasource-level metadata. | Not a datasource scanner, filter, split builder, validation report, manifest, or fingerprint. |
 | `RecordRef` | The lazy reference object for a stable logical record before windowing, including record identity, field presence, and leakage-sensitive metadata. | Not a loaded runtime sample. |
 | `Sample` | The per-item runtime container after payloads are loaded or wrapped. | Not a fixed `(inputs, targets)` tuple and not necessarily the same thing as a record. |
 | `Batch` | The collated runtime container. It exposes the same field access shape as `Sample`. | Do not treat it as merely a list of samples or as a subtype that erases the sample-vs-batch distinction in documentation. |
-| `ResourceRef` | A reference to physical storage through URI, protocol, and storage options. | Not an artifact-store handle or workflow lifecycle object. |
+| `DataSourceSchema` | A declaration-only map from intrinsic `DataKey`s to `FieldSpec`s for fields a datasource is expected to expose. | Not observed payload validation, expected-versus-observed evidence, schema-version envelope, or manifest. |
+| `ResourceRef` | A reference to an addressable storage target through URI, protocol, and storage options. | Not a parsed path, codec key, artifact-store handle, workflow lifecycle object, canonical identity, or fingerprint. |
 | `FieldRef` | A serializable lazy reference to one complete logical field. | It does not contain runtime role, `FieldLocator`, temporal slice, loaded tensors, or open handles. |
-| `FieldView` | A `FieldRef` plus optional imposed access behavior such as a `FieldIndex`. | Distinct from a loaded field payload. |
-| `IndexItem` | A mapping from role-qualified `FieldLocator`s to `FieldView`s. This is the unit consumed by `SampleBuilder`. | It must remain pure lazy IO and must not contain transforms, augmentations, method logic, export logic, or training logic. |
+| `TemporalIndexSlice` | A half-open `[start, stop)` integer slice in one field's native index space. | Not seconds, spatial crop, resampling instruction, padding rule, or cross-field alignment claim. |
+| `FieldView` | A `FieldRef` plus optional field-native access behavior such as a `FieldIndex`. | Distinct from a loaded field payload and not a role-qualified sample field. |
+| `IndexItem` | A mapping from role-qualified `FieldLocator`s to `FieldView`s with mandatory `RecordRef` provenance. This is the unit consumed by `SampleBuilder`. | It must remain pure lazy IO and must not contain item IDs, fingerprints, payloads, transforms, augmentations, method logic, export logic, or training logic. |
 | `Codec` | The boundary object that probes, loads, and saves logical fields and field views. | A codec does not choose splits, parse trainer concerns, or own transform logic. |
 | `SampleBuilder` | The bridge from `IndexItem` field views to runtime `Sample` objects, including lazy sample-field loading behavior. | It should not scan datasources, choose splits, apply ops, or move devices implicitly. |
 
