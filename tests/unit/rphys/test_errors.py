@@ -40,6 +40,27 @@ STAGE_2_ERROR_NAMES = [
     "MissingFieldError",
 ]
 
+DEFERRED_STAGE_3_ERROR_NAMES = [
+    "InvalidDataSourceRefError",
+    "InvalidDataSourceSchemaError",
+    "InvalidFieldIndexError",
+    "InvalidFieldRefError",
+    "InvalidFieldViewError",
+    "InvalidIndexItemError",
+    "InvalidRecordRefError",
+    "InvalidResourceRefError",
+    "UnsupportedFieldIndexError",
+]
+
+
+def test_errors_public_surface_lists_only_implemented_error_names() -> None:
+    assert errors.__all__ == [
+        "RemotePhysError",
+        *STAGE_1_ERROR_NAMES,
+        *STAGE_2_ERROR_NAMES,
+        *BROAD_ERROR_NAMES,
+    ]
+
 
 def test_remote_phys_error_preserves_message_args_and_context() -> None:
     exc = errors.RemotePhysError(
@@ -95,6 +116,12 @@ def test_stage_1_errors_are_exported() -> None:
 def test_stage_2_runtime_errors_are_exported() -> None:
     for error_name in STAGE_2_ERROR_NAMES:
         assert error_name in errors.__all__
+
+
+def test_stage_3_descriptor_errors_are_deferred_until_exercised() -> None:
+    for error_name in DEFERRED_STAGE_3_ERROR_NAMES:
+        assert error_name not in errors.__all__
+        assert not hasattr(errors, error_name)
 
 
 @pytest.mark.parametrize("error_name", STAGE_1_ERROR_NAMES)

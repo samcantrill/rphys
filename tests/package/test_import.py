@@ -100,6 +100,21 @@ STAGE_2_ERROR_NAMES = [
     "MissingFieldError",
 ]
 
+DEFERRED_STAGE_3_IO_NAMES = [
+    "FieldIndex",
+    "FieldRef",
+    "FieldView",
+    "ResourceRef",
+    "TemporalIndexSlice",
+]
+
+DEFERRED_STAGE_3_DATASOURCE_NAMES = [
+    "DataSourceRef",
+    "DataSourceSchema",
+    "IndexItem",
+    "RecordRef",
+]
+
 
 def test_import_rphys() -> None:
     import rphys
@@ -138,8 +153,31 @@ def test_root_package_does_not_reexport_error_classes() -> None:
     import rphys
 
     assert not hasattr(rphys, "RemotePhysError")
-    for error_name in [*BROAD_ERROR_NAMES, *STAGE_1_ERROR_NAMES]:
+    for error_name in [*BROAD_ERROR_NAMES, *STAGE_1_ERROR_NAMES, *STAGE_2_ERROR_NAMES]:
         assert not hasattr(rphys, error_name)
+
+
+def test_root_package_does_not_reexport_stage_3_descriptor_names() -> None:
+    import rphys
+
+    for public_name in [
+        *DEFERRED_STAGE_3_IO_NAMES,
+        *DEFERRED_STAGE_3_DATASOURCE_NAMES,
+    ]:
+        assert not hasattr(rphys, public_name)
+
+
+def test_stage_3_package_homes_defer_descriptor_public_names() -> None:
+    import rphys.datasources
+    import rphys.io
+
+    assert rphys.io.__all__ == []
+    for public_name in DEFERRED_STAGE_3_IO_NAMES:
+        assert not hasattr(rphys.io, public_name)
+
+    assert rphys.datasources.__all__ == []
+    for public_name in DEFERRED_STAGE_3_DATASOURCE_NAMES:
+        assert not hasattr(rphys.datasources, public_name)
 
 
 def test_stage_1_data_modules_import_with_intentional_public_surfaces() -> None:
