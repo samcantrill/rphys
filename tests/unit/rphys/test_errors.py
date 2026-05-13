@@ -40,16 +40,19 @@ STAGE_2_ERROR_NAMES = [
     "MissingFieldError",
 ]
 
-DEFERRED_STAGE_3_ERROR_NAMES = [
-    "InvalidDataSourceRefError",
-    "InvalidDataSourceSchemaError",
+STAGE_3_IO_ERROR_NAMES = [
     "InvalidFieldIndexError",
     "InvalidFieldRefError",
     "InvalidFieldViewError",
-    "InvalidIndexItemError",
-    "InvalidRecordRefError",
     "InvalidResourceRefError",
     "UnsupportedFieldIndexError",
+]
+
+DEFERRED_STAGE_3_DATASOURCE_ERROR_NAMES = [
+    "InvalidDataSourceRefError",
+    "InvalidDataSourceSchemaError",
+    "InvalidIndexItemError",
+    "InvalidRecordRefError",
 ]
 
 
@@ -58,6 +61,7 @@ def test_errors_public_surface_lists_only_implemented_error_names() -> None:
         "RemotePhysError",
         *STAGE_1_ERROR_NAMES,
         *STAGE_2_ERROR_NAMES,
+        *STAGE_3_IO_ERROR_NAMES,
         *BROAD_ERROR_NAMES,
     ]
 
@@ -118,8 +122,8 @@ def test_stage_2_runtime_errors_are_exported() -> None:
         assert error_name in errors.__all__
 
 
-def test_stage_3_descriptor_errors_are_deferred_until_exercised() -> None:
-    for error_name in DEFERRED_STAGE_3_ERROR_NAMES:
+def test_stage_3_datasource_errors_are_deferred_until_exercised() -> None:
+    for error_name in DEFERRED_STAGE_3_DATASOURCE_ERROR_NAMES:
         assert error_name not in errors.__all__
         assert not hasattr(errors, error_name)
 
@@ -158,6 +162,19 @@ def test_stage_2_errors_map_to_runtime_categories() -> None:
     assert issubclass(errors.FieldSchemaError, errors.RemotePhysFieldError)
     assert issubclass(errors.FieldSchemaError, errors.RemotePhysDataError)
     assert issubclass(errors.CollatePolicyError, errors.RemotePhysCollateError)
+
+
+def test_stage_3_io_errors_map_to_approved_categories() -> None:
+    assert issubclass(errors.InvalidResourceRefError, errors.RemotePhysIOError)
+    assert issubclass(errors.InvalidFieldRefError, errors.RemotePhysFieldError)
+    assert issubclass(errors.InvalidFieldRefError, errors.RemotePhysIOError)
+    assert issubclass(errors.InvalidFieldIndexError, errors.RemotePhysSliceError)
+    assert issubclass(errors.InvalidFieldIndexError, errors.RemotePhysIOError)
+    assert issubclass(errors.InvalidFieldViewError, errors.RemotePhysFieldError)
+    assert issubclass(errors.InvalidFieldViewError, errors.RemotePhysSliceError)
+    assert issubclass(errors.InvalidFieldViewError, errors.RemotePhysIOError)
+    assert issubclass(errors.UnsupportedFieldIndexError, errors.RemotePhysSliceError)
+    assert issubclass(errors.UnsupportedFieldIndexError, errors.RemotePhysIOError)
 
 
 def test_deferred_runtime_errors_are_not_defined() -> None:

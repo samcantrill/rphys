@@ -14,6 +14,11 @@ __all__ = [
     "FieldSchemaError",
     "FieldTypeError",
     "MissingFieldError",
+    "InvalidFieldIndexError",
+    "InvalidFieldRefError",
+    "InvalidFieldViewError",
+    "InvalidResourceRefError",
+    "UnsupportedFieldIndexError",
     "RemotePhysAnalysisError",
     "RemotePhysCodecError",
     "RemotePhysCollateError",
@@ -149,3 +154,23 @@ class FieldSchemaError(RemotePhysFieldError, RemotePhysDataError):
 
 class CollatePolicyError(RemotePhysCollateError):
     """Raised when runtime collation cannot apply the requested policy."""
+
+
+class InvalidResourceRefError(RemotePhysIOError):
+    """Raised when a lazy physical resource descriptor is invalid."""
+
+
+class InvalidFieldRefError(RemotePhysFieldError, RemotePhysIOError):
+    """Raised when a lazy logical field descriptor is invalid."""
+
+
+class InvalidFieldIndexError(RemotePhysSliceError, RemotePhysIOError):
+    """Raised when a lazy field-native index descriptor is invalid."""
+
+
+class InvalidFieldViewError(RemotePhysFieldError, RemotePhysSliceError, RemotePhysIOError):
+    """Raised when a lazy field-view descriptor is invalid."""
+
+
+class UnsupportedFieldIndexError(RemotePhysSliceError, RemotePhysIOError):
+    """Raised when a serialized field index uses an unsupported Stage 3 tag."""
