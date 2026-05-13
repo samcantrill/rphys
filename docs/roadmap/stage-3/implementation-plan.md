@@ -5,7 +5,7 @@ Roadmap version: `v3`
 Planning document: `docs/roadmap/stage-3/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: not started
+Current phase: Phase 2 pending
 Blockers: none
 
 ## Summary
@@ -57,7 +57,7 @@ Readiness result: passed. No implementation readiness blocker prevents phase cre
 
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `public-surface-errors` | pending | `agent/stage-3-p1-public-surface-errors` | pending | `rphys.errors`, package import-boundary expectations, package/error tests | Establish typed diagnostics and public-surface guardrails | `make test-package`; focused error unit tests; `git diff --check` | EX-5 coupling/import exclusions |
+| 1 | `public-surface-errors` | merged | `agent/stage-3-p1-public-surface-errors` | [#16](https://github.com/samcantrill/rphys/pull/16) | `rphys.errors`, package import-boundary expectations, package/error tests | Establish typed diagnostics and public-surface guardrails | `make test-package`; focused error unit tests; `git diff --check` | EX-5 coupling/import exclusions |
 | 2 | `io-descriptors-indexes` | pending | `agent/stage-3-p2-io-descriptors-indexes` | pending | `src/rphys/io/`, IO unit tests, IO contract examples | Implement resource, field, index, slice, and view descriptors | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-1, EX-4, EX-5 |
 | 3 | `datasource-refs-schemas` | pending | `agent/stage-3-p3-datasource-refs-schemas` | pending | datasource refs/schema modules and tests | Implement datasource provenance and declaration-only schema descriptors | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-2, EX-4, EX-5 |
 | 4 | `index-item-composition` | pending | `agent/stage-3-p4-index-item-composition` | pending | `src/rphys/datasources/index_items.py`, index-item tests, contract example updates | Implement role-qualified lazy item composition | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-3, EX-4, EX-5 |
@@ -67,15 +67,15 @@ Readiness result: passed. No implementation readiness blocker prevents phase cre
 
 | Blocker | Source | Required resolution | Status |
 | --- | --- | --- | --- |
-| No readiness blocker found. | Stage 11 readiness check against `docs/roadmap/stage-3/planning.md` | None before phase execution; maintainer approval of this implementation plan is still required. | resolved |
+| No readiness blocker found. | Stage 11 readiness check against `docs/roadmap/stage-3/planning.md` | None before phase execution; maintainer approval is recorded in the Final Approval section. | resolved |
 
 ## Phase 1: Public Surface And Diagnostics
 
-Status: pending
+Status: merged
 Slug: `public-surface-errors`
 Branch: `agent/stage-3-p1-public-surface-errors`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-3-p1-public-surface-errors`
-PR: pending
+PR: [#16](https://github.com/samcantrill/rphys/pull/16)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -116,7 +116,7 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: complete in `docs/roadmap/stage-3/phases/public-surface-errors.md`
 - Planning/refinement budget: standard
 - Implementation/refinement budget: standard
 - PR review budget: standard
@@ -132,11 +132,11 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: tightened Stage 3 package-home docstrings and package/error tests without adding descriptor modules, descriptor exports, root exports, or concrete Stage 3 errors.
+- Validation: `make test-package`, `make test-unit`, and `git diff --check` passed before PR submission.
+- PR: [#16](https://github.com/samcantrill/rphys/pull/16) opened against `develop`.
+- Merge: merged into `develop` as `5876867` at 2026-05-13T05:39:02Z.
+- Follow-up: P2 through P4 own replacing deferred-name guards with code-backed descriptor exports and concrete descriptor errors only where behavior raises them.
 
 ## Phase 2: IO Descriptors And Temporal Indexes
 
