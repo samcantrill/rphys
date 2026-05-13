@@ -1,11 +1,11 @@
 # Roadmap Stage 3 Implementation Plan
 
-Status: approved; phase execution ready
+Status: implemented; all phases merged
 Roadmap version: `v3`
 Planning document: `docs/roadmap/stage-3/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 5 pending
+Current phase: all phases merged
 Blockers: none
 
 ## Summary
@@ -61,7 +61,7 @@ Readiness result: passed. No implementation readiness blocker prevents phase cre
 | 2 | `io-descriptors-indexes` | merged | `agent/stage-3-p2-io-descriptors-indexes` | [#17](https://github.com/samcantrill/rphys/pull/17) | `src/rphys/io/`, IO unit tests, IO contract examples | Implement resource, field, index, slice, and view descriptors | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-1, EX-4, EX-5 |
 | 3 | `datasource-refs-schemas` | merged | `agent/stage-3-p3-datasource-refs-schemas` | [#18](https://github.com/samcantrill/rphys/pull/18) | datasource refs/schema modules and tests | Implement datasource provenance and declaration-only schema descriptors | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-2, EX-4, EX-5 |
 | 4 | `index-item-composition` | merged | `agent/stage-3-p4-index-item-composition` | [#19](https://github.com/samcantrill/rphys/pull/19) | `src/rphys/datasources/index_items.py`, index-item tests, contract example updates | Implement role-qualified lazy item composition | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-3, EX-4, EX-5 |
-| 5 | `lazy-reference-hardening` | pending | `agent/stage-3-p5-lazy-reference-hardening` | pending | contract tests, docs/docstrings, package boundary checks, final validation evidence | Prove the full Stage 3 chain and exclusions | focused suites plus `make test`, `make test-summary`, `make validate-pr`, `uv lock --check`, `git diff --check` | EX-1 through EX-5 |
+| 5 | `lazy-reference-hardening` | merged | `agent/stage-3-p5-lazy-reference-hardening` | [#20](https://github.com/samcantrill/rphys/pull/20) | contract tests, docs/docstrings, package boundary checks, final validation evidence | Prove the full Stage 3 chain and exclusions | focused suites plus `make test`, `make test-summary`, `make validate-pr`, `uv lock --check`, `git diff --check` | EX-1 through EX-5 |
 
 ## Implementation Readiness Blockers
 
@@ -359,11 +359,11 @@ Workflow path: expanded path
 
 ## Phase 5: Contract Examples, Docs, And Final Validation Hardening
 
-Status: pending
+Status: merged
 Slug: `lazy-reference-hardening`
 Branch: `agent/stage-3-p5-lazy-reference-hardening`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-3-p5-lazy-reference-hardening`
-PR: pending
+PR: [#20](https://github.com/samcantrill/rphys/pull/20)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -411,7 +411,7 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: complete in `docs/roadmap/stage-3/phases/lazy-reference-hardening.md`
 - Planning/refinement budget: standard
 - Implementation/refinement budget: standard
 - PR review budget: expanded because this phase records final validation and public contract evidence.
@@ -427,11 +427,11 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added a full public-import lazy-reference graph contract and aligned `docs/GLOSSARY.md` with implemented Stage 3 descriptors, temporal slice semantics, provenance, and deferrals.
+- Validation: `make test-package`, `make test-unit`, `make test-contract`, `make test`, `make test-summary`, `make validate-pr`, `UV_CACHE_DIR=/tmp/uv-cache uv lock --check`, and `git diff --check` passed before PR submission.
+- PR: [#20](https://github.com/samcantrill/rphys/pull/20) opened against `develop`.
+- Merge: merged into `develop` as `a87886f` at 2026-05-13T06:28:43Z.
+- Follow-up: later roadmap stages own codecs, `SampleBuilder`, datasource indexes/manifests, fingerprints, stable identity, seconds/spatial indexes, transforms, export, and training adapters.
 
 ## Cross-Phase Validation
 
