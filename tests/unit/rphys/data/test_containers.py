@@ -4,6 +4,7 @@ from collections.abc import Mapping
 
 import pytest
 
+from rphys.data.collation import CollatePolicy
 from rphys.data.containers import Batch, Sample
 from rphys.data.fields import FieldValue
 from rphys.data.locators import FieldLocator, FieldRole
@@ -29,7 +30,7 @@ def test_container_accessors_return_wrapper_or_payload(container_type) -> None:
     field_value = FieldValue(
         [1, 2, 3],
         schema="signal.bvp.v1",
-        collate_policy="list",
+        collate_policy=CollatePolicy.LIST,
     )
     container = container_type({BVP: field_value})
 
