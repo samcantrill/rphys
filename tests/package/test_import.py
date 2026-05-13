@@ -100,12 +100,26 @@ STAGE_2_ERROR_NAMES = [
     "MissingFieldError",
 ]
 
-DEFERRED_STAGE_3_IO_NAMES = [
-    "FieldIndex",
-    "FieldRef",
-    "FieldView",
+STAGE_3_IO_EXPORTS = [
     "ResourceRef",
+    "FieldRef",
+    "FieldIndex",
     "TemporalIndexSlice",
+    "FieldView",
+]
+
+STAGE_3_IO_MODULES = {
+    "rphys.io.resources": ["ResourceRef"],
+    "rphys.io.indexes": ["FieldIndex", "TemporalIndexSlice"],
+    "rphys.io.fields": ["FieldRef", "FieldView"],
+}
+
+STAGE_3_IO_ERROR_NAMES = [
+    "InvalidFieldIndexError",
+    "InvalidFieldRefError",
+    "InvalidFieldViewError",
+    "InvalidResourceRefError",
+    "UnsupportedFieldIndexError",
 ]
 
 DEFERRED_STAGE_3_DATASOURCE_NAMES = [
@@ -125,7 +139,7 @@ def test_import_rphys() -> None:
 
 def test_deferred_package_homes_import_with_empty_public_surfaces() -> None:
     for package_name in PLANNED_PACKAGE_NAMES:
-        if package_name == "rphys.data":
+        if package_name in {"rphys.data", "rphys.io"}:
             continue
         package = importlib.import_module(package_name)
 
@@ -140,6 +154,7 @@ def test_errors_import_and_expose_approved_error_categories() -> None:
         "RemotePhysError",
         *STAGE_1_ERROR_NAMES,
         *STAGE_2_ERROR_NAMES,
+        *STAGE_3_IO_ERROR_NAMES,
         *BROAD_ERROR_NAMES,
     ]
 
@@ -153,7 +168,12 @@ def test_root_package_does_not_reexport_error_classes() -> None:
     import rphys
 
     assert not hasattr(rphys, "RemotePhysError")
-    for error_name in [*BROAD_ERROR_NAMES, *STAGE_1_ERROR_NAMES, *STAGE_2_ERROR_NAMES]:
+    for error_name in [
+        *BROAD_ERROR_NAMES,
+        *STAGE_1_ERROR_NAMES,
+        *STAGE_2_ERROR_NAMES,
+        *STAGE_3_IO_ERROR_NAMES,
+    ]:
         assert not hasattr(rphys, error_name)
 
 
@@ -161,19 +181,32 @@ def test_root_package_does_not_reexport_stage_3_descriptor_names() -> None:
     import rphys
 
     for public_name in [
-        *DEFERRED_STAGE_3_IO_NAMES,
+        *STAGE_3_IO_EXPORTS,
         *DEFERRED_STAGE_3_DATASOURCE_NAMES,
     ]:
         assert not hasattr(rphys, public_name)
 
 
-def test_stage_3_package_homes_defer_descriptor_public_names() -> None:
-    import rphys.datasources
+def test_io_package_reexports_only_code_backed_stage_3_names() -> None:
     import rphys.io
 
-    assert rphys.io.__all__ == []
-    for public_name in DEFERRED_STAGE_3_IO_NAMES:
-        assert not hasattr(rphys.io, public_name)
+    assert rphys.io.__all__ == STAGE_3_IO_EXPORTS
+    for public_name in STAGE_3_IO_EXPORTS:
+        assert hasattr(rphys.io, public_name)
+
+
+def test_stage_3_io_submodules_export_only_code_backed_names() -> None:
+    for module_name, expected_all in STAGE_3_IO_MODULES.items():
+        module = importlib.import_module(module_name)
+
+        assert module.__doc__
+        assert module.__all__ == expected_all
+        for public_name in expected_all:
+            assert hasattr(module, public_name)
+
+
+def test_datasource_package_home_defers_descriptor_public_names() -> None:
+    import rphys.datasources
 
     assert rphys.datasources.__all__ == []
     for public_name in DEFERRED_STAGE_3_DATASOURCE_NAMES:
