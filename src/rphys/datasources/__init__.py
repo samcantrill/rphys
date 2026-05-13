@@ -5,4 +5,11 @@ package does not provide scanning, filtering, builders, manifests, or runtime
 payload hooks.
 """
 
-__all__: list[str] = []
+from .refs import DataSourceRef, RecordRef
+from .schemas import DataSourceSchema
+
+__all__ = [
+    "DataSourceRef",
+    "RecordRef",
+    "DataSourceSchema",
+]
