@@ -48,11 +48,14 @@ STAGE_3_IO_ERROR_NAMES = [
     "UnsupportedFieldIndexError",
 ]
 
-DEFERRED_STAGE_3_DATASOURCE_ERROR_NAMES = [
+STAGE_3_DATASOURCE_ERROR_NAMES = [
     "InvalidDataSourceRefError",
     "InvalidDataSourceSchemaError",
-    "InvalidIndexItemError",
     "InvalidRecordRefError",
+]
+
+DEFERRED_STAGE_3_DATASOURCE_ERROR_NAMES = [
+    "InvalidIndexItemError",
 ]
 
 
@@ -61,6 +64,7 @@ def test_errors_public_surface_lists_only_implemented_error_names() -> None:
         "RemotePhysError",
         *STAGE_1_ERROR_NAMES,
         *STAGE_2_ERROR_NAMES,
+        *STAGE_3_DATASOURCE_ERROR_NAMES,
         *STAGE_3_IO_ERROR_NAMES,
         *BROAD_ERROR_NAMES,
     ]
@@ -175,6 +179,17 @@ def test_stage_3_io_errors_map_to_approved_categories() -> None:
     assert issubclass(errors.InvalidFieldViewError, errors.RemotePhysIOError)
     assert issubclass(errors.UnsupportedFieldIndexError, errors.RemotePhysSliceError)
     assert issubclass(errors.UnsupportedFieldIndexError, errors.RemotePhysIOError)
+
+
+def test_stage_3_datasource_errors_map_to_approved_categories() -> None:
+    assert issubclass(
+        errors.InvalidDataSourceSchemaError,
+        errors.RemotePhysDataSourceError,
+    )
+    assert issubclass(errors.InvalidDataSourceSchemaError, errors.RemotePhysFieldError)
+    assert issubclass(errors.InvalidDataSourceRefError, errors.RemotePhysDataSourceError)
+    assert issubclass(errors.InvalidRecordRefError, errors.RemotePhysDataSourceError)
+    assert issubclass(errors.InvalidRecordRefError, errors.RemotePhysFieldError)
 
 
 def test_deferred_runtime_errors_are_not_defined() -> None:

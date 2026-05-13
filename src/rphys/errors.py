@@ -14,6 +14,9 @@ __all__ = [
     "FieldSchemaError",
     "FieldTypeError",
     "MissingFieldError",
+    "InvalidDataSourceRefError",
+    "InvalidDataSourceSchemaError",
+    "InvalidRecordRefError",
     "InvalidFieldIndexError",
     "InvalidFieldRefError",
     "InvalidFieldViewError",
@@ -174,3 +177,15 @@ class InvalidFieldViewError(RemotePhysFieldError, RemotePhysSliceError, RemotePh
 
 class UnsupportedFieldIndexError(RemotePhysSliceError, RemotePhysIOError):
     """Raised when a serialized field index uses an unsupported Stage 3 tag."""
+
+
+class InvalidDataSourceSchemaError(RemotePhysDataSourceError, RemotePhysFieldError):
+    """Raised when a declaration-only datasource schema descriptor is invalid."""
+
+
+class InvalidDataSourceRefError(RemotePhysDataSourceError):
+    """Raised when a lazy datasource provenance descriptor is invalid."""
+
+
+class InvalidRecordRefError(RemotePhysDataSourceError, RemotePhysFieldError):
+    """Raised when a lazy datasource record descriptor is invalid."""
