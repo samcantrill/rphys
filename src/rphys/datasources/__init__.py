@@ -5,6 +5,7 @@ package does not provide scanning, filtering, builders, manifests, or runtime
 payload hooks.
 """
 
+from .index_items import IndexItem
 from .refs import DataSourceRef, RecordRef
 from .schemas import DataSourceSchema
 
@@ -12,4 +13,5 @@ __all__ = [
     "DataSourceRef",
     "RecordRef",
     "DataSourceSchema",
+    "IndexItem",
 ]

@@ -126,21 +126,20 @@ STAGE_3_DATASOURCE_EXPORTS = [
     "DataSourceRef",
     "RecordRef",
     "DataSourceSchema",
+    "IndexItem",
 ]
 
 STAGE_3_DATASOURCE_MODULES = {
     "rphys.datasources.refs": ["DataSourceRef", "RecordRef"],
     "rphys.datasources.schemas": ["DataSourceSchema"],
+    "rphys.datasources.index_items": ["IndexItem"],
 }
 
 STAGE_3_DATASOURCE_ERROR_NAMES = [
     "InvalidDataSourceRefError",
     "InvalidDataSourceSchemaError",
+    "InvalidIndexItemError",
     "InvalidRecordRefError",
-]
-
-DEFERRED_STAGE_3_DATASOURCE_NAMES = [
-    "IndexItem",
 ]
 
 
@@ -199,7 +198,6 @@ def test_root_package_does_not_reexport_stage_3_descriptor_names() -> None:
     for public_name in [
         *STAGE_3_IO_EXPORTS,
         *STAGE_3_DATASOURCE_EXPORTS,
-        *DEFERRED_STAGE_3_DATASOURCE_NAMES,
     ]:
         assert not hasattr(rphys, public_name)
 
@@ -238,14 +236,6 @@ def test_stage_3_datasource_submodules_export_only_code_backed_names() -> None:
         assert module.__all__ == expected_all
         for public_name in expected_all:
             assert hasattr(module, public_name)
-
-
-def test_datasource_package_home_defers_index_item_public_name() -> None:
-    import rphys.datasources
-
-    for public_name in DEFERRED_STAGE_3_DATASOURCE_NAMES:
-        assert not hasattr(rphys.datasources, public_name)
-
 
 def test_stage_1_data_modules_import_with_intentional_public_surfaces() -> None:
     for module_name, expected_all in STAGE_1_DATA_MODULES.items():

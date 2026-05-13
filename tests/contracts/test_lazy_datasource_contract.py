@@ -86,9 +86,9 @@ def test_datasource_public_surface_has_no_builder_manifest_or_registry_hooks() -
         "DataSourceRef",
         "RecordRef",
         "DataSourceSchema",
+        "IndexItem",
     }
     assert not hasattr(datasources, "registry")
-    assert not hasattr(datasources, "IndexItem")
 
     for name in datasources.__all__:
         public = getattr(datasources, name)
