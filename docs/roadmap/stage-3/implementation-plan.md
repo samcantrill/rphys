@@ -5,7 +5,7 @@ Roadmap version: `v3`
 Planning document: `docs/roadmap/stage-3/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 2 pending
+Current phase: Phase 3 pending
 Blockers: none
 
 ## Summary
@@ -58,7 +58,7 @@ Readiness result: passed. No implementation readiness blocker prevents phase cre
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `public-surface-errors` | merged | `agent/stage-3-p1-public-surface-errors` | [#16](https://github.com/samcantrill/rphys/pull/16) | `rphys.errors`, package import-boundary expectations, package/error tests | Establish typed diagnostics and public-surface guardrails | `make test-package`; focused error unit tests; `git diff --check` | EX-5 coupling/import exclusions |
-| 2 | `io-descriptors-indexes` | pending | `agent/stage-3-p2-io-descriptors-indexes` | pending | `src/rphys/io/`, IO unit tests, IO contract examples | Implement resource, field, index, slice, and view descriptors | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-1, EX-4, EX-5 |
+| 2 | `io-descriptors-indexes` | merged | `agent/stage-3-p2-io-descriptors-indexes` | [#17](https://github.com/samcantrill/rphys/pull/17) | `src/rphys/io/`, IO unit tests, IO contract examples | Implement resource, field, index, slice, and view descriptors | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-1, EX-4, EX-5 |
 | 3 | `datasource-refs-schemas` | pending | `agent/stage-3-p3-datasource-refs-schemas` | pending | datasource refs/schema modules and tests | Implement datasource provenance and declaration-only schema descriptors | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-2, EX-4, EX-5 |
 | 4 | `index-item-composition` | pending | `agent/stage-3-p4-index-item-composition` | pending | `src/rphys/datasources/index_items.py`, index-item tests, contract example updates | Implement role-qualified lazy item composition | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-3, EX-4, EX-5 |
 | 5 | `lazy-reference-hardening` | pending | `agent/stage-3-p5-lazy-reference-hardening` | pending | contract tests, docs/docstrings, package boundary checks, final validation evidence | Prove the full Stage 3 chain and exclusions | focused suites plus `make test`, `make test-summary`, `make validate-pr`, `uv lock --check`, `git diff --check` | EX-1 through EX-5 |
@@ -140,11 +140,11 @@ Workflow path: fast path
 
 ## Phase 2: IO Descriptors And Temporal Indexes
 
-Status: pending
+Status: merged
 Slug: `io-descriptors-indexes`
 Branch: `agent/stage-3-p2-io-descriptors-indexes`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-3-p2-io-descriptors-indexes`
-PR: pending
+PR: [#17](https://github.com/samcantrill/rphys/pull/17)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -190,7 +190,7 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: complete in `docs/roadmap/stage-3/phases/io-descriptors-indexes.md`
 - Planning/refinement budget: standard
 - Implementation/refinement budget: standard
 - PR review budget: expanded because serialization key spelling and temporal semantics are compatibility-sensitive.
@@ -206,11 +206,11 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added `ResourceRef`, `FieldRef`, `FieldIndex`, `TemporalIndexSlice`, and `FieldView`; added exercised IO/index errors; updated package exports and unit/contract/package coverage.
+- Validation: `make test-unit`, `make test-contract`, `make test-package`, and `git diff --check` passed before PR submission.
+- PR: [#17](https://github.com/samcantrill/rphys/pull/17) opened against `develop`.
+- Merge: merged into `develop` as `7b3efe9` at 2026-05-13T05:53:21Z.
+- Follow-up: P3 owns datasource refs/schema descriptors; P4 owns `IndexItem`; later stages own codecs, manifests, fingerprints, and stable identity.
 
 ## Phase 3: Datasource Refs And Schema Descriptors
 
