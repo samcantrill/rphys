@@ -40,7 +40,12 @@ __all__ = [
 
 @dataclass(frozen=True, init=False, slots=True)
 class SampleBuildContext:
-    """Explicit context for one-item lazy sample construction."""
+    """Explicit context for one-item lazy sample construction.
+
+    ``metadata`` is primitive builder metadata copied into datasource-neutral
+    codec contexts. Record and index-item provenance stays on builder-side
+    provenance records rather than becoming codec context fields.
+    """
 
     registry: CodecRegistry
     metadata: Mapping[str, FrozenPrimitive]
@@ -76,7 +81,12 @@ SampleBuildContext.__hash__ = None  # type: ignore[assignment]
 
 @dataclass(frozen=True, init=False, slots=True)
 class SampleFieldProvenance:
-    """Builder-side provenance for one lazy field handle."""
+    """Builder-side provenance for one lazy field handle.
+
+    This record keeps the role-qualified locator, original field view,
+    datasource record, item metadata, and builder metadata inspectable without
+    adding datasource-aware fields to ``LoadContext``.
+    """
 
     locator: FieldLocator
     field_view: FieldView
@@ -127,7 +137,11 @@ SampleFieldProvenance.__hash__ = None  # type: ignore[assignment]
 
 @dataclass(frozen=True, slots=True)
 class SampleProbeResult:
-    """Probe evidence for one requested lazy sample field."""
+    """Probe evidence for one requested lazy sample field.
+
+    Probe results are lightweight codec evidence only; they do not construct a
+    ``SampleField`` or materialize payload data.
+    """
 
     locator: FieldLocator
     field_view: FieldView
@@ -197,7 +211,14 @@ class _BuiltSampleField(SampleField):
 
 
 class SampleBuilder:
-    """Build lazy ``Sample`` containers from exactly one ``IndexItem``."""
+    """Build lazy ``Sample`` containers from exactly one ``IndexItem``.
+
+    The builder selects field views already present on the supplied item,
+    preserves role-qualified locator order, and delegates loading/probing to
+    an explicit ``CodecRegistry``. It does not scan datasources, choose splits,
+    cache payloads, apply operations, format model inputs, move devices, or
+    orchestrate exports.
+    """
 
     __slots__ = ("context",)
 
@@ -240,7 +261,13 @@ class SampleBuilder:
         *,
         eager: bool = False,
     ) -> Sample:
-        """Build all or requested lazy fields from one ``IndexItem``."""
+        """Build all or requested lazy fields from one ``IndexItem``.
+
+        ``requested=None`` builds every item field in descriptor order;
+        otherwise requested locators are parsed and prevalidated atomically.
+        ``eager=True`` materializes through each built ``SampleField`` while
+        preserving the lazy handle in the returned ``Sample``.
+        """
 
         item = _require_index_item(index_item)
         locators = _select_locators(item, requested)
@@ -259,7 +286,7 @@ class SampleBuilder:
         *,
         eager: bool = False,
     ) -> SampleField:
-        """Build one lazy field handle from ``index_item``."""
+        """Build exactly one lazy field handle from ``index_item``."""
 
         item = _require_index_item(index_item)
         if not isinstance(locator, (FieldLocator, str)):

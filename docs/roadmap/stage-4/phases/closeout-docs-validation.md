@@ -57,8 +57,19 @@ git diff --check origin/develop...HEAD
 
 ## Completion Notes
 
-- Implementation summary: pending
-- Validation: pending
+- Implementation summary: updated README status, glossary Stage 4 vocabulary,
+  and public docstrings for runtime containers, lazy sample fields, sample
+  builders, and codec contexts. Added no new behavior, exports, real codecs,
+  datasource discovery, export orchestration, cache policy, or model
+  formatting.
+- Validation: `make test-package` passed 22; `make test-unit` passed 310;
+  `make test-contract` passed 38; `make validate-pr` passed lock check,
+  package 22, unit 310, contract 38, integration 1, build, and
+  `git diff --check`; final `make test-summary` passed package 22, unit 310,
+  contract 38, integration 1; `make test` passed 371. A concurrent
+  `make test-summary` run during `make validate-pr` reported an inconsistent
+  unit status despite zero failed tests and was superseded by the passing
+  standalone rerun.
 - PR: pending
 - Merge: pending
 - Cleanup: pending

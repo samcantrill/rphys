@@ -29,7 +29,13 @@ _MISSING = object()
 
 @runtime_checkable
 class FieldContainer(Protocol):
-    """Protocol for field containers used by loaded runtime sample-like objects."""
+    """Protocol for runtime field containers.
+
+    ``field()`` and ``field_items()`` return the stored ``FieldValue``-compatible
+    objects, which may be lazy handles. Payload-demanding APIs such as
+    ``get()`` and ``require()`` may materialize lazy fields through their
+    ``payload`` property.
+    """
 
     def has(self, locator: FieldLocator | str) -> bool:
         ...

@@ -274,7 +274,13 @@ IOContext.__hash__ = None  # type: ignore[assignment]
 
 @dataclass(frozen=True, init=False, slots=True)
 class LoadContext(IOContext):
-    """Datasource-neutral context for probing or loading one ``FieldView``."""
+    """Datasource-neutral context for probing or loading one ``FieldView``.
+
+    This context deliberately omits datasource records, index items,
+    role-qualified locators, split labels, member/alignment semantics, cache
+    keys, and export policy. Builder-side provenance remains outside codec
+    dispatch.
+    """
 
     field_view: FieldView
 
@@ -299,7 +305,12 @@ LoadContext.__hash__ = None  # type: ignore[assignment]
 
 @dataclass(frozen=True, init=False, slots=True)
 class SaveContext(IOContext):
-    """Datasource-neutral context for saving one logical field target."""
+    """Datasource-neutral context for saving one logical field target.
+
+    ``target`` is the logical ``FieldRef`` being written. Save policy is
+    explicit and narrow; load/probe operations do not imply metadata
+    persistence or export layout behavior.
+    """
 
     target: FieldRef
     metadata_policy: MetadataSavePolicy

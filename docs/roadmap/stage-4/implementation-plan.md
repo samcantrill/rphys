@@ -660,8 +660,8 @@ Workflow path: fast path unless validation exposes behavioral regressions
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
+- Implementation: updated README status to reflect the implemented Stage 1-4 public contracts; expanded glossary entries for `FieldCodec`, `CodecRegistry`, `LoadContext`, `SaveContext`, `SampleField`, and `SampleBuilder`; clarified public docstrings for `FieldContainer`, `SampleField`, `SampleBuildContext`, `SampleFieldProvenance`, `SampleProbeResult`, `SampleBuilder`, `LoadContext`, and `SaveContext`; added Phase 5 assignment and execution-plan artifacts. No new runtime behavior, public exports, real codecs, datasource scanning, export behavior, cache policy, or model formatting was introduced.
+- Validation: `make test-package` passed 22; `make test-unit` passed 310; `make test-contract` passed 38; `make validate-pr` passed lock check, package 22, unit 310, contract 38, integration 1, build, and `git diff --check`; final `make test-summary` passed package 22, unit 310, contract 38, integration 1; `make test` passed 371. A concurrent `make test-summary` run during `make validate-pr` produced an inconsistent summary status while reporting zero failed tests; rerunning `make test-summary` alone passed.
 - PR: pending
 - Merge: pending
 - Follow-up: pending

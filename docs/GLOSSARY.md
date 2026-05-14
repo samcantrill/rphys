@@ -78,8 +78,13 @@ section disagrees with this file, the code-backed contract and roadmap win.
 | `TemporalIndexSlice` | A half-open `[start, stop)` integer slice in one field's native index space. | Not seconds, spatial crop, resampling instruction, padding rule, or cross-field alignment claim. |
 | `FieldView` | A `FieldRef` plus optional field-native access behavior such as a `FieldIndex`. | Distinct from a loaded field payload and not a role-qualified sample field. |
 | `IndexItem` | A mapping from role-qualified `FieldLocator`s to `FieldView`s with mandatory `RecordRef` provenance. This is the unit consumed by `SampleBuilder`. | It must remain pure lazy IO and must not contain item IDs, fingerprints, payloads, transforms, augmentations, method logic, export logic, or training logic. |
+| `FieldCodec` | The structural codec shape for probing, loading, and saving logical fields and field views. | Not a mandatory base class, datasource scanner, split chooser, transform, or trainer concern. |
+| `CodecRegistry` | An explicit instance-local ordered resolver for codec objects. | Not process-global discovery, symbolic config lookup, entry-point loading, or hidden priority policy. |
+| `LoadContext` | Datasource-neutral context for probing or loading one `FieldView`, plus primitive operation metadata. | Not a `RecordRef`, `IndexItem`, split, locator, sample identity, member binding, alignment descriptor, or cache key. |
+| `SaveContext` | Datasource-neutral context for saving one logical field target through a `FieldRef` and explicit metadata-save policy. | Not an export layout, manifest writer, datasource mutation, or implicit metadata persistence rule. |
 | `Codec` | The boundary object that probes, loads, and saves logical fields and field views. | A codec does not choose splits, parse trainer concerns, or own transform logic. |
-| `SampleBuilder` | The bridge from `IndexItem` field views to runtime `Sample` objects, including lazy sample-field loading behavior. | It should not scan datasources, choose splits, apply ops, or move devices implicitly. |
+| `SampleField` | A `FieldValue`-compatible lazy runtime field handle stored directly in a `Sample`; payload access materializes once and retains success or failure state. | Not a cache policy, retry API, datasource record, export instruction, or model-formatted tuple. |
+| `SampleBuilder` | The one-`IndexItem` bridge from role-qualified `FieldView`s to runtime `Sample` objects with lazy `SampleField` handles and builder-side provenance. | It should not scan datasources, choose splits, apply ops, move devices implicitly, cache, format for models, or push record provenance into codec contexts. |
 
 ## Common Identity And Grouping Metadata
 
