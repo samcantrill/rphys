@@ -71,8 +71,8 @@ git diff --check
 - Implementation summary: implemented ordered item-yielding datasource indexes, sidecar entries, build reports/results, entry fingerprints, split/group provenance transfer, and SampleBuilder bridge coverage.
 - Implementation validation: `make test-unit` passed with 355 tests; `make test-contract` passed with 48 tests; `make test-integration` passed with 2 tests; `make test-package` passed with 25 tests; `git diff --check` passed.
 - Pre-submit blocker gate: passed; no manifest codec, composite index, payload loading, or `IndexItem.metadata` identity mutation.
-- PR preparation: pending.
-- Automated review: pending.
+- PR preparation: PR body drafted at `docs/roadmap/stage-5/phases/datasource-index-entries-pr-body.md`; PR #33 opened and verified against `develop`.
+- Automated review: manager expanded-path review passed before PR submission; GitHub checks pending/not configured at open.
 - Merge result: pending.
 - Cleanup: pending.
 - Remaining blockers: none.

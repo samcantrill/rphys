@@ -5,7 +5,7 @@ Roadmap version: `v5`
 Planning document: `docs/roadmap/stage-5/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 5 in progress
+Current phase: Phase 5 PR open
 Blockers: none identified by implementation-plan quality review
 
 ## Summary
@@ -40,7 +40,7 @@ Blockers: none identified by implementation-plan quality review
 | 2 | `adapters-validation` | merged | `agent/stage-5-p2-adapters-validation` | [#30](https://github.com/samcantrill/rphys/pull/30) | `rphys.datasources.adapters`, `rphys.datasources.validation`, synthetic scan/validation tests | Implement datasource specs, structural adapters, scan results, validation reports, and explicit IO policy. | `make test-unit`; `make test-contract`; `make test-package` | EX-1, EX-2 |
 | 3 | `views-filters-candidates` | merged | `agent/stage-5-p3-views-filters-candidates` | [#31](https://github.com/samcantrill/rphys/pull/31) | `rphys.datasources.filters`, index-owned candidate construction/selection surface in `rphys.datasources.indexes` | Implement non-mutating pre-index selection and candidate filtering before group/split. | `make test-unit`; `make test-contract` | EX-1, EX-3 |
 | 4 | `groups-splits` | merged | `agent/stage-5-p4-groups-splits` | [#32](https://github.com/samcantrill/rphys/pull/32) | `rphys.datasources.splits` and group/split provenance handoff to index finalization | Implement candidate-level multiple groups, explicit split-group keys, and leakage-safe split assignment. | `make test-unit`; `make test-contract` | EX-3 |
-| 5 | `datasource-index-entries` | in_progress | `agent/stage-5-p5-datasource-index-entries` | pending | `rphys.datasources.indexes` index plans/builders/results, sidecar entries, field-native windows, `SampleBuilder` bridge | Finalize selected/split candidates into ordered lazy `DataSourceIndex` objects. | `make test-unit`; `make test-contract`; `make test-integration` | EX-1 |
+| 5 | `datasource-index-entries` | pr_open | `agent/stage-5-p5-datasource-index-entries` | [#33](https://github.com/samcantrill/rphys/pull/33) | `rphys.datasources.indexes` index plans/builders/results, sidecar entries, field-native windows, `SampleBuilder` bridge | Finalize selected/split candidates into ordered lazy `DataSourceIndex` objects. | `make test-unit`; `make test-contract`; `make test-integration` | EX-1 |
 | 6 | `index-manifest-codec` | pending | `agent/stage-5-p6-index-manifest-codec` | pending | `rphys.datasources.indexes` manifest/codec/fingerprint/checksum behavior | Persist and reload datasource indexes with schema `rphys.datasource_index.v1`. | `make test-unit`; `make test-contract`; `git diff --check` | EX-4 |
 | 7 | `composite-index` | pending | `agent/stage-5-p7-composite-index` | pending | `CompositeDataSourceIndex`, source-aware sidecar entries, composite manifest behavior | Implement the only public Stage 5 combined-index type. | `make test-unit`; `make test-contract`; `make test-package` | EX-5 |
 | 8 | `docs-integration-hardening` | pending | `agent/stage-5-p8-docs-integration-hardening` | pending | Public docstrings/docs, synthetic vertical slice, integration hardening, release checks | Tie together EX-1 through EX-6 and verify public, scientific, durable-artifact, and workflow boundaries. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `git diff --check`; consider `make validate-pr` | EX-1 through EX-6 |
@@ -342,7 +342,7 @@ Status: in_progress
 Slug: `datasource-index-entries`
 Branch: `agent/stage-5-p5-datasource-index-entries`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-5-p5-datasource-index-entries`
-PR: pending
+PR: [#33](https://github.com/samcantrill/rphys/pull/33)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -403,7 +403,7 @@ Workflow path: expanded path
 
 - Implementation: `IndexPlan`, `IndexBuilder`, `IndexResult`, `IndexBuildReport`, `DataSourceIndex`, `DataSourceIndexEntry`, item/entry access, sidecar fingerprints, split/group/window/source provenance, and SampleBuilder bridge tests added.
 - Validation: `make test-unit` passed with 355 tests; `make test-contract` passed with 48 tests; `make test-integration` passed with 2 tests; `make test-package` passed with 25 tests; `git diff --check` passed.
-- PR: pending.
+- PR: [#33](https://github.com/samcantrill/rphys/pull/33) opened against `develop` with the canonical Phase 5 title.
 - Merge: pending.
 - Follow-up: Phase 6 owns durable manifest schema and checksum behavior.
 
