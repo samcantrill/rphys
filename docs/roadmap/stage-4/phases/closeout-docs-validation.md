@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: PR open
+- Status: merged
 - Roadmap stage: `v4`
 - Feature focus: Codecs and lazy sample construction
 - Stage descriptor: Codecs And Lazy Sample Construction
@@ -71,6 +71,8 @@ git diff --check origin/develop...HEAD
   unit status despite zero failed tests and was superseded by the passing
   standalone rerun.
 - PR: [#27](https://github.com/samcantrill/rphys/pull/27)
-- Merge: pending
-- Cleanup: pending
+- Merge: PR [#27](https://github.com/samcantrill/rphys/pull/27)
+  squash-merged to `develop` at
+  `994dd26029c058813e1797e75431fc4d0ed6b45e`
+- Cleanup: pending branch/worktree cleanup
 - Remaining blockers: none known

@@ -1,11 +1,11 @@
 # Roadmap Stage 4 Implementation Plan
 
-Status: implementation in progress
+Status: implementation complete
 Roadmap version: `v4`
 Planning document: `docs/roadmap/stage-4/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Primary Phase 5 PR open
+Current phase: all phases complete
 Blockers: none identified by implementation-readiness review
 
 ## Summary
@@ -44,7 +44,7 @@ Blockers: none identified by implementation-readiness review
 | 2 | `codec-registry-synthetic-ops` | merged | `agent/codecs-lazy-samples-p2-codec-registry-synthetic-ops` | [#24](https://github.com/samcantrill/rphys/pull/24) | `src/rphys/io/codecs.py`, tests/support synthetic codec, IO unit/contract tests | Prove explicit codec resolution and dependency-light probe/load/save behavior. | `make validate-pr`; targeted codec/package/error checks; `make test-unit`; `make test-contract`; `make test-package`; `git diff --check`; PR-range `git diff --check` after blocker fix | EX-2, EX-3, EX-4, EX-5 |
 | 3 | `lazy-sample-field-runtime` | merged | `agent/codecs-lazy-samples-p3-lazy-sample-field-runtime` | [#25](https://github.com/samcantrill/rphys/pull/25) | `src/rphys/data/sample_fields.py`, additive `src/rphys/data/containers.py` updates, conditional `src/rphys/data/__init__.py`, data unit/contract tests | Add lazy `SampleField` handles while preserving loaded `Sample` semantics. | `make validate-pr`; targeted lazy-field/container/collation/package/contract checks; `make test-unit`; `make test-contract`; `make test-package`; PR-range `git diff --check` | EX-1 |
 | 4 | `sample-builder-provenance` | merged | `agent/codecs-lazy-samples-p4-sample-builder-provenance` | [#26](https://github.com/samcantrill/rphys/pull/26) | `src/rphys/data/sample_builders.py`, conditional `src/rphys/data/__init__.py`, builder/provenance unit/contract tests | Build lazy `Sample`s from one `IndexItem` with all/subset/one/probe/eager paths. | targeted `make test-unit`; `make test-contract`; optional `make test-integration` only for one adopted vertical slice | EX-1, EX-2, EX-5 |
-| 5 | `closeout-docs-validation` | pr_open | `agent/codecs-lazy-samples-p5-closeout-docs-validation` | [#27](https://github.com/samcantrill/rphys/pull/27) | public docstrings/docs/examples, package expectations, final validation evidence | Harden docs, examples, contracts, import checks, and final validation without adding new behavior. | `make test-package`; `make test-unit`; `make test-contract`; `git diff --check`; broaden as needed | EX-1 through EX-6 |
+| 5 | `closeout-docs-validation` | merged | `agent/codecs-lazy-samples-p5-closeout-docs-validation` | [#27](https://github.com/samcantrill/rphys/pull/27) | public docstrings/docs/examples, package expectations, final validation evidence | Harden docs, examples, contracts, import checks, and final validation without adding new behavior. | `make test-package`; `make test-unit`; `make test-contract`; `git diff --check`; broaden as needed | EX-1 through EX-6 |
 
 ## Implementation Readiness Blockers
 
@@ -592,7 +592,7 @@ Workflow path: expanded path
 
 ## Phase 5: Closeout Docs, Examples, And Validation Hardening
 
-Status: pr_open
+Status: merged
 Slug: `closeout-docs-validation`
 Branch: `agent/codecs-lazy-samples-p5-closeout-docs-validation`
 Worktree: `/home/samcantrill/work/rphys-worktrees/codecs-lazy-samples-p5-closeout-docs-validation`
@@ -650,7 +650,7 @@ Workflow path: fast path unless validation exposes behavioral regressions
 - PR review budget: one reviewer pass with emphasis on closeout drift and documentation accuracy
 - Blocker-resolution budget: return to earlier phase or planning if closeout discovers behavior missing from the accepted plan
 - Pre-submit blocker gate: no new behavior mixed into docs/validation closeout
-- Merge record: pending
+- Merge record: PR [#27](https://github.com/samcantrill/rphys/pull/27) squash-merged to `develop` at `994dd26029c058813e1797e75431fc4d0ed6b45e`
 
 ### Risks And Stop Conditions
 
@@ -663,8 +663,25 @@ Workflow path: fast path unless validation exposes behavioral regressions
 - Implementation: updated README status to reflect the implemented Stage 1-4 public contracts; expanded glossary entries for `FieldCodec`, `CodecRegistry`, `LoadContext`, `SaveContext`, `SampleField`, and `SampleBuilder`; clarified public docstrings for `FieldContainer`, `SampleField`, `SampleBuildContext`, `SampleFieldProvenance`, `SampleProbeResult`, `SampleBuilder`, `LoadContext`, and `SaveContext`; added Phase 5 assignment and execution-plan artifacts. No new runtime behavior, public exports, real codecs, datasource scanning, export behavior, cache policy, or model formatting was introduced.
 - Validation: `make test-package` passed 22; `make test-unit` passed 310; `make test-contract` passed 38; `make validate-pr` passed lock check, package 22, unit 310, contract 38, integration 1, build, and `git diff --check`; final `make test-summary` passed package 22, unit 310, contract 38, integration 1; `make test` passed 371. A concurrent `make test-summary` run during `make validate-pr` produced an inconsistent summary status while reporting zero failed tests; rerunning `make test-summary` alone passed.
 - PR: [#27](https://github.com/samcantrill/rphys/pull/27) opened against `develop` with title `Stage 4 Codecs And Lazy Sample Construction - Phase 5: Closeout Docs, Examples, And Validation Hardening`.
-- Merge: pending
-- Follow-up: pending
+- Merge: squash-merged to `develop` 2026-05-14 at `994dd26029c058813e1797e75431fc4d0ed6b45e` via GitHub merge API after local validation and closeout review. GitHub reported no checks for the branch, so local validation and review were the merge gate.
+- Follow-up: Stage 5 can start from the completed Stage 4 bridge; no Stage 4 blockers remain.
+
+### Merge Record
+
+- Phase: Primary Phase 5, `closeout-docs-validation`
+- Branch: `agent/codecs-lazy-samples-p5-closeout-docs-validation`
+- PR: [#27](https://github.com/samcantrill/rphys/pull/27)
+- Base branch: `develop`
+- Merge command: `gh api --method PUT repos/samcantrill/rphys/pulls/27/merge --field merge_method=squash ...`
+- Merge result: merged
+- Merge commit: `994dd26029c058813e1797e75431fc4d0ed6b45e`
+- Branch cleanup: pending
+- Worktree cleanup: pending
+- Behavior implemented: documentation-only Stage 4 closeout covering README status, glossary Stage 4 vocabulary, public docstrings, phase assignment, execution plan, PR body, and validation evidence.
+- Tests and validation: `make test-package`, `make test-unit`, `make test-contract`, `make validate-pr`, `make test-summary`, `make test`, and PR-range `git diff --check` passed.
+- Documentation: closeout artifacts and this merge record updated.
+- Scientific contract implications: Stage 4 boundaries are documented without adding behavior; codec contexts remain datasource-neutral, lazy access triggers remain explicit, provenance remains builder-side, and metadata save policy remains explicit.
+- Remaining blockers: none.
 
 ## Cross-Phase Validation
 
