@@ -248,9 +248,10 @@ git diff --check
 - Implementation validation: complete (`make test-package`, `make test-unit`, `make test-contract`, `git diff --check` executed by phase executor)
 - Refinement summary: locked public schema field spelling/semantics, `OperationMutationPolicy`, shallow immutability/copying expectations, Phase 1 concrete errors, package/import-boundary obligations, and stop conditions without changing phase scope
 - Implementation refinement pass: completed 2026-05-14; updated stale `src/rphys/ops` Stage 1 docstrings to Stage 6 language, replaced identity-like `run_id` provenance examples in `tests/unit/rphys/ops/test_context.py`, and aligned the contracts unit test path to `tests/unit/rphys/ops/test_contracts.py` with an ops test namespace marker to avoid duplicate basename collection conflicts, without changing behavior or adding public API.
-- Pre-submit blocker gate: cleared
-- PR preparation: PR body draft complete 2026-05-14 at `docs/roadmap/stage-6/phases/public-schemas-imports-errors-pr-body.md`; PR body refine pending for expanded path after the manager pre-submit gate; PR not opened.
-- Automated review: pending manager pre-submit gate
+- PR body refinement: completed 2026-05-14 for expanded-path final gate evidence; PR not opened.
+- Pre-submit blocker gate: cleared after `make validate-pr`, `uv lock --check`, `make test-summary`, `uv build`, and `git diff --check` passed.
+- PR preparation: PR body draft complete 2026-05-14 at `docs/roadmap/stage-6/phases/public-schemas-imports-errors-pr-body.md`; expanded-path PR body refine complete; PR not opened.
+- Automated review: not run in this PR-body/evidence-only refinement pass
 - Merge result: pending
 - Cleanup: in-progress
 - Remaining blockers: none known after refinement

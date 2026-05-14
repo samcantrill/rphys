@@ -50,7 +50,20 @@ make test-package
 make test-unit
 make test-contract
 make test-summary
+make validate-pr
+uv lock --check
+uv build
 git diff --check
+```
+
+Final pre-submit gate evidence:
+
+```text
+make validate-pr: passed
+uv lock --check: passed
+make test-summary: passed
+uv build: passed
+git diff --check: passed
 ```
 
 Latest recorded `build/test-summary.md` evidence:
