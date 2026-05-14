@@ -24,6 +24,8 @@ __all__ = [
     "InvalidDataSourceViewError",
     "InvalidDataSourceFilterError",
     "InvalidIndexCandidateError",
+    "InvalidGroupAssignmentError",
+    "InvalidSplitAssignmentError",
     "InvalidFieldIndexError",
     "InvalidFieldRefError",
     "InvalidFieldViewError",
@@ -254,3 +256,11 @@ class InvalidDataSourceFilterError(RemotePhysDataSourceError):
 
 class InvalidIndexCandidateError(RemotePhysDataSourceError, RemotePhysFieldError):
     """Raised when a provisional datasource index candidate is invalid."""
+
+
+class InvalidGroupAssignmentError(RemotePhysDataSourceError):
+    """Raised when candidate-level group extraction is invalid or incomplete."""
+
+
+class InvalidSplitAssignmentError(RemotePhysDataSourceError):
+    """Raised when candidate-level split assignment is invalid or leaky."""

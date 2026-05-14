@@ -203,7 +203,16 @@ STAGE_5_DATASOURCE_MODULES = {
         "FilterResult",
         "build_view",
     ],
-    "rphys.datasources.splits": [],
+    "rphys.datasources.splits": [
+        "CandidateGroupAssignment",
+        "GroupBuilder",
+        "GroupPlan",
+        "GroupResult",
+        "SplitAssignment",
+        "SplitBuilder",
+        "SplitPlan",
+        "SplitResult",
+    ],
     "rphys.datasources.indexes": [
         "IndexCandidate",
         "IndexCandidatePlan",
@@ -228,6 +237,8 @@ STAGE_5_DATASOURCE_ERROR_NAMES = [
     "InvalidDataSourceViewError",
     "InvalidDataSourceFilterError",
     "InvalidIndexCandidateError",
+    "InvalidGroupAssignmentError",
+    "InvalidSplitAssignmentError",
 ]
 
 
@@ -368,7 +379,13 @@ def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
         "build_index_candidates",
         "filter_index_candidates",
         "GroupPlan",
+        "GroupBuilder",
+        "GroupResult",
+        "CandidateGroupAssignment",
         "SplitPlan",
+        "SplitBuilder",
+        "SplitResult",
+        "SplitAssignment",
         "DataSourceIndex",
         "DataSourceIndexEntry",
         "DataSourceIndexManifest",
