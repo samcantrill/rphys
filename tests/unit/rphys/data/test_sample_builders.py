@@ -223,3 +223,19 @@ def test_container_copy_preserves_built_field_provenance_without_loading() -> No
     assert deep.field(VIDEO).provenance is field.provenance
     assert copied.provenance is field.provenance
     assert fixture.video_codec.load_calls == 0
+
+
+def test_map_tensors_preserves_built_field_handle_and_provenance() -> None:
+    fixture = make_builder_fixture()
+    sample = fixture.builder.build(fixture.item, requested=VIDEO)
+    field = sample.field(VIDEO)
+    provenance = field.provenance
+
+    assert sample.map_tensors_(lambda value: value) is sample
+
+    assert sample.field(VIDEO) is field
+    assert field.provenance is provenance
+    assert field.state is SampleFieldState.LOADED
+    assert field.load_result is not None
+    assert field.load_result.metadata["codec"] == "video"
+    assert fixture.video_codec.load_calls == 1

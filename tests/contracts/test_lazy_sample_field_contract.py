@@ -37,6 +37,14 @@ class Loader:
         )
 
 
+class CopyingMappedPayload:
+    def __init__(self, value: str) -> None:
+        self.value = value
+
+    def map_tensors(self, mapper):
+        return type(self)(mapper(self.value))
+
+
 def _context() -> LoadContext:
     return LoadContext(
         FieldView(
@@ -104,3 +112,18 @@ def test_lazy_sample_field_contract_works_with_contracts_and_list_collation() ->
     assert batch.require(VIDEO) == [("f0", "f1"), ("g0", "g1")]
     assert first_loader.calls == 1
     assert second_loader.calls == 1
+
+
+def test_lazy_sample_field_contract_map_tensors_preserves_handle() -> None:
+    loader = Loader(CopyingMappedPayload("f0"))
+    field = SampleField(_context(), loader, collate_policy=CollatePolicy.LIST)
+    sample = Sample({VIDEO: field})
+
+    assert sample.map_tensors_(lambda value: f"{value}:mapped") is sample
+
+    assert sample.field(VIDEO) is field
+    assert field.state is SampleFieldState.LOADED
+    assert loader.calls == 1
+    assert field.load_result is not None
+    assert field.load_result.metadata["codec"] == "contract"
+    assert field.payload.value == "f0:mapped"

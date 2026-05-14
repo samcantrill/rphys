@@ -36,6 +36,16 @@ class CountingLoader:
         return self.result  # type: ignore[return-value]
 
 
+class CopyingMappedPayload:
+    def __init__(self, value: str) -> None:
+        self.value = value
+        self.calls = 0
+
+    def map_tensors(self, mapper):
+        self.calls += 1
+        return type(self)(mapper(self.value))
+
+
 def _load_context(
     key: str = "video.rgb",
     *,
@@ -145,6 +155,23 @@ def test_failed_load_is_retained_and_reraised_without_retry() -> None:
     assert loader.calls == 1
 
 
+def test_non_exception_loader_interrupt_is_not_retained_as_load_failure() -> None:
+    class LoaderInterrupt(BaseException):
+        pass
+
+    error = LoaderInterrupt("stop loading")
+    field, loader = _sample_field(CountingLoader(error))
+
+    with pytest.raises(LoaderInterrupt) as exc_info:
+        field.load()
+
+    assert exc_info.value is error
+    assert field.state is SampleFieldState.UNLOADED
+    assert field.failed is False
+    assert field.load_error is None
+    assert loader.calls == 1
+
+
 def test_payload_assignment_cannot_reset_failed_or_loaded_state() -> None:
     error = RuntimeError("decode failed")
     failed, failed_loader = _sample_field(CountingLoader(error))
@@ -194,6 +221,19 @@ def test_sample_stores_lazy_handle_as_field_object_without_loading() -> None:
     assert loader.calls == 0
 
 
+def test_schema_only_field_validation_does_not_load_but_expected_type_does() -> None:
+    field, loader = _sample_field()
+    sample = Sample({VIDEO: field})
+
+    assert sample.field(VIDEO, schema="video.rgb.v1") is field
+    assert field.state is SampleFieldState.UNLOADED
+    assert loader.calls == 0
+
+    assert sample.field(VIDEO, expected_type=tuple) is field
+    assert field.state is SampleFieldState.LOADED
+    assert loader.calls == 1
+
+
 def test_payload_demanding_sample_accessors_load_once() -> None:
     field, loader = _sample_field()
     sample = Sample({VIDEO: field})
@@ -233,6 +273,65 @@ def test_lazy_fields_collate_through_payload_demanding_list_policy() -> None:
     assert batch.field(VIDEO).metadata[MetadataKey("loaded_by")] == ["unit", "unit"]
     assert first_loader.calls == 1
     assert second_loader.calls == 1
+
+
+def test_map_tensors_preserves_lazy_handle_and_updates_retained_result() -> None:
+    payload = CopyingMappedPayload("video")
+    field, loader = _sample_field(
+        CountingLoader(_load_result(payload, collate_policy=CollatePolicy.LIST)),
+        collate_policy=CollatePolicy.LIST,
+    )
+    sample = Sample({VIDEO: field})
+
+    returned = sample.map_tensors_(lambda value: f"{value}:mapped")
+
+    assert returned is sample
+    assert sample.field(VIDEO) is field
+    assert field.state is SampleFieldState.LOADED
+    assert loader.calls == 1
+    assert payload.calls == 1
+
+    mapped_payload = field.payload
+    assert isinstance(mapped_payload, CopyingMappedPayload)
+    assert mapped_payload is not payload
+    assert mapped_payload.value == "video:mapped"
+    assert field.load_context.field_view.field_ref.key == "video.rgb"
+    assert field.load_result is not None
+    assert field.load_result.metadata["codec"] == "unit"
+    assert field.metadata[MetadataKey("loaded_by")] == "unit"
+    assert field.schema == "video.rgb.v1"
+    assert field.collate_policy is CollatePolicy.LIST
+
+
+def test_map_tensors_loads_unmapped_lazy_payload_once_and_preserves_handle() -> None:
+    field, loader = _sample_field()
+    sample = Sample({VIDEO: field})
+
+    returned = sample.map_tensors_(lambda value: f"{value}:mapped")
+
+    assert returned is sample
+    assert sample.field(VIDEO) is field
+    assert field.state is SampleFieldState.LOADED
+    assert field.payload == ("f0", "f1")
+    assert loader.calls == 1
+
+
+def test_map_tensors_retains_lazy_load_failure_without_retry() -> None:
+    error = RuntimeError("decode failed")
+    field, loader = _sample_field(CountingLoader(error))
+    sample = Sample({VIDEO: field})
+
+    with pytest.raises(RuntimeError) as first:
+        sample.map_tensors_(lambda value: value)
+    with pytest.raises(RuntimeError) as second:
+        sample.map_tensors_(lambda value: value)
+
+    assert first.value is error
+    assert second.value is error
+    assert sample.field(VIDEO) is field
+    assert field.state is SampleFieldState.FAILED
+    assert field.load_error is error
+    assert loader.calls == 1
 
 
 def test_shallow_and_deep_copy_do_not_force_load() -> None:

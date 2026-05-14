@@ -37,8 +37,9 @@ class SampleField(FieldValue):
     loader callable. It does not know about datasource records, index items,
     retry policy, caches, builders, or export behavior. ``field()`` access on a
     ``Sample`` returns the handle unchanged; ``payload`` access, ``get()``,
-    ``require()``, contracts, collation, and ``eager_load()`` may materialize
-    once and then retain either the load result or the failure.
+    ``require()``, contracts, collation, ``map_tensors_()``, and
+    ``eager_load()`` may materialize once and then retain either the load
+    result or the failure.
     """
 
     __slots__ = (
@@ -73,7 +74,7 @@ class SampleField(FieldValue):
         self._loader = loader
         self._state = SampleFieldState.UNLOADED
         self._load_result: CodecLoadResult | None = None
-        self._load_error: BaseException | None = None
+        self._load_error: Exception | None = None
         self.schema = load_context.field_view.field_ref.schema
         self.metadata = {
             MetadataKey(key): value
@@ -124,7 +125,7 @@ class SampleField(FieldValue):
         return self._load_result
 
     @property
-    def load_error(self) -> BaseException | None:
+    def load_error(self) -> Exception | None:
         """Retained loading error, if loading failed."""
 
         return self._load_error
@@ -147,7 +148,7 @@ class SampleField(FieldValue):
 
         try:
             result = self._loader(self._load_context)
-        except BaseException as exc:
+        except Exception as exc:
             self._state = SampleFieldState.FAILED
             self._load_error = exc
             raise
@@ -168,6 +169,35 @@ class SampleField(FieldValue):
         """Materialize through the same state machine as ``payload`` access."""
 
         return self.load()
+
+    def _map_loaded_payload_tensors(
+        self,
+        mapper: Callable[[object], object],
+    ) -> "SampleField":
+        """Map loaded payload tensors while preserving this lazy handle."""
+
+        result = self.load()
+        field_value = result.field_value
+        payload = field_value.payload
+        map_tensors = getattr(payload, "map_tensors", None)
+        if map_tensors is None or not callable(map_tensors):
+            return self
+
+        mapped_payload = map_tensors(mapper)
+        if mapped_payload is payload:
+            return self
+
+        mapped_result = CodecLoadResult(
+            FieldValue(
+                mapped_payload,
+                schema=field_value.schema,
+                metadata=field_value.metadata,
+                collate_policy=field_value.collate_policy,
+            ),
+            metadata=dict(result.metadata),
+        )
+        self._retain_result(mapped_result)
+        return self
 
     def __copy__(self) -> "SampleField":
         clone = type(self)(

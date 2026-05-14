@@ -269,9 +269,23 @@ class _FieldContainerBase:
         return copied
 
     def map_tensors_(self, mapper: Callable[[object], object]) -> "_FieldContainerBase":
-        """Map tensor leaves inside payloads that expose ``map_tensors``."""
+        """Map tensor leaves inside payloads that expose ``map_tensors``.
+
+        Lazy field handles may materialize through this payload-demanding path,
+        but the stored handle is preserved so retained state and provenance stay
+        inspectable.
+        """
 
         for locator, entry in tuple(self._fields.items()):
+            lazy_map_tensors = getattr(
+                entry.value,
+                "_map_loaded_payload_tensors",
+                None,
+            )
+            if callable(lazy_map_tensors):
+                lazy_map_tensors(mapper)
+                continue
+
             payload = entry.value.payload
             map_tensors = getattr(payload, "map_tensors", None)
             if map_tensors is None or not callable(map_tensors):
