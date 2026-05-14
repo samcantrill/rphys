@@ -9,6 +9,8 @@ identity, compute fingerprints, persist manifests, or mutate ``IndexItem``.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from types import MappingProxyType
@@ -22,14 +24,21 @@ from rphys.io._primitives import FrozenPrimitive, freeze_primitive, thaw_primiti
 from rphys.io.fields import FieldView
 from rphys.io.indexes import FieldIndex
 
+from .index_items import IndexItem
 from .filters import DataSourceView, FilterChain
 from .refs import RecordRef
 
 __all__ = [
+    "DataSourceIndex",
+    "DataSourceIndexEntry",
     "IndexCandidate",
     "IndexCandidatePlan",
     "IndexCandidateResult",
     "IndexCandidateView",
+    "IndexBuildReport",
+    "IndexBuilder",
+    "IndexPlan",
+    "IndexResult",
     "build_index_candidates",
     "filter_index_candidates",
 ]
@@ -289,6 +298,350 @@ def filter_index_candidates(
     )
 
 
+@dataclass(frozen=True, init=False, slots=True)
+class IndexPlan:
+    """Plan for finalizing selected candidates into an ordered index."""
+
+    index_id: str
+    metadata: Mapping[MetadataKey, FrozenPrimitive]
+
+    def __init__(
+        self,
+        index_id: str,
+        *,
+        metadata: Mapping[MetadataKey | str, object] | None = None,
+    ) -> None:
+        object.__setattr__(self, "index_id", _non_empty_string(index_id))
+        object.__setattr__(
+            self,
+            "metadata",
+            MappingProxyType(_coerce_metadata(metadata)),
+        )
+
+
+IndexPlan.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class DataSourceIndexEntry:
+    """Sidecar identity and provenance for one ``DataSourceIndex`` position."""
+
+    index_id: str
+    entry_id: str
+    position: int
+    candidate_id: str
+    record_id: str
+    datasource_id: str
+    source_id: str | None
+    groups: Mapping[str, str]
+    split: str | None
+    split_group: str | None
+    split_group_value: str | None
+    field_windows: Mapping[str, object]
+    metadata: Mapping[MetadataKey, FrozenPrimitive]
+    fingerprint: str
+
+    def __init__(
+        self,
+        *,
+        index_id: str,
+        entry_id: str,
+        position: int,
+        candidate_id: str,
+        record_id: str,
+        datasource_id: str,
+        source_id: str | None,
+        groups: Mapping[str, str] | None = None,
+        split: str | None = None,
+        split_group: str | None = None,
+        split_group_value: str | None = None,
+        field_windows: Mapping[str, object] | None = None,
+        metadata: Mapping[MetadataKey | str, object] | None = None,
+        fingerprint: str | None = None,
+    ) -> None:
+        object.__setattr__(self, "index_id", _non_empty_string(index_id))
+        object.__setattr__(self, "entry_id", _non_empty_string(entry_id))
+        object.__setattr__(self, "position", _non_negative_int(position, field="position"))
+        object.__setattr__(self, "candidate_id", _non_empty_string(candidate_id))
+        object.__setattr__(self, "record_id", _non_empty_string(record_id))
+        object.__setattr__(self, "datasource_id", _non_empty_string(datasource_id))
+        if source_id is not None:
+            source_id = _non_empty_string(source_id)
+        object.__setattr__(self, "source_id", source_id)
+        object.__setattr__(
+            self,
+            "groups",
+            MappingProxyType(_coerce_string_mapping(groups, field="groups")),
+        )
+        object.__setattr__(self, "split", split if split is None else _non_empty_string(split))
+        object.__setattr__(
+            self,
+            "split_group",
+            split_group if split_group is None else _non_empty_string(split_group),
+        )
+        object.__setattr__(
+            self,
+            "split_group_value",
+            (
+                split_group_value
+                if split_group_value is None
+                else _non_empty_string(split_group_value)
+            ),
+        )
+        object.__setattr__(
+            self,
+            "field_windows",
+            MappingProxyType(_coerce_field_windows(field_windows)),
+        )
+        object.__setattr__(
+            self,
+            "metadata",
+            MappingProxyType(_coerce_metadata(metadata)),
+        )
+        stable = self._stable_payload()
+        object.__setattr__(self, "fingerprint", fingerprint or _sha256(stable))
+
+    def to_dict(self) -> dict[str, object]:
+        """Serialize sidecar provenance without serializing payload data."""
+
+        return {
+            **self._stable_payload(),
+            "fingerprint": self.fingerprint,
+        }
+
+    def _stable_payload(self) -> dict[str, object]:
+        return {
+            "index_id": self.index_id,
+            "entry_id": self.entry_id,
+            "position": self.position,
+            "candidate_id": self.candidate_id,
+            "record_id": self.record_id,
+            "datasource_id": self.datasource_id,
+            "source_id": self.source_id,
+            "groups": dict(self.groups),
+            "split": self.split,
+            "split_group": self.split_group,
+            "split_group_value": self.split_group_value,
+            "field_windows": dict(self.field_windows),
+            "metadata": {
+                str(key): thaw_primitive(value)
+                for key, value in self.metadata.items()
+            },
+        }
+
+
+DataSourceIndexEntry.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class DataSourceIndex:
+    """Ordered lazy datasource index with sidecar entry provenance."""
+
+    index_id: str
+    _items: tuple[IndexItem, ...]
+    _entries: tuple[DataSourceIndexEntry, ...]
+    metadata: Mapping[MetadataKey, FrozenPrimitive]
+
+    def __init__(
+        self,
+        index_id: str,
+        items: Sequence[IndexItem],
+        entries: Sequence[DataSourceIndexEntry],
+        *,
+        metadata: Mapping[MetadataKey | str, object] | None = None,
+    ) -> None:
+        item_tuple = _coerce_items(items)
+        entry_tuple = _coerce_entries(entries, index_id=index_id, length=len(item_tuple))
+        object.__setattr__(self, "index_id", _non_empty_string(index_id))
+        object.__setattr__(self, "_items", item_tuple)
+        object.__setattr__(self, "_entries", entry_tuple)
+        object.__setattr__(
+            self,
+            "metadata",
+            MappingProxyType(_coerce_metadata(metadata)),
+        )
+
+    def __len__(self) -> int:
+        return len(self._items)
+
+    def __getitem__(self, position: int) -> IndexItem:
+        return self._items[position]
+
+    def __iter__(self):
+        return iter(self._items)
+
+    @property
+    def entries(self) -> tuple[DataSourceIndexEntry, ...]:
+        """Entry sidecars aligned with item positions."""
+
+        return self._entries
+
+    def entry_at(self, position: int) -> DataSourceIndexEntry:
+        """Return the sidecar entry for ``position``."""
+
+        return self._entries[position]
+
+
+DataSourceIndex.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class IndexBuildReport:
+    """Counts and rejection evidence from final index construction."""
+
+    accepted_count: int
+    rejected_candidate_ids: Mapping[str, str]
+    warnings: tuple[str, ...]
+
+    def __init__(
+        self,
+        *,
+        accepted_count: int,
+        rejected_candidate_ids: Mapping[str, str] | None = None,
+        warnings: Sequence[str] = (),
+    ) -> None:
+        object.__setattr__(
+            self,
+            "accepted_count",
+            _non_negative_int(accepted_count, field="accepted_count"),
+        )
+        object.__setattr__(
+            self,
+            "rejected_candidate_ids",
+            MappingProxyType(_coerce_reason_mapping(rejected_candidate_ids)),
+        )
+        object.__setattr__(
+            self,
+            "warnings",
+            _coerce_strings(warnings, field="warnings"),
+        )
+
+
+IndexBuildReport.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class IndexResult:
+    """Final datasource index plus build report."""
+
+    index: DataSourceIndex
+    report: IndexBuildReport
+
+    def __init__(self, index: DataSourceIndex, report: IndexBuildReport) -> None:
+        if not isinstance(index, DataSourceIndex):
+            raise InvalidIndexCandidateError(
+                "IndexResult index must be a DataSourceIndex.",
+                field="index",
+                actual=type(index).__name__,
+            )
+        if not isinstance(report, IndexBuildReport):
+            raise InvalidIndexCandidateError(
+                "IndexResult report must be an IndexBuildReport.",
+                field="report",
+                actual=type(report).__name__,
+            )
+        object.__setattr__(self, "index", index)
+        object.__setattr__(self, "report", report)
+
+
+IndexResult.__hash__ = None  # type: ignore[assignment]
+
+
+class IndexBuilder:
+    """Finalize selected candidates into item-yielding datasource indexes."""
+
+    def __init__(self, plan: IndexPlan) -> None:
+        if not isinstance(plan, IndexPlan):
+            raise InvalidIndexCandidateError(
+                "IndexBuilder plan must be an IndexPlan.",
+                field="plan",
+                actual=type(plan).__name__,
+            )
+        self.plan = plan
+
+    def build(
+        self,
+        candidate_view: IndexCandidateView,
+        *,
+        group_result: object | None = None,
+        split_result: object | None = None,
+    ) -> IndexResult:
+        """Build an ordered ``DataSourceIndex`` from selected candidates."""
+
+        from .splits import GroupResult, SplitResult
+
+        if not isinstance(candidate_view, IndexCandidateView):
+            raise InvalidIndexCandidateError(
+                "IndexBuilder.build requires an IndexCandidateView.",
+                field="candidate_view",
+                actual=type(candidate_view).__name__,
+            )
+        if group_result is not None and not isinstance(group_result, GroupResult):
+            raise InvalidIndexCandidateError(
+                "group_result must be a GroupResult.",
+                field="group_result",
+                actual=type(group_result).__name__,
+            )
+        if split_result is not None and not isinstance(split_result, SplitResult):
+            raise InvalidIndexCandidateError(
+                "split_result must be a SplitResult.",
+                field="split_result",
+                actual=type(split_result).__name__,
+            )
+        items: list[IndexItem] = []
+        entries: list[DataSourceIndexEntry] = []
+        rejected: dict[str, str] = {}
+        for position, candidate in enumerate(candidate_view.candidates):
+            if not candidate.fields:
+                rejected[candidate.candidate_id] = "missing_fields"
+                continue
+            groups = _groups_for(candidate, group_result, split_result)
+            split_assignment = (
+                split_result.assignments.get(candidate.candidate_id)
+                if split_result is not None
+                else None
+            )
+            item = IndexItem(candidate.fields, candidate.record)
+            entry = DataSourceIndexEntry(
+                index_id=self.plan.index_id,
+                entry_id=f"{self.plan.index_id}:{position}",
+                position=len(items),
+                candidate_id=candidate.candidate_id,
+                record_id=candidate.record.record_id,
+                datasource_id=candidate.record.datasource.datasource_id,
+                source_id=candidate.source_id,
+                groups=groups,
+                split=str(split_assignment.split) if split_assignment is not None else None,
+                split_group=(
+                    split_assignment.split_group
+                    if split_assignment is not None
+                    else None
+                ),
+                split_group_value=(
+                    split_assignment.split_group_value
+                    if split_assignment is not None
+                    else None
+                ),
+                field_windows=_field_windows(candidate),
+                metadata=candidate.metadata,
+            )
+            items.append(item)
+            entries.append(entry)
+        index = DataSourceIndex(
+            self.plan.index_id,
+            items,
+            entries,
+            metadata=self.plan.metadata,
+        )
+        return IndexResult(
+            index,
+            IndexBuildReport(
+                accepted_count=len(items),
+                rejected_candidate_ids=rejected,
+            ),
+        )
+
+
 def _coerce_plan_fields(
     fields: Mapping[FieldLocator | str, DataKey | str],
 ) -> dict[FieldLocator, DataKey]:
@@ -396,6 +749,111 @@ def _coerce_candidates(
     return result
 
 
+def _groups_for(
+    candidate: IndexCandidate,
+    group_result: object | None,
+    split_result: object | None,
+) -> Mapping[str, str]:
+    if split_result is not None and candidate.candidate_id in split_result.assignments:
+        return split_result.assignments[candidate.candidate_id].groups
+    if group_result is not None and candidate.candidate_id in group_result.assignments:
+        return group_result.assignments[candidate.candidate_id].groups
+    return {}
+
+
+def _field_windows(candidate: IndexCandidate) -> dict[str, object]:
+    windows: dict[str, object] = {}
+    for locator, view in candidate.fields.items():
+        windows[str(locator)] = (
+            view.field_index.to_dict() if view.field_index is not None else None
+        )
+    return windows
+
+
+def _coerce_items(items: Sequence[IndexItem]) -> tuple[IndexItem, ...]:
+    if isinstance(items, (str, bytes)) or not isinstance(items, Sequence):
+        raise InvalidIndexCandidateError(
+            "DataSourceIndex items must be a sequence.",
+            field="items",
+            actual=type(items).__name__,
+        )
+    result = tuple(items)
+    for item in result:
+        if not isinstance(item, IndexItem):
+            raise InvalidIndexCandidateError(
+                "DataSourceIndex items must contain IndexItem values.",
+                field="items",
+                actual=type(item).__name__,
+            )
+    return result
+
+
+def _coerce_entries(
+    entries: Sequence[DataSourceIndexEntry],
+    *,
+    index_id: str,
+    length: int,
+) -> tuple[DataSourceIndexEntry, ...]:
+    if isinstance(entries, (str, bytes)) or not isinstance(entries, Sequence):
+        raise InvalidIndexCandidateError(
+            "DataSourceIndex entries must be a sequence.",
+            field="entries",
+            actual=type(entries).__name__,
+        )
+    result = tuple(entries)
+    if len(result) != length:
+        raise InvalidIndexCandidateError(
+            "DataSourceIndex entries must align one-to-one with items.",
+            field="entries",
+            expected=length,
+            actual=len(result),
+        )
+    for expected_position, entry in enumerate(result):
+        if not isinstance(entry, DataSourceIndexEntry):
+            raise InvalidIndexCandidateError(
+                "DataSourceIndex entries must contain DataSourceIndexEntry values.",
+                field="entries",
+                actual=type(entry).__name__,
+            )
+        if entry.index_id != index_id:
+            raise InvalidIndexCandidateError(
+                "DataSourceIndex entry index_id must match index_id.",
+                field="entries",
+                expected=index_id,
+                actual=entry.index_id,
+            )
+        if entry.position != expected_position:
+            raise InvalidIndexCandidateError(
+                "DataSourceIndex entry positions must be ordered and contiguous.",
+                field="entries",
+                expected=expected_position,
+                actual=entry.position,
+            )
+    return result
+
+
+def _coerce_field_windows(value: Mapping[str, object] | None) -> dict[str, object]:
+    if value is None:
+        return {}
+    if not isinstance(value, Mapping):
+        raise InvalidIndexCandidateError(
+            "DataSourceIndexEntry field_windows must be a mapping.",
+            field="field_windows",
+            actual=type(value).__name__,
+        )
+    return {
+        _non_empty_string(key): _jsonable_window(window)
+        for key, window in value.items()
+    }
+
+
+def _jsonable_window(value: object) -> object:
+    if value is None:
+        return None
+    json.dumps(value, sort_keys=True)
+    return value
+
+
 def _coerce_metadata(
     metadata: Mapping[MetadataKey | str, object] | None,
 ) -> dict[MetadataKey, FrozenPrimitive]:
@@ -414,6 +872,25 @@ def _coerce_metadata(
             field="metadata",
         )
         for key, value in metadata.items()
+    }
+
+
+def _coerce_string_mapping(
+    value: Mapping[str, str] | None,
+    *,
+    field: str,
+) -> dict[str, str]:
+    if value is None:
+        return {}
+    if not isinstance(value, Mapping):
+        raise InvalidIndexCandidateError(
+            "String provenance mappings must be mappings.",
+            field=field,
+            actual=type(value).__name__,
+        )
+    return {
+        _non_empty_string(key): _non_empty_string(item)
+        for key, item in value.items()
     }
 
 
@@ -482,3 +959,12 @@ def _non_negative_int(value: object, *, field: str) -> int:
             value=value,
         )
     return value
+
+
+def _sha256(payload: Mapping[str, object]) -> str:
+    encoded = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
