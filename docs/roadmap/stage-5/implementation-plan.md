@@ -42,7 +42,7 @@ Blockers: none identified by implementation-plan quality review
 | 4 | `groups-splits` | merged | `agent/stage-5-p4-groups-splits` | [#32](https://github.com/samcantrill/rphys/pull/32) | `rphys.datasources.splits` and group/split provenance handoff to index finalization | Implement candidate-level multiple groups, explicit split-group keys, and leakage-safe split assignment. | `make test-unit`; `make test-contract` | EX-3 |
 | 5 | `datasource-index-entries` | merged | `agent/stage-5-p5-datasource-index-entries` | [#33](https://github.com/samcantrill/rphys/pull/33) | `rphys.datasources.indexes` index plans/builders/results, sidecar entries, field-native windows, `SampleBuilder` bridge | Finalize selected/split candidates into ordered lazy `DataSourceIndex` objects. | `make test-unit`; `make test-contract`; `make test-integration` | EX-1 |
 | 6 | `index-manifest-codec` | merged | `agent/stage-5-p6-index-manifest-codec` | [#34](https://github.com/samcantrill/rphys/pull/34) | `rphys.datasources.indexes` manifest/codec/fingerprint/checksum behavior | Persist and reload datasource indexes with schema `rphys.datasource_index.v1`. | `make test-unit`; `make test-contract`; `git diff --check` | EX-4 |
-| 7 | `composite-index` | implemented / PR open | `agent/stage-5-p7-composite-index` | [#35](https://github.com/samcantrill/rphys/pull/35) | `CompositeDataSourceIndex`, source-aware sidecar entries, composite manifest behavior | Implement the only public Stage 5 combined-index type. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-5 |
+| 7 | `composite-index` | merged | `agent/stage-5-p7-composite-index` | [#35](https://github.com/samcantrill/rphys/pull/35) | `CompositeDataSourceIndex`, source-aware sidecar entries, composite manifest behavior | Implement the only public Stage 5 combined-index type. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-5 |
 | 8 | `docs-integration-hardening` | pending | `agent/stage-5-p8-docs-integration-hardening` | pending | Public docstrings/docs, synthetic vertical slice, integration hardening, release checks | Tie together EX-1 through EX-6 and verify public, scientific, durable-artifact, and workflow boundaries. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `git diff --check`; consider `make validate-pr` | EX-1 through EX-6 |
 
 ## Implementation Readiness Blockers
@@ -481,7 +481,7 @@ Workflow path: expanded path
 
 ## Phase 7: Source-Aware CompositeDataSourceIndex
 
-Status: implemented / PR open
+Status: merged
 Slug: `composite-index`
 Branch: `agent/stage-5-p7-composite-index`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-5-p7-composite-index`
@@ -534,7 +534,7 @@ Workflow path: fast path
 - PR review budget: one composite/provenance review
 - Blocker-resolution budget: reopen DQ-8 only if composite-only ordered flat semantics cannot satisfy source provenance
 - Pre-submit blocker gate: passed; no public concat and no source identity in `IndexItem.metadata`
-- Merge record: pending
+- Merge record: squash-merged to `develop` at `6000cedd4840ff673cf98233f9e203a6c3271976` on 2026-05-14
 
 ### Risks And Stop Conditions
 
@@ -547,7 +547,7 @@ Workflow path: fast path
 - Implementation: `CompositeDataSourceIndex`, source-aware entry fields, composite manifest children, codec round trips, child-order fingerprints, and no-concat package boundary tests added.
 - Validation: `make test-unit` passed with 364 tests; `make test-contract` passed with 52 tests; `make test-package` passed with 25 tests; `git diff --check` passed.
 - PR: [#35](https://github.com/samcantrill/rphys/pull/35) opened against `develop` with clean merge state and the canonical Phase 7 title.
-- Merge: pending
+- Merge: squash-merged to `develop` at `6000cedd4840ff673cf98233f9e203a6c3271976` on 2026-05-14.
 - Follow-up: Phase 8 owns docs/integration hardening across the full Stage 5 vertical slice.
 
 ## Phase 8: Documentation, Examples, Integration Hardening, And Release Checks

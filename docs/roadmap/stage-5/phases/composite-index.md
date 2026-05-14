@@ -52,6 +52,6 @@ git diff --check
 - Pre-submit blocker gate: passed; no public concat API, no source identity in `IndexItem.metadata`, and no sampler/cache/batch behavior.
 - PR preparation: PR body drafted at `docs/roadmap/stage-5/phases/composite-index-pr-body.md`; PR #35 opened and verified against `develop`.
 - Automated review: manager fast-path review passed before PR submission; GitHub checks pending/not configured at open.
-- Merge result: pending.
-- Cleanup: pending worktree and branch removal after metadata commit.
+- Merge result: PR #35 squash-merged to `develop` at `6000cedd4840ff673cf98233f9e203a6c3271976` on 2026-05-14.
+- Cleanup: completed after merge metadata commit.
 - Remaining blockers: none.
