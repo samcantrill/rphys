@@ -18,6 +18,9 @@ __all__ = [
     "InvalidDataSourceSchemaError",
     "InvalidIndexItemError",
     "InvalidRecordRefError",
+    "InvalidDataSourceSpecError",
+    "InvalidDataSourceScanResultError",
+    "InvalidDataSourceValidationError",
     "InvalidFieldIndexError",
     "InvalidFieldRefError",
     "InvalidFieldViewError",
@@ -224,3 +227,15 @@ class InvalidRecordRefError(RemotePhysDataSourceError, RemotePhysFieldError):
 
 class InvalidIndexItemError(RemotePhysDataSourceError, RemotePhysFieldError):
     """Raised when a role-qualified lazy index item descriptor is invalid."""
+
+
+class InvalidDataSourceSpecError(RemotePhysDataSourceError):
+    """Raised when a datasource scan specification is invalid."""
+
+
+class InvalidDataSourceScanResultError(RemotePhysDataSourceError):
+    """Raised when a descriptor-only datasource scan result is invalid."""
+
+
+class InvalidDataSourceValidationError(RemotePhysDataSourceError):
+    """Raised when datasource validation inputs or IO policy are invalid."""

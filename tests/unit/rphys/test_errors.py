@@ -64,6 +64,12 @@ STAGE_3_DATASOURCE_ERROR_NAMES = [
     "InvalidRecordRefError",
 ]
 
+STAGE_5_DATASOURCE_ERROR_NAMES = [
+    "InvalidDataSourceSpecError",
+    "InvalidDataSourceScanResultError",
+    "InvalidDataSourceValidationError",
+]
+
 
 def test_errors_public_surface_lists_only_implemented_error_names() -> None:
     assert errors.__all__ == [
@@ -71,6 +77,7 @@ def test_errors_public_surface_lists_only_implemented_error_names() -> None:
         *STAGE_1_ERROR_NAMES,
         *STAGE_2_ERROR_NAMES,
         *STAGE_3_DATASOURCE_ERROR_NAMES,
+        *STAGE_5_DATASOURCE_ERROR_NAMES,
         *STAGE_3_IO_ERROR_NAMES,
         *STAGE_4_CODEC_ERROR_NAMES,
         *BROAD_ERROR_NAMES,
@@ -207,6 +214,18 @@ def test_stage_3_datasource_errors_map_to_approved_categories() -> None:
     assert issubclass(errors.InvalidRecordRefError, errors.RemotePhysFieldError)
     assert issubclass(errors.InvalidIndexItemError, errors.RemotePhysDataSourceError)
     assert issubclass(errors.InvalidIndexItemError, errors.RemotePhysFieldError)
+
+
+def test_stage_5_datasource_errors_map_to_approved_categories() -> None:
+    assert issubclass(errors.InvalidDataSourceSpecError, errors.RemotePhysDataSourceError)
+    assert issubclass(
+        errors.InvalidDataSourceScanResultError,
+        errors.RemotePhysDataSourceError,
+    )
+    assert issubclass(
+        errors.InvalidDataSourceValidationError,
+        errors.RemotePhysDataSourceError,
+    )
 
 
 def test_deferred_runtime_errors_are_not_defined() -> None:
