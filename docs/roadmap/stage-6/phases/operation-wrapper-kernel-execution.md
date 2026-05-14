@@ -288,10 +288,15 @@ git diff --check
 
 - Draft plan: completed 2026-05-14 in the assigned worktree
 - Final phase execution plan: completed 2026-05-14 after expanded-path refinement
-- Implementation summary: pending
-- Implementation validation: pending
+- Implementation summary:
+  - Added concrete operation execution wrapper in `src/rphys/ops/core.py` with fixed `Operation(function, *, name=None, contract=None)` constructor, read-only `name`/`contract` accessors, exact `context` handling, keyword-only context-callable invocation, output/input/context/result validation, and cause-preserving execution errors.
+  - Added `InvalidOperationInputError` and `OperationExecutionError` in `src/rphys/errors.py`, preserving existing concrete-error reuse and inheritance.
+  - Extended `rphys.ops` exports to include `Operation`; added `rphys.ops.core.__all__` contract surface and updated package/import-boundary tests to import and guard lightweight `rphys.ops.core` loading.
+  - Added unit coverage for wrapper execution and kernel boundaries (`tests/unit/rphys/ops/test_core.py`, `tests/unit/rphys/ops/test_kernels.py`), operation execution contracts (`tests/contracts/test_operation_execution_contract.py`), and updated error contract tests and imports for phase-2 errors.
+  - Documented completion notes in this phase file with implemented behavior and validation status.
+- Implementation validation: complete (`make test-package`, `make test-unit`, `make test-contract`, `git diff --check` passed)
 - Refinement summary: completed; locked exact `Operation` constructor/run/call signatures, keyword-context callable invocation, result wrapping and no-merge rules, side-effect evidence validation, output type validation, `InvalidOperationInputError`/`OperationExecutionError`, package/import-boundary guardrails, raw-output API absence checks, and stop conditions
-- Pre-submit blocker gate: pending
+- Pre-submit blocker gate: cleared
 - PR preparation: pending
 - Automated review: pending
 - Merge result: pending

@@ -5,6 +5,7 @@ from .contracts import (
     OperationMutationPolicy,
     OperationRole,
 )
+from .core import Operation
 from .context import OperationContext, OperationResult
 from .kernels import FunctionalKernel
 
@@ -12,6 +13,7 @@ __all__ = [
     "OperationRole",
     "OperationMutationPolicy",
     "OperationContract",
+    "Operation",
     "OperationContext",
     "OperationResult",
     "FunctionalKernel",

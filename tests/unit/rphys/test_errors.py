@@ -79,6 +79,8 @@ STAGE_6_OPERATION_ERROR_NAMES = [
     "InvalidOperationContractError",
     "InvalidOperationContextError",
     "InvalidOperationResultError",
+    "InvalidOperationInputError",
+    "OperationExecutionError",
 ]
 
 
@@ -253,6 +255,10 @@ def test_stage_6_operation_errors_map_to_approved_categories() -> None:
     assert issubclass(errors.InvalidOperationContextError, errors.RemotePhysOperationError)
     assert issubclass(errors.InvalidOperationResultError, errors.RemotePhysError)
     assert issubclass(errors.InvalidOperationResultError, errors.RemotePhysOperationError)
+    assert issubclass(errors.InvalidOperationInputError, errors.RemotePhysError)
+    assert issubclass(errors.InvalidOperationInputError, errors.RemotePhysOperationError)
+    assert issubclass(errors.OperationExecutionError, errors.RemotePhysError)
+    assert issubclass(errors.OperationExecutionError, errors.RemotePhysOperationError)
 
 
 def test_deferred_runtime_errors_are_not_defined() -> None:

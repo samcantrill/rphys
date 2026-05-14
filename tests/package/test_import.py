@@ -266,6 +266,7 @@ def test_import_ops_public_all_exports() -> None:
         "OperationRole",
         "OperationMutationPolicy",
         "OperationContract",
+        "Operation",
         "OperationContext",
         "OperationResult",
         "FunctionalKernel",
@@ -275,11 +276,12 @@ def test_import_ops_public_all_exports() -> None:
     assert not hasattr(rphys, "OperationContract")
     assert not hasattr(rphys, "OperationContext")
     assert not hasattr(rphys, "OperationResult")
+    assert not hasattr(rphys, "Operation")
     assert not hasattr(rphys, "FunctionalKernel")
 
 
 def test_import_ops_module_exports_are_scoped() -> None:
-    from rphys.ops import contracts, context, kernels
+    from rphys.ops import contracts, context, core, kernels
 
     assert contracts.__all__ == [
         "OperationRole",
@@ -287,6 +289,7 @@ def test_import_ops_module_exports_are_scoped() -> None:
         "OperationContract",
     ]
     assert context.__all__ == ["OperationContext", "OperationResult"]
+    assert core.__all__ == ["Operation"]
     assert kernels.__all__ == ["FunctionalKernel"]
 
 
@@ -297,6 +300,8 @@ def test_import_errors_phase_6_exports_are_scoped() -> None:
         "InvalidOperationContractError",
         "InvalidOperationContextError",
         "InvalidOperationResultError",
+        "InvalidOperationInputError",
+        "OperationExecutionError",
     ]
 
     assert errors.__all__ == [
@@ -329,6 +334,8 @@ def test_errors_import_and_expose_approved_error_categories() -> None:
         "InvalidOperationContractError",
         "InvalidOperationContextError",
         "InvalidOperationResultError",
+        "InvalidOperationInputError",
+        "OperationExecutionError",
     ]
 
     assert errors.__all__ == [
