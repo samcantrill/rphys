@@ -20,7 +20,7 @@ _TEMPORAL_INDEX_SLICE = "temporal_index_slice"
 
 
 class FieldIndex:
-    """Base protocol for Stage 3 field-native index descriptors."""
+    """Base class for Stage 3 field-native index descriptors."""
 
     def __init__(self) -> None:
         if type(self) is FieldIndex:

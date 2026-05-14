@@ -73,6 +73,28 @@ def test_datasource_schema_has_value_equality_without_public_hash_contract() -> 
         hash(schema)
 
 
+def test_datasource_schema_field_declarations_are_immutable_through_mapping() -> None:
+    spec = FieldSpec("video.rgb", "video", "video.rgb.v1")
+    schema = DataSourceSchema({"video.rgb": spec})
+    stored = schema.fields[DataKey("video.rgb")]
+
+    assert stored is spec
+    with pytest.raises(TypeError):
+        schema.fields[DataKey("signal.bvp.reference")] = FieldSpec(
+            "signal.bvp.reference",
+            "signal",
+        )
+    with pytest.raises(FrozenInstanceError):
+        stored.schema = None  # type: ignore[misc]
+    assert schema.fields[DataKey("video.rgb")] == FieldSpec(
+        "video.rgb",
+        "video",
+        "video.rgb.v1",
+    )
+    assert not hasattr(FieldSpec, "to_dict")
+    assert not hasattr(FieldSpec, "from_dict")
+
+
 def test_datasource_schema_round_trips_through_primitive_dict() -> None:
     schema = _schema()
     serialized = schema.to_dict()

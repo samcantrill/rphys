@@ -23,7 +23,7 @@ from rphys.data.types import DataType
 __all__ = ["FieldSpec", "FieldValue"]
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class FieldSpec:
     """Minimal value descriptor for a runtime field.
 
@@ -38,10 +38,13 @@ class FieldSpec:
     schema: SchemaName | None = None
 
     def __post_init__(self) -> None:
-        self.key = DataKey(self.key)
-        self.data_type = DataType(self.data_type)
+        object.__setattr__(self, "key", DataKey(self.key))
+        object.__setattr__(self, "data_type", DataType(self.data_type))
         if self.schema is not None:
-            self.schema = SchemaName(self.schema)
+            object.__setattr__(self, "schema", SchemaName(self.schema))
+
+
+FieldSpec.__hash__ = None  # type: ignore[assignment]
 
 
 class FieldValue:

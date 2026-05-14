@@ -78,7 +78,7 @@ def test_temporal_index_slice_from_dict_rejects_unknown_or_invalid_tags() -> Non
         TemporalIndexSlice.from_dict({"type": "temporal_index_slice", "start": 0})
 
 
-def test_field_index_base_is_not_a_public_registry_or_factory() -> None:
+def test_field_index_base_class_is_not_a_public_registry_or_factory() -> None:
     with pytest.raises(TypeError):
         FieldIndex()
 
