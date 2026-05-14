@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: implementation complete; PR preparation pending
+- Status: PR open
 - Roadmap stage: `v4`
 - Feature focus: Codecs and lazy sample construction
 - Stage descriptor: Codecs And Lazy Sample Construction
@@ -551,7 +551,8 @@ git diff --check origin/develop...HEAD
   creation on missing requested locators, no probe load, no descriptor
   mutation, ordered resource retention, and no datasource provenance pushed into
   codec contexts.
-- PR preparation: pending
+- PR preparation: [#26](https://github.com/samcantrill/rphys/pull/26)
+  opened against `develop` with the required Phase 4 title
 - Automated review: pending
 - Merge result: pending
 - Cleanup: pending
