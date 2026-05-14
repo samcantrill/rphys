@@ -210,7 +210,7 @@ Workflow path: fast path
 - Validation: `make validate-pr` passed: package 18, unit 259, contract 25, integration 1, e2e/acceptance not present, build succeeded, and `git diff --check` clean. Focused field/schema/index tests, `make test-unit`, `make test-contract`, and `make test-package` also passed.
 - PR: [#22](https://github.com/samcantrill/rphys/pull/22) opened against `develop`; PR title and target verified.
 - Merge: squash-merged to `develop` 2026-05-14 at `6fbf5481f6c217fb31a1ddadbaac1d37abd73a17` via GitHub merge API after local validation and automated review.
-- Follow-up: downstream scratch code that mutates `FieldSpec` will now fail as intended; no public `FieldSpec` serialization or `FieldIndex` registry/factory was added. Cleanup of the phase worktree/branch is pending after metadata push.
+- Follow-up: downstream scratch code that mutates `FieldSpec` will now fail as intended; no public `FieldSpec` serialization or `FieldIndex` registry/factory was added. Phase worktree and local/remote branches were cleaned up after metadata push.
 
 ### Merge Record
 
@@ -221,8 +221,8 @@ Workflow path: fast path
 - Merge command: `gh api --method PUT repos/samcantrill/rphys/pulls/22/merge --field merge_method=squash ...`
 - Merge result: merged
 - Merge commit: `6fbf5481f6c217fb31a1ddadbaac1d37abd73a17`
-- Branch cleanup: pending metadata push
-- Worktree cleanup: pending metadata push
+- Branch cleanup: completed; local and remote phase branches deleted after merge metadata push
+- Worktree cleanup: completed; phase worktree removed and worktree metadata pruned
 - Behavior implemented: frozen/unhashable `FieldSpec`, immutable direct datasource schema declarations, and `FieldIndex` base-class terminology with no registry/factory behavior.
 - Tests and validation: targeted field/schema/index checks passed; `make validate-pr` passed with 303 total tests across present suites.
 - Documentation: phase assignment, execution plan, PR body, and this merge record updated.
