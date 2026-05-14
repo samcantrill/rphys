@@ -5,7 +5,7 @@ Roadmap version: `v6`
 Planning document: `docs/roadmap/stage-6/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 4 pending
+Current phase: Phase 5 pending
 Blockers: none
 
 ## Summary
@@ -41,7 +41,7 @@ Blockers: none
 | 1 | `public-schemas-imports-errors` | merged | `agent/stage-6-p1-public-schemas-imports-errors` | [#38](https://github.com/samcantrill/rphys/pull/38) | `src/rphys/ops` schema/context/kernel vocabulary, `src/rphys/errors.py`, package/import tests | Establish code-backed provisional public surface and minimal declaration records | package/import, unit contract/context, error inheritance if exercised, `git diff --check` | contract/context/result construction |
 | 2 | `operation-wrapper-kernel-execution` | merged | `agent/stage-6-p2-operation-wrapper-kernel-execution` | [#40](https://github.com/samcantrill/rphys/pull/40) | `Operation` wrapper/core execution and kernel examples/tests | Implement single-operation wrapper execution and kernel boundary | unit core/kernel, execution contract, package/import regression | plain kernel direct/wrapped use |
 | 3 | `ordered-pipeline-composition` | merged | `agent/stage-6-p3-ordered-pipeline-composition` | [#42](https://github.com/samcantrill/rphys/pull/42) | `OperationPipeline` and pipeline tests | Implement ordered sequence pipeline composition | unit pipeline, pipeline contract, package/import regression | two-step primitive pipeline |
-| 4 | `runtime-boundary-docs` | pending | `agent/stage-6-p4-runtime-boundary-docs` | pending | runtime-boundary test, operation docs/docstrings/examples | Prove runtime/lazy compatibility and document Stage 6 boundaries | integration or contract runtime-boundary test, docs review, `git diff --check` | generic `Sample`/`Batch` payload, mutation/side-effect declarations |
+| 4 | `runtime-boundary-docs` | merged | `agent/stage-6-p4-runtime-boundary-docs` | [#44](https://github.com/samcantrill/rphys/pull/44) | runtime-boundary test, operation docs/docstrings/examples | Prove runtime/lazy compatibility and document Stage 6 boundaries | integration or contract runtime-boundary test, docs review, `git diff --check` | generic `Sample`/`Batch` payload, mutation/side-effect declarations |
 | 5 | `final-validation-readiness` | pending | `agent/stage-6-p5-final-validation-readiness` | pending | validation evidence, plan/status updates only if required | Consolidate stage evidence and ready implementation for review/merge | `make test-package`, `make test-unit`, `make test-contract`, `make test-integration`, `make test-summary`, `uv lock --check`, `git diff --check` | full Stage 6 example/guardrail review |
 
 ## Implementation Readiness Blockers
@@ -286,11 +286,11 @@ Workflow path: expanded path
 
 ## Phase 4: Runtime-Boundary Examples And Public Docs
 
-Status: pending
+Status: merged
 Slug: `runtime-boundary-docs`
 Branch: `agent/stage-6-p4-runtime-boundary-docs`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-6-p4-runtime-boundary-docs`
-PR: pending
+PR: [#44](https://github.com/samcantrill/rphys/pull/44)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -334,13 +334,13 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed in `docs/roadmap/stage-6/phases/runtime-boundary-docs.md`
 - Planning/refinement budget: one focused docs/test boundary plan.
 - Implementation/refinement budget: one implementation pass plus wording/test fixes.
 - PR review budget: one review pass focused on boundary wording and runtime non-interference.
 - Blocker-resolution budget: stop if examples require runtime data module changes or imply Stage 7/8 behavior.
 - Pre-submit blocker gate: docs/examples do not document private helpers or stable implementation submodules.
-- Merge record: pending
+- Merge record: PR [#44](https://github.com/samcantrill/rphys/pull/44) squash-merged to `develop` at `15232cf2ea209ee81c5fd420168ad02ccff35bc1`; phase worktree and local/remote phase branches cleaned up.
 
 ### Risks And Stop Conditions
 
@@ -350,11 +350,11 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added runtime-boundary contract coverage proving generic `Operation` accepts loaded `Sample`/`Batch` payloads, preserves explicit `OperationResult.output` unwrapping, and leaves lazy `SampleField` materialization payload-demand driven by existing runtime APIs; updated operation docs/docstrings for package-level imports, plain kernel versus wrapper boundaries, sequence-only pipelines, mutation/side-effect declarations, and Stage 7/8/9 deferrals.
+- Validation: `make test-package`, `make test-unit`, `make test-contract`, `make validate-pr`, `uv lock --check`, `uv build`, `git diff --check`, and automated phase review passed before merge; latest summary recorded 521 passing package/unit/contract/integration tests, with e2e and acceptance suites not present.
+- PR: [#44](https://github.com/samcantrill/rphys/pull/44) opened against `develop`
+- Merge: squash-merged 2026-05-14 at `15232cf2ea209ee81c5fd420168ad02ccff35bc1`
+- Follow-up: Phase 5 owns final Stage 6 validation evidence, guardrail review, and readiness accounting.
 
 ## Phase 5: Final Validation And Readiness
 
