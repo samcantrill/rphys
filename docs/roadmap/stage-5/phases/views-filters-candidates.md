@@ -150,6 +150,6 @@ git diff --check
 - Pre-submit blocker gate: passed; no split assignment, final identity, manifests, payloads, runtime samples, or `IndexItem.metadata` identity mutation.
 - PR preparation: PR body drafted at `docs/roadmap/stage-5/phases/views-filters-candidates-pr-body.md`; PR #31 opened and verified against `develop`.
 - Automated review: manager expanded-path review passed before PR submission; GitHub checks pending/not configured at open.
-- Merge result: pending.
-- Cleanup: pending.
+- Merge result: PR #31 squash-merged to `develop` at `97b0c4532126c8dba21a49c2b0e56cbb0a084688` on 2026-05-14.
+- Cleanup: pending worktree and branch removal after metadata commit.
 - Remaining blockers: none.

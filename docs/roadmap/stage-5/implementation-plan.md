@@ -5,7 +5,7 @@ Roadmap version: `v5`
 Planning document: `docs/roadmap/stage-5/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 3 PR open
+Current phase: ready for Phase 4 execution planning
 Blockers: none identified by implementation-plan quality review
 
 ## Summary
@@ -38,7 +38,7 @@ Blockers: none identified by implementation-plan quality review
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `public-boundary-errors-fixtures` | merged | `agent/stage-5-p1-public-boundary-errors-fixtures` | [#29](https://github.com/samcantrill/rphys/pull/29) | `src/rphys/datasources/*` module homes, exercised error scaffolding, private `tests/support` fixture scaffold, package import tests | Establish Stage 5 module boundaries without broad behavior or placeholder API. | `make test-package`; targeted error/package checks; `git diff --check` | EX-6 |
 | 2 | `adapters-validation` | merged | `agent/stage-5-p2-adapters-validation` | [#30](https://github.com/samcantrill/rphys/pull/30) | `rphys.datasources.adapters`, `rphys.datasources.validation`, synthetic scan/validation tests | Implement datasource specs, structural adapters, scan results, validation reports, and explicit IO policy. | `make test-unit`; `make test-contract`; `make test-package` | EX-1, EX-2 |
-| 3 | `views-filters-candidates` | pr_open | `agent/stage-5-p3-views-filters-candidates` | [#31](https://github.com/samcantrill/rphys/pull/31) | `rphys.datasources.filters`, index-owned candidate construction/selection surface in `rphys.datasources.indexes` | Implement non-mutating pre-index selection and candidate filtering before group/split. | `make test-unit`; `make test-contract` | EX-1, EX-3 |
+| 3 | `views-filters-candidates` | merged | `agent/stage-5-p3-views-filters-candidates` | [#31](https://github.com/samcantrill/rphys/pull/31) | `rphys.datasources.filters`, index-owned candidate construction/selection surface in `rphys.datasources.indexes` | Implement non-mutating pre-index selection and candidate filtering before group/split. | `make test-unit`; `make test-contract` | EX-1, EX-3 |
 | 4 | `groups-splits` | pending | `agent/stage-5-p4-groups-splits` | pending | `rphys.datasources.splits` and group/split provenance handoff to index finalization | Implement candidate-level multiple groups, explicit split-group keys, and leakage-safe split assignment. | `make test-unit`; `make test-contract` | EX-3 |
 | 5 | `datasource-index-entries` | pending | `agent/stage-5-p5-datasource-index-entries` | pending | `rphys.datasources.indexes` index plans/builders/results, sidecar entries, field-native windows, `SampleBuilder` bridge | Finalize selected/split candidates into ordered lazy `DataSourceIndex` objects. | `make test-unit`; `make test-contract`; `make test-integration` | EX-1 |
 | 6 | `index-manifest-codec` | pending | `agent/stage-5-p6-index-manifest-codec` | pending | `rphys.datasources.indexes` manifest/codec/fingerprint/checksum behavior | Persist and reload datasource indexes with schema `rphys.datasource_index.v1`. | `make test-unit`; `make test-contract`; `git diff --check` | EX-4 |
@@ -196,7 +196,7 @@ Workflow path: expanded path
 
 ## Phase 3: Non-Mutating Views, Filter Chains, And Index-Candidate Selection
 
-Status: in_progress
+Status: merged
 Slug: `views-filters-candidates`
 Branch: `agent/stage-5-p3-views-filters-candidates`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-5-p3-views-filters-candidates`
@@ -261,8 +261,8 @@ Workflow path: expanded path
 
 - Implementation: non-mutating view plan/view/result, filter decisions/chains/results, provisional index candidate plan/candidate/view/result, candidate construction, and candidate filtering added.
 - Validation: `make test-unit` passed with 343 tests; `make test-contract` passed with 44 tests; `make test-package` passed with 25 tests; `git diff --check` passed.
-- PR: [#31](https://github.com/samcantrill/rphys/pull/31) opened against `develop` with the canonical Phase 3 title.
-- Merge: pending.
+- PR: [#31](https://github.com/samcantrill/rphys/pull/31) opened and verified against `develop` with the canonical Phase 3 title.
+- Merge: squash-merged to `develop` at `97b0c4532126c8dba21a49c2b0e56cbb0a084688` on 2026-05-14.
 - Follow-up: Phase 4 owns group/split assignment; Phase 5 owns durable sidecar identity.
 
 ## Phase 4: Candidate-Level Groups And Split Assignment
