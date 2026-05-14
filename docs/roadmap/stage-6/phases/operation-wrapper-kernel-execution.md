@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: draft phase execution plan; expanded-path refinement required before implementation
+- Status: final phase execution plan; expanded-path refinement completed; ready for implementation
 - Roadmap stage: `v6`
 - Feature focus: Concrete operation wrapper execution and functional-kernel boundary
 - Stage descriptor: Operation Foundations And Functional Kernels
@@ -19,11 +19,11 @@
 - Merge eligibility: eligible after automated review, local validation, and CI pass
 - Workflow path: expanded path
 - Phase isolation: existing dedicated branch and worktree verified; do not create a new worktree
-- Plan quality gate: Stage 6 implementation plan approved; expanded-path refinement is required before implementation because Phase 2 locks public execution return semantics, wrapper API behavior, cause-preserving errors, and import-boundary guardrails.
+- Plan quality gate: Stage 6 implementation plan approved; expanded-path refinement was required and is now completed because Phase 2 locks public execution return semantics, wrapper API behavior, cause-preserving errors, and import-boundary guardrails.
 - Draft pass: completed 2026-05-14
-- Refine pass: pending/required
-- Setup limitations: no product code, tests, PR body, or PR opened during this planning pass; no broad checks run; no new worktree created
-- Blockers: none known for drafting; implementation must wait for the required refine pass
+- Refine pass: completed 2026-05-14
+- Setup limitations: no product code, tests, PR body, or PR opened during this planning/refinement pass; no broad checks run; no new worktree created
+- Blockers: none known; implementation may proceed within this refined phase contract
 
 ## Objective
 
@@ -49,7 +49,7 @@ Phase 1 has merged the public schema/context/kernel vocabulary and the initial c
 - Existing tests or harness behavior: `tests/package/test_import.py` asserts exact `rphys.ops.__all__`, submodule `__all__`, root non-reexports, and operation error exports; Phase 2 must update these only for implemented `Operation` and any exercised execution errors.
 - Existing tests or harness behavior: `tests/package/test_import_boundaries.py` imports `rphys.ops`, `rphys.ops.contracts`, `rphys.ops.context`, and `rphys.ops.kernels` in a subprocess and forbids heavy optional modules, `rphys.data`, `rphys.datasources`, `rphys.io`, codec modules, and `tests.support`; Phase 2 must extend this to `rphys.ops.core`.
 - Existing tests or harness behavior: unit ops tests currently cover schema/context/result construction only, and `tests/contracts/test_operation_contract.py` covers public declaration semantics. Phase 2 should add source-mirrored `tests/unit/rphys/ops/test_core.py`, likely extend `tests/unit/rphys/ops/test_kernels.py` or add it if needed, and add `tests/contracts/test_operation_execution_contract.py`.
-- Import-boundary or dependency constraints: `rphys.ops.core` and any Phase 2 validators may use stdlib typing/dataclasses/collections/inspect utilities and existing `rphys.ops` records/errors only. They must not import `rphys.data`, `rphys.io`, `rphys.datasources`, codecs, optional numerical/video/deep-learning stacks, `tests.support`, workflow/artifact packages, or runtime-container modules.
+- Import-boundary or dependency constraints: `rphys.ops.core` and any Phase 2 validators may use stdlib typing/dataclasses/collections utilities and existing `rphys.ops` records/errors only. They must not import `rphys.data`, `rphys.io`, `rphys.datasources`, codecs, optional numerical/video/deep-learning stacks, `tests.support`, workflow/artifact packages, runtime-container modules, or signature-introspection helpers that create alternate call conventions.
 
 ## Phase Isolation State
 
@@ -67,12 +67,12 @@ Phase 1 has merged the public schema/context/kernel vocabulary and the initial c
 - Store an operation name, wrapped callable, and `OperationContract`; use the Phase 1 generic contract fields without adding deterministic/randomness, locator, identity, serialization, workflow, export, or cache fields.
 - Validate the runtime input against `OperationContract.input_type` before callable invocation when a type expectation is declared.
 - Validate `OperationContract.required_context` against explicit `OperationContext.metadata` before callable invocation, and create an empty `OperationContext` when callers omit context.
-- Invoke the wrapped callable through one narrow, documented call shape chosen by implementation refinement, using explicit input and context behavior without hidden globals, registries, implicit runtime containers, device movement, RNG, or schema conversion.
+- Invoke the wrapped callable through the single refined call shape `function(input_value, context=context)`, using keyword-only context delivery without signature introspection, positional-context fallback, hidden globals, registries, implicit runtime containers, device movement, RNG, or schema conversion.
 - Return `OperationResult` from both `.run()` and `__call__` with identical public semantics.
 - Accept a callable-returned `OperationResult` when valid and compatible, or wrap a bare callable output into a new `OperationResult` when the callable returns a raw value.
 - Validate accepted or wrapped results against operation name, role, declared output type, result metadata/provenance mapping shape, and side-effect evidence shape through public behavior.
-- Preserve caller and callable metadata/provenance in inspectable runtime records without making them durable serialization, identity, cache, export, or workflow schemas.
-- Add only exercised concrete operation execution errors for invalid runtime input/context and callable execution failure if broad `RemotePhysOperationError` plus existing invalid result errors are not sufficiently precise for tested behavior.
+- Preserve context metadata/provenance for bare-output wrapping and preserve callable-returned result metadata/provenance/side-effect evidence without hidden merging or durable serialization, identity, cache, export, or workflow semantics.
+- Add exactly the exercised concrete execution errors `InvalidOperationInputError` and `OperationExecutionError`; reuse existing operation errors for constructor, context, and result validation as detailed below.
 - Add unit, contract, and package/import regression tests for wrapper execution, functional-kernel direct use, public return semantics, cause preservation, and guardrail absences.
 
 ## Out-of-Scope Work
@@ -88,29 +88,61 @@ Phase 1 has merged the public schema/context/kernel vocabulary and the initial c
 ## Assumptions
 
 - `Operation` is a concrete lightweight wrapper around a callable plus `OperationContract`, not an abstract base, mixin, registry entry, or public Protocol.
-- The default contract for an operation may be `OperationContract()` unless refinement identifies an existing Phase 1 validation reason to require an explicit contract; the resulting behavior must stay public and tested.
-- The implementation may choose exact constructor keyword spelling during refinement only if the public wrapper semantics remain obvious, package-level exports stay exact, and no extra extension model is introduced.
+- The public constructor is fixed as `Operation(function: FunctionalKernel, *, name: str | None = None, contract: OperationContract | None = None)`. There are no constructor-level metadata, provenance, side-effect-evidence, registry, resolver, runtime-container, or parameter-injection fields.
+- `contract=None` means `OperationContract()`. `name=None` means infer a non-empty name from `function.__name__` for functions or from the callable object's class name; unstable examples should pass `name=` explicitly.
 - Context defaults to `OperationContext()` when omitted; required context keys are satisfied only by `OperationContext.metadata`, not provenance.
-- Result wrapping uses the operation's own name and contract role. Bare outputs receive empty metadata/provenance/side-effect evidence unless implementation refinement records a narrow, explicit merge rule.
-- Callable-returned `OperationResult` must be validated as a result object, not blindly trusted; invalid result construction/shape continues to use `InvalidOperationResultError` where that existing concrete error fits.
-- Concrete execution error names may be selected during refinement/implementation only for failures exercised in Phase 2 tests; any unexercised public error name is out of scope.
+- Bare-output result wrapping uses the operation's own name and contract role, copies `context.metadata` into result metadata, copies `context.provenance` into result provenance, and uses empty `side_effect_evidence`.
+- Callable-returned `OperationResult` must be validated and returned as-is when compatible. The wrapper must not merge context metadata/provenance into a returned result and must not synthesize side-effect evidence.
+- `InvalidOperationResultError` is reused for incompatible returned results, output type mismatches, operation-name or role mismatches, and side-effect evidence that conflicts with the declared mutation policy or side-effect labels.
 - Direct functional kernels remain ordinary Python callables and may be called outside `Operation`; Phase 2 tests should demonstrate this boundary with synthetic stdlib payloads only.
 
 ## Scope Contract
 
-Phase 2 changes public behavior by adding `Operation` execution only. Public imports from `rphys.ops` should include the existing Phase 1 names plus `Operation`; no other new public operation-family or pipeline names should appear unless the required refinement pass explicitly approves an exercised execution error export in `rphys.errors`.
+Phase 2 changes public behavior by adding `Operation` execution only. Public imports from `rphys.ops` should include the existing Phase 1 names plus `Operation`; no other new public operation-family or pipeline names should appear. `rphys.errors` may add only the exercised Phase 2 execution errors `InvalidOperationInputError` and `OperationExecutionError`.
 
-`Operation.run(input, context=None)` and `Operation.__call__(input, context=None)` must both return `OperationResult`. They must not return bare callable outputs, and no `run_raw`, `apply`, `execute_raw`, or equivalent raw-output public API is allowed in this phase. Users access the underlying value through `result.output`.
+`Operation.run(input_value, context=None)` and `Operation.__call__(input_value, context=None)` must both return `OperationResult`. They must not return bare callable outputs, and no `run_raw`, `call_raw`, `apply`, `execute_raw`, `raw`, `output`, or equivalent raw-output public API is allowed in this phase. Users access the underlying value through `result.output`.
 
-Before invoking the callable, `Operation` must validate any declared `input_type` with normal runtime type semantics and must validate that all `contract.required_context` keys are present in `OperationContext.metadata`. These failures must be typed `RemotePhysOperationError` subclasses with structured context that includes useful fields such as `operation_name`, `field`, `expected`, `actual`, `missing`, or `role`.
+Before invoking the callable, `Operation` must validate any declared `input_type` with normal runtime type semantics and must validate that all `contract.required_context` keys are present in `OperationContext.metadata`. Input mismatch uses `InvalidOperationInputError`; invalid context values or missing context metadata keys use `InvalidOperationContextError`. These failures must include structured context such as `operation_name`, `field`, `expected`, `actual`, `missing`, or `role`.
 
-Callable invocation must be explicit and narrow. Refinement must lock whether callables receive `(input)`, `(input, context)`, keyword context, or another small documented shape. The implementation must not infer or inject `Sample`, `Batch`, device, RNG, schema, datasource, IO, or workflow state. Callable objects are supported because they are callable, not because they implement a public `OperationLike` interface.
+Callable invocation must use exactly `function(input_value, context=context)`. The implementation must not infer signatures, try alternate calling conventions, or inject `Sample`, `Batch`, device, RNG, schema, datasource, IO, or workflow state. Callable objects are supported because they are callable, not because they implement a public `OperationLike` interface.
 
-After invocation, if the callable returns `OperationResult`, the wrapper validates it and returns it when compatible. If the callable returns any other object, the wrapper creates an `OperationResult` around that object. In both cases, declared `output_type` must be checked against `result.output` when present, result `role` must remain compatible with the contract role, and metadata/provenance/side-effect evidence must remain inspectable runtime mappings. Result records must not become durable serialization contracts or identity/cache/export/workflow records.
+After invocation, if the callable returns `OperationResult`, the wrapper validates it and returns it without merging context metadata or provenance. If the callable returns any other object, the wrapper creates an `OperationResult` around that object using the operation name, contract role, context metadata, context provenance, and empty side-effect evidence. In both cases, declared `output_type` must be checked against `result.output` when present, result `operation_name` must match the wrapper name, result `role` must match the contract role, and side-effect evidence must match the refined declaration rules. Result records must not become durable serialization contracts or identity/cache/export/workflow records.
 
-Callable exceptions must be wrapped or re-raised as exercised operation execution errors under `RemotePhysOperationError` while preserving the original exception as `__cause__`. Error context must include the operation name and enough execution phase detail to diagnose whether validation, invocation, or result validation failed. Do not collapse original causes into strings only.
+Callable exceptions must be wrapped as `OperationExecutionError` under `RemotePhysOperationError` while preserving the original exception as `__cause__`. Error context must include the operation name and enough execution phase detail to diagnose invocation failure. Do not collapse original causes into strings only.
 
 Mutation and side effects remain declared behavior only in Phase 2. `OperationMutationPolicy.MAY_MUTATE` can document that the callable may mutate its input, and `SIDE_EFFECTING` can document side-effect labels/evidence, but Phase 2 must not police field-level writes, locator permissions, export targets, or external side-effect completion. Any side-effect evidence returned or wrapped must stay generic and mapping-shaped.
+
+## Expanded-Path Refinement Decisions
+
+The public `Operation` API is intentionally small:
+
+```python
+Operation(
+    function: FunctionalKernel,
+    *,
+    name: str | None = None,
+    contract: OperationContract | None = None,
+)
+Operation.run(input_value: object, context: OperationContext | None = None) -> OperationResult
+Operation.__call__(input_value: object, context: OperationContext | None = None) -> OperationResult
+```
+
+The wrapper may expose read-only public `name` and `contract` attributes. The wrapped callable should remain an implementation detail, for example `_function`, so Phase 2 does not freeze a callable-inspection API. Constructor validation uses `InvalidOperationContractError` for non-callable `function`, invalid or empty `name`, or non-`OperationContract` `contract` values after the `None` default is resolved.
+
+Callable invocation has exactly one convention: `function(input_value, context=context)`. There is no one-argument fallback, positional-context fallback, signature introspection, `**context.metadata` expansion, parameter injection, `_target_` resolution, registry lookup, or runtime-container adaptation. Callable objects are supported because Python can call them with this same convention. Kernel examples should use a plain function or callable object that accepts `context` as a keyword and can also be invoked directly outside the wrapper with the same explicit argument.
+
+Result handling has two paths. If the callable returns an `OperationResult`, validate it and return that same semantic result without merging context mappings into it. If the callable returns any other object, create `OperationResult(output, operation_name=name, role=contract.role, metadata=context.metadata, provenance=context.provenance, side_effect_evidence=None)`. The wrapper does not add constructor-level metadata/provenance because that would turn `Operation` into a durable identity or serialization record before Stage 7/8 pressure exists.
+
+Side-effect evidence is validated only as a generic runtime mapping against declared operation behavior. For `OperationMutationPolicy.PURE` and `MAY_MUTATE`, any non-empty result `side_effect_evidence` is an `InvalidOperationResultError`. For `SIDE_EFFECTING`, evidence keys must be a subset of `contract.side_effects`; empty evidence is allowed because Phase 2 records declarations and evidence but does not prove external side-effect completion. No export target, file path, artifact, cache key, or workflow status is introduced.
+
+Output type validation is `isinstance(result.output, contract.output_type)` when `output_type` is declared, using the concrete type or tuple of concrete types accepted by `OperationContract`. `output_type=None` disables output validation. The wrapper does not coerce outputs, inspect schemas, unpack containers, validate array shape, move devices, or materialize lazy fields. A bare `None` output is valid only when the declared output type allows it.
+
+Phase 2 adds exactly two exercised concrete execution errors if implementation follows this plan:
+
+- `InvalidOperationInputError`: raised before invocation when `contract.input_type` is declared and `input_value` does not satisfy it.
+- `OperationExecutionError`: raised when the wrapped callable raises during the single invocation convention, with the original exception preserved as `__cause__`.
+
+Existing errors are reused as follows: `InvalidOperationContractError` for wrapper declaration and constructor failures; `InvalidOperationContextError` for non-`OperationContext` context arguments or missing required metadata keys; `InvalidOperationResultError` for returned/wrapped result incompatibility, declared output type mismatch, operation-name mismatch, role mismatch, invalid result mapping shape, or side-effect evidence mismatch. Do not add `MissingOperationContextError`, `OperationOutputTypeError`, `OperationCallableError`, pipeline errors, or other placeholder execution names in Phase 2.
 
 ## Scientific Contract Notes
 
@@ -157,16 +189,16 @@ Mutation and side effects remain declared behavior only in Phase 2. `OperationMu
 
 ## Reviewability
 
-- Expected PR size and shape: small execution-focused PR adding one core wrapper module, exact `rphys.ops` export updates, minimal exercised errors if required, and focused package/unit/contract tests.
+- Expected PR size and shape: small execution-focused PR adding one core wrapper module, exact `rphys.ops` export updates, `InvalidOperationInputError` and `OperationExecutionError`, and focused package/unit/contract tests.
 - Files and areas to inspect: `src/rphys/ops/core.py`, `src/rphys/ops/__init__.py`, `src/rphys/ops/kernels.py` only if docs/example text changes, private `src/rphys/ops/_validation.py` only if execution validation reuses it, `src/rphys/errors.py`, `tests/package/test_import.py`, `tests/package/test_import_boundaries.py`, `tests/unit/rphys/ops/test_core.py`, `tests/unit/rphys/ops/test_kernels.py`, `tests/unit/rphys/test_errors.py`, and `tests/contracts/test_operation_execution_contract.py`.
 - Scope-control checks: `Operation` is the only new `rphys.ops` execution public name; no raw-output API; no pipeline names or behavior; no Protocol/base/registry; no SampleOp/BatchOp/runtime-container imports; no hidden RNG/device/schema conversion; no IO/datasource/heavy imports; no private helper docs/tests; no unexercised public errors.
 
 ## Implementation Steps
 
-1. Add `src/rphys/ops/core.py` with a concrete `Operation` wrapper that stores a name, callable, and `OperationContract`, validates constructor inputs, and keeps imports limited to stdlib, Phase 1 operation records, and `rphys.errors`.
-2. Implement `.run()` and `__call__` parity with explicit context defaulting, declared input-type validation, required context validation against `OperationContext.metadata`, narrow callable invocation, and `OperationResult` return in every successful path.
-3. Implement result acceptance/wrapping and output/result validation: validate callable-returned `OperationResult`, wrap bare outputs with operation name/role and generic runtime mappings, check declared output type, preserve side-effect evidence, and keep metadata/provenance generic.
-4. Add only exercised concrete execution errors if needed for invalid input/context or callable failure, preserving original callable exceptions as `__cause__` and structured `RemotePhysError.context`; otherwise reuse existing concrete result/context errors where semantically correct.
+1. Add `src/rphys/ops/core.py` with the fixed `Operation(function, *, name=None, contract=None)` wrapper, public `name`/`contract` inspection, private callable storage, constructor validation, and imports limited to stdlib, Phase 1 operation records, and `rphys.errors`.
+2. Implement `.run(input_value, context=None)` and `__call__(input_value, context=None)` parity with explicit `OperationContext()` defaulting, `InvalidOperationInputError` input-type validation, `InvalidOperationContextError` required-metadata validation, and the single callable invocation shape `function(input_value, context=context)`.
+3. Implement result acceptance/wrapping and output/result validation: return compatible callable-produced `OperationResult` without context merging, wrap bare outputs with context metadata/provenance and empty side-effect evidence, validate declared output type, operation name, role, and side-effect evidence rules, and reuse `InvalidOperationResultError` for result incompatibility.
+4. Add only the exercised concrete execution errors `InvalidOperationInputError` and `OperationExecutionError`, preserving original callable exceptions as `__cause__` and structured `RemotePhysError.context`; reuse existing contract/context/result errors for all other Phase 2 validation failures.
 5. Update package exports/import-boundary tests for `Operation` and `rphys.ops.core`, add unit tests for wrapper execution and functional-kernel direct-call examples, and add contract tests for public execution semantics and guardrail absences.
 6. Run focused Phase 2 validation and stop for manager review if implementation requires pipeline behavior, raw-output execution, public Protocol/base, registry lookup, runtime-container imports, hidden RNG/device/schema conversion, or unexercised public errors.
 
@@ -176,19 +208,19 @@ Mutation and side effects remain declared behavior only in Phase 2. `OperationMu
 
 - Status: required
 - Expected paths: `tests/package/test_import.py`; `tests/package/test_import_boundaries.py`
-- Required assertions or deferral reason: `rphys.ops.__all__` includes `Operation` plus existing Phase 1 public names and no `OperationPipeline`, `SampleOp`, `BatchOp`, `Transform`, registry, raw-output helper, Protocol/base, or Stage 7/8 placeholder names; `rphys.ops.core.__all__` exposes exactly `["Operation"]`; root `rphys` still does not re-export operation names; any new exercised execution error appears in `rphys.errors.__all__` only if implemented and tested; importing `rphys.ops.core` does not load heavy optional modules, `rphys.data`, `rphys.datasources`, `rphys.io`, codec modules, `tests.support`, or workflow/artifact packages.
+- Required assertions or deferral reason: `rphys.ops.__all__` includes `Operation` plus existing Phase 1 public names and no `OperationPipeline`, `SampleOp`, `BatchOp`, `Transform`, registry, raw-output helper, Protocol/base, or Stage 7/8 placeholder names; `rphys.ops.core.__all__` exposes exactly `["Operation"]`; root `rphys` still does not re-export operation names; `rphys.errors.__all__` adds exactly `InvalidOperationInputError` and `OperationExecutionError` for Phase 2; importing `rphys.ops.core` does not load heavy optional modules, `rphys.data`, `rphys.datasources`, `rphys.io`, codec modules, `tests.support`, or workflow/artifact packages.
 
 ### Unit Suite
 
 - Status: required
-- Expected paths: `tests/unit/rphys/ops/test_core.py`; `tests/unit/rphys/ops/test_kernels.py`; `tests/unit/rphys/test_errors.py` if new execution errors are added
-- Required assertions or deferral reason: `Operation` wraps functions and callable objects; `.run()` and `__call__` return equivalent `OperationResult` shapes; omitted context becomes empty `OperationContext`; declared `input_type` is checked before invocation; missing required context keys fail before invocation; bare outputs are wrapped; callable-returned `OperationResult` is accepted only when valid and compatible; output type mismatches fail loudly; result metadata/provenance/side-effect evidence remain mapping-shaped and immutable through `OperationResult`; callable exceptions preserve `__cause__`; direct kernels remain callable without `Operation`; no raw-output method, registry, Protocol/base, SampleOp/BatchOp, runtime-container, RNG, device, or schema conversion behavior is present.
+- Expected paths: `tests/unit/rphys/ops/test_core.py`; `tests/unit/rphys/ops/test_kernels.py`; `tests/unit/rphys/test_errors.py`
+- Required assertions or deferral reason: `Operation` wraps functions and callable objects through `function(input_value, context=context)` only; `.run()` and `__call__` return equivalent `OperationResult` shapes; omitted context becomes empty `OperationContext`; declared `input_type` is checked before invocation with `InvalidOperationInputError`; missing required context keys fail before invocation with `InvalidOperationContextError`; bare outputs are wrapped with context metadata/provenance and empty side-effect evidence; callable-returned `OperationResult` is accepted only when valid and compatible and is not context-merged; output type mismatches use `InvalidOperationResultError`; result metadata/provenance/side-effect evidence remain mapping-shaped and immutable through `OperationResult`; callable exceptions raise `OperationExecutionError` with `__cause__`; direct kernels remain callable without `Operation`; no raw-output method, registry, Protocol/base, SampleOp/BatchOp, runtime-container, RNG, device, or schema conversion behavior is present.
 
 ### Contract Suite
 
 - Status: required
 - Expected paths: `tests/contracts/test_operation_execution_contract.py`
-- Required assertions or deferral reason: public execution contract proves `Operation` is wrapper-first, context is explicit, `required_context` keys come from `OperationContext.metadata`, successful calls always return `OperationResult`, users unwrap `.output`, input/context/result/callable failures are typed and cause-preserving, and Stage 6 execution has no raw-output API, registry, public Protocol/base, pipeline behavior, or later-stage domain semantics.
+- Required assertions or deferral reason: public execution contract proves `Operation` is wrapper-first with the fixed constructor and call signatures, context is explicit, `required_context` keys come from `OperationContext.metadata`, successful calls always return `OperationResult`, users unwrap `.output`, bare-output and returned-result metadata/provenance behavior follows the refined rules, input/context/result/callable failures are typed and cause-preserving, and Stage 6 execution has no raw-output API, registry, public Protocol/base, pipeline behavior, or later-stage domain semantics.
 
 ### Integration Suite
 
@@ -216,6 +248,7 @@ Mutation and side effects remain declared behavior only in Phase 2. `OperationMu
 - Callable-result acceptance can blur responsibility between callable and wrapper metadata unless validation and merge rules stay narrow.
 - Import-boundary regressions can slip in if execution helpers reuse runtime, IO, datasource, codec, or test helper modules.
 - Signature adaptation can accidentally become a hidden dispatch framework if it supports too many callable shapes.
+- The fixed keyword-context convention may require small adapters around existing one-argument callables; adding an automatic fallback is a stop condition, not Phase 2 scope.
 
 ## Validation Commands
 
@@ -241,12 +274,12 @@ git diff --check
 
 - Safe implementation slices: add `Operation` core wrapper and constructor validation first; add package export/import-boundary updates second; add run/call input/context validation third; add result acceptance/wrapping/output validation fourth; add exercised execution errors and cause preservation last.
 - Tests to run with each slice: package tests after export/import-boundary edits; focused unit core tests after wrapper behavior; unit error tests after any `errors.py` change; contract tests after public execution semantics settle.
-- Decisions the executor must not revisit: `.run()` and `__call__` return `OperationResult`; no raw-output API; wrapper-first concrete `Operation`; no public Protocol/base; no registry; no pipeline behavior; no SampleOp/BatchOp/runtime-container dependency; no hidden RNG/device/schema conversion; no durable identity/serialization/context fields; no unexercised public errors.
-- Conditions that require stopping for the manager: implementation needs multiple callable signature conventions beyond the refined call shape; callable-object support appears impossible without a public Protocol/base; preserving exception causes requires broad new error taxonomy; execution needs runtime-container, IO, datasource, codec, workflow, RNG, device, or schema conversion imports; tests require pipeline semantics or a raw-output API.
+- Decisions the executor must not revisit: `Operation(function, *, name=None, contract=None)`; `.run(input_value, context=None)` and `__call__(input_value, context=None)` return `OperationResult`; callable invocation is only `function(input_value, context=context)`; bare-output wrapping copies context metadata/provenance and uses empty side-effect evidence; returned `OperationResult` is not context-merged; no raw-output API; wrapper-first concrete `Operation`; no public Protocol/base; no registry; no pipeline behavior; no SampleOp/BatchOp/runtime-container dependency; no hidden RNG/device/schema conversion; no durable identity/serialization/context fields; no unexercised public errors beyond `InvalidOperationInputError` and `OperationExecutionError`.
+- Conditions that require stopping for the manager: implementation needs constructor-level metadata/provenance/side-effect fields; needs multiple callable signature conventions or signature introspection; callable-object support appears impossible without a public Protocol/base; preserving exception causes requires broad new error taxonomy; result metadata/provenance requires hidden merge policy beyond the refined rules; output validation requires coercion, schema inspection, device movement, or lazy-field materialization; execution needs runtime-container, IO, datasource, codec, workflow, RNG, device, or schema conversion imports; tests require pipeline semantics, direct private-helper imports, or a raw-output API.
 
 ## Refinement And Review Budget Status
 
-- Phase execution plan refinement: pending/required
+- Phase execution plan refinement: completed 2026-05-14
 - Phase implementation refinement: unused
 - PR review: unused
 - Blocker resolution: 0/3 used
@@ -254,13 +287,13 @@ git diff --check
 ## Completion Notes
 
 - Draft plan: completed 2026-05-14 in the assigned worktree
-- Final phase execution plan: pending required expanded-path refinement
+- Final phase execution plan: completed 2026-05-14 after expanded-path refinement
 - Implementation summary: pending
 - Implementation validation: pending
-- Refinement summary: pending; must focus on public execution return semantics, exact wrapper API/callable invocation shape, cause-preserving errors, result merge/validation rules, and import-boundary risk before implementation
+- Refinement summary: completed; locked exact `Operation` constructor/run/call signatures, keyword-context callable invocation, result wrapping and no-merge rules, side-effect evidence validation, output type validation, `InvalidOperationInputError`/`OperationExecutionError`, package/import-boundary guardrails, raw-output API absence checks, and stop conditions
 - Pre-submit blocker gate: pending
 - PR preparation: pending
 - Automated review: pending
 - Merge result: pending
 - Cleanup: pending
-- Remaining blockers: required refinement pass before implementation
+- Remaining blockers: none known before implementation
