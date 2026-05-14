@@ -388,7 +388,7 @@ Workflow path: fast path
 - Validation: `make validate-pr` passed: package 19, unit 285, contract 30, integration 1, e2e/acceptance not present, build succeeded, lock check passed, and `git diff --check` clean. Focused codec, package import-boundary, contract, and error tests also passed. Automated review found an initial PR-range whitespace blocker in `tests/support/__init__.py`; it was fixed and `git diff --check origin/develop...HEAD` passed before merge.
 - PR: [#24](https://github.com/samcantrill/rphys/pull/24) opened against `develop`; PR title and target verified.
 - Merge: squash-merged to `develop` 2026-05-14 at `608ffdfe9650c99bf3e8abd4f10ee316aa55e387` via GitHub merge API after local validation, blocker resolution, and automated review.
-- Follow-up: real codec families may later motivate additive support predicates or resource-member semantics; symbolic names, plugin discovery, concrete production codecs, lazy `SampleField`, and `SampleBuilder` remain deferred. Phase worktree and branch cleanup pending after merge metadata push.
+- Follow-up: real codec families may later motivate additive support predicates or resource-member semantics; symbolic names, plugin discovery, concrete production codecs, lazy `SampleField`, and `SampleBuilder` remain deferred. Phase worktree and local/remote branches were cleaned up after metadata push.
 
 ### Merge Record
 
@@ -399,8 +399,8 @@ Workflow path: fast path
 - Merge command: `gh api --method PUT repos/samcantrill/rphys/pulls/24/merge --field merge_method=squash ...`
 - Merge result: merged
 - Merge commit: `608ffdfe9650c99bf3e8abd4f10ee316aa55e387`
-- Branch cleanup: pending merge metadata push
-- Worktree cleanup: pending merge metadata push
+- Branch cleanup: completed; local and remote phase branches deleted after merge metadata push
+- Worktree cleanup: completed; phase worktree removed and worktree metadata pruned
 - Behavior implemented: explicit deterministic codec registry, operation wrappers, structural support predicates, typed resolution/operation/dependency/index failures, private dependency-light synthetic codec validation, metadata policy handling, ordered save resources, and no hidden full-load fallback.
 - Tests and validation: targeted codec/package/contract/error checks passed; `make validate-pr` passed with 335 total tests across present suites; PR-range `git diff --check` passed after review blocker fix.
 - Documentation: phase assignment, execution plan, PR body, and this merge record updated.
