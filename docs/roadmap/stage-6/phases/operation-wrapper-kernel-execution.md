@@ -297,7 +297,7 @@ git diff --check
 - Implementation validation: complete (`make test-package`, `make test-unit`, `make test-contract`, `git diff --check` passed)
 - Refinement summary: completed; locked exact `Operation` constructor/run/call signatures, keyword-context callable invocation, result wrapping and no-merge rules, side-effect evidence validation, output type validation, `InvalidOperationInputError`/`OperationExecutionError`, package/import-boundary guardrails, raw-output API absence checks, and stop conditions
 - Pre-submit blocker gate: cleared
-- PR preparation: pending
+- PR preparation: PR body draft complete in `docs/roadmap/stage-6/phases/operation-wrapper-kernel-execution-pr-body.md`; PR body refine pending for expanded path before PR open
 - Automated review: pending
 - Merge result: pending
 - Cleanup: pending
