@@ -453,8 +453,13 @@ git diff --check
   - `make test-contract`: passed, 25 tests.
   - `make test-package`: passed, 18 tests.
   - `git diff --check`: clean.
+  - `make validate-pr`: passed. Suite summary: package 18 passed, unit 259
+    passed, contract 25 passed, integration 1 passed, e2e/acceptance not
+    present, build succeeded, and `git diff --check` was clean.
 - Refinement summary: not needed; targeted and required validation passed.
-- Pre-submit blocker gate: pending manager review
+- Pre-submit blocker gate: manager review found the diff phase-scoped,
+  future codec/lazy/builder behavior absent, public imports unchanged, and no
+  scientific behavior changes beyond descriptor immutability and terminology.
 - PR preparation: pending executor
 - Automated review: pending PR
 - Merge result: pending PR
