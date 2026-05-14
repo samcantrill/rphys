@@ -268,6 +268,7 @@ def test_ops_import_does_not_load_heavy_or_optional_runtime_modules() -> None:
         importlib.import_module("rphys.ops.context")
         importlib.import_module("rphys.ops.core")
         importlib.import_module("rphys.ops.kernels")
+        importlib.import_module("rphys.ops.pipelines")
 
         forbidden = sorted(
             name for name in [{forbidden}]

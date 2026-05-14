@@ -637,15 +637,20 @@ git diff --check
 
 - Draft plan: completed 2026-05-14 in the assigned worktree
 - Final phase execution plan: completed 2026-05-15 in the assigned worktree
-- Implementation summary: pending
-- Implementation validation: pending
+- Implementation summary: added `src/rphys/ops/pipelines.py` with sequence-only
+  `OperationPipeline` construction, immutable `operations` tuple, static
+  compatibility validation, context forwarding semantics, output chaining,
+  and step-aware pipeline execution wrapping; exported `OperationPipeline` from
+  `rphys.ops`; added `InvalidOperationPipelineError` and
+  `OperationPipelineExecutionError` under `RemotePhysPipelineError`; added
+  phase-scoped unit/contract/package tests plus error-surface updates.
+- Implementation validation: `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/unit/rphys/ops/test_pipelines.py tests/contracts/test_operation_pipeline_contract.py tests/unit/rphys/test_errors.py tests/package/test_import.py tests/package/test_import_boundaries.py` (81 passed), `make test-package` (29 passed), `make test-unit` (416 passed), `make test-contract` (70 passed), `git diff --check` clean
 - Refinement summary: completed; locked constructor/execution signatures,
   compatibility type rules, concrete pipeline error names, inspection surface,
   context handling, and step diagnostics before code edits
-- Pre-submit blocker gate: pending
-- PR preparation: pending
-- Automated review: pending
-- Merge result: pending
-- Cleanup: pending
-- Remaining blockers: none in the execution plan; product implementation remains
-  pending
+- Pre-submit blocker gate: clear
+- PR preparation: blocked pending commit and handoff
+- Automated review: not yet run in this session
+- Merge result: not yet run in this session
+- Cleanup: clean (`git diff --check` passed)
+- Remaining blockers: none

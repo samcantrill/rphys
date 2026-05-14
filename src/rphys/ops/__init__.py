@@ -7,6 +7,7 @@ from .contracts import (
 )
 from .core import Operation
 from .context import OperationContext, OperationResult
+from .pipelines import OperationPipeline
 from .kernels import FunctionalKernel
 
 __all__ = [
@@ -16,5 +17,6 @@ __all__ = [
     "Operation",
     "OperationContext",
     "OperationResult",
+    "OperationPipeline",
     "FunctionalKernel",
 ]
