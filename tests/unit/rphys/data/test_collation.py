@@ -33,6 +33,78 @@ def _sample(
     )
 
 
+class PublicFieldContainer:
+    def __init__(
+        self,
+        *,
+        payload: object,
+        schema: str = "video.rgb.v1",
+        metadata: dict[str, object] | None = None,
+        policy: object = CollatePolicy.LIST,
+    ) -> None:
+        self._items = (
+            FieldLocator.parse("inputs/video.rgb"),
+            FieldValue(
+                payload,
+                schema=schema,
+                metadata=metadata,
+                collate_policy=policy,
+            ),
+        )
+
+    def has(self, locator: FieldLocator | str) -> bool:
+        return locator == self._items[0] or str(locator) == str(self._items[0])
+
+    def field(
+        self,
+        locator: FieldLocator | str,
+        *,
+        expected_type: type | tuple[type, ...] | None = None,
+        schema: str | None = None,
+    ) -> FieldValue:
+        if locator == self._items[0] or str(locator) == str(self._items[0]):
+            return self._items[1]
+        raise KeyError(locator)
+
+    def get(
+        self,
+        locator: FieldLocator | str,
+        default: object = None,
+        *,
+        expected_type: type | tuple[type, ...] | None = None,
+        schema: str | None = None,
+    ) -> object:
+        if locator == self._items[0] or str(locator) == str(self._items[0]):
+            return self._items[1].payload
+        return default
+
+    def require(
+        self,
+        locator: FieldLocator | str,
+        *,
+        expected_type: type | tuple[type, ...] | None = None,
+        schema: str | None = None,
+    ) -> object:
+        if locator == self._items[0] or str(locator) == str(self._items[0]):
+            return self._items[1].payload
+        raise KeyError(locator)
+
+    def role(self, role) -> dict[str, object]:
+        return {}
+
+    def field_items(self) -> tuple[tuple[FieldLocator, FieldValue], ...]:
+        return (self._items,)
+
+    def _field_items(self) -> tuple[tuple[FieldLocator, FieldValue]]:
+        raise AssertionError("Private field-items hook should not be required.")
+
+
+class NonCallableFieldItemsContainer(PublicFieldContainer):
+    def __init__(self) -> None:
+        super().__init__(payload="frame-0")
+        self.field_items = 1
+
+
 def test_collate_policy_list_has_public_identity_name_and_value() -> None:
     assert CollatePolicy.LIST.name == "LIST"
     assert CollatePolicy.LIST.value == "list"
@@ -90,6 +162,27 @@ def test_collate_samples_rejects_empty_and_empty_field_inputs() -> None:
 
     with pytest.raises(CollatePolicyError):
         collate_samples([Sample()])
+
+
+def test_collate_samples_uses_public_field_items_protocol() -> None:
+    batch = collate_samples(
+        [
+            PublicFieldContainer(payload="frame-0", metadata={"source_id": "s1"}),
+            PublicFieldContainer(payload="frame-1", metadata={"source_id": "s2"}),
+        ],
+        context=CollateContext(operation="unit"),
+    )
+
+    field_value = batch.field(VIDEO)
+    assert field_value.payload == ["frame-0", "frame-1"]
+    assert field_value.metadata[MetadataKey("source_id")] == ["s1", "s2"]
+
+
+def test_collate_samples_rejects_non_callable_public_field_items() -> None:
+    with pytest.raises(CollatePolicyError) as exc_info:
+        collate_samples([NonCallableFieldItemsContainer()])
+
+    assert exc_info.value.context["actual"] == "NonCallableFieldItemsContainer"
 
 
 def test_collate_samples_requires_homogeneous_field_sets() -> None:

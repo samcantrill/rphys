@@ -11,7 +11,7 @@ from __future__ import annotations
 import copy
 from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
-from typing import Any, TypeAlias
+from typing import Any, Protocol, TypeAlias, runtime_checkable
 
 from rphys.errors import FieldSchemaError, FieldTypeError, MissingFieldError
 
@@ -20,11 +20,53 @@ from .locators import FieldLocator, FieldRole
 from .metadata import MetadataKey
 from .schemas import SchemaName
 
-__all__ = ["Batch", "Sample"]
+__all__ = ["Batch", "FieldContainer", "Sample"]
 
 FieldValueInput: TypeAlias = FieldValue | object
 PayloadType: TypeAlias = type | tuple[type, ...]
 _MISSING = object()
+
+
+@runtime_checkable
+class FieldContainer(Protocol):
+    """Protocol for field containers used by loaded runtime sample-like objects."""
+
+    def has(self, locator: FieldLocator | str) -> bool:
+        ...
+
+    def field(
+        self,
+        locator: FieldLocator | str,
+        *,
+        expected_type: PayloadType | None = None,
+        schema: SchemaName | str | None = None,
+    ) -> FieldValue:
+        ...
+
+    def get(
+        self,
+        locator: FieldLocator | str,
+        default: object = None,
+        *,
+        expected_type: PayloadType | None = None,
+        schema: SchemaName | str | None = None,
+    ) -> object:
+        ...
+
+    def require(
+        self,
+        locator: FieldLocator | str,
+        *,
+        expected_type: PayloadType | None = None,
+        schema: SchemaName | str | None = None,
+    ) -> object:
+        ...
+
+    def role(self, role: FieldRole | str) -> Mapping[FieldLocator, FieldValue]:
+        ...
+
+    def field_items(self) -> tuple[tuple[FieldLocator, FieldValue], ...]:
+        ...
 
 
 @dataclass(slots=True)
@@ -249,8 +291,13 @@ class _FieldContainerBase:
                 locator=str(locator),
             ) from exc
 
-    def _field_items(self) -> tuple[tuple[FieldLocator, FieldValue], ...]:
+    def field_items(self) -> tuple[tuple[FieldLocator, FieldValue], ...]:
         return tuple((locator, entry.value) for locator, entry in self._fields.items())
+
+    def _field_items(self) -> tuple[tuple[FieldLocator, FieldValue], ...]:
+        # Compatibility shim for internal callers that may still rely on the
+        # legacy private method name.
+        return self.field_items()
 
 
 class Sample(_FieldContainerBase):
