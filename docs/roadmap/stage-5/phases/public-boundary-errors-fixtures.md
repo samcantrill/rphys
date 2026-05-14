@@ -204,8 +204,8 @@ git diff --check
 - Implementation validation: `make test-package` passed with 25 tests; `git diff --check` passed.
 - Refinement summary: not needed; targeted validation passed and no coverage obligation is missing for Phase 1.
 - Pre-submit blocker gate: passed; no root exports, parent Stage 5 re-exports, public synthetic fixture, public concat API, or unimplemented public placeholder names are present.
-- PR preparation: pending.
-- Automated review: pending.
+- PR preparation: PR body drafted at `docs/roadmap/stage-5/phases/public-boundary-errors-fixtures-pr-body.md`; PR #29 opened and verified against `develop`.
+- Automated review: manager review passed before PR submission; GitHub checks pending/not configured at open.
 - Merge result: pending.
 - Cleanup: pending.
 - Remaining blockers: none.
