@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: ready for implementation
+- Status: implemented; ready for PR
 - Roadmap stage: `v4`
 - Feature focus: Codecs and lazy sample construction
 - Stage descriptor: Codecs And Lazy Sample Construction
@@ -496,7 +496,7 @@ git diff --check
 ## Completion Notes
 
 - Draft plan: completed in this artifact
-- Final phase execution plan: ready for implementation
+- Final phase execution plan: implemented and locally validated
 - Implementation summary:
   - Added `rphys.io.codecs` as the canonical codec contract module with
     structural `FieldCodec`, `CodecCapabilities`, `IOContext`, `LoadContext`,
@@ -524,10 +524,14 @@ git diff --check
   - `make test-contract`: passed, 25 tests.
   - `make test-package`: passed, 19 tests.
   - `make test-unit`: passed, 271 tests.
+  - `make validate-pr`: passed; lock check passed, harness summary wrote
+    `build/test-summary.md`, package 19, unit 271, contract 25, integration
+    1, e2e/acceptance not present, build succeeded, and `git diff --check`
+    was clean.
   - `git diff --check`: clean.
 - Refinement summary: not needed; manager resolved the import-boundary issue
   found by contract validation before PR preparation.
-- Pre-submit blocker gate: pending manager final review after `make validate-pr`
+- Pre-submit blocker gate: passed after local validation and manager review
 - PR preparation: pending implementation
 - Automated review: pending PR
 - Merge result: pending
