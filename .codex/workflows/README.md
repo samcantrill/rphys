@@ -25,6 +25,7 @@ capability triage and candidate requirements
 functionality-agreement review
 behavior confirmation
 context checkpoint if applicable
+design implication and future-roadmap safety review
 design-agreement review
 validation and phase shaping
 approved stage implementation plan

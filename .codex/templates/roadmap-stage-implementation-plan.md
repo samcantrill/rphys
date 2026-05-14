@@ -18,6 +18,7 @@ Blockers:
 - Source design-agreement gate:
 - Source functionality-agreement queue:
 - Source design-agreement queue:
+- Source future-roadmap/reuse safety review:
 - Examples covered:
 - Source phase shaping:
 - Source plan quality gate:
@@ -62,6 +63,7 @@ Workflow path: fast path / expanded path
 - Files/modules owned:
 - Behavior implemented:
 - Decisions applied:
+- Future-roadmap/reuse constraints:
 - Examples or demos covered:
 - Out of scope:
 - Dependencies:
@@ -80,6 +82,7 @@ Workflow path: fast path / expanded path
 
 - Behavior evidence:
 - Design-decision evidence:
+- Future-roadmap/reuse evidence:
 - Example/demo evidence:
 - Documentation evidence:
 - Scientific contract evidence:

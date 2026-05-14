@@ -21,26 +21,31 @@ Task:
    design-decision IDs, impact, what is being locked, why it matters,
    recommended answer, trade-offs or rejected branches, repo evidence or direct
    resolution, exact feedback needed, and current state.
-4. Resolve repo-answerable branches directly in `planning.md`. Mark them
+4. Confirm that any future-roadmap/reuse safety findings are resolved or routed
+   into concrete design revisions, explicit deferrals, revisit triggers,
+   validation obligations, or maintainer discussion packets.
+5. Resolve repo-answerable branches directly in `planning.md`. Mark them
    `repo-resolved` or `locked`; do not ask the maintainer to confirm clear
    evidence-backed defaults.
-5. Order unresolved items by dependency first, then impact. Ask only one
+6. Order unresolved items by dependency first, then impact. Ask only one
    unresolved high-impact design question at a time.
-6. Use this packet shape for each raised item:
+7. Use this packet shape for each raised item:
    - What is being locked:
    - Why it matters:
    - Recommended answer:
    - Trade-offs:
+   - Future-roadmap or reuse impact:
    - Exact feedback needed:
-7. After each maintainer answer, immediately update the queue item, linked
+8. After each maintainer answer, immediately update the queue item, linked
    design-decision rows, `Design Decision Triage`, `Stage Gates`,
-   `Stage Readbacks`, and any accepted assumption or deferral.
-8. Continue until no high-impact design queue item remains in
+   `Stage Readbacks`, `Future Roadmap And Reuse Safety Review`, and any
+   accepted assumption or deferral.
+9. Continue until no high-impact design queue item remains in
    `needs maintainer discussion` or `blocked`.
-9. Reopen only the relevant functionality-agreement queue item when a design
+10. Reopen only the relevant functionality-agreement queue item when a design
    blocker reveals a missing upstream behavior decision that cannot be resolved
    from repository evidence.
-10. Do not draft implementation phases here.
+11. Do not draft implementation phases here.
 
 Rules:
 

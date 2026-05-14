@@ -52,7 +52,7 @@ Implementation plan: `docs/roadmap/stage-<N>/implementation-plan.md`
 | Functionality-agreement review | functionality-agreement queue |  | pending / in_progress / passed / blocked |  |  |
 | Behavior confirmation | resolved functionality-agreement queue |  | pending / in_progress / passed / blocked |  |  |
 | Context checkpoint if applicable | resume checkpoint, refreshed context if needed |  | pending / in_progress / passed / blocked / not needed |  |  |
-| Design-agreement review | proposed implementation shape, design decisions, design-agreement queue, design implication review |  | pending / in_progress / passed / blocked |  |  |
+| Design-agreement review | proposed implementation shape, design decisions, design-agreement queue, design implication review, future-roadmap/reuse safety review |  | pending / in_progress / passed / blocked |  |  |
 | Validation and phase shaping | validation strategy, phase shaping |  | pending / in_progress / passed / blocked |  |  |
 | Plan quality gate | traceability review, specialist evidence check |  | pending / in_progress / passed / blocked |  |  |
 | Implementation plan approved | implementation-plan review and approval |  | pending / in_progress / passed / blocked |  |  |
@@ -141,6 +141,9 @@ Auto-approval criteria:
 - Localized implementation choice with straightforward validation.
 - Consistent with approved behavior and rphys design principles.
 - Low future refactor risk and no meaningful downstream extension consequence.
+- No unaddressed conflict with future roadmap items and no avoidable
+  dataset-, modality-, backend-, framework-, codec-, or project-specific
+  coupling in interfaces/adapters/protocols.
 - Traceable to an approved functional requirement.
 - Challenged by design implication review with no blocker or major concern.
 
@@ -149,6 +152,12 @@ Auto-approval criteria:
 | Finding | Affected decision or requirement | Maintainability/extensibility impact | Recommended revision | Queue action | Status |
 | --- | --- | --- | --- | --- | --- |
 |  |  |  |  | record / reopen functionality queue / reopen design queue | pending |
+
+## Future Roadmap And Reuse Safety Review
+
+| Finding | Affected decision or requirement | Future roadmap item or dependency | Interface/adapter/protocol implication | Recommended revision or deferral | Revisit trigger | Queue action | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+|  |  |  |  |  |  | record / revise design / reopen functionality queue / reopen design queue / defer with trigger | pending |
 
 ## Functionality And Decision Audit
 
@@ -170,9 +179,9 @@ Auto-approval criteria:
 
 ## Phase Shaping
 
-| Phase | Goal | Scope | Out of scope | Dependencies | Acceptance criteria | Test expectations | Design impact | Future compatibility | Reviewability | Risks | Status |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 |  |  |  |  |  |  |  |  |  |  | pending |
+| Phase | Goal | Scope | Out of scope | Dependencies | Acceptance criteria | Test expectations | Design impact | Future compatibility | Interface/reuse implications | Reviewability | Risks | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 |  |  |  |  |  |  |  |  |  |  |  | pending |
 
 ## Plan Quality Gate
 
@@ -186,6 +195,8 @@ Auto-approval criteria:
 | Design-to-example traceability |  | pass / block |  |
 | Example-to-validation traceability |  | pass / block |  |
 | Phase-shaping readiness |  | pass / block |  |
+| Future-roadmap compatibility readiness |  | pass / block |  |
+| Interface/adapter/protocol reuse readiness |  | pass / block |  |
 | Extensibility and maintainability readiness |  | pass / block |  |
 | Scientific/workflow contract clarity |  | pass / block |  |
 | Reviewability and phase granularity |  | pass / block |  |

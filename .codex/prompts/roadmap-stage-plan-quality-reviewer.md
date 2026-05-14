@@ -8,8 +8,10 @@ Follow these steps exactly:
 2. Review traceability from roadmap extraction through capability triage,
    functional requirements, the functionality-agreement queue, behavior
    confirmation, proposed implementation shape, the design-agreement queue,
-   design decisions, examples, validation strategy, and phase shaping.
-3. Check extensibility, maintainability, scientific/workflow contract clarity,
+   design decisions, future-roadmap/reuse safety findings, examples,
+   validation strategy, and phase shaping.
+3. Check future-roadmap compatibility, interface/adapter/protocol reuse,
+   extensibility, maintainability, scientific/workflow contract clarity,
    reviewability, phase granularity, unresolved ambiguity, unresolved
    `blocked` decisions, unresolved `needs maintainer discussion` decisions,
    missing queue dependencies, and reopened agreement queues.
@@ -17,7 +19,7 @@ Follow these steps exactly:
    - context scaffold handoff
    - functionality mapper handoff
    - design proposer handoff
-   - design implication/coherence audit/examples handoff
+   - design implication/future-roadmap safety/coherence audit/examples handoff
    - validation and phase-shaping handoff
    - recorded functionality-agreement review and behavior-confirmation readbacks
    - recorded design-agreement review readback
@@ -28,12 +30,18 @@ Follow these steps exactly:
 6. Block implementation-plan drafting when an agreement-queue item or decision
    is marked `needs maintainer discussion`, `blocked`, `pending approval`, or
    `ready for approval` but lacks a recorded maintainer answer and resolution.
-7. Block implementation-plan drafting when behavior, design, examples,
-   validation, or phase shaping would require an implementation agent to invent
-   product or design decisions, or when a queue would need to reopen.
-8. Record pass/block evidence in `Plan Quality Gate`.
-9. Update only `docs/roadmap/stage-<N>/planning.md`.
-10. Do not implement code and do not create `implementation-plan.md`.
+7. Block implementation-plan drafting when behavior, design,
+   future-roadmap/reuse safety findings, examples, validation, or phase shaping
+   would require an implementation agent to invent product or design decisions,
+   or when a queue would need to reopen.
+8. Block implementation-plan drafting when `Future Roadmap And Reuse Safety
+   Review` is missing, stale relative to current design decisions, or records a
+   revision/reopen action that has not been incorporated.
+9. Record pass/block evidence in `Plan Quality Gate`, including
+   future-roadmap compatibility readiness and interface/adapter/protocol reuse
+   readiness when the planning template has those rows.
+10. Update only `docs/roadmap/stage-<N>/planning.md`.
+11. Do not implement code and do not create `implementation-plan.md`.
 
 Return:
 
@@ -43,5 +51,6 @@ Return:
 - Blocking findings.
 - Missing or stale specialist evidence, if any.
 - Unraised or unresolved agreement-queue packets, if any.
+- Future-roadmap or interface/reuse readiness gaps, if any.
 - Accepted risks, if any.
 - Required return-to-planning actions.

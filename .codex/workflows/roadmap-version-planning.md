@@ -120,7 +120,7 @@ Use these role prompts and agent definitions:
 | Capability triage and candidate requirements | `roadmap_stage_functionality_mapper` | `.codex/prompts/roadmap-stage-functionality-mapper.md` | `planning.md` |
 | Functionality-agreement review | managing agent | `.codex/prompts/roadmap-stage-functionality-agreement.md` | `planning.md` |
 | Design proposal | `roadmap_stage_design_proposer` | `.codex/prompts/roadmap-stage-design-proposer.md` | `planning.md` |
-| Design implication, coherence audit, and examples | `roadmap_stage_design_implication_reviewer` | `.codex/prompts/roadmap-stage-design-implication-reviewer.md` | `planning.md` |
+| Design implication, future-roadmap safety, coherence audit, and examples | `roadmap_stage_design_implication_reviewer` | `.codex/prompts/roadmap-stage-design-implication-reviewer.md` | `planning.md` |
 | Design-agreement review | managing agent | `.codex/prompts/roadmap-stage-design-agreement.md` | `planning.md` |
 | Validation and phase shaping | `roadmap_stage_validation_planner` | `.codex/prompts/roadmap-stage-validation-planner.md` | `planning.md` |
 | Plan quality review | `roadmap_stage_plan_quality_reviewer` | `.codex/prompts/roadmap-stage-plan-quality-reviewer.md` | `planning.md` |
@@ -146,6 +146,10 @@ recorded in `planning.md`:
   where maintainer input is required.
 - `Design Decision Triage` final classifications after design implication
   review, not only after design proposal.
+- `Future Roadmap And Reuse Safety Review` evidence that material design
+  decisions were checked against later roadmap items and that
+  interface/adapter/protocol generality, reuse, and explicit revisit triggers
+  were considered.
 - `Functionality And Decision Audit` evidence that all included capabilities map
   to requirements, design decisions, examples, and validation needs.
 - `Plan Quality Gate` evidence that unresolved ambiguity, blockers,
@@ -162,8 +166,8 @@ Hard gate rules:
 - Design proposal must not begin until the functionality-agreement queue has no
   unresolved high-impact blockers and the behavior confirmation gate has passed.
 - Design-agreement review must not begin until both the design proposal and
-  design implication/coherence audit/example passes have completed, and their
-  findings are recorded in `planning.md`.
+  design implication/future-roadmap safety/coherence audit/example passes have
+  completed, and their findings are recorded in `planning.md`.
 - Design-agreement review must not pass while any high-impact design queue item
   is `needs maintainer discussion` or `blocked`.
 - Validation and phase shaping must not be treated as approved while either
@@ -312,10 +316,10 @@ The subagent must:
 
 The managing agent must treat design-proposer classifications as provisional.
 Do not ask for design approval and do not downgrade `needs maintainer
-discussion` decisions until the design implication, coherence audit, and
-examples pass has reviewed them.
+discussion` decisions until the design implication, future-roadmap safety,
+coherence audit, and examples pass has reviewed them.
 
-### 7. Design Implication, Coherence Audit, And Examples
+### 7. Design Implication, Future-Roadmap Safety, Coherence Audit, And Examples
 
 Spawn `roadmap_stage_design_implication_reviewer`.
 
@@ -323,29 +327,38 @@ The subagent must:
 
 1. Review the proposed design decisions against the confirmed functionality.
 2. Pressure-test modularity, decoupling, base classes/protocols, inheritance or
-   composition, future extension, maintainability, complexity, and future
-   refactor risk.
+   composition, interfaces/adapters, future extension, maintainability,
+   complexity, and future refactor risk.
 3. Try to overturn every `auto-approved candidate` using adversarial examples
    and refactor-risk analysis.
-4. Reclassify decisions and update the design-agreement queue.
-5. Verify every auto-approved decision is traceable to approved behavior and
+4. Check each material design decision against future roadmap items that may
+   depend on, constrain, or be constrained by the current shape. Record whether
+   the design should be revised now, deferred with a revisit trigger, or raised
+   for maintainer judgment.
+5. Review interfaces, adapters, and protocols for generic reuse across datasets,
+   modalities, methods, codecs, framework integrations, and downstream projects
+   while preserving domain semantics and explicit failure behavior.
+6. Reclassify decisions and update the design-agreement queue.
+7. Verify every auto-approved decision is traceable to approved behavior and
    has adversarial review evidence.
-6. Verify each included capability maps to at least one functional requirement,
+8. Verify each included capability maps to at least one functional requirement,
    design decision, example, and validation need.
-7. Find conflicts, missing requirements, unsupported decisions, excessive
+9. Find conflicts, missing requirements, unsupported decisions, excessive
    scope, unclear failure modes, validation gaps, and downstream impacts.
-8. Propose project-context examples that demonstrate the functionality across
+10. Propose project-context examples that demonstrate the functionality across
    the intended workflow.
-9. Reopen only the relevant functionality-agreement queue item when a missing
+11. Reopen only the relevant functionality-agreement queue item when a missing
    behavior decision blocks design and cannot be resolved from repository
    evidence.
-10. Update `planning.md` with findings, recommended revisions, audit/example
-    evidence, and only the packets that need maintainer discussion because they
-    remain ambiguous, blocked, or materially risky.
+12. Update `planning.md` with findings, recommended revisions, future-roadmap
+    safety evidence, reuse evidence, audit/example evidence, and only the
+    packets that need maintainer discussion because they remain ambiguous,
+    blocked, or materially risky.
 
 Hard gate: this pass is mandatory before design-agreement review. If it is
 missing, manager-authored only, stale relative to the current proposed design,
-or fails to reclassify design decisions, design approval is blocked.
+or fails to reclassify design decisions and record future-roadmap/reuse safety
+findings, design approval is blocked.
 
 ### 8. Design-Agreement Review
 
@@ -360,7 +373,10 @@ The managing agent must:
    resolutions.
 4. Ask only one unresolved high-impact design question at a time.
 5. Continue until there are no unresolved high-impact design blockers.
-6. Reopen the functionality-agreement queue only when a design blocker reveals a
+6. Ensure accepted revisions from the future-roadmap/reuse safety review are
+   reflected in the proposed implementation shape, design decisions, validation
+   obligations, deferrals, or revisit triggers before design approval passes.
+7. Reopen the functionality-agreement queue only when a design blocker reveals a
    missing upstream behavior decision that cannot be resolved from repository
    evidence.
 
@@ -379,14 +395,16 @@ Spawn `roadmap_stage_validation_planner`.
 The subagent must:
 
 1. Review the confirmed functionality, resolved agreement queues, design
-   decisions, audit findings, and examples.
+   decisions, future-roadmap/reuse safety findings, audit findings, and
+   examples.
 2. Define tests and checks for behavior, edge cases, failure modes, integration
    boundaries, examples, docs/templates/workflows, and scientific/workflow
    contracts.
 3. Define optional tests/checks only when they would materially reduce risk.
 4. Propose implementation phase order, phase boundaries, dependencies, review
    boundaries, acceptance criteria, test expectations, design impact, future
-   compatibility, and phase risks.
+   compatibility, interface/adapter/protocol reuse implications, and phase
+   risks.
 5. Keep phases reviewable and coherent; split broad phases before they can
    become implementation-plan work.
 6. Reopen only the relevant agreement queue when validation scope or reviewable
