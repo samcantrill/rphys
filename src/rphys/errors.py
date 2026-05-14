@@ -37,6 +37,9 @@ __all__ = [
     "UnsupportedCodecIndexError",
     "CodecDependencyError",
     "CodecOperationError",
+    "InvalidOperationContractError",
+    "InvalidOperationContextError",
+    "InvalidOperationResultError",
     "RemotePhysAnalysisError",
     "RemotePhysCodecError",
     "RemotePhysCollateError",
@@ -96,6 +99,18 @@ class RemotePhysCollateError(RemotePhysError):
 
 class RemotePhysOperationError(RemotePhysError):
     """Base error for operation contract and execution failures."""
+
+
+class InvalidOperationContractError(RemotePhysOperationError):
+    """Raised when an operation contract is invalid."""
+
+
+class InvalidOperationContextError(RemotePhysOperationError):
+    """Raised when an operation context record is invalid."""
+
+
+class InvalidOperationResultError(RemotePhysOperationError):
+    """Raised when an operation result record is invalid."""
 
 
 class RemotePhysPipelineError(RemotePhysError):
