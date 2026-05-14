@@ -251,7 +251,7 @@ git diff --check
 - PR body refinement: completed 2026-05-14 for expanded-path final gate evidence; PR not opened.
 - Pre-submit blocker gate: cleared after `make validate-pr`, `uv lock --check`, `make test-summary`, `uv build`, and `git diff --check` passed.
 - PR preparation: PR body draft complete 2026-05-14 at `docs/roadmap/stage-6/phases/public-schemas-imports-errors-pr-body.md`; expanded-path PR body refine complete; PR [#38](https://github.com/samcantrill/rphys/pull/38) opened against `develop`.
-- Automated review: pending after PR open
+- Automated review: passed manager review 2026-05-14; diff matches Phase 1 scope, validation evidence is current for code/test changes, and the only post-validation changes are docs metadata recorded with `git diff --check`.
 - Merge result: pending
 - Cleanup: in-progress
 - Remaining blockers: none known after refinement
