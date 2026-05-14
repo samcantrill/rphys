@@ -28,7 +28,7 @@ context checks, and inspectable execution output:
         contract=OperationContract(input_type=int, output_type=int),
     )
     result = op(3, context=OperationContext(metadata={"phase": "test"}))
-    sample = result.output
+    output = result.output
 
 `Operation` always returns :class:`OperationResult`; users must read payloads through
 the ``.output`` attribute.

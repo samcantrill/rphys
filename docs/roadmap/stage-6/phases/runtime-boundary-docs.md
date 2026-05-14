@@ -20,7 +20,7 @@
 - Workflow path: expanded path
 - Phase isolation: existing dedicated branch and worktree verified; preserve this branch/worktree/base/target
 - Plan quality gate: Stage 6 implementation plan approved; expanded-path rigor used because this phase adds public runtime-boundary wording and examples that must not imply Stage 7/8/9 behavior. Separate refine pass is not needed unless a stop condition below is hit.
-- Draft pass: completed 2026-05-15
+- Draft pass: completed 2026-05-14
 - Refine pass: not needed before implementation
 - Setup limitations: no product code, tests, PR body, PR, or broad validation run during this planning pass. The assigned worktree already existed on `agent/stage-6-p4-runtime-boundary-docs`; local `HEAD`, `develop`, `origin/develop`, and merge-base all resolved to `52b99571bf86df76237fb007aa3a056d88cadfc7`.
 - Blockers: none before implementation

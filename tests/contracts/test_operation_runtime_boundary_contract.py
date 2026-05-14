@@ -46,12 +46,12 @@ def _demand_sample_payload(payload: Sample, *, context: OperationContext) -> Sam
 def test_operation_treats_loaded_sample_and_batch_as_ordinary_payload() -> None:
     sample = Sample(
         {
-            VIDEO: FieldValue((0.2, 0.4), schema="signal.bvp.v1"),
+            VIDEO: FieldValue((0.2, 0.4), schema="video.rgb.v1"),
         }
     )
     batch = Batch(
         {
-            VIDEO: FieldValue((("a",), ("b",)), schema="signal.bvp.v1"),
+            VIDEO: FieldValue((("a",), ("b",)), schema="video.rgb.v1"),
         }
     )
 
