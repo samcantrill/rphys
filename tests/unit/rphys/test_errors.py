@@ -68,6 +68,9 @@ STAGE_5_DATASOURCE_ERROR_NAMES = [
     "InvalidDataSourceSpecError",
     "InvalidDataSourceScanResultError",
     "InvalidDataSourceValidationError",
+    "InvalidDataSourceViewError",
+    "InvalidDataSourceFilterError",
+    "InvalidIndexCandidateError",
 ]
 
 
@@ -226,6 +229,10 @@ def test_stage_5_datasource_errors_map_to_approved_categories() -> None:
         errors.InvalidDataSourceValidationError,
         errors.RemotePhysDataSourceError,
     )
+    assert issubclass(errors.InvalidDataSourceViewError, errors.RemotePhysDataSourceError)
+    assert issubclass(errors.InvalidDataSourceFilterError, errors.RemotePhysDataSourceError)
+    assert issubclass(errors.InvalidIndexCandidateError, errors.RemotePhysDataSourceError)
+    assert issubclass(errors.InvalidIndexCandidateError, errors.RemotePhysFieldError)
 
 
 def test_deferred_runtime_errors_are_not_defined() -> None:

@@ -21,6 +21,9 @@ __all__ = [
     "InvalidDataSourceSpecError",
     "InvalidDataSourceScanResultError",
     "InvalidDataSourceValidationError",
+    "InvalidDataSourceViewError",
+    "InvalidDataSourceFilterError",
+    "InvalidIndexCandidateError",
     "InvalidFieldIndexError",
     "InvalidFieldRefError",
     "InvalidFieldViewError",
@@ -239,3 +242,15 @@ class InvalidDataSourceScanResultError(RemotePhysDataSourceError):
 
 class InvalidDataSourceValidationError(RemotePhysDataSourceError):
     """Raised when datasource validation inputs or IO policy are invalid."""
+
+
+class InvalidDataSourceViewError(RemotePhysDataSourceError):
+    """Raised when a non-mutating datasource view request or result is invalid."""
+
+
+class InvalidDataSourceFilterError(RemotePhysDataSourceError):
+    """Raised when descriptor or candidate filtering inputs are invalid."""
+
+
+class InvalidIndexCandidateError(RemotePhysDataSourceError, RemotePhysFieldError):
+    """Raised when a provisional datasource index candidate is invalid."""

@@ -193,9 +193,25 @@ STAGE_5_DATASOURCE_MODULES = {
         "ValidationIssue",
         "validate_scan_result",
     ],
-    "rphys.datasources.filters": [],
+    "rphys.datasources.filters": [
+        "DataSourceFilter",
+        "DataSourceView",
+        "DataSourceViewPlan",
+        "DataSourceViewResult",
+        "FilterChain",
+        "FilterDecision",
+        "FilterResult",
+        "build_view",
+    ],
     "rphys.datasources.splits": [],
-    "rphys.datasources.indexes": [],
+    "rphys.datasources.indexes": [
+        "IndexCandidate",
+        "IndexCandidatePlan",
+        "IndexCandidateResult",
+        "IndexCandidateView",
+        "build_index_candidates",
+        "filter_index_candidates",
+    ],
 }
 
 STAGE_3_DATASOURCE_ERROR_NAMES = [
@@ -209,6 +225,9 @@ STAGE_5_DATASOURCE_ERROR_NAMES = [
     "InvalidDataSourceSpecError",
     "InvalidDataSourceScanResultError",
     "InvalidDataSourceValidationError",
+    "InvalidDataSourceViewError",
+    "InvalidDataSourceFilterError",
+    "InvalidIndexCandidateError",
 ]
 
 
@@ -336,8 +355,18 @@ def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
         "ValidationIOPolicy",
         "validate_scan_result",
         "DataSourceView",
+        "DataSourceViewPlan",
+        "DataSourceViewResult",
         "FilterChain",
+        "FilterDecision",
+        "FilterResult",
+        "build_view",
         "IndexCandidate",
+        "IndexCandidatePlan",
+        "IndexCandidateResult",
+        "IndexCandidateView",
+        "build_index_candidates",
+        "filter_index_candidates",
         "GroupPlan",
         "SplitPlan",
         "DataSourceIndex",
