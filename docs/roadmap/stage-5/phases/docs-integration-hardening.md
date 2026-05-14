@@ -52,8 +52,8 @@ make validate-pr
 - Implementation summary: updated datasource index module docstrings and added `tests/integration/test_stage5_synthetic_datasource_flow.py` for the full synthetic Stage 5 vertical slice through `SampleBuilder`.
 - Implementation validation: `make test-unit` passed with 364 tests; `make test-contract` passed with 52 tests; `make test-integration` passed with 3 tests; `make test-package` passed with 25 tests; `git diff --check` passed; `make validate-pr` passed with lock check, test summary, build, and diff check.
 - Pre-submit blocker gate: passed; EX-1 through EX-6 remain traceable, no public synthetic fixtures or concat API were added, and Stage 5 deferrals remain documented.
-- PR preparation: PR body drafted at `docs/roadmap/stage-5/phases/docs-integration-hardening-pr-body.md`; PR pending.
-- Automated review: pending.
+- PR preparation: PR body drafted at `docs/roadmap/stage-5/phases/docs-integration-hardening-pr-body.md`; PR #36 opened and verified against `develop`.
+- Automated review: manager expanded-path review passed before PR submission; GitHub checks pending/not configured at open.
 - Merge result: pending.
 - Cleanup: pending worktree and branch removal after metadata commit.
 - Remaining blockers: none.
