@@ -1,3 +1,18 @@
-"""Package home for context-aware operations and sample transforms."""
+"""Dependency-light declarations for Stage 6 operations."""
 
-__all__: list[str] = []
+from .contracts import (
+    OperationContract,
+    OperationMutationPolicy,
+    OperationRole,
+)
+from .context import OperationContext, OperationResult
+from .kernels import FunctionalKernel
+
+__all__ = [
+    "OperationRole",
+    "OperationMutationPolicy",
+    "OperationContract",
+    "OperationContext",
+    "OperationResult",
+    "FunctionalKernel",
+]

@@ -75,6 +75,12 @@ STAGE_5_DATASOURCE_ERROR_NAMES = [
     "InvalidSplitAssignmentError",
 ]
 
+STAGE_6_OPERATION_ERROR_NAMES = [
+    "InvalidOperationContractError",
+    "InvalidOperationContextError",
+    "InvalidOperationResultError",
+]
+
 
 def test_errors_public_surface_lists_only_implemented_error_names() -> None:
     assert errors.__all__ == [
@@ -85,6 +91,7 @@ def test_errors_public_surface_lists_only_implemented_error_names() -> None:
         *STAGE_5_DATASOURCE_ERROR_NAMES,
         *STAGE_3_IO_ERROR_NAMES,
         *STAGE_4_CODEC_ERROR_NAMES,
+        *STAGE_6_OPERATION_ERROR_NAMES,
         *BROAD_ERROR_NAMES,
     ]
 
@@ -237,6 +244,15 @@ def test_stage_5_datasource_errors_map_to_approved_categories() -> None:
     assert issubclass(errors.InvalidIndexCandidateError, errors.RemotePhysFieldError)
     assert issubclass(errors.InvalidGroupAssignmentError, errors.RemotePhysDataSourceError)
     assert issubclass(errors.InvalidSplitAssignmentError, errors.RemotePhysDataSourceError)
+
+
+def test_stage_6_operation_errors_map_to_approved_categories() -> None:
+    assert issubclass(errors.InvalidOperationContractError, errors.RemotePhysError)
+    assert issubclass(errors.InvalidOperationContractError, errors.RemotePhysOperationError)
+    assert issubclass(errors.InvalidOperationContextError, errors.RemotePhysError)
+    assert issubclass(errors.InvalidOperationContextError, errors.RemotePhysOperationError)
+    assert issubclass(errors.InvalidOperationResultError, errors.RemotePhysError)
+    assert issubclass(errors.InvalidOperationResultError, errors.RemotePhysOperationError)
 
 
 def test_deferred_runtime_errors_are_not_defined() -> None:

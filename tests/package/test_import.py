@@ -258,9 +258,63 @@ def test_import_rphys() -> None:
     assert rphys.__all__ == []
 
 
+def test_import_ops_public_all_exports() -> None:
+    import rphys
+    import rphys.ops as ops
+
+    assert ops.__all__ == [
+        "OperationRole",
+        "OperationMutationPolicy",
+        "OperationContract",
+        "OperationContext",
+        "OperationResult",
+        "FunctionalKernel",
+    ]
+    assert not hasattr(rphys, "OperationRole")
+    assert not hasattr(rphys, "OperationMutationPolicy")
+    assert not hasattr(rphys, "OperationContract")
+    assert not hasattr(rphys, "OperationContext")
+    assert not hasattr(rphys, "OperationResult")
+    assert not hasattr(rphys, "FunctionalKernel")
+
+
+def test_import_ops_module_exports_are_scoped() -> None:
+    from rphys.ops import contracts, context, kernels
+
+    assert contracts.__all__ == [
+        "OperationRole",
+        "OperationMutationPolicy",
+        "OperationContract",
+    ]
+    assert context.__all__ == ["OperationContext", "OperationResult"]
+    assert kernels.__all__ == ["FunctionalKernel"]
+
+
+def test_import_errors_phase_6_exports_are_scoped() -> None:
+    from rphys import errors
+
+    STAGE_6_OPERATION_ERROR_NAMES = [
+        "InvalidOperationContractError",
+        "InvalidOperationContextError",
+        "InvalidOperationResultError",
+    ]
+
+    assert errors.__all__ == [
+        "RemotePhysError",
+        *STAGE_1_ERROR_NAMES,
+        *STAGE_2_ERROR_NAMES,
+        *STAGE_3_DATASOURCE_ERROR_NAMES,
+        *STAGE_5_DATASOURCE_ERROR_NAMES,
+        *STAGE_3_IO_ERROR_NAMES,
+        *STAGE_4_CODEC_ERROR_NAMES,
+        *STAGE_6_OPERATION_ERROR_NAMES,
+        *BROAD_ERROR_NAMES,
+    ]
+
+
 def test_deferred_package_homes_import_with_empty_public_surfaces() -> None:
     for package_name in PLANNED_PACKAGE_NAMES:
-        if package_name in {"rphys.data", "rphys.io", "rphys.datasources"}:
+        if package_name in {"rphys.data", "rphys.io", "rphys.datasources", "rphys.ops"}:
             continue
         package = importlib.import_module(package_name)
 
@@ -271,6 +325,12 @@ def test_deferred_package_homes_import_with_empty_public_surfaces() -> None:
 def test_errors_import_and_expose_approved_error_categories() -> None:
     from rphys import errors
 
+    STAGE_6_OPERATION_ERROR_NAMES = [
+        "InvalidOperationContractError",
+        "InvalidOperationContextError",
+        "InvalidOperationResultError",
+    ]
+
     assert errors.__all__ == [
         "RemotePhysError",
         *STAGE_1_ERROR_NAMES,
@@ -279,6 +339,7 @@ def test_errors_import_and_expose_approved_error_categories() -> None:
         *STAGE_5_DATASOURCE_ERROR_NAMES,
         *STAGE_3_IO_ERROR_NAMES,
         *STAGE_4_CODEC_ERROR_NAMES,
+        *STAGE_6_OPERATION_ERROR_NAMES,
         *BROAD_ERROR_NAMES,
     ]
 
@@ -300,6 +361,9 @@ def test_root_package_does_not_reexport_error_classes() -> None:
         *STAGE_5_DATASOURCE_ERROR_NAMES,
         *STAGE_3_IO_ERROR_NAMES,
         *STAGE_4_CODEC_ERROR_NAMES,
+        "InvalidOperationContractError",
+        "InvalidOperationContextError",
+        "InvalidOperationResultError",
     ]:
         assert not hasattr(rphys, error_name)
 

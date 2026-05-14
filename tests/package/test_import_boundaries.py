@@ -245,6 +245,64 @@ def test_sample_builder_import_does_not_load_test_support_or_heavy_modules() -> 
     assert completed.returncode == 0, completed.stdout
 
 
+def test_ops_import_does_not_load_heavy_or_optional_runtime_modules() -> None:
+    heavy_modules = ", ".join(repr(module_name) for module_name in HEAVY_OPTIONAL_MODULES)
+    forbidden = ", ".join(
+        repr(module_name)
+        for module_name in [
+            "rphys.data",
+            "rphys.datasources",
+            "rphys.io",
+            "rphys.io.codecs",
+            "rphys.io.fields",
+            "tests.support",
+        ]
+    )
+    script = textwrap.dedent(
+        f"""
+        import importlib
+        import sys
+
+        importlib.import_module("rphys.ops")
+        importlib.import_module("rphys.ops.contracts")
+        importlib.import_module("rphys.ops.context")
+        importlib.import_module("rphys.ops.kernels")
+
+        forbidden = sorted(
+            name for name in [{forbidden}]
+            if name in sys.modules
+        )
+        if forbidden:
+            raise SystemExit("forbidden modules loaded: " + ", ".join(forbidden))
+
+        heavy = sorted(
+            name for name in [{heavy_modules}]
+            if name in sys.modules
+        )
+        if heavy:
+            raise SystemExit("heavy optional modules loaded: " + ", ".join(heavy))
+        """
+    )
+    env = os.environ.copy()
+    existing_pythonpath = env.get("PYTHONPATH")
+    pythonpath_parts = [str(REPO_ROOT / "src"), str(REPO_ROOT)]
+    if existing_pythonpath:
+        pythonpath_parts.append(existing_pythonpath)
+    env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
+
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        check=False,
+        cwd=REPO_ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+
+    assert completed.returncode == 0, completed.stdout
+
+
 def test_deferred_packages_do_not_define_duplicate_vocabulary_surfaces() -> None:
     deferred_packages = [
         "rphys.analysis",

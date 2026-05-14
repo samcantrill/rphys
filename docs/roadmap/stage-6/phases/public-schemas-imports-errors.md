@@ -241,12 +241,15 @@ git diff --check
 
 - Draft plan: completed 2026-05-14 in the assigned worktree
 - Final phase execution plan: completed 2026-05-14 after expanded-path refinement
-- Implementation summary: pending
-- Implementation validation: pending
+- Implementation summary:
+  - Added new dependency-light `rphys.ops` public schemas in `src/rphys/ops/contracts.py`, `src/rphys/ops/context.py`, and `src/rphys/ops/kernels.py` with exact public names.
+  - Added private validation helpers in `src/rphys/ops/_validation.py` and exact error types in `src/rphys/errors.py`.
+  - Added focused package/import-boundary tests and unit + contract coverage for contract/context/result normalization, validation, and deferred-field absence.
+- Implementation validation: complete (`make test-package`, `make test-unit`, `make test-contract`, `git diff --check` executed by phase executor)
 - Refinement summary: locked public schema field spelling/semantics, `OperationMutationPolicy`, shallow immutability/copying expectations, Phase 1 concrete errors, package/import-boundary obligations, and stop conditions without changing phase scope
-- Pre-submit blocker gate: pending
-- PR preparation: pending
-- Automated review: pending
+- Pre-submit blocker gate: cleared
+- PR preparation: in-progress
+- Automated review: in-progress
 - Merge result: pending
-- Cleanup: pending
+- Cleanup: in-progress
 - Remaining blockers: none known after refinement
