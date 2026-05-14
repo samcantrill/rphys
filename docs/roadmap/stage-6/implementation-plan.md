@@ -5,7 +5,7 @@ Roadmap version: `v6`
 Planning document: `docs/roadmap/stage-6/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 3 pending
+Current phase: Phase 4 pending
 Blockers: none
 
 ## Summary
@@ -40,7 +40,7 @@ Blockers: none
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `public-schemas-imports-errors` | merged | `agent/stage-6-p1-public-schemas-imports-errors` | [#38](https://github.com/samcantrill/rphys/pull/38) | `src/rphys/ops` schema/context/kernel vocabulary, `src/rphys/errors.py`, package/import tests | Establish code-backed provisional public surface and minimal declaration records | package/import, unit contract/context, error inheritance if exercised, `git diff --check` | contract/context/result construction |
 | 2 | `operation-wrapper-kernel-execution` | merged | `agent/stage-6-p2-operation-wrapper-kernel-execution` | [#40](https://github.com/samcantrill/rphys/pull/40) | `Operation` wrapper/core execution and kernel examples/tests | Implement single-operation wrapper execution and kernel boundary | unit core/kernel, execution contract, package/import regression | plain kernel direct/wrapped use |
-| 3 | `ordered-pipeline-composition` | pending | `agent/stage-6-p3-ordered-pipeline-composition` | pending | `OperationPipeline` and pipeline tests | Implement ordered sequence pipeline composition | unit pipeline, pipeline contract, package/import regression | two-step primitive pipeline |
+| 3 | `ordered-pipeline-composition` | merged | `agent/stage-6-p3-ordered-pipeline-composition` | [#42](https://github.com/samcantrill/rphys/pull/42) | `OperationPipeline` and pipeline tests | Implement ordered sequence pipeline composition | unit pipeline, pipeline contract, package/import regression | two-step primitive pipeline |
 | 4 | `runtime-boundary-docs` | pending | `agent/stage-6-p4-runtime-boundary-docs` | pending | runtime-boundary test, operation docs/docstrings/examples | Prove runtime/lazy compatibility and document Stage 6 boundaries | integration or contract runtime-boundary test, docs review, `git diff --check` | generic `Sample`/`Batch` payload, mutation/side-effect declarations |
 | 5 | `final-validation-readiness` | pending | `agent/stage-6-p5-final-validation-readiness` | pending | validation evidence, plan/status updates only if required | Consolidate stage evidence and ready implementation for review/merge | `make test-package`, `make test-unit`, `make test-contract`, `make test-integration`, `make test-summary`, `uv lock --check`, `git diff --check` | full Stage 6 example/guardrail review |
 
@@ -212,11 +212,11 @@ Workflow path: expanded path
 
 ## Phase 3: Ordered Pipeline Composition
 
-Status: pending
+Status: merged
 Slug: `ordered-pipeline-composition`
 Branch: `agent/stage-6-p3-ordered-pipeline-composition`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-6-p3-ordered-pipeline-composition`
-PR: pending
+PR: [#42](https://github.com/samcantrill/rphys/pull/42)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -262,13 +262,13 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed in `docs/roadmap/stage-6/phases/ordered-pipeline-composition.md`
 - Planning/refinement budget: one focused pipeline plan.
 - Implementation/refinement budget: one implementation pass plus focused fixes.
 - PR review budget: one review pass focused on ordering, validation timing, and diagnostics.
 - Blocker-resolution budget: stop for design review if sequence-only construction cannot express required Stage 6 behavior.
 - Pre-submit blocker gate: tests reject mapping/named-entry construction and workflow/DAG semantics.
-- Merge record: pending
+- Merge record: PR [#42](https://github.com/samcantrill/rphys/pull/42) squash-merged to `develop` at `9c9bfacc5286cf88ae7964e4811e5c80d2d70147`; phase worktree and local/remote phase branches cleaned up.
 
 ### Risks And Stop Conditions
 
@@ -278,11 +278,11 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added sequence-only `OperationPipeline`, static adjacent type compatibility validation, final-result return with `OperationResult.output` forwarding, unchanged context propagation, and the exercised pipeline errors `InvalidOperationPipelineError` and `OperationPipelineExecutionError`.
+- Validation: `make test-package`, `make test-unit`, `make test-contract`, `make validate-pr`, `uv lock --check`, `uv build`, `git diff --check`, and automated phase review passed before merge; latest summary recorded 518 passing package/unit/contract/integration tests, with e2e and acceptance suites not present.
+- PR: [#42](https://github.com/samcantrill/rphys/pull/42) opened against `develop`
+- Merge: squash-merged 2026-05-14 at `9c9bfacc5286cf88ae7964e4811e5c80d2d70147`
+- Follow-up: Phase 4 owns runtime-container-as-payload examples, public docs expansion, and mutation/side-effect declaration examples.
 
 ## Phase 4: Runtime-Boundary Examples And Public Docs
 
