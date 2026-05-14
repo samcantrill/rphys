@@ -1,9 +1,9 @@
-"""Mutable runtime field containers for loaded samples and batches.
+"""Mutable runtime field containers for samples and batches.
 
 ``Sample`` and ``Batch`` expose the same Stage 2 access and mutation API while
-remaining distinct public classes. They store loaded ``FieldValue`` objects
-behind private entries keyed by ``FieldLocator`` and do not perform IO, lazy
-loading, serialization, padding, stacking, or scientific schema validation.
+remaining distinct public classes. They store ``FieldValue``-compatible field
+objects behind private entries keyed by ``FieldLocator`` and do not serialize,
+pad, stack, or perform scientific schema validation.
 """
 
 from __future__ import annotations

@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: draft phase execution plan
+- Status: implemented; ready for PR
 - Roadmap stage: `v4`
 - Feature focus: Codecs and lazy sample construction
 - Stage descriptor: Codecs And Lazy Sample Construction
@@ -526,11 +526,42 @@ git diff --check origin/develop...HEAD
 ## Completion Notes
 
 - Draft plan: completed in this artifact
-- Final phase execution plan: completed for handoff after plan commit
-- Implementation summary: pending
-- Implementation validation: pending
+- Final phase execution plan: implemented and locally validated
+- Implementation summary:
+  - Added `rphys.data.sample_fields` with public `SampleField` and
+    `SampleFieldState`. `SampleField` subclasses `FieldValue` so existing
+    containers store the lazy handle as the field object rather than wrapping
+    it as a payload.
+  - Implemented the narrow lazy state machine: unloaded handles retain
+    `LoadContext` and a private loader; payload/eager access loads once and
+    retains the `CodecLoadResult`; failed loads retain and re-raise the same
+    error without retry.
+  - Preserved loaded runtime behavior while documenting the container as
+    `FieldValue`-compatible storage. `Sample.field()`, `role()`, and
+    `field_items()` return handles without loading; payload-demanding paths
+    such as `get()`, `require()`, expected-type validation, and LIST collation
+    load through `.payload`.
+  - Kept `SampleField` canonical in `rphys.data.sample_fields` rather than
+    package-level `rphys.data` to avoid import cycles and preserve lightweight
+    codec import boundaries.
+  - Added unit and contract coverage for initial/loaded/failed states,
+    successful load-once behavior, eager loading, retained failures, invalid
+    loader results, no-load container field access, payload-demanding sample
+    access, sample contracts, LIST collation, copy behavior, and import
+    boundaries.
+- Implementation validation:
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/unit/rphys/data/test_sample_fields.py tests/unit/rphys/data/test_containers.py tests/unit/rphys/data/test_collation.py`: passed, 34 tests after copy/metadata fixes.
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/contracts/test_lazy_sample_field_contract.py tests/contracts/test_runtime_core_contract.py`: passed, 9 tests.
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/package/test_import.py tests/package/test_import_boundaries.py`: passed, 18 tests.
+  - `make test-package`: passed, 21 tests.
+  - `make test-unit`: passed, 298 tests.
+  - `make test-contract`: passed, 33 tests.
+  - `make validate-pr`: passed; lock check passed, harness summary wrote
+    `build/test-summary.md`, package 21, unit 298, contract 33, integration
+    1, e2e/acceptance not present, build succeeded, and `git diff --check`
+    was clean.
 - Refinement summary: not needed
-- Pre-submit blocker gate: pending implementation validation
+- Pre-submit blocker gate: passed after local validation and manager review
 - PR preparation: pending
 - Automated review: pending
 - Merge result: pending

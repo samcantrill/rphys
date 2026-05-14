@@ -94,6 +94,15 @@ STAGE_2_DATA_EXPORTS = [
     "collate_samples",
 ]
 
+STAGE_4_DATA_EXPORTS = [
+    "SampleField",
+    "SampleFieldState",
+]
+
+STAGE_4_DATA_MODULES = {
+    "rphys.data.sample_fields": STAGE_4_DATA_EXPORTS,
+}
+
 STAGE_2_ERROR_NAMES = [
     "CollatePolicyError",
     "FieldSchemaError",
@@ -222,6 +231,7 @@ def test_root_package_does_not_reexport_stage_3_descriptor_names() -> None:
     import rphys
 
     for public_name in [
+        *STAGE_4_DATA_EXPORTS,
         *STAGE_3_IO_EXPORTS,
         *STAGE_4_IO_EXPORTS,
         *STAGE_3_DATASOURCE_EXPORTS,
@@ -286,9 +296,21 @@ def test_data_package_does_not_reexport_stage_1_vocabulary() -> None:
         assert not hasattr(rphys.data, public_name)
 
 
+def test_stage_4_data_modules_import_with_intentional_public_surfaces() -> None:
+    for module_name, expected_all in STAGE_4_DATA_MODULES.items():
+        module = importlib.import_module(module_name)
+
+        assert module.__doc__
+        assert module.__all__ == expected_all
+        for public_name in expected_all:
+            assert hasattr(module, public_name)
+
+
 def test_data_package_reexports_only_code_backed_stage_2_runtime_names() -> None:
     import rphys.data
 
     assert rphys.data.__all__ == STAGE_2_DATA_EXPORTS
     for public_name in STAGE_2_DATA_EXPORTS:
         assert hasattr(rphys.data, public_name)
+    for public_name in STAGE_4_DATA_EXPORTS:
+        assert not hasattr(rphys.data, public_name)
