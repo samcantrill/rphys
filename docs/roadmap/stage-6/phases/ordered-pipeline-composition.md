@@ -649,8 +649,9 @@ git diff --check
   compatibility type rules, concrete pipeline error names, inspection surface,
   context handling, and step diagnostics before code edits
 - Pre-submit blocker gate: clear
-- PR preparation: pending PR body
-- Automated review: not yet run in this session
+- PR preparation: completed in
+  `docs/roadmap/stage-6/phases/ordered-pipeline-composition-pr-body.md`
+- Automated review: completed; no blocking findings
 - Merge result: not yet run in this session
 - Cleanup: clean (`git diff --check` passed)
 - Remaining blockers: none
