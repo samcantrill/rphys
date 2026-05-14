@@ -417,6 +417,20 @@ git diff --check
   - Updated LIST collation to consume `field_items()` and not rely on `_field_items`.
   - Exported `FieldContainer` via `rphys.data` and added focused package/tests coverage.
 - Implementation validation:
-  - Ran `uv run pytest tests/unit/rphys/data/test_containers.py tests/unit/rphys/data/test_contracts.py tests/unit/rphys/data/test_collation.py`.
-  - Ran contract and package-focused validation tests for public import behavior.
-- Pre-submit blockers: none observed
+  - `uv run pytest tests/unit/rphys/data/test_containers.py tests/unit/rphys/data/test_contracts.py tests/unit/rphys/data/test_collation.py`: passed, 28 tests.
+  - `uv run pytest tests/contracts/test_runtime_core_contract.py tests/package/test_import.py tests/package/test_import_boundaries.py`: passed, 21 tests.
+  - `make test-contract`: passed, 25 tests.
+  - `make test-package`: passed, 18 tests.
+  - `make test-unit`: passed, 256 tests.
+  - `git diff --check`: clean.
+  - `make validate-pr`: initial sandboxed run failed while downloading locked
+    dev dependency `coverage==7.14.0`; rerun with approved network access
+    passed. Suite summary: package 18 passed, unit 256 passed, contract 25
+    passed, integration 1 passed, e2e/acceptance not present, build succeeded,
+    and `git diff --check` was clean.
+- Refinement summary: not needed; targeted and final validation passed after
+  the environment-only network retry.
+- Pre-submit blocker gate: manager review found the diff phase-scoped, future
+  codec/lazy/builder behavior absent, public imports lightweight, and no
+  scientific behavior changes beyond the public runtime container surface.
+- Pre-submit blockers: none observed.
