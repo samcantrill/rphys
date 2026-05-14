@@ -145,6 +145,29 @@ def test_failed_load_is_retained_and_reraised_without_retry() -> None:
     assert loader.calls == 1
 
 
+def test_payload_assignment_cannot_reset_failed_or_loaded_state() -> None:
+    error = RuntimeError("decode failed")
+    failed, failed_loader = _sample_field(CountingLoader(error))
+    with pytest.raises(RuntimeError):
+        _ = failed.payload
+
+    with pytest.raises(AttributeError):
+        failed.payload = "manual"  # type: ignore[misc]
+
+    assert failed.state is SampleFieldState.FAILED
+    assert failed.load_error is error
+    assert failed_loader.calls == 1
+
+    loaded, loaded_loader = _sample_field()
+    loaded.eager_load()
+    with pytest.raises(AttributeError):
+        loaded.payload = "manual"  # type: ignore[misc]
+
+    assert loaded.state is SampleFieldState.LOADED
+    assert loaded.payload == ("f0", "f1")
+    assert loaded_loader.calls == 1
+
+
 def test_loader_result_type_is_validated_and_failure_is_retained() -> None:
     field, loader = _sample_field(CountingLoader(object()))
 

@@ -68,10 +68,12 @@ make validate-pr
 git diff --check origin/develop...HEAD
 ```
 
-`make validate-pr` passed with package 21, unit 298, contract 33, integration
+`make validate-pr` passed with package 21, unit 299, contract 33, integration
 1, e2e/acceptance not present, build success, lock check success, and clean
 `git diff --check`. PR-range `git diff --check origin/develop...HEAD` also
-passed.
+passed. Automated review found an initial blocker where direct `payload`
+assignment could reset lazy state; the setter now raises `AttributeError`, a
+regression test covers failed and loaded handles, and validation was refreshed.
 
 # Risks And Follow-Up
 

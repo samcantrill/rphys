@@ -86,13 +86,9 @@ class SampleField(FieldValue):
 
     @payload.setter
     def payload(self, value: object) -> None:
-        loaded = FieldValue(
-            value,
-            schema=self.schema,
-            metadata=self.metadata,
-            collate_policy=self.collate_policy,
+        raise AttributeError(
+            "SampleField payload is loaded through its loader and cannot be assigned."
         )
-        self._retain_result(CodecLoadResult(loaded))
 
     @property
     def load_context(self) -> LoadContext:

@@ -557,13 +557,14 @@ git diff --check origin/develop...HEAD
   - `make test-unit`: passed, 298 tests.
   - `make test-contract`: passed, 33 tests.
   - `make validate-pr`: passed; lock check passed, harness summary wrote
-    `build/test-summary.md`, package 21, unit 298, contract 33, integration
+    `build/test-summary.md`, package 21, unit 299, contract 33, integration
     1, e2e/acceptance not present, build succeeded, and `git diff --check`
     was clean.
 - Refinement summary: not needed
 - Pre-submit blocker gate: passed after local validation and manager review
 - PR preparation: pending
-- Automated review: pending
+- Automated review: completed; initial payload-assignment reset blocker was
+  fixed, validation was refreshed, and PR-range `git diff --check` passed
 - Merge result: pending
 - Cleanup: pending
 - Remaining blockers: none known
