@@ -38,7 +38,7 @@
 - `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/unit/rphys/data/test_sample_builders.py tests/contracts/test_lazy_sample_builder_contract.py`
   - 16 passed after review fix
 - `make test-summary`
-  - package 22, unit 309, contract 38, integration 1 passed
+  - package 22, unit 310, contract 38, integration 1 passed
 - `git diff --check origin/develop...HEAD`
   - passed
 

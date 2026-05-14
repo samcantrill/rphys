@@ -546,7 +546,8 @@ git diff --check origin/develop...HEAD
   passed 51 tests; `make test-package` passed 22; `make test-unit` passed 309;
   `make test-contract` passed 38; review-fix focused builder/contract pytest
   passed 16 tests; final `make validate-pr` passed lock check, package 22,
-  unit 310, contract 38, integration 1, build, and `git diff --check`.
+  unit 310, contract 38, integration 1, build, and `git diff --check`; final
+  `make test-summary` passed package 22, unit 310, contract 38, integration 1.
 - Refinement summary: pending
 - Pre-submit blocker gate: passed locally; tests confirm no partial sample
   creation on missing requested locators, `build_one` rejects iterable locator
