@@ -636,7 +636,7 @@ git diff --check
 ## Completion Notes
 
 - Draft plan: completed 2026-05-14 in the assigned worktree
-- Final phase execution plan: completed 2026-05-15 in the assigned worktree
+- Final phase execution plan: completed 2026-05-14 in the assigned worktree
 - Implementation summary: added `src/rphys/ops/pipelines.py` with sequence-only
   `OperationPipeline` construction, immutable `operations` tuple, static
   compatibility validation, context forwarding semantics, output chaining,
@@ -644,12 +644,12 @@ git diff --check
   `rphys.ops`; added `InvalidOperationPipelineError` and
   `OperationPipelineExecutionError` under `RemotePhysPipelineError`; added
   phase-scoped unit/contract/package tests plus error-surface updates.
-- Implementation validation: `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/unit/rphys/ops/test_pipelines.py tests/contracts/test_operation_pipeline_contract.py tests/unit/rphys/test_errors.py tests/package/test_import.py tests/package/test_import_boundaries.py` (81 passed), `make test-package` (29 passed), `make test-unit` (416 passed), `make test-contract` (70 passed), `git diff --check` clean
+- Implementation validation: `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/unit/rphys/ops/test_pipelines.py tests/contracts/test_operation_pipeline_contract.py tests/unit/rphys/test_errors.py tests/package/test_import.py tests/package/test_import_boundaries.py` (81 passed), `make test-package` (29 passed), `make test-unit` (416 passed), `make test-contract` (70 passed), `make validate-pr` (package 29 passed, unit 416 passed, contract 70 passed, integration 3 passed, e2e/acceptance not present; `uv lock --check`, `uv build`, and `git diff --check` passed)
 - Refinement summary: completed; locked constructor/execution signatures,
   compatibility type rules, concrete pipeline error names, inspection surface,
   context handling, and step diagnostics before code edits
 - Pre-submit blocker gate: clear
-- PR preparation: blocked pending commit and handoff
+- PR preparation: pending PR body
 - Automated review: not yet run in this session
 - Merge result: not yet run in this session
 - Cleanup: clean (`git diff --check` passed)
