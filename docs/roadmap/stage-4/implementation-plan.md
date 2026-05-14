@@ -122,7 +122,7 @@ Workflow path: fast path
 - Validation: `make validate-pr` passed after blocker fix: package 18, unit 257, contract 25, integration 1, e2e/acceptance not present, build succeeded, and `git diff --check` clean. Focused targeted runtime/package/contract checks also passed.
 - PR: [#21](https://github.com/samcantrill/rphys/pull/21) opened against `develop`; PR title and target verified.
 - Merge: squash-merged to `develop` 2026-05-14 at `c556572541df1b32a2d9625cc77993d53f57cdfd` via GitHub merge API after local validation and review.
-- Follow-up: `_field_items()` remains a private compatibility alias; later lazy-field work may widen annotations additively but must preserve the public method names. Cleanup of the phase worktree/branch is pending after metadata push.
+- Follow-up: `_field_items()` remains a private compatibility alias; later lazy-field work may widen annotations additively but must preserve the public method names. Phase worktree and local/remote branches were cleaned up after metadata push.
 
 ### Merge Record
 
@@ -133,8 +133,8 @@ Workflow path: fast path
 - Merge command: `gh api --method PUT repos/samcantrill/rphys/pulls/21/merge --field merge_method=squash ...`
 - Merge result: merged
 - Merge commit: `c556572541df1b32a2d9625cc77993d53f57cdfd`
-- Branch cleanup: pending metadata push
-- Worktree cleanup: pending metadata push
+- Branch cleanup: completed; local and remote phase branches deleted after merge metadata push
+- Worktree cleanup: completed; phase worktree removed and worktree metadata pruned
 - Behavior implemented: public runtime field-container protocol, stable public field iteration, contract/collation use of public surface, and typed failures for malformed structural containers.
 - Tests and validation: targeted unit/package/contract checks passed; `make validate-pr` passed with 301 total tests across present suites.
 - Documentation: phase assignment, execution plan, PR body, and this merge record updated.
