@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: implementation in progress
+- Status: PR open
 - Roadmap stage: `v4`
 - Feature focus: Codecs and lazy sample construction
 - Stage descriptor: Codecs And Lazy Sample Construction
@@ -70,7 +70,7 @@ git diff --check origin/develop...HEAD
   `make test-summary` run during `make validate-pr` reported an inconsistent
   unit status despite zero failed tests and was superseded by the passing
   standalone rerun.
-- PR: pending
+- PR: [#27](https://github.com/samcantrill/rphys/pull/27)
 - Merge: pending
 - Cleanup: pending
 - Remaining blockers: none known
