@@ -70,8 +70,8 @@ git diff --check
 - Implementation summary: implemented candidate group extraction, explicit split assignment, leakage checks, counts, and tests.
 - Implementation validation: `make test-unit` passed with 350 tests; `make test-contract` passed with 46 tests; `make test-package` passed with 25 tests; `git diff --check` passed.
 - Pre-submit blocker gate: passed; no implicit ratios, trainer/evaluator semantics, post-split filtering, or final index persistence.
-- PR preparation: pending.
-- Automated review: pending.
+- PR preparation: PR body drafted at `docs/roadmap/stage-5/phases/groups-splits-pr-body.md`; PR #32 opened and verified against `develop`.
+- Automated review: manager expanded-path review passed before PR submission; GitHub checks pending/not configured at open.
 - Merge result: pending.
 - Cleanup: pending.
 - Remaining blockers: none.
