@@ -148,8 +148,8 @@ git diff --check
 - Implementation validation: `make test-unit` passed with 343 tests; `make test-contract` passed with 44 tests; `make test-package` passed with 25 tests; `git diff --check` passed.
 - Refinement summary: not needed; no validation or scope blocker remains.
 - Pre-submit blocker gate: passed; no split assignment, final identity, manifests, payloads, runtime samples, or `IndexItem.metadata` identity mutation.
-- PR preparation: pending.
-- Automated review: pending.
+- PR preparation: PR body drafted at `docs/roadmap/stage-5/phases/views-filters-candidates-pr-body.md`; PR #31 opened and verified against `develop`.
+- Automated review: manager expanded-path review passed before PR submission; GitHub checks pending/not configured at open.
 - Merge result: pending.
 - Cleanup: pending.
 - Remaining blockers: none.
