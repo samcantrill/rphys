@@ -5,7 +5,7 @@ Roadmap version: `v4`
 Planning document: `docs/roadmap/stage-4/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Primary Phase 2 pending
+Current phase: Primary Phase 3 pending
 Blockers: none identified by implementation-readiness review
 
 ## Summary
@@ -41,7 +41,7 @@ Blockers: none identified by implementation-readiness review
 | Prep 1 | `field-container-protocol` | merged | `agent/codecs-lazy-samples-prep1-field-container-protocol` | [#21](https://github.com/samcantrill/rphys/pull/21) | `src/rphys/data/containers.py`, `src/rphys/data/contracts.py`, `src/rphys/data/collation.py`, `src/rphys/data/__init__.py`, runtime unit/contract/package tests | Add the public field-container protocol and public field-iteration surface before lazy fields widen runtime semantics. | `make validate-pr`; targeted runtime/unit/package/contract checks; `git diff --check` | Runtime compatibility and no private collation hook |
 | Prep 2 | `field-spec-index-contracts` | merged | `agent/codecs-lazy-samples-prep2-field-spec-index-contracts` | [#22](https://github.com/samcantrill/rphys/pull/22) | `src/rphys/data/fields.py`, datasource schema tests, IO index docs/tests, package/contract tests | Freeze `FieldSpec` and clarify `FieldIndex` as a subclass-based base interface. | `make validate-pr`; targeted field/schema/index checks; `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | Immutable datasource declarations and explicit index extension boundary |
 | 1 | `codec-contract-foundation` | merged | `agent/codecs-lazy-samples-p1-codec-contract-foundation` | [#23](https://github.com/samcantrill/rphys/pull/23) | `src/rphys/io/codecs.py`, conditional `src/rphys/io/__init__.py`, exercised `src/rphys/errors.py`, package/unit import tests | Establish the Stage 4 IO public contract without runtime sample behavior. | `make validate-pr`; targeted codec/package/error checks; `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-3, EX-6 |
-| 2 | `codec-registry-synthetic-ops` | pending | `agent/codecs-lazy-samples-p2-codec-registry-synthetic-ops` | pending | `src/rphys/io/codecs.py`, tests/support synthetic codec, IO unit/contract tests | Prove explicit codec resolution and dependency-light probe/load/save behavior. | targeted `make test-unit`; `make test-contract`; `make test-package` if exports change | EX-2, EX-3, EX-4, EX-5 |
+| 2 | `codec-registry-synthetic-ops` | merged | `agent/codecs-lazy-samples-p2-codec-registry-synthetic-ops` | [#24](https://github.com/samcantrill/rphys/pull/24) | `src/rphys/io/codecs.py`, tests/support synthetic codec, IO unit/contract tests | Prove explicit codec resolution and dependency-light probe/load/save behavior. | `make validate-pr`; targeted codec/package/error checks; `make test-unit`; `make test-contract`; `make test-package`; `git diff --check`; PR-range `git diff --check` after blocker fix | EX-2, EX-3, EX-4, EX-5 |
 | 3 | `lazy-sample-field-runtime` | pending | `agent/codecs-lazy-samples-p3-lazy-sample-field-runtime` | pending | `src/rphys/data/sample_fields.py`, additive `src/rphys/data/containers.py` updates, conditional `src/rphys/data/__init__.py`, data unit/contract tests | Add lazy `SampleField` handles while preserving loaded `Sample` semantics. | targeted `make test-unit`; `make test-contract` including runtime core coverage | EX-1 |
 | 4 | `sample-builder-provenance` | pending | `agent/codecs-lazy-samples-p4-sample-builder-provenance` | pending | `src/rphys/data/sample_builders.py`, conditional `src/rphys/data/__init__.py`, builder/provenance unit/contract tests | Build lazy `Sample`s from one `IndexItem` with all/subset/one/probe/eager paths. | targeted `make test-unit`; `make test-contract`; optional `make test-integration` only for one adopted vertical slice | EX-1, EX-2, EX-5 |
 | 5 | `closeout-docs-validation` | pending | `agent/codecs-lazy-samples-p5-closeout-docs-validation` | pending | public docstrings/docs/examples, package expectations, final validation evidence | Harden docs, examples, contracts, import checks, and final validation without adding new behavior. | `make test-package`; `make test-unit`; `make test-contract`; `git diff --check`; broaden as needed | EX-1 through EX-6 |
@@ -320,11 +320,11 @@ Workflow path: fast path
 
 ## Phase 2: Explicit Registry And Synthetic Codec Operations
 
-Status: pending
+Status: merged
 Slug: `codec-registry-synthetic-ops`
 Branch: `agent/codecs-lazy-samples-p2-codec-registry-synthetic-ops`
 Worktree: `/home/samcantrill/work/rphys-worktrees/codecs-lazy-samples-p2-codec-registry-synthetic-ops`
-PR: pending
+PR: [#24](https://github.com/samcantrill/rphys/pull/24)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -368,13 +368,13 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed in `docs/roadmap/stage-4/phases/codec-registry-synthetic-ops.md`
 - Planning/refinement budget: one phase planner pass; one refiner pass only for blocker findings
 - Implementation/refinement budget: one executor pass; one targeted refiner pass if validation or review blocks
 - PR review budget: one reviewer pass
 - Blocker-resolution budget: return to planning if registry matching needs symbolic names, hidden plugin discovery, priority heuristics not captured by accepted design, or public fake codec support
-- Pre-submit blocker gate: no runtime sample behavior and no descriptor mutation
-- Merge record: pending
+- Pre-submit blocker gate: passed after local validation, automated review, and PR-range whitespace blocker resolution
+- Merge record: PR [#24](https://github.com/samcantrill/rphys/pull/24) squash-merged to `develop` at `608ffdfe9650c99bf3e8abd4f10ee316aa55e387`
 
 ### Risks And Stop Conditions
 
@@ -384,11 +384,28 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added explicit instance-local `CodecRegistry` behavior in `rphys.io.codecs`, including deterministic registration, operation-specific probe/load/save resolution, structural support predicates, save metadata-policy matching, typed result validation, and no global registry or discovery behavior. Added exercised codec diagnostics and private `tests.support.synthetic_codecs.SyntheticCodec` coverage.
+- Validation: `make validate-pr` passed: package 19, unit 285, contract 30, integration 1, e2e/acceptance not present, build succeeded, lock check passed, and `git diff --check` clean. Focused codec, package import-boundary, contract, and error tests also passed. Automated review found an initial PR-range whitespace blocker in `tests/support/__init__.py`; it was fixed and `git diff --check origin/develop...HEAD` passed before merge.
+- PR: [#24](https://github.com/samcantrill/rphys/pull/24) opened against `develop`; PR title and target verified.
+- Merge: squash-merged to `develop` 2026-05-14 at `608ffdfe9650c99bf3e8abd4f10ee316aa55e387` via GitHub merge API after local validation, blocker resolution, and automated review.
+- Follow-up: real codec families may later motivate additive support predicates or resource-member semantics; symbolic names, plugin discovery, concrete production codecs, lazy `SampleField`, and `SampleBuilder` remain deferred. Phase worktree and branch cleanup pending after merge metadata push.
+
+### Merge Record
+
+- Phase: Primary Phase 2, `codec-registry-synthetic-ops`
+- Branch: `agent/codecs-lazy-samples-p2-codec-registry-synthetic-ops`
+- PR: [#24](https://github.com/samcantrill/rphys/pull/24)
+- Base branch: `develop`
+- Merge command: `gh api --method PUT repos/samcantrill/rphys/pulls/24/merge --field merge_method=squash ...`
+- Merge result: merged
+- Merge commit: `608ffdfe9650c99bf3e8abd4f10ee316aa55e387`
+- Branch cleanup: pending merge metadata push
+- Worktree cleanup: pending merge metadata push
+- Behavior implemented: explicit deterministic codec registry, operation wrappers, structural support predicates, typed resolution/operation/dependency/index failures, private dependency-light synthetic codec validation, metadata policy handling, ordered save resources, and no hidden full-load fallback.
+- Tests and validation: targeted codec/package/contract/error checks passed; `make validate-pr` passed with 335 total tests across present suites; PR-range `git diff --check` passed after review blocker fix.
+- Documentation: phase assignment, execution plan, PR body, and this merge record updated.
+- Scientific contract implications: field-native indexes remain explicit; unsupported indexed materialization fails loudly; no datasource-aware codec context, global registry, public fake codec, real codec catalog, manifest/export policy, runtime lazy field, sample builder, sampling conversion, alignment semantics, or member semantics was introduced.
+- Remaining blockers: none.
 
 ## Phase 3: Lazy `SampleField` Runtime Compatibility
 
