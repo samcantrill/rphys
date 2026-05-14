@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: PR open
+- Status: merged
 - Roadmap stage: `v4`
 - Feature focus: Codecs and lazy sample construction
 - Stage descriptor: Codecs And Lazy Sample Construction
@@ -526,9 +526,9 @@ git diff --check origin/develop...HEAD
   remains available if implementation exposes unresolved provenance or accessor
   ambiguity
 - Phase implementation refinement: unused
-- PR review: unused; expected reviewer focus is scientific provenance and scope
-  boundaries
-- Blocker resolution: 0/3 used
+- PR review: completed; reviewer found one low non-blocking issue in
+  `build_one` iterable input handling
+- Blocker resolution: 1/3 used for the low `build_one` input validation fix
 
 ## Completion Notes
 
@@ -548,14 +548,18 @@ git diff --check origin/develop...HEAD
   passed 16 tests; final `make validate-pr` passed lock check, package 22,
   unit 310, contract 38, integration 1, build, and `git diff --check`; final
   `make test-summary` passed package 22, unit 310, contract 38, integration 1.
-- Refinement summary: pending
+- Refinement summary: reviewer low finding fixed by rejecting iterable
+  `build_one` locator inputs and adding unit coverage.
 - Pre-submit blocker gate: passed locally; tests confirm no partial sample
   creation on missing requested locators, `build_one` rejects iterable locator
   inputs, no probe load, no descriptor mutation, ordered resource retention,
   and no datasource provenance pushed into codec contexts.
 - PR preparation: [#26](https://github.com/samcantrill/rphys/pull/26)
   opened against `develop` with the required Phase 4 title
-- Automated review: pending
-- Merge result: pending
-- Cleanup: pending
+- Automated review: completed; no blockers remained after the low
+  `build_one` diagnostics fix
+- Merge result: PR [#26](https://github.com/samcantrill/rphys/pull/26)
+  squash-merged to `develop` at
+  `f10daecc7380996f3cd9fffc9f00fde3ea30b405`
+- Cleanup: pending branch/worktree cleanup
 - Remaining blockers: none known
