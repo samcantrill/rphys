@@ -168,6 +168,7 @@ def _coerce_role(
             actual=repr(value),
         )
 
+
 def _coerce_mutation_policy(
     value: object,
     *,
