@@ -43,7 +43,7 @@ Blockers: none identified by implementation-plan quality review
 | 5 | `datasource-index-entries` | merged | `agent/stage-5-p5-datasource-index-entries` | [#33](https://github.com/samcantrill/rphys/pull/33) | `rphys.datasources.indexes` index plans/builders/results, sidecar entries, field-native windows, `SampleBuilder` bridge | Finalize selected/split candidates into ordered lazy `DataSourceIndex` objects. | `make test-unit`; `make test-contract`; `make test-integration` | EX-1 |
 | 6 | `index-manifest-codec` | merged | `agent/stage-5-p6-index-manifest-codec` | [#34](https://github.com/samcantrill/rphys/pull/34) | `rphys.datasources.indexes` manifest/codec/fingerprint/checksum behavior | Persist and reload datasource indexes with schema `rphys.datasource_index.v1`. | `make test-unit`; `make test-contract`; `git diff --check` | EX-4 |
 | 7 | `composite-index` | merged | `agent/stage-5-p7-composite-index` | [#35](https://github.com/samcantrill/rphys/pull/35) | `CompositeDataSourceIndex`, source-aware sidecar entries, composite manifest behavior | Implement the only public Stage 5 combined-index type. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-5 |
-| 8 | `docs-integration-hardening` | pending | `agent/stage-5-p8-docs-integration-hardening` | pending | Public docstrings/docs, synthetic vertical slice, integration hardening, release checks | Tie together EX-1 through EX-6 and verify public, scientific, durable-artifact, and workflow boundaries. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `git diff --check`; consider `make validate-pr` | EX-1 through EX-6 |
+| 8 | `docs-integration-hardening` | implemented / PR open | `agent/stage-5-p8-docs-integration-hardening` | [#36](https://github.com/samcantrill/rphys/pull/36) | Public docstrings/docs, synthetic vertical slice, integration hardening, release checks | Tie together EX-1 through EX-6 and verify public, scientific, durable-artifact, and workflow boundaries. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `git diff --check`; `make validate-pr` | EX-1 through EX-6 |
 
 ## Implementation Readiness Blockers
 
@@ -552,11 +552,11 @@ Workflow path: fast path
 
 ## Phase 8: Documentation, Examples, Integration Hardening, And Release Checks
 
-Status: pending
+Status: implemented / PR open
 Slug: `docs-integration-hardening`
 Branch: `agent/stage-5-p8-docs-integration-hardening`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-5-p8-docs-integration-hardening`
-PR: pending
+PR: [#36](https://github.com/samcantrill/rphys/pull/36)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -602,12 +602,12 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed at `docs/roadmap/stage-5/phases/docs-integration-hardening.md`
 - Planning/refinement budget: one expanded planning pass
 - Implementation/refinement budget: one implementation pass plus refinement as required by integration failures
 - PR review budget: one full Stage 5 integration/docs review
 - Blocker-resolution budget: reopen only the affected FQ/DQ row if docs/integration reveal behavior drift from locked decisions
-- Pre-submit blocker gate: EX-1 through EX-6 traceability must remain complete
+- Pre-submit blocker gate: passed; EX-1 through EX-6 traceability remains complete
 - Merge record: pending
 
 ### Risks And Stop Conditions
@@ -618,11 +618,11 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
+- Implementation: datasource index module docstrings aligned with final Stage 5 behavior; synthetic integration test added for scan, validation, view/filter, candidate/filter, group/split, index, manifest, composite, and `SampleBuilder`.
+- Validation: `make test-unit` passed with 364 tests; `make test-contract` passed with 52 tests; `make test-integration` passed with 3 tests; `make test-package` passed with 25 tests; `git diff --check` passed; `make validate-pr` passed with lock check, test summary, build, and diff check.
+- PR: [#36](https://github.com/samcantrill/rphys/pull/36) opened against `develop` with clean merge state and the canonical Phase 8 title.
 - Merge: pending
-- Follow-up: pending
+- Follow-up: future stages own real datasource SDK adapters, cache/export/materialization, Torch loaders, operations, training/evaluation workflow behavior, path normalization, and any concat alias/class.
 
 ## Cross-Phase Validation
 

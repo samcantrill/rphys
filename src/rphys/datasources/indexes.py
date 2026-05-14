@@ -1,10 +1,11 @@
-"""Datasource index-candidate construction.
+"""Datasource index candidates, sidecar entries, manifests, and composites.
 
-Phase 3 exposes provisional index candidates from non-mutating datasource
-views. Candidates map role-qualified ``FieldLocator`` values to lazy
-``FieldView`` descriptors and carry primitive provenance only. They do not
-assign splits, load payloads, create runtime samples, allocate durable entry
-identity, compute fingerprints, persist manifests, or mutate ``IndexItem``.
+Stage 5 builds descriptor-only candidates from non-mutating datasource views,
+finalizes selected candidates into item-yielding ``DataSourceIndex`` objects,
+persists indexes through schema-versioned JSON manifests, and composes child
+indexes through source-aware ``CompositeDataSourceIndex``. Identity, split,
+group, window, source, and child provenance live in sidecar entries; the
+``IndexItem`` descriptors returned by indexes remain unchanged and payload-free.
 """
 
 from __future__ import annotations
@@ -328,7 +329,13 @@ IndexPlan.__hash__ = None  # type: ignore[assignment]
 
 @dataclass(frozen=True, init=False, slots=True)
 class DataSourceIndexEntry:
-    """Sidecar identity and provenance for one ``DataSourceIndex`` position."""
+    """Sidecar identity and provenance for one datasource-index position.
+
+    Plain indexes leave composite fields as ``None`` or empty metadata.
+    Composite indexes populate source key, child index ID/fingerprint, child
+    entry ID, child local position, and child metadata without mutating the
+    returned ``IndexItem``.
+    """
 
     index_id: str
     entry_id: str
@@ -616,7 +623,13 @@ DataSourceIndex.__hash__ = None  # type: ignore[assignment]
 
 @dataclass(frozen=True, init=False, slots=True)
 class CompositeDataSourceIndex:
-    """Ordered flat access over multiple source-aware datasource indexes."""
+    """Ordered flat access over multiple source-aware datasource indexes.
+
+    ``__getitem__`` and iteration return child ``IndexItem`` objects unchanged
+    for ``SampleBuilder`` compatibility. Source and child identity is exposed
+    only through ``entry_at``/``entries`` and manifests; Stage 5 intentionally
+    does not expose a public ``ConcatDataSourceIndex`` or sampler/cache policy.
+    """
 
     index_id: str
     sources: Mapping[str, DataSourceIndex]
@@ -880,7 +893,13 @@ _DATASOURCE_INDEX_SCHEMA = "rphys.datasource_index.v1"
 
 @dataclass(frozen=True, init=False, slots=True)
 class DataSourceIndexManifest:
-    """Durable JSON manifest for one datasource index."""
+    """Durable JSON manifest for one plain or composite datasource index.
+
+    The envelope records the schema version, index kind, exact item descriptor
+    dictionaries, sidecar entries, optional composite child descriptors,
+    content fingerprint, and full-manifest checksum. It does not normalize
+    paths, pickle payloads, or encode cache/export invalidation policy.
+    """
 
     schema_version: str
     index_id: str
@@ -1018,7 +1037,7 @@ DataSourceIndexManifest.__hash__ = None  # type: ignore[assignment]
 
 
 class DataSourceIndexCodec:
-    """Canonical JSON codec for datasource index manifests."""
+    """Canonical JSON codec for plain and composite datasource indexes."""
 
     schema_version = _DATASOURCE_INDEX_SCHEMA
 
