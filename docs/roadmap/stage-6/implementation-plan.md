@@ -1,11 +1,11 @@
 # Roadmap Stage 6 Implementation Plan
 
-Status: approved
+Status: implemented
 Roadmap version: `v6`
 Planning document: `docs/roadmap/stage-6/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 5 pr_open
+Current phase: all phases merged
 Blockers: none
 
 ## Summary
@@ -42,7 +42,7 @@ Blockers: none
 | 2 | `operation-wrapper-kernel-execution` | merged | `agent/stage-6-p2-operation-wrapper-kernel-execution` | [#40](https://github.com/samcantrill/rphys/pull/40) | `Operation` wrapper/core execution and kernel examples/tests | Implement single-operation wrapper execution and kernel boundary | unit core/kernel, execution contract, package/import regression | plain kernel direct/wrapped use |
 | 3 | `ordered-pipeline-composition` | merged | `agent/stage-6-p3-ordered-pipeline-composition` | [#42](https://github.com/samcantrill/rphys/pull/42) | `OperationPipeline` and pipeline tests | Implement ordered sequence pipeline composition | unit pipeline, pipeline contract, package/import regression | two-step primitive pipeline |
 | 4 | `runtime-boundary-docs` | merged | `agent/stage-6-p4-runtime-boundary-docs` | [#44](https://github.com/samcantrill/rphys/pull/44) | runtime-boundary test, operation docs/docstrings/examples | Prove runtime/lazy compatibility and document Stage 6 boundaries | integration or contract runtime-boundary test, docs review, `git diff --check` | generic `Sample`/`Batch` payload, mutation/side-effect declarations |
-| 5 | `final-validation-readiness` | pr_open | `agent/stage-6-p5-final-validation-readiness` | pending | validation evidence, plan/status updates only if required | Consolidate stage evidence and ready implementation for review/merge | `make test-package`, `make test-unit`, `make test-contract`, `make test-integration`, `make test-summary`, `uv lock --check`, `git diff --check` | full Stage 6 example/guardrail review |
+| 5 | `final-validation-readiness` | merged | `agent/stage-6-p5-final-validation-readiness` | [#46](https://github.com/samcantrill/rphys/pull/46) | validation evidence, plan/status updates only if required | Consolidate stage evidence and ready implementation for review/merge | `make test-package`, `make test-unit`, `make test-contract`, `make test-integration`, `make test-summary`, `uv lock --check`, `git diff --check` | full Stage 6 example/guardrail review |
 
 ## Implementation Readiness Blockers
 
@@ -358,11 +358,11 @@ Workflow path: expanded path
 
 ## Phase 5: Final Validation And Readiness
 
-Status: pr_open
+Status: merged
 Slug: `final-validation-readiness`
 Branch: `agent/stage-6-p5-final-validation-readiness`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-6-p5-final-validation-readiness`
-PR: pending
+PR: [#46](https://github.com/samcantrill/rphys/pull/46)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -415,7 +415,7 @@ Workflow path: expanded path
 - PR review budget: final review focused on evidence and scope control.
 - Blocker-resolution budget: stop if final validation reveals a design contradiction or missing maintainer decision.
 - Pre-submit blocker gate: no unresolved agreement queue, no failed required validation without recorded risk and approval.
-- Merge record: pending
+- Merge record: PR [#46](https://github.com/samcantrill/rphys/pull/46) squash-merged to `develop` at `7bd231728ac1639b2c8758ea7d6fb772a4421bef`; phase worktree and local/remote phase branches cleaned up.
 
 ### Risks And Stop Conditions
 
@@ -427,9 +427,9 @@ Workflow path: expanded path
 
 - Implementation: validation/evidence-only phase completed without source, test, or public API behavior changes; reviewed Stage 6 public exports, scoped operation submodule exports, Stage 6 error exports, root-export absence, private-helper boundaries, lightweight import guardrails, docs/docstring wording, explicit `.output`, sequence-only pipeline semantics, declaration-only mutation/side-effect wording, runtime payload boundary evidence, and Stage 7/8/9 deferrals.
 - Validation: `make test-package` (29 passed), `make test-unit` (416 passed), `make test-contract` (73 passed), `make test-integration` (3 passed), `make test-summary` (package 29 passed, unit 416 passed, contract 73 passed, integration 3 passed, e2e/acceptance not present), `UV_CACHE_DIR=/tmp/uv-cache uv lock --check` (passed after uncached `uv lock --check` hit read-only home cache), `git diff --check` (passed), and `make validate-pr` (package 29 passed, unit 416 passed, contract 73 passed, integration 3 passed, e2e/acceptance not present; `uv lock --check`, `uv build`, and `git diff --check` passed).
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- PR: [#46](https://github.com/samcantrill/rphys/pull/46) opened against `develop`
+- Merge: squash-merged 2026-05-14 at `7bd231728ac1639b2c8758ea7d6fb772a4421bef`
+- Follow-up: Stage 6 complete; Stage 7 owns SampleOp/BatchOp, locator permissions, named entries, and deferred operation-family behavior.
 
 ## Cross-Phase Validation
 
