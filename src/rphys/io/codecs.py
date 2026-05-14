@@ -8,14 +8,24 @@ layouts, or attach datasource record provenance to IO contexts.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from types import MappingProxyType
 from typing import Protocol, runtime_checkable
 
 from rphys.data.fields import FieldSpec, FieldValue
-from rphys.errors import RemotePhysCodecError
+from rphys.errors import (
+    CodecDependencyError,
+    CodecOperationError,
+    CodecResolutionError,
+    InvalidCodecError,
+    RemotePhysCodecError,
+    RemotePhysDependencyError,
+    RemotePhysSliceError,
+    UnsupportedCodecIndexError,
+    UnsupportedCodecOperationError,
+)
 
 from ._primitives import FrozenPrimitive, copy_string_mapping
 from .fields import FieldRef, FieldView
@@ -25,6 +35,7 @@ __all__ = [
     "CodecCapabilities",
     "CodecLoadResult",
     "CodecProbeResult",
+    "CodecRegistry",
     "CodecSaveResult",
     "FieldCodec",
     "IOContext",
@@ -95,6 +106,157 @@ class FieldCodec(Protocol):
 
     def save(self, value: FieldValue, context: SaveContext) -> CodecSaveResult:
         ...
+
+
+class CodecRegistry:
+    """Explicit ordered registry for structural field codecs.
+
+    Registry instances are intentionally local objects. They do not discover
+    codecs, consult process-global state, assign symbolic names, or import
+    optional dependencies during core import.
+
+    Registered codecs may optionally define ``supports_probe(context)``,
+    ``supports_load(context)``, and ``supports_save(value, context)``
+    predicates. Predicates must return ``bool`` and are used only to select a
+    unique operation-specific codec; unsupported indexed views should fail
+    loudly instead of falling back to full-resource loads.
+    """
+
+    __slots__ = ("_codecs",)
+
+    def __init__(self, codecs: Sequence[object] | None = None) -> None:
+        self._codecs: list[object] = []
+        if codecs is not None:
+            if isinstance(codecs, (str, bytes)) or not isinstance(codecs, Sequence):
+                raise InvalidCodecError(
+                    "CodecRegistry codecs must be a sequence of codec objects.",
+                    field="codecs",
+                    actual=type(codecs).__name__,
+                )
+            for codec in codecs:
+                self.register(codec)
+
+    @property
+    def codecs(self) -> tuple[object, ...]:
+        """Registered codec objects in deterministic resolution order."""
+
+        return tuple(self._codecs)
+
+    def register(self, codec: object) -> object:
+        """Register one structural codec and return it unchanged."""
+
+        _codec_capabilities(codec, operation="register", index=len(self._codecs))
+        self._codecs.append(codec)
+        return codec
+
+    def resolve_probe(self, context: LoadContext) -> object:
+        """Return the unique codec that can probe ``context``."""
+
+        _require_load_context(context, operation="probe")
+        return self._resolve("probe", context)
+
+    def resolve_load(self, context: LoadContext) -> object:
+        """Return the unique codec that can load ``context``."""
+
+        _require_load_context(context, operation="load")
+        return self._resolve("load", context)
+
+    def resolve_save(self, value: FieldValue, context: SaveContext) -> object:
+        """Return the unique codec that can save ``value`` to ``context``."""
+
+        _require_field_value(value, operation="save")
+        _require_save_context(context, operation="save")
+        return self._resolve("save", context, value=value)
+
+    def probe(self, context: LoadContext) -> CodecProbeResult:
+        """Probe a field view through the unique matching codec."""
+
+        codec = self.resolve_probe(context)
+        result = _invoke_codec(codec, "probe", CodecProbeResult, context)
+        return result
+
+    def load(self, context: LoadContext) -> CodecLoadResult:
+        """Load a field view through the unique matching codec."""
+
+        codec = self.resolve_load(context)
+        result = _invoke_codec(codec, "load", CodecLoadResult, context)
+        return result
+
+    def save(self, value: FieldValue, context: SaveContext) -> CodecSaveResult:
+        """Save one field value through the unique matching codec."""
+
+        codec = self.resolve_save(value, context)
+        result = _invoke_codec(codec, "save", CodecSaveResult, value, context)
+        return result
+
+    def _resolve(
+        self,
+        operation: str,
+        context: LoadContext | SaveContext,
+        *,
+        value: FieldValue | None = None,
+    ) -> object:
+        if not self._codecs:
+            raise CodecResolutionError(
+                "No codecs are registered.",
+                operation=operation,
+            )
+
+        matches: list[tuple[int, object]] = []
+        unsupported_operation_count = 0
+        unsupported_index_errors: list[UnsupportedCodecIndexError] = []
+        for index, codec in enumerate(self._codecs):
+            capabilities = _codec_capabilities(codec, operation=operation, index=index)
+            if not _operation_enabled(capabilities, operation):
+                unsupported_operation_count += 1
+                continue
+            if (
+                operation == "save"
+                and isinstance(context, SaveContext)
+                and context.metadata_policy not in capabilities.metadata_policies
+            ):
+                continue
+            _codec_operation_method(codec, operation, index=index)
+            try:
+                supported = _codec_supports(
+                    codec,
+                    operation,
+                    context,
+                    value=value,
+                    index=index,
+                )
+            except UnsupportedCodecIndexError as exc:
+                unsupported_index_errors.append(exc)
+                continue
+            if supported:
+                matches.append((index, codec))
+
+        if len(matches) == 1:
+            return matches[0][1]
+        if len(matches) > 1:
+            raise CodecResolutionError(
+                "Codec resolution is ambiguous.",
+                operation=operation,
+                field_key=_context_field_key(context),
+                matches=[_codec_label(codec, index=index) for index, codec in matches],
+            )
+        if unsupported_index_errors:
+            raise unsupported_index_errors[0]
+        if unsupported_operation_count == len(self._codecs):
+            raise UnsupportedCodecOperationError(
+                "No registered codec declares support for the requested operation.",
+                operation=operation,
+                registered=len(self._codecs),
+            )
+        raise CodecResolutionError(
+            "No registered codec matched the operation context.",
+            operation=operation,
+            field_key=_context_field_key(context),
+            registered=len(self._codecs),
+        )
+
+
+CodecRegistry.__hash__ = None  # type: ignore[assignment]
 
 
 @dataclass(frozen=True, init=False, slots=True)
@@ -250,6 +412,196 @@ class CodecSaveResult:
 
 
 CodecSaveResult.__hash__ = None  # type: ignore[assignment]
+
+
+def _require_load_context(context: object, *, operation: str) -> None:
+    if not isinstance(context, LoadContext):
+        raise CodecOperationError(
+            "Codec operation requires a LoadContext.",
+            operation=operation,
+            field="context",
+            actual=type(context).__name__,
+        )
+
+
+def _require_save_context(context: object, *, operation: str) -> None:
+    if not isinstance(context, SaveContext):
+        raise CodecOperationError(
+            "Codec operation requires a SaveContext.",
+            operation=operation,
+            field="context",
+            actual=type(context).__name__,
+        )
+
+
+def _require_field_value(value: object, *, operation: str) -> None:
+    if not isinstance(value, FieldValue):
+        raise CodecOperationError(
+            "Codec save operation requires a FieldValue.",
+            operation=operation,
+            field="value",
+            actual=type(value).__name__,
+        )
+
+
+def _codec_capabilities(
+    codec: object,
+    *,
+    operation: str,
+    index: int,
+) -> CodecCapabilities:
+    capabilities = getattr(codec, "capabilities", None)
+    if not isinstance(capabilities, CodecCapabilities):
+        raise InvalidCodecError(
+            "Registered codecs must expose CodecCapabilities.",
+            operation=operation,
+            codec=_codec_label(codec, index=index),
+            field="capabilities",
+            actual=type(capabilities).__name__,
+        )
+    return capabilities
+
+
+def _operation_enabled(capabilities: CodecCapabilities, operation: str) -> bool:
+    if operation == "probe":
+        return capabilities.can_probe
+    if operation == "load":
+        return capabilities.can_load
+    if operation == "save":
+        return capabilities.can_save
+    raise CodecOperationError(
+        "Unsupported codec registry operation.",
+        operation=operation,
+    )
+
+
+def _codec_operation_method(
+    codec: object,
+    operation: str,
+    *,
+    index: int,
+) -> Callable[..., object]:
+    method = getattr(codec, operation, None)
+    if not callable(method):
+        raise InvalidCodecError(
+            "Registered codec operation attribute must be callable.",
+            operation=operation,
+            codec=_codec_label(codec, index=index),
+            field=operation,
+            actual=type(method).__name__,
+        )
+    return method
+
+
+def _codec_supports(
+    codec: object,
+    operation: str,
+    context: LoadContext | SaveContext,
+    *,
+    value: FieldValue | None,
+    index: int,
+) -> bool:
+    support_name = f"supports_{operation}"
+    support = getattr(codec, support_name, None)
+    if support is None:
+        return True
+    if not callable(support):
+        raise InvalidCodecError(
+            "Codec support predicate attribute must be callable.",
+            operation=operation,
+            codec=_codec_label(codec, index=index),
+            field=support_name,
+            actual=type(support).__name__,
+        )
+
+    try:
+        if operation == "save":
+            supported = support(value, context)
+        else:
+            supported = support(context)
+    except CodecDependencyError:
+        raise
+    except RemotePhysDependencyError as exc:
+        raise CodecDependencyError(
+            "Codec support check dependency is unavailable.",
+            operation=operation,
+            codec=_codec_label(codec, index=index),
+            field_key=_context_field_key(context),
+            dependency_error=str(exc),
+        ) from exc
+    except (RemotePhysSliceError, RemotePhysCodecError):
+        raise
+    except Exception as exc:
+        raise CodecOperationError(
+            "Codec support check failed.",
+            operation=operation,
+            codec=_codec_label(codec, index=index),
+            field_key=_context_field_key(context),
+            error_type=type(exc).__name__,
+        ) from exc
+
+    if not isinstance(supported, bool):
+        raise InvalidCodecError(
+            "Codec support predicate must return bool.",
+            operation=operation,
+            codec=_codec_label(codec, index=index),
+            field=support_name,
+            actual=type(supported).__name__,
+        )
+    return supported
+
+
+def _invoke_codec(
+    codec: object,
+    operation: str,
+    expected_type: type[CodecProbeResult] | type[CodecLoadResult] | type[CodecSaveResult],
+    *args: object,
+) -> CodecProbeResult | CodecLoadResult | CodecSaveResult:
+    method = _codec_operation_method(codec, operation, index=-1)
+    try:
+        result = method(*args)
+    except CodecDependencyError:
+        raise
+    except RemotePhysDependencyError as exc:
+        raise CodecDependencyError(
+            "Codec operation dependency is unavailable.",
+            operation=operation,
+            codec=_codec_label(codec, index=-1),
+            dependency_error=str(exc),
+        ) from exc
+    except (RemotePhysSliceError, RemotePhysCodecError):
+        raise
+    except Exception as exc:
+        raise CodecOperationError(
+            "Codec operation failed.",
+            operation=operation,
+            codec=_codec_label(codec, index=-1),
+            error_type=type(exc).__name__,
+        ) from exc
+
+    if not isinstance(result, expected_type):
+        raise CodecOperationError(
+            "Codec operation returned an invalid result type.",
+            operation=operation,
+            codec=_codec_label(codec, index=-1),
+            expected=expected_type.__name__,
+            actual=type(result).__name__,
+        )
+    return result
+
+
+def _context_field_key(context: LoadContext | SaveContext) -> str:
+    if isinstance(context, LoadContext):
+        return str(context.field_view.field_ref.key)
+    return str(context.target.key)
+
+
+def _codec_label(codec: object, *, index: int) -> str:
+    name = getattr(codec, "name", None)
+    label = name if isinstance(name, str) and name else type(codec).__qualname__
+    if index >= 0:
+        return f"{index}:{label}"
+    return label
 
 
 def _require_bool(value: object, *, field: str) -> bool:
