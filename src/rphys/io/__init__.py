@@ -1,7 +1,8 @@
 """Package home for dependency-light lazy IO descriptors.
 
-Stage 3 exports are added only when descriptor behavior is implemented. This
-package does not provide codecs, builders, registries, or runtime payload hooks.
+Codec contract records live in ``rphys.io.codecs``. This package does not
+provide real codecs, builders, registries, datasource scanning, or runtime
+payload hooks.
 """
 
 from .fields import FieldRef, FieldView

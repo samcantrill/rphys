@@ -109,10 +109,23 @@ STAGE_3_IO_EXPORTS = [
     "FieldView",
 ]
 
+STAGE_4_IO_EXPORTS = [
+    "CodecCapabilities",
+    "CodecLoadResult",
+    "CodecProbeResult",
+    "CodecSaveResult",
+    "FieldCodec",
+    "IOContext",
+    "LoadContext",
+    "MetadataSavePolicy",
+    "SaveContext",
+]
+
 STAGE_3_IO_MODULES = {
     "rphys.io.resources": ["ResourceRef"],
     "rphys.io.indexes": ["FieldIndex", "TemporalIndexSlice"],
     "rphys.io.fields": ["FieldRef", "FieldView"],
+    "rphys.io.codecs": STAGE_4_IO_EXPORTS,
 }
 
 STAGE_3_IO_ERROR_NAMES = [
@@ -198,20 +211,23 @@ def test_root_package_does_not_reexport_stage_3_descriptor_names() -> None:
 
     for public_name in [
         *STAGE_3_IO_EXPORTS,
+        *STAGE_4_IO_EXPORTS,
         *STAGE_3_DATASOURCE_EXPORTS,
     ]:
         assert not hasattr(rphys, public_name)
 
 
-def test_io_package_reexports_only_code_backed_stage_3_names() -> None:
+def test_io_package_reexports_only_code_backed_stage_3_descriptor_names() -> None:
     import rphys.io
 
     assert rphys.io.__all__ == STAGE_3_IO_EXPORTS
     for public_name in STAGE_3_IO_EXPORTS:
         assert hasattr(rphys.io, public_name)
+    for public_name in STAGE_4_IO_EXPORTS:
+        assert not hasattr(rphys.io, public_name)
 
 
-def test_stage_3_io_submodules_export_only_code_backed_names() -> None:
+def test_io_submodules_export_only_code_backed_names() -> None:
     for module_name, expected_all in STAGE_3_IO_MODULES.items():
         module = importlib.import_module(module_name)
 

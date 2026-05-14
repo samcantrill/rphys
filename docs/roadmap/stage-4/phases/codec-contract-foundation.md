@@ -497,10 +497,37 @@ git diff --check
 
 - Draft plan: completed in this artifact
 - Final phase execution plan: ready for implementation
-- Implementation summary: pending
-- Implementation validation: pending
-- Refinement summary: not needed for planning pass
-- Pre-submit blocker gate: pending implementation
+- Implementation summary:
+  - Added `rphys.io.codecs` as the canonical codec contract module with
+    structural `FieldCodec`, `CodecCapabilities`, `IOContext`, `LoadContext`,
+    `SaveContext`, `CodecProbeResult`, `CodecLoadResult`, `CodecSaveResult`,
+    and `MetadataSavePolicy`.
+  - Kept codec contexts datasource-neutral: load/probe contexts carry
+    `FieldView`, save contexts carry `target: FieldRef`, and all primitive
+    metadata mappings are detached and frozen.
+  - Kept package-level `rphys.io.__all__` limited to Stage 3 descriptor names
+    after contract tests confirmed codec names with `load`/`save`/`probe`
+    methods must stay in `rphys.io.codecs`.
+  - Added focused package/unit coverage for exact exports, import boundaries,
+    record construction, invalid typed components, structural duck typing,
+    descriptor non-mutation, and metadata detachment.
+  - No concrete codec error classes were added; construction validation uses
+    the existing broad `RemotePhysCodecError` because no operation-specific
+    behavior exists in this phase.
+- Implementation validation:
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/unit/rphys/io/test_codecs.py`: passed, 12 tests.
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/package/test_import.py tests/package/test_import_boundaries.py`: passed, 16 tests.
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/unit/rphys/test_errors.py`: passed, 34 tests.
+  - `make test-contract`: initially failed when codec names were package-level
+    `rphys.io` re-exports; fixed by keeping canonical codec imports in
+    `rphys.io.codecs`.
+  - `make test-contract`: passed, 25 tests.
+  - `make test-package`: passed, 19 tests.
+  - `make test-unit`: passed, 271 tests.
+  - `git diff --check`: clean.
+- Refinement summary: not needed; manager resolved the import-boundary issue
+  found by contract validation before PR preparation.
+- Pre-submit blocker gate: pending manager final review after `make validate-pr`
 - PR preparation: pending implementation
 - Automated review: pending PR
 - Merge result: pending
