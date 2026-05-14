@@ -5,7 +5,7 @@ Roadmap version: `v6`
 Planning document: `docs/roadmap/stage-6/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 1 pr_open
+Current phase: Phase 2 pending
 Blockers: none
 
 ## Summary
@@ -38,7 +38,7 @@ Blockers: none
 
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `public-schemas-imports-errors` | pr_open | `agent/stage-6-p1-public-schemas-imports-errors` | [#38](https://github.com/samcantrill/rphys/pull/38) | `src/rphys/ops` schema/context/kernel vocabulary, `src/rphys/errors.py`, package/import tests | Establish code-backed provisional public surface and minimal declaration records | package/import, unit contract/context, error inheritance if exercised, `git diff --check` | contract/context/result construction |
+| 1 | `public-schemas-imports-errors` | merged | `agent/stage-6-p1-public-schemas-imports-errors` | [#38](https://github.com/samcantrill/rphys/pull/38) | `src/rphys/ops` schema/context/kernel vocabulary, `src/rphys/errors.py`, package/import tests | Establish code-backed provisional public surface and minimal declaration records | package/import, unit contract/context, error inheritance if exercised, `git diff --check` | contract/context/result construction |
 | 2 | `operation-wrapper-kernel-execution` | pending | `agent/stage-6-p2-operation-wrapper-kernel-execution` | pending | `Operation` wrapper/core execution and kernel examples/tests | Implement single-operation wrapper execution and kernel boundary | unit core/kernel, execution contract, package/import regression | plain kernel direct/wrapped use |
 | 3 | `ordered-pipeline-composition` | pending | `agent/stage-6-p3-ordered-pipeline-composition` | pending | `OperationPipeline` and pipeline tests | Implement ordered sequence pipeline composition | unit pipeline, pipeline contract, package/import regression | two-step primitive pipeline |
 | 4 | `runtime-boundary-docs` | pending | `agent/stage-6-p4-runtime-boundary-docs` | pending | runtime-boundary test, operation docs/docstrings/examples | Prove runtime/lazy compatibility and document Stage 6 boundaries | integration or contract runtime-boundary test, docs review, `git diff --check` | generic `Sample`/`Batch` payload, mutation/side-effect declarations |
@@ -64,7 +64,7 @@ Blockers: none
 
 ## Phase 1: Public Schemas, Imports, And Errors
 
-Status: pr_open
+Status: merged
 Slug: `public-schemas-imports-errors`
 Branch: `agent/stage-6-p1-public-schemas-imports-errors`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-6-p1-public-schemas-imports-errors`
@@ -114,13 +114,13 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed in `docs/roadmap/stage-6/phases/public-schemas-imports-errors.md`
 - Planning/refinement budget: one reviewable phase plan plus at most one refinement pass unless schema naming reveals a blocker.
 - Implementation/refinement budget: one implementation pass plus focused fixes.
 - PR review budget: one review pass focused on public API, import cost, and schema fields.
 - Blocker-resolution budget: stop for maintainer/design review if a required public field conflicts with locked deferrals.
 - Pre-submit blocker gate: no extra public names, no deferred fields, no heavy/IO/datasource imports.
-- Merge record: pending
+- Merge record: PR [#38](https://github.com/samcantrill/rphys/pull/38) squash-merged to `develop` at `159734a0f4c79722afa14abb0484b76cff3ef4d3`; phase worktree and local/remote phase branches cleaned up.
 
 ### Risks And Stop Conditions
 
@@ -130,11 +130,11 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
+- Implementation: added dependency-light `rphys.ops` schema/context/kernel modules, exact package re-exports, and the three exercised Phase 1 operation construction errors.
+- Validation: `make test-package`, `make test-unit`, `make test-contract`, `make validate-pr`, `uv lock --check`, `uv build`, and `git diff --check` passed before merge; latest summary recorded 476 passing tests across package, unit, contract, and integration suites.
 - PR: [#38](https://github.com/samcantrill/rphys/pull/38) opened against `develop`
-- Merge: pending
-- Follow-up: pending
+- Merge: squash-merged 2026-05-14 at `159734a0f4c79722afa14abb0484b76cff3ef4d3`
+- Follow-up: Phase 2 owns wrapper execution, `.run()`/`__call__`, callable errors, and result validation during execution.
 
 ## Phase 2: Operation Wrapper And Kernel Execution
 
