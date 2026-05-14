@@ -123,8 +123,6 @@ def _validate_expected_type(expected_type: PayloadType) -> None:
 
 
 def _validate_container_shape(container: object) -> None:
-    if isinstance(container, FieldContainer):
-        return
     for method_name in ("has", "field", "get", "require", "role", "field_items"):
         method = getattr(container, method_name, None)
         if method is None or not callable(method):

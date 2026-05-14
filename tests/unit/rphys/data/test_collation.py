@@ -99,6 +99,12 @@ class PublicFieldContainer:
         raise AssertionError("Private field-items hook should not be required.")
 
 
+class NonCallableFieldItemsContainer(PublicFieldContainer):
+    def __init__(self) -> None:
+        super().__init__(payload="frame-0")
+        self.field_items = 1
+
+
 def test_collate_policy_list_has_public_identity_name_and_value() -> None:
     assert CollatePolicy.LIST.name == "LIST"
     assert CollatePolicy.LIST.value == "list"
@@ -170,6 +176,13 @@ def test_collate_samples_uses_public_field_items_protocol() -> None:
     field_value = batch.field(VIDEO)
     assert field_value.payload == ["frame-0", "frame-1"]
     assert field_value.metadata[MetadataKey("source_id")] == ["s1", "s2"]
+
+
+def test_collate_samples_rejects_non_callable_public_field_items() -> None:
+    with pytest.raises(CollatePolicyError) as exc_info:
+        collate_samples([NonCallableFieldItemsContainer()])
+
+    assert exc_info.value.context["actual"] == "NonCallableFieldItemsContainer"
 
 
 def test_collate_samples_requires_homogeneous_field_sets() -> None:

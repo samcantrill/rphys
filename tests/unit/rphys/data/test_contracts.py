@@ -126,6 +126,12 @@ class MissingFieldItemsContainer:
         return {}
 
 
+class NonCallablePublicShapeContainer(PublicShapeContainer):
+    def __init__(self) -> None:
+        super().__init__("payload", "quality.face_visibility")
+        self.field_items = 1
+
+
 def test_field_requirement_coerces_locator_and_schema_and_compares_by_value() -> None:
     requirement = FieldRequirement(
         "inputs/video.rgb",
@@ -229,3 +235,8 @@ def test_sample_contract_uses_public_protocol_shape_for_validation() -> None:
         contract.validate(MissingFieldItemsContainer())
 
     assert exc.value.context["method"] == "field_items"
+
+    with pytest.raises(FieldTypeError) as non_callable:
+        contract.validate(NonCallablePublicShapeContainer())
+
+    assert non_callable.value.context["method"] == "field_items"

@@ -389,8 +389,8 @@ git diff --check
 
 - Phase execution plan refinement: not needed
 - Phase implementation refinement: unused
-- PR review: unused
-- Blocker resolution: 0/3 used
+- PR review: consumed by automated PR review after PR 21 opened
+- Blocker resolution: 1/3 used for callable-method shape validation fix
 
 ## Completion Notes
 
@@ -416,6 +416,8 @@ git diff --check
     surface in `rphys.data.contracts`.
   - Updated LIST collation to consume `field_items()` and not rely on `_field_items`.
   - Exported `FieldContainer` via `rphys.data` and added focused package/tests coverage.
+  - Resolved PR review blocker by validating callable public methods before
+    `SampleContract` or LIST collation use a structural container.
 - Implementation validation:
   - `uv run pytest tests/unit/rphys/data/test_containers.py tests/unit/rphys/data/test_contracts.py tests/unit/rphys/data/test_collation.py`: passed, 28 tests.
   - `uv run pytest tests/contracts/test_runtime_core_contract.py tests/package/test_import.py tests/package/test_import_boundaries.py`: passed, 21 tests.
@@ -428,9 +430,16 @@ git diff --check
     passed. Suite summary: package 18 passed, unit 256 passed, contract 25
     passed, integration 1 passed, e2e/acceptance not present, build succeeded,
     and `git diff --check` was clean.
-- Refinement summary: not needed; targeted and final validation passed after
-  the environment-only network retry.
+  - After blocker fix, `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/unit/rphys/data/test_contracts.py tests/unit/rphys/data/test_collation.py`: passed, 18 tests.
+  - After blocker fix, `make validate-pr`: passed. Suite summary: package 18
+    passed, unit 257 passed, contract 25 passed, integration 1 passed,
+    e2e/acceptance not present, build succeeded, and `git diff --check` was
+    clean.
+- Refinement summary: no implementation refiner pass used; manager resolved
+  the single PR-review blocker locally within blocker-resolution budget.
 - Pre-submit blocker gate: manager review found the diff phase-scoped, future
   codec/lazy/builder behavior absent, public imports lightweight, and no
   scientific behavior changes beyond the public runtime container surface.
+- PR review: consumed; one blocking finding on non-callable structural
+  protocol attributes was fixed with explicit callable checks and focused tests.
 - Pre-submit blockers: none observed.

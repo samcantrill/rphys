@@ -30,7 +30,9 @@ datasource behavior, new collation policies, or root-package exports.
 
 - Inputs/outputs: runtime field containers continue to expose `FieldLocator` to
   `FieldValue` mappings; `field_items()` returns an insertion-ordered tuple
-  snapshot of `(FieldLocator, FieldValue)` pairs.
+  snapshot of `(FieldLocator, FieldValue)` pairs. Structural containers with
+  non-callable public attributes fail with typed contract/collation errors
+  before their methods are invoked.
 - Units/shapes/dtypes: unchanged. Payload units, shapes, dtypes, schemas, and
   metadata remain stored on `FieldValue` and are not reinterpreted.
 - Sampling/alignment/provenance: unchanged. No sampling-rate, timestamp,
@@ -64,6 +66,7 @@ uv run pytest tests/contracts/test_runtime_core_contract.py tests/package/test_i
 make test-contract
 make test-package
 make test-unit
+UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/unit/rphys/data/test_contracts.py tests/unit/rphys/data/test_collation.py
 git diff --check
 make validate-pr
 ```
@@ -73,15 +76,17 @@ Latest `make validate-pr` summary:
 | Suite | Status | Passed | Failed | Errors | Skipped | Total |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | package | passed | 18 | 0 | 0 | 0 | 18 |
-| unit | passed | 256 | 0 | 0 | 0 | 256 |
+| unit | passed | 257 | 0 | 0 | 0 | 257 |
 | contract | passed | 25 | 0 | 0 | 0 | 25 |
 | integration | passed | 1 | 0 | 0 | 0 | 1 |
 | e2e | not present | 0 | 0 | 0 | 0 | 0 |
 | acceptance | not present | 0 | 0 | 0 | 0 | 0 |
-| Overall | passed | 300 | 0 | 0 | 0 | 300 |
+| Overall | passed | 301 | 0 | 0 | 0 | 301 |
 
 # Risks And Follow-Up
 
+- PR review found and this revision fixed one typed failure gap for malformed
+  structural containers with non-callable public attributes.
 - Primary Stage 4 lazy-field work may widen compatible annotations
   additively, but should preserve the public method names introduced here.
 - `_field_items()` remains as a private compatibility alias and should not be

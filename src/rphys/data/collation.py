@@ -124,7 +124,13 @@ def _field_map(sample: FieldContainer) -> dict[FieldLocator, FieldValue]:
             "collate_samples requires Sample-like field containers.",
             actual=type(sample).__name__,
         )
-    items = sample.field_items()
+    field_items = getattr(sample, "field_items", None)
+    if field_items is None or not callable(field_items):
+        raise CollatePolicyError(
+            "collate_samples requires Sample-like field containers.",
+            actual=type(sample).__name__,
+        )
+    items = field_items()
     return dict(items)
 
 
