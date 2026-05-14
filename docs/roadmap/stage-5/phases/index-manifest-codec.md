@@ -50,8 +50,8 @@ git diff --check
 - Implementation summary: implemented `DataSourceIndexManifest`, `DataSourceIndexCodec`, entry `from_dict`, deterministic JSON dumps/loads, file dump/load, fingerprints, checksums, and rejection tests.
 - Implementation validation: `make test-unit` passed with 360 tests; `make test-contract` passed with 50 tests; `make test-package` passed with 25 tests; `git diff --check` passed.
 - Pre-submit blocker gate: passed; no pickle, path normalization, cache/export manifest, or migration framework.
-- PR preparation: pending.
-- Automated review: pending.
+- PR preparation: PR body drafted at `docs/roadmap/stage-5/phases/index-manifest-codec-pr-body.md`; PR #34 opened and verified against `develop`.
+- Automated review: manager expanded-path review passed before PR submission; GitHub checks pending/not configured at open.
 - Merge result: pending.
 - Cleanup: pending.
 - Remaining blockers: none.
