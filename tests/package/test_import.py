@@ -81,6 +81,7 @@ STAGE_1_DATA_MODULES = {
 
 STAGE_2_DATA_EXPORTS = [
     "Batch",
+    "FieldContainer",
     "CollateContext",
     "CollatePolicy",
     "CompositeDataObjectBase",

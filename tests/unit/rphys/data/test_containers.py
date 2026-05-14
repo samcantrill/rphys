@@ -5,7 +5,7 @@ from collections.abc import Mapping
 import pytest
 
 from rphys.data.collation import CollatePolicy
-from rphys.data.containers import Batch, Sample
+from rphys.data.containers import Batch, FieldContainer, Sample
 from rphys.data.fields import FieldValue
 from rphys.data.locators import FieldLocator, FieldRole
 from rphys.errors import FieldSchemaError, FieldTypeError, MissingFieldError
@@ -81,6 +81,27 @@ def test_sample_and_batch_are_distinct_public_classes_with_api_parity() -> None:
     ]:
         assert hasattr(sample, method_name)
         assert hasattr(batch, method_name)
+
+
+def test_sample_and_batch_are_field_container_protocol_objects() -> None:
+    for container_type in (Sample, Batch):
+        assert isinstance(container_type(), FieldContainer)
+
+
+def test_sample_field_items_returns_a_public_snapshot_tuple() -> None:
+    sample_value = FieldValue([0.1], schema="signal.bvp.v1")
+    batch_value = FieldValue("payload", schema="video.rgb.v1")
+    sample = Sample({BVP: sample_value, VIDEO: batch_value})
+
+    items = sample.field_items()
+
+    assert isinstance(items, tuple)
+    assert items == ((BVP, sample_value), (VIDEO, batch_value))
+    assert sample._field_items() == items
+    assert all(isinstance(value, FieldValue) for _, value in items)
+
+    sample.delete_field(BVP)
+    assert items == ((BVP, sample_value), (VIDEO, batch_value))
 
 
 def test_role_returns_read_only_shallow_mapping_snapshot() -> None:

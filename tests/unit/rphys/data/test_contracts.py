@@ -17,6 +17,115 @@ BVP = FieldLocator.parse("targets/signal.bvp.reference")
 QUALITY = FieldLocator.parse("diagnostics/quality.face_visibility")
 
 
+def _loc(locator: FieldLocator | str) -> FieldLocator:
+    if isinstance(locator, FieldLocator):
+        return locator
+    return FieldLocator.parse(locator)
+
+
+class PublicShapeContainer:
+    def __init__(self, value: object, schema: str) -> None:
+        self._value = value
+        self._schema = schema
+
+    def has(self, locator: FieldLocator | str) -> bool:
+        return _loc(locator) == QUALITY
+
+    def field(
+        self,
+        locator: FieldLocator | str,
+        *,
+        expected_type=None,
+        schema=None,
+    ) -> FieldValue:
+        if _loc(locator) == QUALITY:
+            return FieldValue(self._value, schema=self._schema)
+        raise MissingFieldError(
+            "Required field is missing.",
+            locator=str(locator),
+        )
+
+    def get(
+        self,
+        locator: FieldLocator | str,
+        default: object = None,
+        *,
+        expected_type=None,
+        schema=None,
+    ) -> object:
+        if _loc(locator) == QUALITY:
+            return self._value
+        return default
+
+    def require(
+        self,
+        locator: FieldLocator | str,
+        *,
+        expected_type=None,
+        schema=None,
+    ) -> object:
+        if _loc(locator) == QUALITY:
+            return self._value
+        raise MissingFieldError(
+            "Required field is missing.",
+            locator=str(locator),
+        )
+
+    def role(self, role) -> dict[str, object]:
+        return {}
+
+    def field_items(self):
+        return ((QUALITY, FieldValue(self._value, schema=self._schema)),)
+
+
+class MissingFieldItemsContainer:
+    def has(self, locator: FieldLocator | str) -> bool:
+        return _loc(locator) == QUALITY
+
+    def field(
+        self,
+        locator: FieldLocator | str,
+        *,
+        expected_type=None,
+        schema=None,
+    ) -> FieldValue:
+        if _loc(locator) == QUALITY:
+            return FieldValue("payload", schema="quality.face_visibility")
+        raise MissingFieldError(
+            "Required field is missing.",
+            locator=str(locator),
+        )
+
+    def get(
+        self,
+        locator: FieldLocator | str,
+        default: object = None,
+        *,
+        expected_type=None,
+        schema=None,
+    ) -> object:
+        if _loc(locator) == QUALITY:
+            return "payload"
+        return default
+
+    def require(
+        self,
+        locator: FieldLocator | str,
+        *,
+        expected_type=None,
+        schema=None,
+    ) -> object:
+        if _loc(locator) == QUALITY:
+            return "payload"
+        raise MissingFieldError(
+            "Required field is missing.",
+            locator=str(locator),
+        )
+
+    def role(self, role) -> dict[str, object]:
+        return {}
+
+
 def test_field_requirement_coerces_locator_and_schema_and_compares_by_value() -> None:
     requirement = FieldRequirement(
         "inputs/video.rgb",
@@ -109,3 +218,14 @@ def test_sample_contract_is_copyable_without_scientific_schema_fields() -> None:
 def test_invalid_requirement_expected_type_fails_loudly() -> None:
     with pytest.raises(FieldTypeError):
         FieldRequirement(VIDEO, expected_type="list")  # type: ignore[arg-type]
+
+
+def test_sample_contract_uses_public_protocol_shape_for_validation() -> None:
+    contract = SampleContract(required=[FieldRequirement(QUALITY, expected_type=str)])
+
+    assert contract.validate(PublicShapeContainer("value", "quality.face_visibility"))
+
+    with pytest.raises(FieldTypeError) as exc:
+        contract.validate(MissingFieldItemsContainer())
+
+    assert exc.value.context["method"] == "field_items"

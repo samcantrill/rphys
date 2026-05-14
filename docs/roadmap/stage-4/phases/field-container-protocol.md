@@ -406,3 +406,17 @@ git diff --check
 - Merge result: pending PR
 - Cleanup: pending merge
 - Remaining blockers: none known
+
+### Execution Completion Notes
+
+- Implementation summary:
+  - Added public `FieldContainer` protocol and `field_items()` snapshot surface in
+    `rphys.data.containers`.
+  - Switched `SampleContract` container shape validation to the public protocol
+    surface in `rphys.data.contracts`.
+  - Updated LIST collation to consume `field_items()` and not rely on `_field_items`.
+  - Exported `FieldContainer` via `rphys.data` and added focused package/tests coverage.
+- Implementation validation:
+  - Ran `uv run pytest tests/unit/rphys/data/test_containers.py tests/unit/rphys/data/test_contracts.py tests/unit/rphys/data/test_collation.py`.
+  - Ran contract and package-focused validation tests for public import behavior.
+- Pre-submit blockers: none observed

@@ -12,6 +12,7 @@ from typing import TypeAlias
 
 from rphys.errors import FieldTypeError
 
+from .containers import FieldContainer
 from .locators import FieldLocator
 from .schemas import SchemaName
 
@@ -122,7 +123,9 @@ def _validate_expected_type(expected_type: PayloadType) -> None:
 
 
 def _validate_container_shape(container: object) -> None:
-    for method_name in ("has", "require"):
+    if isinstance(container, FieldContainer):
+        return
+    for method_name in ("has", "field", "get", "require", "role", "field_items"):
         method = getattr(container, method_name, None)
         if method is None or not callable(method):
             raise FieldTypeError(

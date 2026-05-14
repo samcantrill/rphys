@@ -73,6 +73,8 @@ def test_sample_access_and_contract_validation_contract_example() -> None:
 
     assert sample.require(BVP) == [0.2, 0.3]
     assert contract.validate(sample) is sample
+    assert isinstance(sample, data.FieldContainer)
+    assert sample.field_items() == ((VIDEO, sample.field(VIDEO)), (BVP, sample.field(BVP)))
 
     with pytest.raises(MissingFieldError):
         contract.validate(Sample({VIDEO: FieldValue([], schema="video.rgb.v1")}))

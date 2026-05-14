@@ -14,7 +14,7 @@ from typing import Iterable, Sequence
 
 from rphys.errors import CollatePolicyError
 
-from .containers import Batch, Sample
+from .containers import Batch, FieldContainer, Sample
 from .fields import FieldValue
 from .locators import FieldLocator
 from .metadata import MetadataKey
@@ -118,14 +118,14 @@ class _MissingAwareMetadata:
         }
 
 
-def _field_map(sample: Sample) -> dict[FieldLocator, FieldValue]:
-    items = getattr(sample, "_field_items", None)
-    if items is None or not callable(items):
+def _field_map(sample: FieldContainer) -> dict[FieldLocator, FieldValue]:
+    if not isinstance(sample, FieldContainer):
         raise CollatePolicyError(
             "collate_samples requires Sample-like field containers.",
             actual=type(sample).__name__,
         )
-    return dict(items())
+    items = sample.field_items()
+    return dict(items)
 
 
 def _validate_list_collation(
