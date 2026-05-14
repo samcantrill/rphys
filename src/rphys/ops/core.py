@@ -1,4 +1,15 @@
-"""Single-operation execution wrappers for Stage 6."""
+"""Single-operation execution wrappers for Stage 6.
+
+Plain functional kernels stay plain callables. Wrapping a kernel in
+:class:`Operation` adds:
+
+- typed payload declarations,
+- optional context checks,
+- :class:`OperationResult` normalization.
+
+Operation payloads are ordinary Python objects, including runtime containers such as
+`Sample` and `Batch` when the contract declares those types.
+"""
 
 from __future__ import annotations
 
@@ -24,7 +35,14 @@ __all__ = ["Operation"]
 
 
 class Operation:
-    """Concrete wrapper around a callable that returns ``OperationResult``."""
+    """Concrete wrapper around a callable that returns :class:`OperationResult`.
+
+    Plain kernel call sites should still call the underlying function directly when
+    declaration, context, and output normalization are not required.
+
+    Wrapped execution always returns ``OperationResult``; call sites must unwrap the
+    payload via ``result.output``.
+    """
 
     def __init__(
         self,
@@ -107,7 +125,7 @@ class Operation:
         )
 
     def __call__(self, input_value: object, context: OperationContext | None = None) -> OperationResult:
-        """Execute the wrapped callable and return ``OperationResult``."""
+        """Execute the wrapped callable and return :class:`OperationResult`."""
         return self.run(input_value, context=context)
 
 

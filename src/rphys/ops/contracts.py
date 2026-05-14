@@ -1,8 +1,15 @@
 """Public operation declaration contracts for Stage 6.
 
-These records carry minimal, dependency-light metadata for operation declaration,
-mutation declaration, and expected runtime context needs. They intentionally avoid
-future-stage execution, pipeline, locator, and serialization fields.
+The stage keeps contracts dependency-light and payload-agnostic: any runtime
+container object can be declared through ``input_type`` and ``output_type`` and
+treated as an ordinary payload by :class:`Operation`.
+
+Mutation policy and side-effect declarations are *advisory metadata*. They describe
+what an operation may do and what evidence labels it promises to emit, but they do
+not impose runtime enforcement in Stage 6.
+
+Planned Stage 7/8/9 fields (for specialized ``Sample``/``Batch`` families, export/save
+workflows, and cache/materialization identity) are intentionally deferred.
 """
 
 from __future__ import annotations
@@ -22,13 +29,17 @@ __all__ = [
 
 
 class OperationRole(StrEnum):
-    """Minimal operation role vocabulary for Stage 6 public schemas."""
+    """Operation role vocabulary used by :class:`OperationResult`."""
 
     GENERIC = "generic"
 
 
 class OperationMutationPolicy(StrEnum):
-    """Mutation and side-effect declaration policy for an operation."""
+    """Declared mutation and side-effect policy for an operation.
+
+    The values are informational declarations and are validated for consistency with
+    declared evidence labels. Enforcement of mutation constraints is deferred.
+    """
 
     PURE = "pure"
     MAY_MUTATE = "may_mutate"
@@ -37,7 +48,14 @@ class OperationMutationPolicy(StrEnum):
 
 @dataclass(frozen=True, init=False, slots=True)
 class OperationContract:
-    """Immutable declaration of an operation's boundary contract."""
+    """Immutable declaration of an operation's boundary contract.
+
+    The contract captures:
+    - input/output type expectations for boundary checking,
+    - required context keys,
+    - mutation policy declaration, and
+    - declarative side-effect evidence labels.
+    """
 
     role: OperationRole
     input_type: type | tuple[type, ...] | None

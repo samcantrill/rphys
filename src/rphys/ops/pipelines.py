@@ -1,4 +1,11 @@
-"""Ordered generic operation composition for Stage 6."""
+"""Ordered generic operation composition for Stage 6.
+
+Stages in :class:`OperationPipeline` are composed from a sequence only; mapping- and
+name-based pipeline construction is intentionally unsupported.
+
+Execution forwards each upstream step's :attr:`OperationResult.output` as the next
+step input and returns the final :class:`OperationResult`.
+"""
 
 from __future__ import annotations
 
