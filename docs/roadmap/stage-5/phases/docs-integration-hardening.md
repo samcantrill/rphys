@@ -54,6 +54,6 @@ make validate-pr
 - Pre-submit blocker gate: passed; EX-1 through EX-6 remain traceable, no public synthetic fixtures or concat API were added, and Stage 5 deferrals remain documented.
 - PR preparation: PR body drafted at `docs/roadmap/stage-5/phases/docs-integration-hardening-pr-body.md`; PR #36 opened and verified against `develop`.
 - Automated review: manager expanded-path review passed before PR submission; GitHub checks pending/not configured at open.
-- Merge result: pending.
-- Cleanup: pending worktree and branch removal after metadata commit.
+- Merge result: PR #36 squash-merged to `develop` at `6934bce871d11885160429b2b7b08f74803c96a7` on 2026-05-14.
+- Cleanup: completed after merge metadata commit.
 - Remaining blockers: none.
