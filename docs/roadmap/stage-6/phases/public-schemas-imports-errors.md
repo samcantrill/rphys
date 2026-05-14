@@ -233,9 +233,9 @@ git diff --check
 ## Refinement And Review Budget Status
 
 - Phase execution plan refinement: completed 2026-05-14
-- Phase implementation refinement: unused
+- Phase implementation refinement: completed 2026-05-14 for pre-submit blocker hardening
 - PR review: unused
-- Blocker resolution: 0/3 used
+- Blocker resolution: 1/3 used
 
 ## Completion Notes
 
@@ -247,6 +247,7 @@ git diff --check
   - Added focused package/import-boundary tests and unit + contract coverage for contract/context/result normalization, validation, and deferred-field absence.
 - Implementation validation: complete (`make test-package`, `make test-unit`, `make test-contract`, `git diff --check` executed by phase executor)
 - Refinement summary: locked public schema field spelling/semantics, `OperationMutationPolicy`, shallow immutability/copying expectations, Phase 1 concrete errors, package/import-boundary obligations, and stop conditions without changing phase scope
+- Implementation refinement pass: completed 2026-05-14; updated stale `src/rphys/ops` Stage 1 docstrings to Stage 6 language, replaced identity-like `run_id` provenance examples in `tests/unit/rphys/ops/test_context.py`, and aligned the contracts unit test path to `tests/unit/rphys/ops/test_contracts.py` with an ops test namespace marker to avoid duplicate basename collection conflicts, without changing behavior or adding public API.
 - Pre-submit blocker gate: cleared
 - PR preparation: in-progress
 - Automated review: in-progress

@@ -22,7 +22,7 @@ __all__ = [
 
 
 class OperationRole(StrEnum):
-    """Minimal operation role vocabulary for Stage 1."""
+    """Minimal operation role vocabulary for Stage 6 public schemas."""
 
     GENERIC = "generic"
 

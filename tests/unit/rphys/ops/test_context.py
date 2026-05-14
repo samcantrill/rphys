@@ -23,15 +23,15 @@ def test_operation_context_defaults_to_empty_immutable_mappings() -> None:
 
 def test_operation_context_copies_input_mappings_and_is_immutable() -> None:
     metadata = {"source": "sample-a"}
-    provenance = {"run_id": "op-001"}
+    provenance = {"transform_label": "baseline-filter"}
 
     context = OperationContext(metadata=metadata, provenance=provenance)
 
     metadata["source"] = "mutated"
-    provenance["run_id"] = "mutated"
+    provenance["transform_label"] = "mutated"
 
     assert context.metadata == {"source": "sample-a"}
-    assert context.provenance == {"run_id": "op-001"}
+    assert context.provenance == {"transform_label": "baseline-filter"}
     assert isinstance(context.metadata, MappingProxyType)
     assert isinstance(context.provenance, MappingProxyType)
 
@@ -39,7 +39,7 @@ def test_operation_context_copies_input_mappings_and_is_immutable() -> None:
         context.metadata["source"] = "forbidden"
 
     with pytest.raises(TypeError):
-        context.provenance["run_id"] = "forbidden"
+        context.provenance["transform_label"] = "forbidden"
 
 
 def test_operation_context_rejects_non_mapping_inputs() -> None:

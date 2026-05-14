@@ -1,4 +1,4 @@
-"""Private helpers for Stage 1 operation schema and record validation."""
+"""Private helpers for Stage 6 operation schema and record validation."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Operation runtime context and result records for Stage 1 operation schemas."""
+"""Operation runtime context and result records for Stage 6 public schemas."""
 
 from __future__ import annotations
 
