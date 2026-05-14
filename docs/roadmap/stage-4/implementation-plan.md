@@ -299,7 +299,7 @@ Workflow path: fast path
 - Validation: `make validate-pr` passed: package 19, unit 271, contract 25, integration 1, e2e/acceptance not present, build succeeded, lock check passed, and `git diff --check` clean. Focused codec, package import-boundary, and error tests also passed.
 - PR: [#23](https://github.com/samcantrill/rphys/pull/23) opened against `develop`; PR title and target verified.
 - Merge: squash-merged to `develop` 2026-05-14 at `06e5682112519a8f11bc554b140131a1917a6069` via GitHub merge API after local validation and automated review.
-- Follow-up: real codecs may motivate additive context/result fields later; registry resolution, synthetic codec operation behavior, lazy `SampleField`, and `SampleBuilder` remain explicitly deferred to later phases. Phase worktree and branch cleanup pending after merge metadata push.
+- Follow-up: real codecs may motivate additive context/result fields later; registry resolution, synthetic codec operation behavior, lazy `SampleField`, and `SampleBuilder` remain explicitly deferred to later phases. Phase worktree and local/remote branches were cleaned up after metadata push.
 
 ### Merge Record
 
@@ -310,8 +310,8 @@ Workflow path: fast path
 - Merge command: `gh api --method PUT repos/samcantrill/rphys/pulls/23/merge --field merge_method=squash ...`
 - Merge result: merged
 - Merge commit: `06e5682112519a8f11bc554b140131a1917a6069`
-- Branch cleanup: pending merge metadata push
-- Worktree cleanup: pending merge metadata push
+- Branch cleanup: completed; local and remote phase branches deleted after merge metadata push
+- Worktree cleanup: completed; phase worktree removed and worktree metadata pruned
 - Behavior implemented: dependency-light codec contract records, structural codec surface, datasource-neutral load/save contexts, save-target `FieldRef` contract, result records, metadata save policy, import-boundary coverage, and no descriptor runtime hooks.
 - Tests and validation: targeted codec/package/error checks passed; `make validate-pr` passed with 316 total tests across present suites.
 - Documentation: phase assignment, execution plan, PR body, and this merge record updated.
