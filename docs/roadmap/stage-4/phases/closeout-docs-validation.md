@@ -74,5 +74,6 @@ git diff --check origin/develop...HEAD
 - Merge: PR [#27](https://github.com/samcantrill/rphys/pull/27)
   squash-merged to `develop` at
   `994dd26029c058813e1797e75431fc4d0ed6b45e`
-- Cleanup: pending branch/worktree cleanup
+- Cleanup: completed; local and remote phase branches deleted, worktree
+  removed, and worktree metadata pruned
 - Remaining blockers: none known

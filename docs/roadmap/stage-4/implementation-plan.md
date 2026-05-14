@@ -675,8 +675,8 @@ Workflow path: fast path unless validation exposes behavioral regressions
 - Merge command: `gh api --method PUT repos/samcantrill/rphys/pulls/27/merge --field merge_method=squash ...`
 - Merge result: merged
 - Merge commit: `994dd26029c058813e1797e75431fc4d0ed6b45e`
-- Branch cleanup: pending
-- Worktree cleanup: pending
+- Branch cleanup: completed; local and remote phase branches deleted after merge metadata push
+- Worktree cleanup: completed; phase worktree removed and worktree metadata pruned
 - Behavior implemented: documentation-only Stage 4 closeout covering README status, glossary Stage 4 vocabulary, public docstrings, phase assignment, execution plan, PR body, and validation evidence.
 - Tests and validation: `make test-package`, `make test-unit`, `make test-contract`, `make validate-pr`, `make test-summary`, `make test`, and PR-range `git diff --check` passed.
 - Documentation: closeout artifacts and this merge record updated.
