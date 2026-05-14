@@ -40,6 +40,7 @@ LIGHTWEIGHT_IMPORTS = [
     "rphys.errors",
     "rphys.evaluation",
     "rphys.io",
+    "rphys.io.codecs",
     "rphys.io.fields",
     "rphys.io.indexes",
     "rphys.io.resources",
@@ -106,6 +107,50 @@ def test_rphys_does_not_define_generic_workflow_or_artifact_runtime_packages() -
 
     for package_name in forbidden_packages:
         assert importlib.util.find_spec(package_name) is None
+
+
+def test_codec_contract_import_does_not_load_datasource_or_runtime_builders() -> None:
+    script = textwrap.dedent(
+        """
+        import importlib
+        import sys
+
+        importlib.import_module("rphys.io.codecs")
+
+        forbidden = sorted(
+            name for name in [
+                "rphys.datasources",
+                "rphys.datasources.refs",
+                "rphys.datasources.schemas",
+                "rphys.datasources.index_items",
+                "rphys.data.sample_fields",
+                "rphys.data.sample_builders",
+                "tests.support",
+            ]
+            if name in sys.modules
+        )
+        if forbidden:
+            raise SystemExit("forbidden modules loaded: " + ", ".join(forbidden))
+        """
+    )
+    env = os.environ.copy()
+    existing_pythonpath = env.get("PYTHONPATH")
+    pythonpath_parts = [str(REPO_ROOT / "src"), str(REPO_ROOT)]
+    if existing_pythonpath:
+        pythonpath_parts.append(existing_pythonpath)
+    env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
+
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        check=False,
+        cwd=REPO_ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+
+    assert completed.returncode == 0, completed.stdout
 
 
 def test_deferred_packages_do_not_define_duplicate_vocabulary_surfaces() -> None:
