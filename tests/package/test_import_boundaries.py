@@ -30,6 +30,7 @@ LIGHTWEIGHT_IMPORTS = [
     "rphys.data.locators",
     "rphys.data.metadata",
     "rphys.data.objects",
+    "rphys.data.sample_builders",
     "rphys.data.sample_fields",
     "rphys.data.schemas",
     "rphys.data.splits",
@@ -170,6 +171,47 @@ def test_sample_field_import_does_not_load_datasource_builders_or_test_support()
                 "rphys.datasources.index_items",
                 "rphys.data.sample_builders",
                 "tests.support",
+            ]
+            if name in sys.modules
+        )
+        if forbidden:
+            raise SystemExit("forbidden modules loaded: " + ", ".join(forbidden))
+        """
+    )
+    env = os.environ.copy()
+    existing_pythonpath = env.get("PYTHONPATH")
+    pythonpath_parts = [str(REPO_ROOT / "src"), str(REPO_ROOT)]
+    if existing_pythonpath:
+        pythonpath_parts.append(existing_pythonpath)
+    env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
+
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        check=False,
+        cwd=REPO_ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+
+    assert completed.returncode == 0, completed.stdout
+
+
+def test_sample_builder_import_does_not_load_test_support_or_heavy_modules() -> None:
+    heavy_modules = ", ".join(repr(module_name) for module_name in HEAVY_OPTIONAL_MODULES)
+    script = textwrap.dedent(
+        f"""
+        import importlib
+        import sys
+
+        importlib.import_module("rphys.data.sample_builders")
+
+        forbidden = sorted(
+            name for name in [
+                "tests.support",
+                "tests.support.synthetic_codecs",
+                {heavy_modules},
             ]
             if name in sys.modules
         )

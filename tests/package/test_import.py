@@ -94,13 +94,26 @@ STAGE_2_DATA_EXPORTS = [
     "collate_samples",
 ]
 
-STAGE_4_DATA_EXPORTS = [
+STAGE_4_SAMPLE_FIELD_EXPORTS = [
     "SampleField",
     "SampleFieldState",
 ]
 
+STAGE_4_SAMPLE_BUILDER_EXPORTS = [
+    "SampleBuildContext",
+    "SampleBuilder",
+    "SampleFieldProvenance",
+    "SampleProbeResult",
+]
+
+STAGE_4_DATA_EXPORTS = [
+    *STAGE_4_SAMPLE_FIELD_EXPORTS,
+    *STAGE_4_SAMPLE_BUILDER_EXPORTS,
+]
+
 STAGE_4_DATA_MODULES = {
-    "rphys.data.sample_fields": STAGE_4_DATA_EXPORTS,
+    "rphys.data.sample_fields": STAGE_4_SAMPLE_FIELD_EXPORTS,
+    "rphys.data.sample_builders": STAGE_4_SAMPLE_BUILDER_EXPORTS,
 }
 
 STAGE_2_ERROR_NAMES = [
@@ -275,6 +288,7 @@ def test_stage_3_datasource_submodules_export_only_code_backed_names() -> None:
         assert module.__all__ == expected_all
         for public_name in expected_all:
             assert hasattr(module, public_name)
+
 
 def test_stage_1_data_modules_import_with_intentional_public_surfaces() -> None:
     for module_name, expected_all in STAGE_1_DATA_MODULES.items():
