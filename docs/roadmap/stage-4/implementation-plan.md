@@ -582,8 +582,8 @@ Workflow path: expanded path
 - Merge command: `gh api --method PUT repos/samcantrill/rphys/pulls/26/merge --field merge_method=squash ...`
 - Merge result: merged
 - Merge commit: `f10daecc7380996f3cd9fffc9f00fde3ea30b405`
-- Branch cleanup: pending
-- Worktree cleanup: pending
+- Branch cleanup: completed; local and remote phase branches deleted after merge metadata push
+- Worktree cleanup: completed; phase worktree removed and worktree metadata pruned
 - Behavior implemented: canonical `SampleBuilder` bridge, explicit `SampleBuildContext`, builder/probe provenance, lazy/eager `SampleField` construction from one `IndexItem`, atomic requested-locator failures, `build_one` single-locator validation, package import-boundary coverage, and no datasource provenance in codec contexts.
 - Tests and validation: focused builder/field/contract/package pytest passed; `make test-package`, `make test-unit`, `make test-contract`, `make validate-pr`, `make test-summary`, and PR-range `git diff --check` passed.
 - Documentation: phase assignment, execution plan, PR body, and this merge record updated.
