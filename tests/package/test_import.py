@@ -218,6 +218,7 @@ STAGE_5_DATASOURCE_MODULES = {
         "DataSourceIndexCodec",
         "DataSourceIndexEntry",
         "DataSourceIndexManifest",
+        "CompositeDataSourceIndex",
         "IndexCandidate",
         "IndexCandidatePlan",
         "IndexCandidateResult",

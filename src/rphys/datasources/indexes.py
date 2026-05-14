@@ -34,6 +34,7 @@ __all__ = [
     "DataSourceIndexCodec",
     "DataSourceIndexEntry",
     "DataSourceIndexManifest",
+    "CompositeDataSourceIndex",
     "IndexCandidate",
     "IndexCandidatePlan",
     "IndexCandidateResult",
@@ -340,6 +341,12 @@ class DataSourceIndexEntry:
     split: str | None
     split_group: str | None
     split_group_value: str | None
+    source_key: str | None
+    child_index_id: str | None
+    child_index_fingerprint: str | None
+    child_metadata: Mapping[MetadataKey, FrozenPrimitive]
+    child_entry_id: str | None
+    child_position: int | None
     field_windows: Mapping[str, object]
     metadata: Mapping[MetadataKey, FrozenPrimitive]
     fingerprint: str
@@ -358,6 +365,12 @@ class DataSourceIndexEntry:
         split: str | None = None,
         split_group: str | None = None,
         split_group_value: str | None = None,
+        source_key: str | None = None,
+        child_index_id: str | None = None,
+        child_index_fingerprint: str | None = None,
+        child_metadata: Mapping[MetadataKey | str, object] | None = None,
+        child_entry_id: str | None = None,
+        child_position: int | None = None,
         field_windows: Mapping[str, object] | None = None,
         metadata: Mapping[MetadataKey | str, object] | None = None,
         fingerprint: str | None = None,
@@ -391,6 +404,49 @@ class DataSourceIndexEntry:
                 else _non_empty_string(split_group_value)
             ),
         )
+        object.__setattr__(
+            self,
+            "source_key",
+            source_key if source_key is None else _non_empty_string(source_key),
+        )
+        object.__setattr__(
+            self,
+            "child_index_id",
+            (
+                child_index_id
+                if child_index_id is None
+                else _non_empty_string(child_index_id)
+            ),
+        )
+        object.__setattr__(
+            self,
+            "child_index_fingerprint",
+            (
+                child_index_fingerprint
+                if child_index_fingerprint is None
+                else _fingerprint_string(
+                    child_index_fingerprint,
+                    field="child_index_fingerprint",
+                )
+            ),
+        )
+        object.__setattr__(
+            self,
+            "child_metadata",
+            MappingProxyType(_coerce_metadata(child_metadata)),
+        )
+        object.__setattr__(
+            self,
+            "child_entry_id",
+            (
+                child_entry_id
+                if child_entry_id is None
+                else _non_empty_string(child_entry_id)
+            ),
+        )
+        if child_position is not None:
+            child_position = _non_negative_int(child_position, field="child_position")
+        object.__setattr__(self, "child_position", child_position)
         object.__setattr__(
             self,
             "field_windows",
@@ -431,6 +487,12 @@ class DataSourceIndexEntry:
                 "split",
                 "split_group",
                 "split_group_value",
+                "source_key",
+                "child_index_id",
+                "child_index_fingerprint",
+                "child_metadata",
+                "child_entry_id",
+                "child_position",
                 "field_windows",
                 "metadata",
                 "fingerprint",
@@ -449,6 +511,12 @@ class DataSourceIndexEntry:
             split=data["split"],  # type: ignore[arg-type]
             split_group=data["split_group"],  # type: ignore[arg-type]
             split_group_value=data["split_group_value"],  # type: ignore[arg-type]
+            source_key=data["source_key"],  # type: ignore[arg-type]
+            child_index_id=data["child_index_id"],  # type: ignore[arg-type]
+            child_index_fingerprint=data["child_index_fingerprint"],  # type: ignore[arg-type]
+            child_metadata=data["child_metadata"],  # type: ignore[arg-type]
+            child_entry_id=data["child_entry_id"],  # type: ignore[arg-type]
+            child_position=data["child_position"],  # type: ignore[arg-type]
             field_windows=data["field_windows"],  # type: ignore[arg-type]
             metadata=data["metadata"],  # type: ignore[arg-type]
         )
@@ -474,6 +542,15 @@ class DataSourceIndexEntry:
             "split": self.split,
             "split_group": self.split_group,
             "split_group_value": self.split_group_value,
+            "source_key": self.source_key,
+            "child_index_id": self.child_index_id,
+            "child_index_fingerprint": self.child_index_fingerprint,
+            "child_metadata": {
+                str(key): thaw_primitive(value)
+                for key, value in self.child_metadata.items()
+            },
+            "child_entry_id": self.child_entry_id,
+            "child_position": self.child_position,
             "field_windows": dict(self.field_windows),
             "metadata": {
                 str(key): thaw_primitive(value)
@@ -535,6 +612,110 @@ class DataSourceIndex:
 
 
 DataSourceIndex.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class CompositeDataSourceIndex:
+    """Ordered flat access over multiple source-aware datasource indexes."""
+
+    index_id: str
+    sources: Mapping[str, DataSourceIndex]
+    metadata: Mapping[MetadataKey, FrozenPrimitive]
+    fingerprint: str
+    _items: tuple[IndexItem, ...]
+    _entries: tuple[DataSourceIndexEntry, ...]
+
+    def __init__(
+        self,
+        index_id: str,
+        sources: Mapping[str, DataSourceIndex],
+        *,
+        metadata: Mapping[MetadataKey | str, object] | None = None,
+    ) -> None:
+        source_map = _coerce_sources(sources)
+        object.__setattr__(self, "index_id", _non_empty_string(index_id))
+        object.__setattr__(self, "sources", MappingProxyType(source_map))
+        object.__setattr__(
+            self,
+            "metadata",
+            MappingProxyType(_coerce_metadata(metadata)),
+        )
+        items: list[IndexItem] = []
+        entries: list[DataSourceIndexEntry] = []
+        for source_key, child in source_map.items():
+            child_fingerprint = _index_content_fingerprint(child)
+            for child_position, item in enumerate(child):
+                child_entry = child.entry_at(child_position)
+                global_position = len(items)
+                items.append(item)
+                entries.append(
+                    DataSourceIndexEntry(
+                        index_id=index_id,
+                        entry_id=f"{index_id}:{global_position}",
+                        position=global_position,
+                        candidate_id=child_entry.candidate_id,
+                        record_id=child_entry.record_id,
+                        datasource_id=child_entry.datasource_id,
+                        source_id=child_entry.source_id,
+                        groups=child_entry.groups,
+                        split=child_entry.split,
+                        split_group=child_entry.split_group,
+                        split_group_value=child_entry.split_group_value,
+                        source_key=source_key,
+                        child_index_id=child.index_id,
+                        child_index_fingerprint=child_fingerprint,
+                        child_metadata=child.metadata,
+                        child_entry_id=child_entry.entry_id,
+                        child_position=child_position,
+                        field_windows=child_entry.field_windows,
+                        metadata=child_entry.metadata,
+                    )
+                )
+        object.__setattr__(self, "_items", tuple(items))
+        object.__setattr__(self, "_entries", tuple(entries))
+        object.__setattr__(self, "fingerprint", _sha256(self._stable_payload()))
+
+    def __len__(self) -> int:
+        return len(self._items)
+
+    def __getitem__(self, position: int) -> IndexItem:
+        return self._items[position]
+
+    def __iter__(self):
+        return iter(self._items)
+
+    @property
+    def entries(self) -> tuple[DataSourceIndexEntry, ...]:
+        """Composite sidecars aligned with global item positions."""
+
+        return self._entries
+
+    def entry_at(self, position: int) -> DataSourceIndexEntry:
+        """Return the composite sidecar entry for ``position``."""
+
+        return self._entries[position]
+
+    def _stable_payload(self) -> dict[str, object]:
+        return {
+            "index_id": self.index_id,
+            "metadata": _metadata_to_dict(self.metadata),
+            "sources": [
+                {
+                    "source_key": source_key,
+                    "child_index_id": child.index_id,
+                    "child_index_fingerprint": _index_content_fingerprint(child),
+                    "child_metadata": _metadata_to_dict(child.metadata),
+                    "length": len(child),
+                    "entry_fingerprints": [
+                        entry.fingerprint for entry in child.entries
+                    ],
+                }
+                for source_key, child in self.sources.items()
+            ],
+        }
+
+
+CompositeDataSourceIndex.__hash__ = None  # type: ignore[assignment]
 
 
 @dataclass(frozen=True, init=False, slots=True)
@@ -704,6 +885,8 @@ class DataSourceIndexManifest:
     schema_version: str
     index_id: str
     metadata: Mapping[MetadataKey, FrozenPrimitive]
+    index_kind: str
+    children: tuple[Mapping[str, object], ...]
     items: tuple[Mapping[str, object], ...]
     entries: tuple[Mapping[str, object], ...]
     content_fingerprint: str
@@ -715,6 +898,8 @@ class DataSourceIndexManifest:
         schema_version: str,
         index_id: str,
         metadata: Mapping[MetadataKey | str, object],
+        index_kind: str = "datasource_index",
+        children: Sequence[Mapping[str, object]] = (),
         items: Sequence[Mapping[str, object]],
         entries: Sequence[Mapping[str, object]],
         content_fingerprint: str | None = None,
@@ -733,6 +918,18 @@ class DataSourceIndexManifest:
             self,
             "metadata",
             MappingProxyType(_coerce_metadata(metadata)),
+        )
+        if index_kind not in {"datasource_index", "composite_datasource_index"}:
+            raise InvalidIndexCandidateError(
+                "Unsupported datasource index manifest kind.",
+                field="index_kind",
+                actual=index_kind,
+            )
+        object.__setattr__(self, "index_kind", index_kind)
+        object.__setattr__(
+            self,
+            "children",
+            _coerce_manifest_records(children, field="children"),
         )
         object.__setattr__(self, "items", _coerce_manifest_records(items, field="items"))
         object.__setattr__(
@@ -781,6 +978,8 @@ class DataSourceIndexManifest:
                 "schema_version",
                 "index_id",
                 "metadata",
+                "index_kind",
+                "children",
                 "items",
                 "entries",
                 "content_fingerprint",
@@ -792,6 +991,8 @@ class DataSourceIndexManifest:
             schema_version=data["schema_version"],  # type: ignore[arg-type]
             index_id=data["index_id"],  # type: ignore[arg-type]
             metadata=data["metadata"],  # type: ignore[arg-type]
+            index_kind=data["index_kind"],  # type: ignore[arg-type]
+            children=data["children"],  # type: ignore[arg-type]
             items=data["items"],  # type: ignore[arg-type]
             entries=data["entries"],  # type: ignore[arg-type]
             content_fingerprint=data["content_fingerprint"],  # type: ignore[arg-type]
@@ -806,6 +1007,8 @@ class DataSourceIndexManifest:
                 str(key): thaw_primitive(value)
                 for key, value in self.metadata.items()
             },
+            "index_kind": self.index_kind,
+            "children": [dict(child) for child in self.children],
             "items": [dict(item) for item in self.items],
             "entries": [dict(entry) for entry in self.entries],
         }
@@ -819,9 +1022,22 @@ class DataSourceIndexCodec:
 
     schema_version = _DATASOURCE_INDEX_SCHEMA
 
-    def to_manifest(self, index: DataSourceIndex) -> DataSourceIndexManifest:
+    def to_manifest(
+        self,
+        index: DataSourceIndex | CompositeDataSourceIndex,
+    ) -> DataSourceIndexManifest:
         """Create a manifest preserving exact item and entry descriptors."""
 
+        if isinstance(index, CompositeDataSourceIndex):
+            return DataSourceIndexManifest(
+                schema_version=self.schema_version,
+                index_id=index.index_id,
+                metadata=index.metadata,
+                index_kind="composite_datasource_index",
+                children=_composite_child_descriptors(index),
+                items=[item.to_dict() for item in index],
+                entries=[entry.to_dict() for entry in index.entries],
+            )
         if not isinstance(index, DataSourceIndex):
             raise InvalidIndexCandidateError(
                 "DataSourceIndexCodec.to_manifest requires a DataSourceIndex.",
@@ -832,11 +1048,16 @@ class DataSourceIndexCodec:
             schema_version=self.schema_version,
             index_id=index.index_id,
             metadata=index.metadata,
+            index_kind="datasource_index",
+            children=[],
             items=[item.to_dict() for item in index],
             entries=[entry.to_dict() for entry in index.entries],
         )
 
-    def from_manifest(self, manifest: DataSourceIndexManifest) -> DataSourceIndex:
+    def from_manifest(
+        self,
+        manifest: DataSourceIndexManifest,
+    ) -> DataSourceIndex | CompositeDataSourceIndex:
         """Reconstruct a datasource index from a validated manifest."""
 
         if not isinstance(manifest, DataSourceIndexManifest):
@@ -844,6 +1065,14 @@ class DataSourceIndexCodec:
                 "DataSourceIndexCodec.from_manifest requires a DataSourceIndexManifest.",
                 field="manifest",
                 actual=type(manifest).__name__,
+            )
+        if manifest.index_kind == "composite_datasource_index":
+            return _composite_from_manifest(manifest)
+        if manifest.children:
+            raise InvalidIndexCandidateError(
+                "Plain datasource index manifests cannot contain children.",
+                field="children",
+                actual=len(manifest.children),
             )
         items = [IndexItem.from_dict(item) for item in manifest.items]
         entries = [DataSourceIndexEntry.from_dict(entry) for entry in manifest.entries]
@@ -854,12 +1083,12 @@ class DataSourceIndexCodec:
             metadata=manifest.metadata,
         )
 
-    def dumps(self, index: DataSourceIndex) -> str:
+    def dumps(self, index: DataSourceIndex | CompositeDataSourceIndex) -> str:
         """Serialize an index manifest as deterministic JSON."""
 
         return _canonical_json(self.to_manifest(index).to_dict())
 
-    def loads(self, payload: str) -> DataSourceIndex:
+    def loads(self, payload: str) -> DataSourceIndex | CompositeDataSourceIndex:
         """Load an index from deterministic JSON manifest text."""
 
         if not isinstance(payload, str):
@@ -871,12 +1100,16 @@ class DataSourceIndexCodec:
         data = json.loads(payload)
         return self.from_manifest(DataSourceIndexManifest.from_dict(data))
 
-    def dump(self, index: DataSourceIndex, path: str | Path) -> None:
+    def dump(
+        self,
+        index: DataSourceIndex | CompositeDataSourceIndex,
+        path: str | Path,
+    ) -> None:
         """Write a deterministic JSON manifest to ``path``."""
 
         Path(path).write_text(self.dumps(index), encoding="utf-8")
 
-    def load(self, path: str | Path) -> DataSourceIndex:
+    def load(self, path: str | Path) -> DataSourceIndex | CompositeDataSourceIndex:
         """Read a deterministic JSON manifest from ``path``."""
 
         return self.loads(Path(path).read_text(encoding="utf-8"))
@@ -1072,6 +1305,225 @@ def _coerce_entries(
     return result
 
 
+def _coerce_sources(
+    sources: Mapping[str, DataSourceIndex],
+) -> dict[str, DataSourceIndex]:
+    if not isinstance(sources, Mapping) or not sources:
+        raise InvalidIndexCandidateError(
+            "CompositeDataSourceIndex sources must be a non-empty mapping.",
+            field="sources",
+            actual=type(sources).__name__,
+        )
+    result: dict[str, DataSourceIndex] = {}
+    for key, child in sources.items():
+        source_key = _non_empty_string(key)
+        if source_key in result:
+            raise InvalidIndexCandidateError(
+                "CompositeDataSourceIndex source keys must be unique.",
+                field="sources",
+                source_key=source_key,
+            )
+        if not isinstance(child, DataSourceIndex):
+            raise InvalidIndexCandidateError(
+                "CompositeDataSourceIndex sources must contain DataSourceIndex values.",
+                field="sources",
+                source_key=source_key,
+                actual=type(child).__name__,
+            )
+        result[source_key] = child
+    return result
+
+
+def _composite_child_descriptors(
+    index: CompositeDataSourceIndex,
+) -> list[dict[str, object]]:
+    children: list[dict[str, object]] = []
+    offset = 0
+    for source_key, child in index.sources.items():
+        children.append(
+            {
+                "source_key": source_key,
+                "child_index_id": child.index_id,
+                "child_index_fingerprint": _index_content_fingerprint(child),
+                "child_metadata": _metadata_to_dict(child.metadata),
+                "length": len(child),
+                "start_position": offset,
+            }
+        )
+        offset += len(child)
+    return children
+
+
+def _composite_from_manifest(
+    manifest: DataSourceIndexManifest,
+) -> CompositeDataSourceIndex:
+    items = [IndexItem.from_dict(item) for item in manifest.items]
+    entries = [DataSourceIndexEntry.from_dict(entry) for entry in manifest.entries]
+    if len(items) != len(entries):
+        raise InvalidIndexCandidateError(
+            "Composite datasource index manifest items and entries must align.",
+            field="entries",
+            expected=len(items),
+            actual=len(entries),
+        )
+    sources: dict[str, DataSourceIndex] = {}
+    expected_start = 0
+    for raw_child in manifest.children:
+        child = _coerce_child_descriptor(raw_child)
+        source_key = child["source_key"]
+        child_index_id = child["child_index_id"]
+        child_fingerprint = child["child_index_fingerprint"]
+        child_metadata = child["child_metadata"]
+        length = child["length"]
+        start_position = child["start_position"]
+        if start_position != expected_start:
+            raise InvalidIndexCandidateError(
+                "Composite datasource index child ranges must be ordered.",
+                field="children",
+                expected=expected_start,
+                actual=start_position,
+            )
+        child_items: list[IndexItem | None] = [None] * length
+        child_entries: list[DataSourceIndexEntry | None] = [None] * length
+        for item, entry in zip(items, entries, strict=True):
+            if entry.source_key != source_key or entry.child_index_id != child_index_id:
+                continue
+            if entry.child_index_fingerprint != child_fingerprint:
+                raise InvalidIndexCandidateError(
+                    "Composite datasource index child fingerprint mismatch.",
+                    field="child_index_fingerprint",
+                    expected=child_fingerprint,
+                    actual=entry.child_index_fingerprint,
+                )
+            if entry.child_position is None or entry.child_position >= length:
+                raise InvalidIndexCandidateError(
+                    "Composite datasource index child positions must be in range.",
+                    field="child_position",
+                    actual=entry.child_position,
+                )
+            if child_items[entry.child_position] is not None:
+                raise InvalidIndexCandidateError(
+                    "Composite datasource index child positions must be unique.",
+                    field="child_position",
+                    actual=entry.child_position,
+                )
+            if entry.child_entry_id is None:
+                raise InvalidIndexCandidateError(
+                    "Composite datasource index entries require child entry IDs.",
+                    field="child_entry_id",
+                )
+            child_items[entry.child_position] = item
+            child_entries[entry.child_position] = DataSourceIndexEntry(
+                index_id=child_index_id,
+                entry_id=entry.child_entry_id,
+                position=entry.child_position,
+                candidate_id=entry.candidate_id,
+                record_id=entry.record_id,
+                datasource_id=entry.datasource_id,
+                source_id=entry.source_id,
+                groups=entry.groups,
+                split=entry.split,
+                split_group=entry.split_group,
+                split_group_value=entry.split_group_value,
+                field_windows=entry.field_windows,
+                metadata=entry.metadata,
+            )
+        if any(item is None for item in child_items) or any(
+            entry is None for entry in child_entries
+        ):
+            raise InvalidIndexCandidateError(
+                "Composite datasource index child ranges must be complete.",
+                field="children",
+                source_key=source_key,
+            )
+        child_index = DataSourceIndex(
+            child_index_id,
+            [item for item in child_items if item is not None],
+            [entry for entry in child_entries if entry is not None],
+            metadata=child_metadata,
+        )
+        actual_fingerprint = _index_content_fingerprint(child_index)
+        if actual_fingerprint != child_fingerprint:
+            raise InvalidIndexCandidateError(
+                "Composite datasource index child manifest fingerprint mismatch.",
+                field="child_index_fingerprint",
+                expected=child_fingerprint,
+                actual=actual_fingerprint,
+            )
+        sources[source_key] = child_index
+        expected_start += length
+    if expected_start != len(entries):
+        raise InvalidIndexCandidateError(
+            "Composite datasource index child ranges must cover every entry.",
+            field="children",
+            expected=len(entries),
+            actual=expected_start,
+        )
+    result = CompositeDataSourceIndex(
+        manifest.index_id,
+        sources,
+        metadata=manifest.metadata,
+    )
+    if [entry.to_dict() for entry in result.entries] != [
+        entry.to_dict() for entry in entries
+    ]:
+        raise InvalidIndexCandidateError(
+            "Composite datasource index manifest entries are inconsistent.",
+            field="entries",
+        )
+    return result
+
+
+def _coerce_child_descriptor(value: object) -> dict[str, object]:
+    data = _require_mapping(value, field="children")
+    _require_keys(
+        data,
+        {
+            "source_key",
+            "child_index_id",
+            "child_index_fingerprint",
+            "child_metadata",
+            "length",
+            "start_position",
+        },
+        descriptor="CompositeDataSourceIndex child",
+    )
+    return {
+        "source_key": _non_empty_string(data["source_key"]),
+        "child_index_id": _non_empty_string(data["child_index_id"]),
+        "child_index_fingerprint": _fingerprint_string(
+            data["child_index_fingerprint"],
+            field="child_index_fingerprint",
+        ),
+        "child_metadata": _coerce_metadata(data["child_metadata"]),  # type: ignore[arg-type]
+        "length": _non_negative_int(data["length"], field="length"),
+        "start_position": _non_negative_int(
+            data["start_position"],
+            field="start_position",
+        ),
+    }
+
+
+def _index_content_fingerprint(index: DataSourceIndex) -> str:
+    return _sha256(
+        {
+            "index_id": index.index_id,
+            "metadata": _metadata_to_dict(index.metadata),
+            "items": [item.to_dict() for item in index],
+            "entries": [entry.to_dict() for entry in index.entries],
+        }
+    )
+
+
+def _metadata_to_dict(
+    metadata: Mapping[MetadataKey, FrozenPrimitive],
+) -> dict[str, object]:
+    return {
+        str(key): thaw_primitive(value)
+        for key, value in metadata.items()
+    }
+
+
 def _coerce_field_windows(value: Mapping[str, object] | None) -> dict[str, object]:
     if value is None:
         return {}
@@ -1188,6 +1640,19 @@ def _non_empty_string(value: object) -> str:
             value=value,
         )
     return value
+
+
+def _fingerprint_string(value: object, *, field: str) -> str:
+    fingerprint = _non_empty_string(value)
+    if len(fingerprint) != 64 or any(
+        char not in "0123456789abcdef" for char in fingerprint
+    ):
+        raise InvalidIndexCandidateError(
+            "Fingerprints must be lowercase SHA-256 hex strings.",
+            field=field,
+            actual=value,
+        )
+    return fingerprint
 
 
 def _non_negative_int(value: object, *, field: str) -> int:
