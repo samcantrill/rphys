@@ -66,11 +66,14 @@ make test-unit
 make test-contract
 make validate-pr
 git diff --check
+git diff --check origin/develop...HEAD
 ```
 
 `make validate-pr` passed with package 19, unit 285, contract 30, integration
 1, e2e/acceptance not present, build success, lock check success, and clean
-`git diff --check`.
+`git diff --check`. Automated review found an initial PR-range whitespace
+blocker in `tests/support/__init__.py`; it was fixed and
+`git diff --check origin/develop...HEAD` was re-run clean after the fix.
 
 # Risks And Follow-Up
 
