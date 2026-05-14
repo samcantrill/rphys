@@ -50,8 +50,8 @@ git diff --check
 - Implementation summary: implemented `CompositeDataSourceIndex`, source-aware `DataSourceIndexEntry` fields, composite child descriptors in `DataSourceIndexManifest`, codec round trips for composite indexes, child-order fingerprint behavior, and package boundaries excluding `ConcatDataSourceIndex`.
 - Implementation validation: `make test-unit` passed with 364 tests; `make test-contract` passed with 52 tests; `make test-package` passed with 25 tests; `git diff --check` passed.
 - Pre-submit blocker gate: passed; no public concat API, no source identity in `IndexItem.metadata`, and no sampler/cache/batch behavior.
-- PR preparation: PR body drafted at `docs/roadmap/stage-5/phases/composite-index-pr-body.md`; PR pending.
-- Automated review: pending.
+- PR preparation: PR body drafted at `docs/roadmap/stage-5/phases/composite-index-pr-body.md`; PR #35 opened and verified against `develop`.
+- Automated review: manager fast-path review passed before PR submission; GitHub checks pending/not configured at open.
 - Merge result: pending.
 - Cleanup: pending worktree and branch removal after metadata commit.
 - Remaining blockers: none.
