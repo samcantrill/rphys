@@ -13,6 +13,7 @@ import hashlib
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from types import MappingProxyType
 from typing import Self
 
@@ -30,7 +31,9 @@ from .refs import RecordRef
 
 __all__ = [
     "DataSourceIndex",
+    "DataSourceIndexCodec",
     "DataSourceIndexEntry",
+    "DataSourceIndexManifest",
     "IndexCandidate",
     "IndexCandidatePlan",
     "IndexCandidateResult",
@@ -409,6 +412,55 @@ class DataSourceIndexEntry:
             "fingerprint": self.fingerprint,
         }
 
+    @classmethod
+    def from_dict(cls, value: object) -> Self:
+        """Reconstruct a sidecar entry from manifest data."""
+
+        data = _require_mapping(value, field="entry")
+        _require_keys(
+            data,
+            {
+                "index_id",
+                "entry_id",
+                "position",
+                "candidate_id",
+                "record_id",
+                "datasource_id",
+                "source_id",
+                "groups",
+                "split",
+                "split_group",
+                "split_group_value",
+                "field_windows",
+                "metadata",
+                "fingerprint",
+            },
+            descriptor="DataSourceIndexEntry",
+        )
+        entry = cls(
+            index_id=data["index_id"],  # type: ignore[arg-type]
+            entry_id=data["entry_id"],  # type: ignore[arg-type]
+            position=data["position"],  # type: ignore[arg-type]
+            candidate_id=data["candidate_id"],  # type: ignore[arg-type]
+            record_id=data["record_id"],  # type: ignore[arg-type]
+            datasource_id=data["datasource_id"],  # type: ignore[arg-type]
+            source_id=data["source_id"],  # type: ignore[arg-type]
+            groups=data["groups"],  # type: ignore[arg-type]
+            split=data["split"],  # type: ignore[arg-type]
+            split_group=data["split_group"],  # type: ignore[arg-type]
+            split_group_value=data["split_group_value"],  # type: ignore[arg-type]
+            field_windows=data["field_windows"],  # type: ignore[arg-type]
+            metadata=data["metadata"],  # type: ignore[arg-type]
+        )
+        if entry.fingerprint != data["fingerprint"]:
+            raise InvalidIndexCandidateError(
+                "DataSourceIndexEntry fingerprint mismatch.",
+                field="fingerprint",
+                expected=entry.fingerprint,
+                actual=data["fingerprint"],
+            )
+        return entry
+
     def _stable_payload(self) -> dict[str, object]:
         return {
             "index_id": self.index_id,
@@ -640,6 +692,194 @@ class IndexBuilder:
                 rejected_candidate_ids=rejected,
             ),
         )
+
+
+_DATASOURCE_INDEX_SCHEMA = "rphys.datasource_index.v1"
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class DataSourceIndexManifest:
+    """Durable JSON manifest for one datasource index."""
+
+    schema_version: str
+    index_id: str
+    metadata: Mapping[MetadataKey, FrozenPrimitive]
+    items: tuple[Mapping[str, object], ...]
+    entries: tuple[Mapping[str, object], ...]
+    content_fingerprint: str
+    checksum: str
+
+    def __init__(
+        self,
+        *,
+        schema_version: str,
+        index_id: str,
+        metadata: Mapping[MetadataKey | str, object],
+        items: Sequence[Mapping[str, object]],
+        entries: Sequence[Mapping[str, object]],
+        content_fingerprint: str | None = None,
+        checksum: str | None = None,
+    ) -> None:
+        if schema_version != _DATASOURCE_INDEX_SCHEMA:
+            raise InvalidIndexCandidateError(
+                "Unsupported datasource index manifest schema.",
+                field="schema_version",
+                expected=_DATASOURCE_INDEX_SCHEMA,
+                actual=schema_version,
+            )
+        object.__setattr__(self, "schema_version", schema_version)
+        object.__setattr__(self, "index_id", _non_empty_string(index_id))
+        object.__setattr__(
+            self,
+            "metadata",
+            MappingProxyType(_coerce_metadata(metadata)),
+        )
+        object.__setattr__(self, "items", _coerce_manifest_records(items, field="items"))
+        object.__setattr__(
+            self,
+            "entries",
+            _coerce_manifest_records(entries, field="entries"),
+        )
+        stable = self._stable_payload()
+        fingerprint = content_fingerprint or _sha256(stable)
+        if fingerprint != _sha256(stable):
+            raise InvalidIndexCandidateError(
+                "DataSourceIndexManifest content fingerprint mismatch.",
+                field="content_fingerprint",
+                expected=_sha256(stable),
+                actual=fingerprint,
+            )
+        object.__setattr__(self, "content_fingerprint", fingerprint)
+        checksum_payload = {**stable, "content_fingerprint": fingerprint}
+        manifest_checksum = checksum or _sha256(checksum_payload)
+        if manifest_checksum != _sha256(checksum_payload):
+            raise InvalidIndexCandidateError(
+                "DataSourceIndexManifest checksum mismatch.",
+                field="checksum",
+                expected=_sha256(checksum_payload),
+                actual=manifest_checksum,
+            )
+        object.__setattr__(self, "checksum", manifest_checksum)
+
+    def to_dict(self) -> dict[str, object]:
+        """Serialize the complete manifest envelope."""
+
+        return {
+            **self._stable_payload(),
+            "content_fingerprint": self.content_fingerprint,
+            "checksum": self.checksum,
+        }
+
+    @classmethod
+    def from_dict(cls, value: object) -> Self:
+        """Validate and reconstruct a manifest from primitive data."""
+
+        data = _require_mapping(value, field="manifest")
+        _require_keys(
+            data,
+            {
+                "schema_version",
+                "index_id",
+                "metadata",
+                "items",
+                "entries",
+                "content_fingerprint",
+                "checksum",
+            },
+            descriptor="DataSourceIndexManifest",
+        )
+        return cls(
+            schema_version=data["schema_version"],  # type: ignore[arg-type]
+            index_id=data["index_id"],  # type: ignore[arg-type]
+            metadata=data["metadata"],  # type: ignore[arg-type]
+            items=data["items"],  # type: ignore[arg-type]
+            entries=data["entries"],  # type: ignore[arg-type]
+            content_fingerprint=data["content_fingerprint"],  # type: ignore[arg-type]
+            checksum=data["checksum"],  # type: ignore[arg-type]
+        )
+
+    def _stable_payload(self) -> dict[str, object]:
+        return {
+            "schema_version": self.schema_version,
+            "index_id": self.index_id,
+            "metadata": {
+                str(key): thaw_primitive(value)
+                for key, value in self.metadata.items()
+            },
+            "items": [dict(item) for item in self.items],
+            "entries": [dict(entry) for entry in self.entries],
+        }
+
+
+DataSourceIndexManifest.__hash__ = None  # type: ignore[assignment]
+
+
+class DataSourceIndexCodec:
+    """Canonical JSON codec for datasource index manifests."""
+
+    schema_version = _DATASOURCE_INDEX_SCHEMA
+
+    def to_manifest(self, index: DataSourceIndex) -> DataSourceIndexManifest:
+        """Create a manifest preserving exact item and entry descriptors."""
+
+        if not isinstance(index, DataSourceIndex):
+            raise InvalidIndexCandidateError(
+                "DataSourceIndexCodec.to_manifest requires a DataSourceIndex.",
+                field="index",
+                actual=type(index).__name__,
+            )
+        return DataSourceIndexManifest(
+            schema_version=self.schema_version,
+            index_id=index.index_id,
+            metadata=index.metadata,
+            items=[item.to_dict() for item in index],
+            entries=[entry.to_dict() for entry in index.entries],
+        )
+
+    def from_manifest(self, manifest: DataSourceIndexManifest) -> DataSourceIndex:
+        """Reconstruct a datasource index from a validated manifest."""
+
+        if not isinstance(manifest, DataSourceIndexManifest):
+            raise InvalidIndexCandidateError(
+                "DataSourceIndexCodec.from_manifest requires a DataSourceIndexManifest.",
+                field="manifest",
+                actual=type(manifest).__name__,
+            )
+        items = [IndexItem.from_dict(item) for item in manifest.items]
+        entries = [DataSourceIndexEntry.from_dict(entry) for entry in manifest.entries]
+        return DataSourceIndex(
+            manifest.index_id,
+            items,
+            entries,
+            metadata=manifest.metadata,
+        )
+
+    def dumps(self, index: DataSourceIndex) -> str:
+        """Serialize an index manifest as deterministic JSON."""
+
+        return _canonical_json(self.to_manifest(index).to_dict())
+
+    def loads(self, payload: str) -> DataSourceIndex:
+        """Load an index from deterministic JSON manifest text."""
+
+        if not isinstance(payload, str):
+            raise InvalidIndexCandidateError(
+                "DataSourceIndexCodec.loads requires JSON text.",
+                field="payload",
+                actual=type(payload).__name__,
+            )
+        data = json.loads(payload)
+        return self.from_manifest(DataSourceIndexManifest.from_dict(data))
+
+    def dump(self, index: DataSourceIndex, path: str | Path) -> None:
+        """Write a deterministic JSON manifest to ``path``."""
+
+        Path(path).write_text(self.dumps(index), encoding="utf-8")
+
+    def load(self, path: str | Path) -> DataSourceIndex:
+        """Read a deterministic JSON manifest from ``path``."""
+
+        return self.loads(Path(path).read_text(encoding="utf-8"))
 
 
 def _coerce_plan_fields(
@@ -961,10 +1201,56 @@ def _non_negative_int(value: object, *, field: str) -> int:
     return value
 
 
+def _coerce_manifest_records(
+    values: Sequence[Mapping[str, object]],
+    *,
+    field: str,
+) -> tuple[Mapping[str, object], ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, Sequence):
+        raise InvalidIndexCandidateError(
+            "Manifest records must be a sequence.",
+            field=field,
+            actual=type(values).__name__,
+        )
+    records: list[Mapping[str, object]] = []
+    for value in values:
+        record = _require_mapping(value, field=field)
+        copied = dict(record)
+        json.loads(_canonical_json(copied))
+        records.append(MappingProxyType(copied))
+    return tuple(records)
+
+
+def _require_mapping(value: object, *, field: str) -> Mapping[str, object]:
+    if not isinstance(value, Mapping):
+        raise InvalidIndexCandidateError(
+            "Manifest values must be mappings.",
+            field=field,
+            actual=type(value).__name__,
+        )
+    return value
+
+
+def _require_keys(
+    value: Mapping[str, object],
+    keys: set[str],
+    *,
+    descriptor: str,
+) -> None:
+    actual = set(value)
+    if actual != keys:
+        raise InvalidIndexCandidateError(
+            "Manifest keys do not match the Stage 5 schema.",
+            descriptor=descriptor,
+            expected=sorted(keys),
+            actual=sorted(actual),
+        )
+
+
+def _canonical_json(value: Mapping[str, object]) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"))
+
+
 def _sha256(payload: Mapping[str, object]) -> str:
-    encoded = json.dumps(
-        payload,
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
+    encoded = _canonical_json(payload).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
