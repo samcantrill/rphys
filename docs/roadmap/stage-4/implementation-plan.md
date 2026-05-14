@@ -1,11 +1,11 @@
 # Roadmap Stage 4 Implementation Plan
 
-Status: reviewed; ready for maintainer approval
+Status: implementation in progress
 Roadmap version: `v4`
 Planning document: `docs/roadmap/stage-4/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: pending maintainer approval
+Current phase: Preparation Phase 2 pending
 Blockers: none identified by implementation-readiness review
 
 ## Summary
@@ -29,7 +29,7 @@ Blockers: none identified by implementation-readiness review
 - Review pass: completed 2026-05-14 / manager implementation-plan review
 - Refinement pass: completed 2026-05-14 / FR traceability added; updated after maintainer request to prepend two interface-cleanup phases and refine affected primary phases
 - Post-revision specialist review: completed 2026-05-14 / plan specialist review; no blocker found after adding preparation phases
-- Confirmation review: pending maintainer approval
+- Confirmation review: maintainer approved implementation 2026-05-14 / user request
 - Automatic merge mode: enabled
 - Worktree root: `/home/samcantrill/work/rphys-worktrees`
 - Phase status vocabulary: `pending`, `in_progress`, `pr_open`, `approved`, `merged`, `blocked`
@@ -38,7 +38,7 @@ Blockers: none identified by implementation-readiness review
 
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Prep 1 | `field-container-protocol` | pending | `agent/codecs-lazy-samples-prep1-field-container-protocol` | pending | `src/rphys/data/containers.py`, `src/rphys/data/contracts.py`, `src/rphys/data/collation.py`, `src/rphys/data/__init__.py`, runtime unit/contract/package tests | Add the public field-container protocol and public field-iteration surface before lazy fields widen runtime semantics. | targeted `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | Runtime compatibility and no private collation hook |
+| Prep 1 | `field-container-protocol` | merged | `agent/codecs-lazy-samples-prep1-field-container-protocol` | [#21](https://github.com/samcantrill/rphys/pull/21) | `src/rphys/data/containers.py`, `src/rphys/data/contracts.py`, `src/rphys/data/collation.py`, `src/rphys/data/__init__.py`, runtime unit/contract/package tests | Add the public field-container protocol and public field-iteration surface before lazy fields widen runtime semantics. | `make validate-pr`; targeted runtime/unit/package/contract checks; `git diff --check` | Runtime compatibility and no private collation hook |
 | Prep 2 | `field-spec-index-contracts` | pending | `agent/codecs-lazy-samples-prep2-field-spec-index-contracts` | pending | `src/rphys/data/fields.py`, datasource schema tests, IO index docs/tests, package/contract tests | Freeze `FieldSpec` and clarify `FieldIndex` as a subclass-based base interface. | targeted `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | Immutable datasource declarations and explicit index extension boundary |
 | 1 | `codec-contract-foundation` | pending | `agent/codecs-lazy-samples-p1-codec-contract-foundation` | pending | `src/rphys/io/codecs.py`, conditional `src/rphys/io/__init__.py`, exercised `src/rphys/errors.py`, package/unit import tests | Establish the Stage 4 IO public contract without runtime sample behavior. | `make test-package`; targeted `make test-unit`; `git diff --check` | EX-3, EX-6 |
 | 2 | `codec-registry-synthetic-ops` | pending | `agent/codecs-lazy-samples-p2-codec-registry-synthetic-ops` | pending | `src/rphys/io/codecs.py`, tests/support synthetic codec, IO unit/contract tests | Prove explicit codec resolution and dependency-light probe/load/save behavior. | targeted `make test-unit`; `make test-contract`; `make test-package` if exports change | EX-2, EX-3, EX-4, EX-5 |
@@ -54,11 +54,11 @@ Blockers: none identified by implementation-readiness review
 
 ## Preparation Phase 1: Field Container Protocol
 
-Status: pending
+Status: merged
 Slug: `field-container-protocol`
 Branch: `agent/codecs-lazy-samples-prep1-field-container-protocol`
 Worktree: `/home/samcantrill/work/rphys-worktrees/codecs-lazy-samples-prep1-field-container-protocol`
-PR: pending
+PR: [#21](https://github.com/samcantrill/rphys/pull/21)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -102,13 +102,13 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed in `docs/roadmap/stage-4/phases/field-container-protocol.md`
 - Planning/refinement budget: one phase planner pass; one refiner pass only if protocol typing exposes a loaded-runtime regression
 - Implementation/refinement budget: one executor pass; targeted refiner pass if existing runtime tests regress
 - PR review budget: one reviewer pass focused on public API minimality and compatibility
 - Blocker-resolution budget: return to planning if the protocol needs lazy-field-specific types before `SampleField` is implemented
-- Pre-submit blocker gate: existing runtime unit and contract tests remain green
-- Merge record: pending
+- Pre-submit blocker gate: passed after PR-review blocker resolution
+- Merge record: PR [#21](https://github.com/samcantrill/rphys/pull/21) squash-merged to `develop` at `c556572541df1b32a2d9625cc77993d53f57cdfd`
 
 ### Risks And Stop Conditions
 
@@ -118,11 +118,28 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added public `FieldContainer`, public `field_items()` on `Sample`/`Batch`, public-shape validation in `SampleContract`, public field iteration in LIST collation, and `rphys.data` export/package coverage.
+- Validation: `make validate-pr` passed after blocker fix: package 18, unit 257, contract 25, integration 1, e2e/acceptance not present, build succeeded, and `git diff --check` clean. Focused targeted runtime/package/contract checks also passed.
+- PR: [#21](https://github.com/samcantrill/rphys/pull/21) opened against `develop`; PR title and target verified.
+- Merge: squash-merged to `develop` 2026-05-14 at `c556572541df1b32a2d9625cc77993d53f57cdfd` via GitHub merge API after local validation and review.
+- Follow-up: `_field_items()` remains a private compatibility alias; later lazy-field work may widen annotations additively but must preserve the public method names. Cleanup of the phase worktree/branch is pending after metadata push.
+
+### Merge Record
+
+- Phase: Preparation Phase 1, `field-container-protocol`
+- Branch: `agent/codecs-lazy-samples-prep1-field-container-protocol`
+- PR: [#21](https://github.com/samcantrill/rphys/pull/21)
+- Base branch: `develop`
+- Merge command: `gh api --method PUT repos/samcantrill/rphys/pulls/21/merge --field merge_method=squash ...`
+- Merge result: merged
+- Merge commit: `c556572541df1b32a2d9625cc77993d53f57cdfd`
+- Branch cleanup: pending metadata push
+- Worktree cleanup: pending metadata push
+- Behavior implemented: public runtime field-container protocol, stable public field iteration, contract/collation use of public surface, and typed failures for malformed structural containers.
+- Tests and validation: targeted unit/package/contract checks passed; `make validate-pr` passed with 301 total tests across present suites.
+- Documentation: phase assignment, execution plan, PR body, and this merge record updated.
+- Scientific contract implications: no payload loading, datasource, codec, builder, sampling, alignment, metadata interpretation, or collation policy changes were introduced.
+- Remaining blockers: none.
 
 ## Preparation Phase 2: FieldSpec And FieldIndex Contract Tightening
 
