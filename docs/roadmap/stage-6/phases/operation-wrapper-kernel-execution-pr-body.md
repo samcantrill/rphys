@@ -33,7 +33,7 @@ without hidden context merging.
 - Title: `Stage 6 Operation Foundations And Functional Kernels - Phase 2: Operation Wrapper And Kernel Execution`
 - Base: `develop`
 - Head: `agent/stage-6-p2-operation-wrapper-kernel-execution`
-- Status: prepared only; PR not opened yet
+- Status: opened as [#40](https://github.com/samcantrill/rphys/pull/40)
 
 # Scientific Contract
 
