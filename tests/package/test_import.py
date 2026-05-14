@@ -113,6 +113,7 @@ STAGE_4_IO_EXPORTS = [
     "CodecCapabilities",
     "CodecLoadResult",
     "CodecProbeResult",
+    "CodecRegistry",
     "CodecSaveResult",
     "FieldCodec",
     "IOContext",
@@ -134,6 +135,15 @@ STAGE_3_IO_ERROR_NAMES = [
     "InvalidFieldViewError",
     "InvalidResourceRefError",
     "UnsupportedFieldIndexError",
+]
+
+STAGE_4_CODEC_ERROR_NAMES = [
+    "InvalidCodecError",
+    "CodecResolutionError",
+    "UnsupportedCodecOperationError",
+    "UnsupportedCodecIndexError",
+    "CodecDependencyError",
+    "CodecOperationError",
 ]
 
 STAGE_3_DATASOURCE_EXPORTS = [
@@ -183,6 +193,7 @@ def test_errors_import_and_expose_approved_error_categories() -> None:
         *STAGE_2_ERROR_NAMES,
         *STAGE_3_DATASOURCE_ERROR_NAMES,
         *STAGE_3_IO_ERROR_NAMES,
+        *STAGE_4_CODEC_ERROR_NAMES,
         *BROAD_ERROR_NAMES,
     ]
 
@@ -202,6 +213,7 @@ def test_root_package_does_not_reexport_error_classes() -> None:
         *STAGE_2_ERROR_NAMES,
         *STAGE_3_DATASOURCE_ERROR_NAMES,
         *STAGE_3_IO_ERROR_NAMES,
+        *STAGE_4_CODEC_ERROR_NAMES,
     ]:
         assert not hasattr(rphys, error_name)
 

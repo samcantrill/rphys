@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: ready for implementation
+- Status: implemented; ready for PR
 - Roadmap stage: `v4`
 - Feature focus: Codecs and lazy sample construction
 - Stage descriptor: Codecs And Lazy Sample Construction
@@ -529,11 +529,38 @@ uv lock --check
 ## Completion Notes
 
 - Draft plan: completed in this artifact
-- Final phase execution plan: committed before implementation
-- Implementation summary: pending
-- Implementation validation: pending
+- Final phase execution plan: implemented and locally validated
+- Implementation summary:
+  - Added explicit instance-local `CodecRegistry` behavior in
+    `rphys.io.codecs`, including deterministic ordered registration,
+    operation-specific resolution for probe/load/save, optional structural
+    `supports_*` predicates, save metadata-policy matching, typed result
+    validation, and no process-global registry or discovery behavior.
+  - Added exercised Stage 4 codec diagnostics for invalid codec shape,
+    resolution ambiguity/no-match, unsupported operation, unsupported indexed
+    materialization, dependency-unavailable operation boundaries, and invalid
+    operation results.
+  - Added private `tests.support.synthetic_codecs.SyntheticCodec` for
+    dependency-light probe/load/save validation. The fixture records call
+    counts, probes without loading, loads only supported unit-step temporal
+    slices, rejects unsupported indexes without full-load fallback, preserves
+    ordered resources on save, and exercises both metadata save policies.
+  - Added executable unit and contract coverage for EX-2, EX-3, EX-4, and
+    EX-5 while keeping root `rphys` and package-level `rphys.io` exports
+    unchanged.
+- Implementation validation:
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/unit/rphys/io/test_codec_registry.py tests/unit/rphys/io/test_codecs.py`: passed, 25 tests.
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/contracts/test_codec_contract.py tests/contracts/test_lazy_io_contract.py`: passed, 9 tests.
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/package/test_import.py tests/package/test_import_boundaries.py tests/unit/rphys/test_errors.py`: passed, 51 tests.
+  - `make test-package`: passed, 19 tests.
+  - `make test-unit`: passed, 284 tests before final synthetic-private assertion and 285 tests under `make validate-pr`.
+  - `make test-contract`: passed, 30 tests.
+  - `make validate-pr`: passed; lock check passed, harness summary wrote
+    `build/test-summary.md`, package 19, unit 285, contract 30, integration
+    1, e2e/acceptance not present, build succeeded, and `git diff --check`
+    was clean.
 - Refinement summary: not needed for planning
-- Pre-submit blocker gate: pending
+- Pre-submit blocker gate: passed after local validation and manager review
 - PR preparation: pending
 - Automated review: pending
 - Merge result: pending

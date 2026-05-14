@@ -23,6 +23,12 @@ __all__ = [
     "InvalidFieldViewError",
     "InvalidResourceRefError",
     "UnsupportedFieldIndexError",
+    "InvalidCodecError",
+    "CodecResolutionError",
+    "UnsupportedCodecOperationError",
+    "UnsupportedCodecIndexError",
+    "CodecDependencyError",
+    "CodecOperationError",
     "RemotePhysAnalysisError",
     "RemotePhysCodecError",
     "RemotePhysCollateError",
@@ -178,6 +184,30 @@ class InvalidFieldViewError(RemotePhysFieldError, RemotePhysSliceError, RemotePh
 
 class UnsupportedFieldIndexError(RemotePhysSliceError, RemotePhysIOError):
     """Raised when a serialized field index uses an unsupported Stage 3 tag."""
+
+
+class InvalidCodecError(RemotePhysCodecError):
+    """Raised when a registered codec object lacks the required shape."""
+
+
+class CodecResolutionError(RemotePhysCodecError):
+    """Raised when codec selection has no unique matching codec."""
+
+
+class UnsupportedCodecOperationError(RemotePhysCodecError):
+    """Raised when no registered codec declares support for an operation."""
+
+
+class UnsupportedCodecIndexError(RemotePhysCodecError, RemotePhysSliceError):
+    """Raised when a codec cannot materialize a requested field index."""
+
+
+class CodecDependencyError(RemotePhysCodecError, RemotePhysDependencyError):
+    """Raised when a codec operation cannot run because a dependency is absent."""
+
+
+class CodecOperationError(RemotePhysCodecError):
+    """Raised when a codec operation fails or returns an invalid result."""
 
 
 class InvalidDataSourceSchemaError(RemotePhysDataSourceError, RemotePhysFieldError):

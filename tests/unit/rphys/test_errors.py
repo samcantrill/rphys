@@ -48,6 +48,15 @@ STAGE_3_IO_ERROR_NAMES = [
     "UnsupportedFieldIndexError",
 ]
 
+STAGE_4_CODEC_ERROR_NAMES = [
+    "InvalidCodecError",
+    "CodecResolutionError",
+    "UnsupportedCodecOperationError",
+    "UnsupportedCodecIndexError",
+    "CodecDependencyError",
+    "CodecOperationError",
+]
+
 STAGE_3_DATASOURCE_ERROR_NAMES = [
     "InvalidDataSourceRefError",
     "InvalidDataSourceSchemaError",
@@ -63,6 +72,7 @@ def test_errors_public_surface_lists_only_implemented_error_names() -> None:
         *STAGE_2_ERROR_NAMES,
         *STAGE_3_DATASOURCE_ERROR_NAMES,
         *STAGE_3_IO_ERROR_NAMES,
+        *STAGE_4_CODEC_ERROR_NAMES,
         *BROAD_ERROR_NAMES,
     ]
 
@@ -170,6 +180,20 @@ def test_stage_3_io_errors_map_to_approved_categories() -> None:
     assert issubclass(errors.InvalidFieldViewError, errors.RemotePhysIOError)
     assert issubclass(errors.UnsupportedFieldIndexError, errors.RemotePhysSliceError)
     assert issubclass(errors.UnsupportedFieldIndexError, errors.RemotePhysIOError)
+
+
+def test_stage_4_codec_errors_map_to_approved_categories() -> None:
+    assert issubclass(errors.InvalidCodecError, errors.RemotePhysCodecError)
+    assert issubclass(errors.CodecResolutionError, errors.RemotePhysCodecError)
+    assert issubclass(
+        errors.UnsupportedCodecOperationError,
+        errors.RemotePhysCodecError,
+    )
+    assert issubclass(errors.UnsupportedCodecIndexError, errors.RemotePhysCodecError)
+    assert issubclass(errors.UnsupportedCodecIndexError, errors.RemotePhysSliceError)
+    assert issubclass(errors.CodecDependencyError, errors.RemotePhysCodecError)
+    assert issubclass(errors.CodecDependencyError, errors.RemotePhysDependencyError)
+    assert issubclass(errors.CodecOperationError, errors.RemotePhysCodecError)
 
 
 def test_stage_3_datasource_errors_map_to_approved_categories() -> None:
