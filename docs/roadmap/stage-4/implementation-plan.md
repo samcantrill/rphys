@@ -5,7 +5,7 @@ Roadmap version: `v4`
 Planning document: `docs/roadmap/stage-4/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Primary Phase 4 pending
+Current phase: Primary Phase 4 in progress
 Blockers: none identified by implementation-readiness review
 
 ## Summary
@@ -43,7 +43,7 @@ Blockers: none identified by implementation-readiness review
 | 1 | `codec-contract-foundation` | merged | `agent/codecs-lazy-samples-p1-codec-contract-foundation` | [#23](https://github.com/samcantrill/rphys/pull/23) | `src/rphys/io/codecs.py`, conditional `src/rphys/io/__init__.py`, exercised `src/rphys/errors.py`, package/unit import tests | Establish the Stage 4 IO public contract without runtime sample behavior. | `make validate-pr`; targeted codec/package/error checks; `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-3, EX-6 |
 | 2 | `codec-registry-synthetic-ops` | merged | `agent/codecs-lazy-samples-p2-codec-registry-synthetic-ops` | [#24](https://github.com/samcantrill/rphys/pull/24) | `src/rphys/io/codecs.py`, tests/support synthetic codec, IO unit/contract tests | Prove explicit codec resolution and dependency-light probe/load/save behavior. | `make validate-pr`; targeted codec/package/error checks; `make test-unit`; `make test-contract`; `make test-package`; `git diff --check`; PR-range `git diff --check` after blocker fix | EX-2, EX-3, EX-4, EX-5 |
 | 3 | `lazy-sample-field-runtime` | merged | `agent/codecs-lazy-samples-p3-lazy-sample-field-runtime` | [#25](https://github.com/samcantrill/rphys/pull/25) | `src/rphys/data/sample_fields.py`, additive `src/rphys/data/containers.py` updates, conditional `src/rphys/data/__init__.py`, data unit/contract tests | Add lazy `SampleField` handles while preserving loaded `Sample` semantics. | `make validate-pr`; targeted lazy-field/container/collation/package/contract checks; `make test-unit`; `make test-contract`; `make test-package`; PR-range `git diff --check` | EX-1 |
-| 4 | `sample-builder-provenance` | pending | `agent/codecs-lazy-samples-p4-sample-builder-provenance` | pending | `src/rphys/data/sample_builders.py`, conditional `src/rphys/data/__init__.py`, builder/provenance unit/contract tests | Build lazy `Sample`s from one `IndexItem` with all/subset/one/probe/eager paths. | targeted `make test-unit`; `make test-contract`; optional `make test-integration` only for one adopted vertical slice | EX-1, EX-2, EX-5 |
+| 4 | `sample-builder-provenance` | in_progress | `agent/codecs-lazy-samples-p4-sample-builder-provenance` | pending | `src/rphys/data/sample_builders.py`, conditional `src/rphys/data/__init__.py`, builder/provenance unit/contract tests | Build lazy `Sample`s from one `IndexItem` with all/subset/one/probe/eager paths. | targeted `make test-unit`; `make test-contract`; optional `make test-integration` only for one adopted vertical slice | EX-1, EX-2, EX-5 |
 | 5 | `closeout-docs-validation` | pending | `agent/codecs-lazy-samples-p5-closeout-docs-validation` | pending | public docstrings/docs/examples, package expectations, final validation evidence | Harden docs, examples, contracts, import checks, and final validation without adding new behavior. | `make test-package`; `make test-unit`; `make test-contract`; `git diff --check`; broaden as needed | EX-1 through EX-6 |
 
 ## Implementation Readiness Blockers
@@ -499,7 +499,7 @@ Workflow path: expanded path if runtime compatibility review finds accessor ambi
 
 ## Phase 4: `SampleBuilder` Bridge And Provenance Contracts
 
-Status: pending
+Status: in_progress
 Slug: `sample-builder-provenance`
 Branch: `agent/codecs-lazy-samples-p4-sample-builder-provenance`
 Worktree: `/home/samcantrill/work/rphys-worktrees/codecs-lazy-samples-p4-sample-builder-provenance`
@@ -551,7 +551,7 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed in `docs/roadmap/stage-4/phases/sample-builder-provenance.md`
 - Planning/refinement budget: one phase planner pass; one refiner pass available because this is the main bridge behavior phase
 - Implementation/refinement budget: one executor pass; targeted refiner pass for validation or review blocker
 - PR review budget: one reviewer pass with focus on scientific provenance and scope boundaries
@@ -567,11 +567,11 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
+- Implementation: added canonical `rphys.data.sample_builders` public records and bridge behavior: explicit `SampleBuildContext`, `SampleBuilder`, `SampleFieldProvenance`, and `SampleProbeResult`; all/subset/one requested-locator builds; atomic missing-request prevalidation; probe without load; eager loading through retained `SampleField` handles; builder-side provenance on built handles without adding datasource fields to `LoadContext`; copy-safe built lazy handles; and package import-boundary coverage without a `rphys.data` re-export.
+- Validation: focused `uv run pytest tests/unit/rphys/data/test_sample_builders.py tests/unit/rphys/data/test_sample_fields.py tests/contracts/test_lazy_sample_builder_contract.py tests/contracts/test_lazy_sample_field_contract.py tests/package/test_import.py tests/package/test_import_boundaries.py` passed 51 tests; `make test-package` passed 22; `make test-unit` passed 309; `make test-contract` passed 38; `make validate-pr` passed lock check, package 22, unit 309, contract 38, integration 1, build, and `git diff --check`.
 - PR: pending
 - Merge: pending
-- Follow-up: pending
+- Follow-up: Phase 5 still owns closeout docs/examples and final validation hardening; no integration vertical slice was added because focused unit and contract tests directly cover the bridge risk.
 
 ## Phase 5: Closeout Docs, Examples, And Validation Hardening
 

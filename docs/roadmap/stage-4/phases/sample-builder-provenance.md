@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: draft phase execution plan
+- Status: implementation complete; PR preparation pending
 - Roadmap stage: `v4`
 - Feature focus: Codecs and lazy sample construction
 - Stage descriptor: Codecs And Lazy Sample Construction
@@ -535,12 +535,22 @@ git diff --check origin/develop...HEAD
 - Draft plan: completed in this artifact
 - Final phase execution plan: this artifact is ready for implementation unless
   manager review requests changes
-- Implementation summary: pending
-- Implementation validation: pending
+- Implementation summary: added canonical `rphys.data.sample_builders` with
+  `SampleBuildContext`, `SampleBuilder`, `SampleFieldProvenance`, and
+  `SampleProbeResult`; implemented all/subset/one requested-locator selection,
+  atomic missing-request prevalidation, lazy/eager `SampleField` construction,
+  probe without load, copy-safe built lazy handles, and builder-side provenance
+  that keeps `LoadContext` datasource-neutral.
+- Implementation validation: focused builder/field/contract/package pytest
+  passed 51 tests; `make test-package` passed 22; `make test-unit` passed 309;
+  `make test-contract` passed 38; `make validate-pr` passed lock check,
+  package 22, unit 309, contract 38, integration 1, build, and
+  `git diff --check`.
 - Refinement summary: pending
-- Pre-submit blocker gate: pending; must confirm no partial sample creation on
-  missing requested locators, no probe load, no descriptor mutation, and no
-  datasource provenance pushed into codec contexts
+- Pre-submit blocker gate: passed locally; tests confirm no partial sample
+  creation on missing requested locators, no probe load, no descriptor
+  mutation, ordered resource retention, and no datasource provenance pushed into
+  codec contexts.
 - PR preparation: pending
 - Automated review: pending
 - Merge result: pending
