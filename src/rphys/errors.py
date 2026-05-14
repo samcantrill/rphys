@@ -40,6 +40,8 @@ __all__ = [
     "InvalidOperationContractError",
     "InvalidOperationContextError",
     "InvalidOperationResultError",
+    "InvalidOperationInputError",
+    "OperationExecutionError",
     "RemotePhysAnalysisError",
     "RemotePhysCodecError",
     "RemotePhysCollateError",
@@ -111,6 +113,14 @@ class InvalidOperationContextError(RemotePhysOperationError):
 
 class InvalidOperationResultError(RemotePhysOperationError):
     """Raised when an operation result record is invalid."""
+
+
+class InvalidOperationInputError(RemotePhysOperationError):
+    """Raised when an operation input value is incompatible with contract."""
+
+
+class OperationExecutionError(RemotePhysOperationError):
+    """Raised when an operation callable raises during execution."""
 
 
 class RemotePhysPipelineError(RemotePhysError):
