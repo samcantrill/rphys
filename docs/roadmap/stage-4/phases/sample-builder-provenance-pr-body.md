@@ -4,7 +4,7 @@
   `SampleBuilder`, `SampleFieldProvenance`, and `SampleProbeResult`.
 - Build all, subset, and one requested lazy `SampleField` handles from one
   `IndexItem`, with atomic missing-request validation, optional eager loading,
-  and probe without load.
+  `build_one` exactly-one input validation, and probe without load.
 - Preserve builder-side provenance on built handles while keeping
   `LoadContext` datasource-neutral and package imports lightweight.
 
@@ -32,9 +32,11 @@
   - 38 passed
 - `make validate-pr`
   - lock check passed
-  - package 22, unit 309, contract 38, integration 1 passed
+  - package 22, unit 310, contract 38, integration 1 passed
   - build passed
   - `git diff --check` passed
+- `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/unit/rphys/data/test_sample_builders.py tests/contracts/test_lazy_sample_builder_contract.py`
+  - 16 passed after review fix
 - `make test-summary`
   - package 22, unit 309, contract 38, integration 1 passed
 - `git diff --check origin/develop...HEAD`

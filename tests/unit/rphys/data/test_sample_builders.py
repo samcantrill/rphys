@@ -151,6 +151,17 @@ def test_duplicate_and_malformed_requested_locators_fail_loudly() -> None:
     assert duplicate.value.context["duplicates"] == [str(VIDEO)]
 
 
+def test_build_one_rejects_iterable_locator_inputs() -> None:
+    fixture = make_builder_fixture()
+
+    with pytest.raises(FieldTypeError) as exc_info:
+        fixture.builder.build_one(fixture.item, [VIDEO, BVP])  # type: ignore[arg-type]
+
+    assert exc_info.value.context["field"] == "locator"
+    assert fixture.video_codec.load_calls == 0
+    assert fixture.bvp_codec.load_calls == 0
+
+
 def test_probe_returns_results_without_loading_payloads() -> None:
     fixture = make_builder_fixture()
 

@@ -538,19 +538,20 @@ git diff --check origin/develop...HEAD
 - Implementation summary: added canonical `rphys.data.sample_builders` with
   `SampleBuildContext`, `SampleBuilder`, `SampleFieldProvenance`, and
   `SampleProbeResult`; implemented all/subset/one requested-locator selection,
-  atomic missing-request prevalidation, lazy/eager `SampleField` construction,
-  probe without load, copy-safe built lazy handles, and builder-side provenance
-  that keeps `LoadContext` datasource-neutral.
+  atomic missing-request prevalidation, exactly-one `build_one` input
+  validation, lazy/eager `SampleField` construction, probe without load,
+  copy-safe built lazy handles, and builder-side provenance that keeps
+  `LoadContext` datasource-neutral.
 - Implementation validation: focused builder/field/contract/package pytest
   passed 51 tests; `make test-package` passed 22; `make test-unit` passed 309;
-  `make test-contract` passed 38; `make validate-pr` passed lock check,
-  package 22, unit 309, contract 38, integration 1, build, and
-  `git diff --check`.
+  `make test-contract` passed 38; review-fix focused builder/contract pytest
+  passed 16 tests; final `make validate-pr` passed lock check, package 22,
+  unit 310, contract 38, integration 1, build, and `git diff --check`.
 - Refinement summary: pending
 - Pre-submit blocker gate: passed locally; tests confirm no partial sample
-  creation on missing requested locators, no probe load, no descriptor
-  mutation, ordered resource retention, and no datasource provenance pushed into
-  codec contexts.
+  creation on missing requested locators, `build_one` rejects iterable locator
+  inputs, no probe load, no descriptor mutation, ordered resource retention,
+  and no datasource provenance pushed into codec contexts.
 - PR preparation: [#26](https://github.com/samcantrill/rphys/pull/26)
   opened against `develop` with the required Phase 4 title
 - Automated review: pending

@@ -262,6 +262,12 @@ class SampleBuilder:
         """Build one lazy field handle from ``index_item``."""
 
         item = _require_index_item(index_item)
+        if not isinstance(locator, (FieldLocator, str)):
+            raise FieldTypeError(
+                "SampleBuilder.build_one requires exactly one locator.",
+                field="locator",
+                actual=type(locator).__name__,
+            )
         selected = _select_locators(item, locator)
         field = self._make_field(item, selected[0])
         if eager:
