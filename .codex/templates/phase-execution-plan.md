@@ -5,7 +5,9 @@
 - Status: draft phase execution plan
 - Roadmap stage: `v<N>`
 - Feature focus:
-- PR title:
+- Stage descriptor:
+- Phase descriptor:
+- PR title: `Stage <N> <Stage-Descriptor> - Phase <M>: <Phase-Descriptor>`
 - Branch: `agent/<roadmap-slug>-p<p>-<phase-slug>`
 - Worktree: `/home/samcantrill/work/rphys-worktrees/<roadmap-slug>-p<p>-<phase-slug>`
 - Phase execution plan path: `docs/roadmap/stage-<N>/phases/<phase-slug>.md`

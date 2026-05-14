@@ -71,9 +71,15 @@ Hard requirements:
   artifact and stop before GitHub-dependent work.
 - Always open phase PRs with explicit base/head/title flags. Root phase PRs
   target `develop`.
+- Phase PR titles must use
+  `Stage <N> <Stage-Descriptor> - Phase <M>: <Phase-Descriptor>`. Use the
+  roadmap milestone heading after `Milestone <N>:` as the stage descriptor and
+  the selected implementation-plan heading after `Phase <M>:` as the phase
+  descriptor.
 - Immediately verify each opened or discovered phase PR with
-  `gh pr view <PR> --json baseRefName,headRefName,state,url`. Stop if
-  `baseRefName` is not `develop`.
+  `gh pr view <PR> --json baseRefName,headRefName,state,title,url`. Stop if
+  `baseRefName` is not `develop` or the title does not match the required
+  phase PR title.
 
 ## Fast Path And Expanded Path
 
@@ -179,8 +185,9 @@ For each phase:
    The phase branch must not be reused for a different phase. If the branch or
    worktree already exists, verify it matches the selected phase and is not
    carrying unrelated work before continuing.
-6. Record branch, base branch `develop`, target branch `develop`, PR title,
-   worktree path, workflow path, and budget state in the phase assignment.
+6. Record branch, base branch `develop`, target branch `develop`, stage
+   descriptor, phase descriptor, canonical PR title, worktree path, workflow
+   path, and budget state in the phase assignment.
 7. Assign phase execution plan drafting to `rphys_phase_planner` using
    `.codex/prompts/phase-execution-plan-draft.md`.
 8. Decide whether expanded-path triggers apply. On the fast path, treat the
@@ -210,13 +217,14 @@ For each phase:
    remains, no concrete new remedy exists, the blocker is out of scope, or all
    three blocker-resolution passes are used, mark the phase `blocked` and stop.
 14. After the pre-submit blocker gate passes, push the phase branch, open the
-   phase PR with explicit base/head/title targeting `develop`, and record
-   `pr_open` metadata in the implementation plan without overwriting unrelated
-   content. If branch push or PR creation fails, mark the phase `blocked` and
-   stop.
+   phase PR with explicit base/head/title targeting `develop`, using the
+   canonical phase PR title, and record `pr_open` metadata in the implementation
+   plan without overwriting unrelated content. If branch push or PR creation
+   fails, mark the phase `blocked` and stop.
 15. Verify the PR target with `gh pr view <PR>
-   --json baseRefName,headRefName,state,url,mergedAt,reviewDecision,statusCheckRollup`.
-   Stop if the PR target is not `develop`.
+   --json baseRefName,headRefName,state,title,url,mergedAt,reviewDecision,statusCheckRollup`.
+   Stop if the PR target is not `develop` or the title does not match the
+   canonical phase PR title.
 16. Mark automated phase review approved only if:
    - the explanation matches the implementation
    - assigned acceptance criteria are satisfied

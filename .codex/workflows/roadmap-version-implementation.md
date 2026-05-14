@@ -78,10 +78,21 @@ Manager responsibilities:
 - Run or record relevant targeted checks plus `make validate-pr` and
   `make test-summary` before PR submission unless unavailable.
 - Open exactly one phase PR per phase with explicit base/head/title and target
-  `develop`; do not bundle multiple phases into one PR, stack routine phase
-  branches, or record local-only implementation as phase completion.
+  `develop`; PR titles must use
+  `Stage <N> <Stage-Descriptor> - Phase <M>: <Phase-Descriptor>`; do not bundle
+  multiple phases into one PR, stack routine phase branches, or record
+  local-only implementation as phase completion.
 - Poll CI and merge eligible phase PRs into `develop` without waiting for human
   GitHub approval; use admin merge authority only for review-only branch
   protection when automated gates pass.
 - Record merge metadata in the implementation plan and clean up phase branches
   and worktrees when safe.
+
+PR title descriptors:
+
+- Stage descriptor: use the roadmap milestone heading after `Milestone <N>:` in
+  `docs/roadmap.md`, preserving its title text.
+- Phase descriptor: use the selected implementation-plan heading after
+  `Phase <M>:` in `docs/roadmap/stage-<N>/implementation-plan.md`, preserving
+  its title text.
+- Example: `Stage 3 Lazy References And Index Items - Phase 2: IO Descriptors And Temporal Indexes`.

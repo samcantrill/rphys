@@ -41,7 +41,9 @@ the limitation in the phase execution plan.
 
 The draft phase execution plan must include:
 
-1. Branch, worktree, PR target `develop`, and intended PR title.
+1. Branch, worktree, PR target `develop`, stage descriptor, phase descriptor,
+   and intended PR title using
+   `Stage <N> <Stage-Descriptor> - Phase <M>: <Phase-Descriptor>`.
 2. Source implementation plan and source phase.
 3. Workflow path: fast path by default or expanded path when assigned.
 4. Objective, full-plan context, in-scope work, out-of-scope work, assumptions,

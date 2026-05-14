@@ -17,6 +17,9 @@ Task:
    implications, tests, risks, and follow-ups.
 3. Confirm the pre-submit blocker gate has no unresolved known blockers.
 4. Open or prepare the PR against `develop` with explicit base/head/title flags.
+   The title must match
+   `Stage <N> <Stage-Descriptor> - Phase <M>: <Phase-Descriptor>` from the phase
+   execution plan.
 5. Verify the opened PR target and record facts in the phase execution plan.
 
 Rules:

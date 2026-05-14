@@ -38,10 +38,11 @@ Task:
 10. On the fast path, open the PR if GitHub tooling and authentication are
    available. Use explicit `--base develop`,
    `--head agent/<roadmap-slug>-p<n>-<phase-slug>`, and `--title` flags from
-   the phase execution plan.
+   the phase execution plan. The title must match
+   `Stage <N> <Stage-Descriptor> - Phase <M>: <Phase-Descriptor>`.
 11. Verify an opened PR with
-   `gh pr view <PR> --json baseRefName,headRefName,state,url` and confirm
-   `baseRefName` is `develop`.
+   `gh pr view <PR> --json baseRefName,headRefName,state,title,url` and confirm
+   `baseRefName` is `develop` and `title` matches the phase execution plan.
 
 Rules:
 

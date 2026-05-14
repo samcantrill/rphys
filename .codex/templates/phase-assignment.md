@@ -7,11 +7,13 @@
 - Source phase:
 - Roadmap slug:
 - Phase slug:
+- Stage descriptor:
+- Phase descriptor:
 - Branch: `agent/<roadmap-slug>-p<p>-<phase-slug>`
 - Worktree: `/home/samcantrill/work/rphys-worktrees/<roadmap-slug>-p<p>-<phase-slug>`
 - Base branch: `develop`
 - Target branch: `develop`
-- PR title:
+- PR title: `Stage <N> <Stage-Descriptor> - Phase <M>: <Phase-Descriptor>`
 - Workflow path: fast path / expanded path
 - Expanded-path trigger:
 - Plan quality gate:
