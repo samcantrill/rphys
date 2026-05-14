@@ -215,7 +215,9 @@ STAGE_5_DATASOURCE_MODULES = {
     ],
     "rphys.datasources.indexes": [
         "DataSourceIndex",
+        "DataSourceIndexCodec",
         "DataSourceIndexEntry",
+        "DataSourceIndexManifest",
         "IndexCandidate",
         "IndexCandidatePlan",
         "IndexCandidateResult",
