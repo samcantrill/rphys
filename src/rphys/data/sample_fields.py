@@ -35,7 +35,10 @@ class SampleField(FieldValue):
 
     The handle keeps the datasource-neutral ``LoadContext`` and a private
     loader callable. It does not know about datasource records, index items,
-    retry policy, caches, builders, or export behavior.
+    retry policy, caches, builders, or export behavior. ``field()`` access on a
+    ``Sample`` returns the handle unchanged; ``payload`` access, ``get()``,
+    ``require()``, contracts, collation, and ``eager_load()`` may materialize
+    once and then retain either the load result or the failure.
     """
 
     __slots__ = (

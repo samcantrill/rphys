@@ -5,7 +5,7 @@ Roadmap version: `v4`
 Planning document: `docs/roadmap/stage-4/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Primary Phase 5 pending
+Current phase: Primary Phase 5 PR open
 Blockers: none identified by implementation-readiness review
 
 ## Summary
@@ -44,7 +44,7 @@ Blockers: none identified by implementation-readiness review
 | 2 | `codec-registry-synthetic-ops` | merged | `agent/codecs-lazy-samples-p2-codec-registry-synthetic-ops` | [#24](https://github.com/samcantrill/rphys/pull/24) | `src/rphys/io/codecs.py`, tests/support synthetic codec, IO unit/contract tests | Prove explicit codec resolution and dependency-light probe/load/save behavior. | `make validate-pr`; targeted codec/package/error checks; `make test-unit`; `make test-contract`; `make test-package`; `git diff --check`; PR-range `git diff --check` after blocker fix | EX-2, EX-3, EX-4, EX-5 |
 | 3 | `lazy-sample-field-runtime` | merged | `agent/codecs-lazy-samples-p3-lazy-sample-field-runtime` | [#25](https://github.com/samcantrill/rphys/pull/25) | `src/rphys/data/sample_fields.py`, additive `src/rphys/data/containers.py` updates, conditional `src/rphys/data/__init__.py`, data unit/contract tests | Add lazy `SampleField` handles while preserving loaded `Sample` semantics. | `make validate-pr`; targeted lazy-field/container/collation/package/contract checks; `make test-unit`; `make test-contract`; `make test-package`; PR-range `git diff --check` | EX-1 |
 | 4 | `sample-builder-provenance` | merged | `agent/codecs-lazy-samples-p4-sample-builder-provenance` | [#26](https://github.com/samcantrill/rphys/pull/26) | `src/rphys/data/sample_builders.py`, conditional `src/rphys/data/__init__.py`, builder/provenance unit/contract tests | Build lazy `Sample`s from one `IndexItem` with all/subset/one/probe/eager paths. | targeted `make test-unit`; `make test-contract`; optional `make test-integration` only for one adopted vertical slice | EX-1, EX-2, EX-5 |
-| 5 | `closeout-docs-validation` | pending | `agent/codecs-lazy-samples-p5-closeout-docs-validation` | pending | public docstrings/docs/examples, package expectations, final validation evidence | Harden docs, examples, contracts, import checks, and final validation without adding new behavior. | `make test-package`; `make test-unit`; `make test-contract`; `git diff --check`; broaden as needed | EX-1 through EX-6 |
+| 5 | `closeout-docs-validation` | pr_open | `agent/codecs-lazy-samples-p5-closeout-docs-validation` | [#27](https://github.com/samcantrill/rphys/pull/27) | public docstrings/docs/examples, package expectations, final validation evidence | Harden docs, examples, contracts, import checks, and final validation without adding new behavior. | `make test-package`; `make test-unit`; `make test-contract`; `git diff --check`; broaden as needed | EX-1 through EX-6 |
 
 ## Implementation Readiness Blockers
 
@@ -592,11 +592,11 @@ Workflow path: expanded path
 
 ## Phase 5: Closeout Docs, Examples, And Validation Hardening
 
-Status: pending
+Status: pr_open
 Slug: `closeout-docs-validation`
 Branch: `agent/codecs-lazy-samples-p5-closeout-docs-validation`
 Worktree: `/home/samcantrill/work/rphys-worktrees/codecs-lazy-samples-p5-closeout-docs-validation`
-PR: pending
+PR: [#27](https://github.com/samcantrill/rphys/pull/27)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path unless validation exposes behavioral regressions
@@ -644,7 +644,7 @@ Workflow path: fast path unless validation exposes behavioral regressions
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed in `docs/roadmap/stage-4/phases/closeout-docs-validation.md`
 - Planning/refinement budget: one phase planner pass; one refiner pass only for validation blocker
 - Implementation/refinement budget: one executor pass; targeted refiner pass if final checks fail
 - PR review budget: one reviewer pass with emphasis on closeout drift and documentation accuracy
@@ -660,9 +660,9 @@ Workflow path: fast path unless validation exposes behavioral regressions
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
+- Implementation: updated README status to reflect the implemented Stage 1-4 public contracts; expanded glossary entries for `FieldCodec`, `CodecRegistry`, `LoadContext`, `SaveContext`, `SampleField`, and `SampleBuilder`; clarified public docstrings for `FieldContainer`, `SampleField`, `SampleBuildContext`, `SampleFieldProvenance`, `SampleProbeResult`, `SampleBuilder`, `LoadContext`, and `SaveContext`; added Phase 5 assignment and execution-plan artifacts. No new runtime behavior, public exports, real codecs, datasource scanning, export behavior, cache policy, or model formatting was introduced.
+- Validation: `make test-package` passed 22; `make test-unit` passed 310; `make test-contract` passed 38; `make validate-pr` passed lock check, package 22, unit 310, contract 38, integration 1, build, and `git diff --check`; final `make test-summary` passed package 22, unit 310, contract 38, integration 1; `make test` passed 371. A concurrent `make test-summary` run during `make validate-pr` produced an inconsistent summary status while reporting zero failed tests; rerunning `make test-summary` alone passed.
+- PR: [#27](https://github.com/samcantrill/rphys/pull/27) opened against `develop` with title `Stage 4 Codecs And Lazy Sample Construction - Phase 5: Closeout Docs, Examples, And Validation Hardening`.
 - Merge: pending
 - Follow-up: pending
 

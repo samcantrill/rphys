@@ -15,10 +15,18 @@ Start with:
 
 ## Current Status
 
-Milestone 0 provides the repository skeleton and governance baseline. Planned
-package homes are importable, but they intentionally expose empty `__all__`
-surfaces until behavior is documented and tested. Public API stability requires
-code, tests, and roadmap or docstring coverage to agree on the contract.
+The rebuild has implemented the early public contracts for naming vocabulary,
+runtime field containers, lazy IO descriptors, codec contracts, explicit codec
+registries, lazy `SampleField` handles, and one-item `SampleBuilder`
+construction from `IndexItem` descriptors. Later roadmap stages still own
+datasource discovery, operations, export orchestration, training adapters, real
+codec catalogs, and project-specific workflows.
+
+Public API stability requires code, tests, and roadmap or docstring coverage to
+agree on the contract. Focused modules such as `rphys.io.codecs`,
+`rphys.data.sample_fields`, and `rphys.data.sample_builders` are the canonical
+homes for Stage 4 names unless package tests explicitly cover a package-level
+re-export.
 
 Core imports are intentionally lightweight. Importing `rphys`, `rphys.errors`,
 or the planned package homes must not import optional scientific, video,
