@@ -5,7 +5,7 @@ Roadmap version: `v6`
 Planning document: `docs/roadmap/stage-6/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 1 pending
+Current phase: Phase 1 pr_open
 Blockers: none
 
 ## Summary
@@ -38,7 +38,7 @@ Blockers: none
 
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `public-schemas-imports-errors` | pending | `agent/stage-6-p1-public-schemas-imports-errors` | pending | `src/rphys/ops` schema/context/kernel vocabulary, `src/rphys/errors.py`, package/import tests | Establish code-backed provisional public surface and minimal declaration records | package/import, unit contract/context, error inheritance if exercised, `git diff --check` | contract/context/result construction |
+| 1 | `public-schemas-imports-errors` | pr_open | `agent/stage-6-p1-public-schemas-imports-errors` | [#38](https://github.com/samcantrill/rphys/pull/38) | `src/rphys/ops` schema/context/kernel vocabulary, `src/rphys/errors.py`, package/import tests | Establish code-backed provisional public surface and minimal declaration records | package/import, unit contract/context, error inheritance if exercised, `git diff --check` | contract/context/result construction |
 | 2 | `operation-wrapper-kernel-execution` | pending | `agent/stage-6-p2-operation-wrapper-kernel-execution` | pending | `Operation` wrapper/core execution and kernel examples/tests | Implement single-operation wrapper execution and kernel boundary | unit core/kernel, execution contract, package/import regression | plain kernel direct/wrapped use |
 | 3 | `ordered-pipeline-composition` | pending | `agent/stage-6-p3-ordered-pipeline-composition` | pending | `OperationPipeline` and pipeline tests | Implement ordered sequence pipeline composition | unit pipeline, pipeline contract, package/import regression | two-step primitive pipeline |
 | 4 | `runtime-boundary-docs` | pending | `agent/stage-6-p4-runtime-boundary-docs` | pending | runtime-boundary test, operation docs/docstrings/examples | Prove runtime/lazy compatibility and document Stage 6 boundaries | integration or contract runtime-boundary test, docs review, `git diff --check` | generic `Sample`/`Batch` payload, mutation/side-effect declarations |
@@ -64,11 +64,11 @@ Blockers: none
 
 ## Phase 1: Public Schemas, Imports, And Errors
 
-Status: pending
+Status: pr_open
 Slug: `public-schemas-imports-errors`
 Branch: `agent/stage-6-p1-public-schemas-imports-errors`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-6-p1-public-schemas-imports-errors`
-PR: pending
+PR: [#38](https://github.com/samcantrill/rphys/pull/38)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -132,7 +132,7 @@ Workflow path: expanded path
 
 - Implementation: pending
 - Validation: pending
-- PR: pending
+- PR: [#38](https://github.com/samcantrill/rphys/pull/38) opened against `develop`
 - Merge: pending
 - Follow-up: pending
 
