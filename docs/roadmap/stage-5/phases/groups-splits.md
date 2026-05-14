@@ -72,6 +72,6 @@ git diff --check
 - Pre-submit blocker gate: passed; no implicit ratios, trainer/evaluator semantics, post-split filtering, or final index persistence.
 - PR preparation: PR body drafted at `docs/roadmap/stage-5/phases/groups-splits-pr-body.md`; PR #32 opened and verified against `develop`.
 - Automated review: manager expanded-path review passed before PR submission; GitHub checks pending/not configured at open.
-- Merge result: pending.
-- Cleanup: pending.
+- Merge result: PR #32 squash-merged to `develop` at `c8ec1454c08e65ea73c3e61c1f651217a30f220c` on 2026-05-14.
+- Cleanup: pending worktree and branch removal after metadata commit.
 - Remaining blockers: none.
