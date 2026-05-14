@@ -5,7 +5,7 @@
 - Status: final phase execution plan
 - Roadmap stage: `v3`
 - Feature focus: Stage 3 lazy-reference contract hardening
-- PR title: `Stage 3 P5: lazy reference hardening`
+- PR title: `Stage 3 Lazy References And Index Items - Phase 5: Contract Examples, Docs, And Final Validation Hardening`
 - Branch: `agent/stage-3-p5-lazy-reference-hardening`
 - Worktree: `/home/samcantrill/work/rphys-worktrees/stage-3-p5-lazy-reference-hardening`
 - Phase execution plan path: `docs/roadmap/stage-3/phases/lazy-reference-hardening.md`

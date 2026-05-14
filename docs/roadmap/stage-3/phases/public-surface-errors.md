@@ -5,7 +5,7 @@
 - Status: final phase execution plan
 - Roadmap stage: `v3`
 - Feature focus: Stage 3 public package homes and diagnostics guardrails
-- PR title: `Stage 3 P1: public surface and diagnostics guardrails`
+- PR title: `Stage 3 Lazy References And Index Items - Phase 1: Public Surface And Diagnostics`
 - Branch: `agent/stage-3-p1-public-surface-errors`
 - Worktree: `/home/samcantrill/work/rphys-worktrees/stage-3-p1-public-surface-errors`
 - Phase execution plan path: `docs/roadmap/stage-3/phases/public-surface-errors.md`

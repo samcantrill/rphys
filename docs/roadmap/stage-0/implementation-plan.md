@@ -49,6 +49,7 @@ Slug: `core-skeleton-errors`
 Branch: `agent/stage-0-p1-core-skeleton-errors`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-0-p1-core-skeleton-errors`
 PR: [#2](https://github.com/samcantrill/rphys/pull/2)
+PR title: `Stage 0 Repository Skeleton And Governance - Phase 1: Core Skeleton And Base Errors`
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -118,6 +119,7 @@ Slug: `governance-guardrails`
 Branch: `agent/stage-0-p2-governance-guardrails`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-0-p2-governance-guardrails`
 PR: [#3](https://github.com/samcantrill/rphys/pull/3)
+PR title: `Stage 0 Repository Skeleton And Governance - Phase 2: Governance Guardrail Tests`
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -188,6 +190,7 @@ Slug: `readme-final-validation`
 Branch: `agent/stage-0-p3-readme-final-validation`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-0-p3-readme-final-validation`
 PR: [#4](https://github.com/samcantrill/rphys/pull/4)
+PR title: `Stage 0 Repository Skeleton And Governance - Phase 3: README Handoff And Final Validation`
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path

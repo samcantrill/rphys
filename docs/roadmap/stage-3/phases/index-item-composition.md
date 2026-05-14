@@ -5,7 +5,7 @@
 - Status: final phase execution plan
 - Roadmap stage: `v3`
 - Feature focus: role-qualified lazy index items
-- PR title: `Stage 3 P4: IndexItem composition`
+- PR title: `Stage 3 Lazy References And Index Items - Phase 4: Role-Qualified IndexItem Composition`
 - Branch: `agent/stage-3-p4-index-item-composition`
 - Worktree: `/home/samcantrill/work/rphys-worktrees/stage-3-p4-index-item-composition`
 - Phase execution plan path: `docs/roadmap/stage-3/phases/index-item-composition.md`

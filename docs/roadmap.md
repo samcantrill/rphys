@@ -766,9 +766,11 @@ DataSourceSchema
 Object rules:
 
 ```text
-ResourceRef identifies physical storage through URI/protocol/storage options.
-It is not an ArtifactRef, stage output handle, artifact store object, or
-workflow lifecycle primitive.
+ResourceRef identifies an addressable storage target through
+URI/protocol/storage options. The URI may be the most precise target a
+protocol or format can name, such as a file, shard, array, stream, archive
+entry, or URI fragment, but that target remains storage identity and is not a
+DataKey, codec key, runtime role, or workflow lifecycle primitive.
 
 DataSourceRef represents a datasource or datasource view without loaded payloads.
 
@@ -852,6 +854,9 @@ Codec rules:
 
 ```text
 A codec loads a FieldView, not a path and not a role-qualified sample field.
+Codecs interpret ResourceRef URI syntax, including protocol- or
+format-specific internal targets such as fragments or structured paths; Stage 3
+refs preserve those URI strings without parsing or normalizing them.
 probe returns normalized lightweight metadata or FieldSpec without full payload
 loading.
 load respects FieldView.field_index.
@@ -985,6 +990,8 @@ monitoring, and analysis.
 SplitBuilder consumes GroupResult for group-disjoint behavior.
 IndexBuilder creates DataSourceIndex items with FieldViews only.
 Durable indexes use schema-versioned JSON/JSONL-like manifests, not pickle.
+Index manifests preserve ResourceRef URI/protocol/storage_options and own any
+canonicalization or fingerprint policy for those resource identities.
 ```
 
 Definition of done:

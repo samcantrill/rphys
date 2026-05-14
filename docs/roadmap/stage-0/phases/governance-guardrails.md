@@ -5,7 +5,7 @@
 - Status: complete
 - Roadmap stage: `v0`
 - Feature focus: package governance guardrails
-- PR title: `Stage 0 Phase 2: governance guardrail tests`
+- PR title: `Stage 0 Repository Skeleton And Governance - Phase 2: Governance Guardrail Tests`
 - Branch: `agent/stage-0-p2-governance-guardrails`
 - Worktree: `/home/samcantrill/work/rphys-worktrees/stage-0-p2-governance-guardrails`
 - Phase execution plan path: `docs/roadmap/stage-0/phases/governance-guardrails.md`

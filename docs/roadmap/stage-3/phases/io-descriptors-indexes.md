@@ -5,7 +5,7 @@
 - Status: final phase execution plan
 - Roadmap stage: `v3`
 - Feature focus: dependency-free lazy IO descriptors
-- PR title: `Stage 3 P2: IO descriptors and temporal indexes`
+- PR title: `Stage 3 Lazy References And Index Items - Phase 2: IO Descriptors And Temporal Indexes`
 - Branch: `agent/stage-3-p2-io-descriptors-indexes`
 - Worktree: `/home/samcantrill/work/rphys-worktrees/stage-3-p2-io-descriptors-indexes`
 - Phase execution plan path: `docs/roadmap/stage-3/phases/io-descriptors-indexes.md`

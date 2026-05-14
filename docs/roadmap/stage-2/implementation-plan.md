@@ -52,6 +52,7 @@ Slug: `runtime-fields-errors`
 Branch: `agent/stage-2-p1-runtime-fields-errors`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-2-p1-runtime-fields-errors`
 PR: [#10](https://github.com/samcantrill/rphys/pull/10)
+PR title: `Stage 2 Loaded Runtime Core - Phase 1: Runtime Fields And Errors`
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -122,6 +123,7 @@ Slug: `data-object-base`
 Branch: `agent/stage-2-p2-data-object-base`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-2-p2-data-object-base`
 PR: [#11](https://github.com/samcantrill/rphys/pull/11)
+PR title: `Stage 2 Loaded Runtime Core - Phase 2: Data Object Bases`
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -191,6 +193,7 @@ Slug: `sample-batch-contracts`
 Branch: `agent/stage-2-p3-sample-batch-contracts`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-2-p3-sample-batch-contracts`
 PR: [#12](https://github.com/samcantrill/rphys/pull/12)
+PR title: `Stage 2 Loaded Runtime Core - Phase 3: Sample, Batch, And SampleContract`
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -260,6 +263,7 @@ Slug: `list-collation`
 Branch: `agent/stage-2-p4-list-collation`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-2-p4-list-collation`
 PR: [#13](https://github.com/samcantrill/rphys/pull/13)
+PR title: `Stage 2 Loaded Runtime Core - Phase 4: LIST Collation`
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -330,6 +334,7 @@ Slug: `runtime-core-hardening`
 Branch: `agent/stage-2-p5-runtime-core-hardening`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-2-p5-runtime-core-hardening`
 PR: [#14](https://github.com/samcantrill/rphys/pull/14)
+PR title: `Stage 2 Loaded Runtime Core - Phase 5: Runtime Core Hardening`
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path

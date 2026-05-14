@@ -36,11 +36,11 @@ Blockers: none
 
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `diagnostic-datakey-foundation` | merged | `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-1-diagnostic-datakey-foundation` | [#5](https://github.com/samcantrill/rphys/pull/5) `Milestone 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 1: Diagnostic And DataKey Foundation` | `rphys.errors`, `rphys.data.keys`, optional private lexical helpers, focused unit/package tests | Establish typed diagnostics and `DataKey` grammar | Focused unit tests plus targeted package import checks | Canonical rPPG field keys and invalid key forms |
-| 2 | `metadata-split-vocabularies` | merged | `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-2-metadata-split-vocabularies` | [#6](https://github.com/samcantrill/rphys/pull/6) `Milestone 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 2: Metadata And Split Vocabularies` | `rphys.data.metadata`, `rphys.data.splits`, focused unit/package tests | Add metadata and split labels without storage or loop behavior | Unit tests for constants/validation and package import checks | Metadata/split context and grouped constants |
-| 3 | `schema-type-vocabularies` | merged | `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-3-schema-type-vocabularies` | [#9](https://github.com/samcantrill/rphys/pull/9) `Milestone 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 3: Schema And Data Type Vocabularies` | `rphys.data.schemas`, `rphys.data.types`, focused unit/package tests | Add schema identity and backend-agnostic data categories | Unit tests for schema/type grammar and package import checks | Schema/type separation |
-| 4 | `field-role-locators` | merged | `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-4-field-role-locators` | [#7](https://github.com/samcantrill/rphys/pull/7) `Milestone 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 4: Field Roles And Locators` | `rphys.data.locators`, locator unit tests, targeted contract seeds | Add closed roles and component-preserving locators | Unit tests for roles, parsing, round trips, and component failures | Role-qualified training/prediction locators |
-| 5 | `contract-package-docs-hardening` | merged | `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-5-contract-package-docs-hardening` | [#8](https://github.com/samcantrill/rphys/pull/8) `Milestone 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 5: Contract, Package, And Documentation Hardening` | `tests/contracts`, `tests/package`, docs/docstrings, cross-phase fixes only | Harden public contract, imports, docs, and validation evidence | `make test-unit`, `make test-package`, `make test-contract`, `uv lock --check`, `git diff --check` | Full approved example set and no runtime/workflow coupling |
+| 1 | `diagnostic-datakey-foundation` | merged | `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-1-diagnostic-datakey-foundation` | [#5](https://github.com/samcantrill/rphys/pull/5) `Stage 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 1: Diagnostic And DataKey Foundation` | `rphys.errors`, `rphys.data.keys`, optional private lexical helpers, focused unit/package tests | Establish typed diagnostics and `DataKey` grammar | Focused unit tests plus targeted package import checks | Canonical rPPG field keys and invalid key forms |
+| 2 | `metadata-split-vocabularies` | merged | `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-2-metadata-split-vocabularies` | [#6](https://github.com/samcantrill/rphys/pull/6) `Stage 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 2: Metadata And Split Vocabularies` | `rphys.data.metadata`, `rphys.data.splits`, focused unit/package tests | Add metadata and split labels without storage or loop behavior | Unit tests for constants/validation and package import checks | Metadata/split context and grouped constants |
+| 3 | `schema-type-vocabularies` | merged | `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-3-schema-type-vocabularies` | [#9](https://github.com/samcantrill/rphys/pull/9) `Stage 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 3: Schema And Data Type Vocabularies` | `rphys.data.schemas`, `rphys.data.types`, focused unit/package tests | Add schema identity and backend-agnostic data categories | Unit tests for schema/type grammar and package import checks | Schema/type separation |
+| 4 | `field-role-locators` | merged | `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-4-field-role-locators` | [#7](https://github.com/samcantrill/rphys/pull/7) `Stage 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 4: Field Roles And Locators` | `rphys.data.locators`, locator unit tests, targeted contract seeds | Add closed roles and component-preserving locators | Unit tests for roles, parsing, round trips, and component failures | Role-qualified training/prediction locators |
+| 5 | `contract-package-docs-hardening` | merged | `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-5-contract-package-docs-hardening` | [#8](https://github.com/samcantrill/rphys/pull/8) `Stage 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 5: Contract, Package, And Documentation Hardening` | `tests/contracts`, `tests/package`, docs/docstrings, cross-phase fixes only | Harden public contract, imports, docs, and validation evidence | `make test-unit`, `make test-package`, `make test-contract`, `uv lock --check`, `git diff --check` | Full approved example set and no runtime/workflow coupling |
 
 ## Implementation Readiness Blockers
 
@@ -54,7 +54,7 @@ Status: merged
 Slug: `diagnostic-datakey-foundation`
 Branch: `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-1-diagnostic-datakey-foundation`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-1-p1-diagnostic-datakey-foundation`
-PR: [#5](https://github.com/samcantrill/rphys/pull/5) `Milestone 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 1: Diagnostic And DataKey Foundation`
+PR: [#5](https://github.com/samcantrill/rphys/pull/5) `Stage 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 1: Diagnostic And DataKey Foundation`
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -125,7 +125,7 @@ Status: merged
 Slug: `metadata-split-vocabularies`
 Branch: `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-2-metadata-split-vocabularies`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-1-p2-metadata-split-vocabularies`
-PR: [#6](https://github.com/samcantrill/rphys/pull/6) `Milestone 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 2: Metadata And Split Vocabularies`
+PR: [#6](https://github.com/samcantrill/rphys/pull/6) `Stage 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 2: Metadata And Split Vocabularies`
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -196,7 +196,7 @@ Status: merged
 Slug: `schema-type-vocabularies`
 Branch: `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-3-schema-type-vocabularies`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-1-p3-schema-type-vocabularies`
-PR: [#9](https://github.com/samcantrill/rphys/pull/9) `Milestone 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 3: Schema And Data Type Vocabularies`
+PR: [#9](https://github.com/samcantrill/rphys/pull/9) `Stage 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 3: Schema And Data Type Vocabularies`
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -267,7 +267,7 @@ Status: merged
 Slug: `field-role-locators`
 Branch: `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-4-field-role-locators`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-1-p4-field-role-locators`
-PR: [#7](https://github.com/samcantrill/rphys/pull/7) `Milestone 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 4: Field Roles And Locators`
+PR: [#7](https://github.com/samcantrill/rphys/pull/7) `Stage 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 4: Field Roles And Locators`
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -340,7 +340,7 @@ Status: merged
 Slug: `contract-package-docs-hardening`
 Branch: `agent/milestone-1-naming-locators-schemas-metadata-errors-phase-5-contract-package-docs-hardening`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-1-p5-contract-package-docs-hardening`
-PR: [#8](https://github.com/samcantrill/rphys/pull/8) `Milestone 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 5: Contract, Package, And Documentation Hardening`
+PR: [#8](https://github.com/samcantrill/rphys/pull/8) `Stage 1 Naming, Locators, Schemas, Metadata, And Errors - Phase 5: Contract, Package, And Documentation Hardening`
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path

@@ -5,7 +5,7 @@
 - Status: complete
 - Roadmap stage: `v0`
 - Feature focus: README governance handoff and final validation
-- PR title: `Stage 0 Phase 3: README handoff and final validation`
+- PR title: `Stage 0 Repository Skeleton And Governance - Phase 3: README Handoff And Final Validation`
 - Branch: `agent/stage-0-p3-readme-final-validation`
 - Worktree: `/home/samcantrill/work/rphys-worktrees/stage-0-p3-readme-final-validation`
 - Phase execution plan path: `docs/roadmap/stage-0/phases/readme-final-validation.md`

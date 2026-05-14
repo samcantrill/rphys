@@ -5,7 +5,7 @@
 - Status: final phase execution plan
 - Roadmap stage: `v3`
 - Feature focus: datasource provenance and declaration-only schemas
-- PR title: `Stage 3 P3: datasource refs and schema descriptors`
+- PR title: `Stage 3 Lazy References And Index Items - Phase 3: Datasource Refs And Schema Descriptors`
 - Branch: `agent/stage-3-p3-datasource-refs-schemas`
 - Worktree: `/home/samcantrill/work/rphys-worktrees/stage-3-p3-datasource-refs-schemas`
 - Phase execution plan path: `docs/roadmap/stage-3/phases/datasource-refs-schemas.md`

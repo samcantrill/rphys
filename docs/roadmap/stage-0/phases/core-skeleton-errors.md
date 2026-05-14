@@ -5,7 +5,7 @@
 - Status: complete
 - Roadmap stage: `v0`
 - Feature focus: package homes and broad base errors
-- PR title: `Stage 0 Phase 1: core skeleton and base errors`
+- PR title: `Stage 0 Repository Skeleton And Governance - Phase 1: Core Skeleton And Base Errors`
 - Branch: `agent/stage-0-p1-core-skeleton-errors`
 - Worktree: `/home/samcantrill/work/rphys-worktrees/stage-0-p1-core-skeleton-errors`
 - Phase execution plan path: `docs/roadmap/stage-0/phases/core-skeleton-errors.md`
