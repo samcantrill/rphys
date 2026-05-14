@@ -478,7 +478,7 @@ Workflow path: expanded path if runtime compatibility review finds accessor ambi
 - Validation: `make validate-pr` passed after blocker fix: package 21, unit 299, contract 33, integration 1, e2e/acceptance not present, build succeeded, lock check passed, and `git diff --check` clean. Focused lazy-field/container/collation/package/contract checks passed, and `git diff --check origin/develop...HEAD` passed.
 - PR: [#25](https://github.com/samcantrill/rphys/pull/25) opened against `develop`; PR title and target verified.
 - Merge: squash-merged to `develop` 2026-05-14 at `5f35a55d8efe400be875842aab46b884b01451ea` via GitHub merge API after local validation, blocker resolution, and automated review.
-- Follow-up: Phase 4 still owns `SampleBuilder`, datasource provenance joining, requested locator selection, and eager sample construction. Phase worktree and branch cleanup pending after merge metadata push.
+- Follow-up: Phase 4 still owns `SampleBuilder`, datasource provenance joining, requested locator selection, and eager sample construction. Phase worktree and local/remote branches were cleaned up after metadata push.
 
 ### Merge Record
 
@@ -489,8 +489,8 @@ Workflow path: expanded path if runtime compatibility review finds accessor ambi
 - Merge command: `gh api --method PUT repos/samcantrill/rphys/pulls/25/merge --field merge_method=squash ...`
 - Merge result: merged
 - Merge commit: `5f35a55d8efe400be875842aab46b884b01451ea`
-- Branch cleanup: pending merge metadata push
-- Worktree cleanup: pending merge metadata push
+- Branch cleanup: completed; local and remote phase branches deleted after merge metadata push
+- Worktree cleanup: completed; phase worktree removed and worktree metadata pruned
 - Behavior implemented: lazy `SampleField` state, retained load result/error, no-load `Sample.field()`/`role()`/`field_items()` access, payload-demanding load semantics, eager handle loading through the same path, package/import boundary coverage, and direct payload-assignment blocker fix.
 - Tests and validation: targeted lazy-field/container/collation/package/contract checks passed; `make validate-pr` passed with 354 total tests across present suites; PR-range `git diff --check` passed.
 - Documentation: phase assignment, execution plan, PR body, and this merge record updated.
