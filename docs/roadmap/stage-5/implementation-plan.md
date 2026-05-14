@@ -5,7 +5,7 @@ Roadmap version: `v5`
 Planning document: `docs/roadmap/stage-5/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 1 PR open
+Current phase: ready for Phase 2 execution planning
 Blockers: none identified by implementation-plan quality review
 
 ## Summary
@@ -36,7 +36,7 @@ Blockers: none identified by implementation-plan quality review
 
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `public-boundary-errors-fixtures` | pr_open | `agent/stage-5-p1-public-boundary-errors-fixtures` | [#29](https://github.com/samcantrill/rphys/pull/29) | `src/rphys/datasources/*` module homes, exercised error scaffolding, private `tests/support` fixture scaffold, package import tests | Establish Stage 5 module boundaries without broad behavior or placeholder API. | `make test-package`; targeted error/package checks; `git diff --check` | EX-6 |
+| 1 | `public-boundary-errors-fixtures` | merged | `agent/stage-5-p1-public-boundary-errors-fixtures` | [#29](https://github.com/samcantrill/rphys/pull/29) | `src/rphys/datasources/*` module homes, exercised error scaffolding, private `tests/support` fixture scaffold, package import tests | Establish Stage 5 module boundaries without broad behavior or placeholder API. | `make test-package`; targeted error/package checks; `git diff --check` | EX-6 |
 | 2 | `adapters-validation` | pending | `agent/stage-5-p2-adapters-validation` | pending | `rphys.datasources.adapters`, `rphys.datasources.validation`, synthetic scan/validation tests | Implement datasource specs, structural adapters, scan results, validation reports, and explicit IO policy. | `make test-unit`; `make test-contract`; `make test-package` | EX-1, EX-2 |
 | 3 | `views-filters-candidates` | pending | `agent/stage-5-p3-views-filters-candidates` | pending | `rphys.datasources.filters`, index-owned candidate construction/selection surface in `rphys.datasources.indexes` | Implement non-mutating pre-index selection and candidate filtering before group/split. | `make test-unit`; `make test-contract` | EX-1, EX-3 |
 | 4 | `groups-splits` | pending | `agent/stage-5-p4-groups-splits` | pending | `rphys.datasources.splits` and group/split provenance handoff to index finalization | Implement candidate-level multiple groups, explicit split-group keys, and leakage-safe split assignment. | `make test-unit`; `make test-contract` | EX-3 |
@@ -53,7 +53,7 @@ Blockers: none identified by implementation-plan quality review
 
 ## Phase 1: Public Boundary, Errors, And Private Synthetic Fixture Scaffold
 
-Status: in_progress
+Status: merged
 Slug: `public-boundary-errors-fixtures`
 Branch: `agent/stage-5-p1-public-boundary-errors-fixtures`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-5-p1-public-boundary-errors-fixtures`
@@ -118,8 +118,8 @@ Workflow path: fast path
 
 - Implementation: dependency-light Stage 5 submodule homes, package boundary tests, and private synthetic fixture scaffold added.
 - Validation: `make test-package` passed with 25 tests; `git diff --check` passed.
-- PR: [#29](https://github.com/samcantrill/rphys/pull/29) opened against `develop` with the canonical Phase 1 title.
-- Merge: pending.
+- PR: [#29](https://github.com/samcantrill/rphys/pull/29) opened and verified against `develop` with the canonical Phase 1 title.
+- Merge: squash-merged to `develop` at `d1fc25ff3a1defcead441e414fcf0142ce1a1232` on 2026-05-14.
 - Follow-up: add concrete Stage 5 public names and errors only in later phases with behavior and tests.
 
 ## Phase 2: Specs, Adapters, Scan Results, And Validation Reports

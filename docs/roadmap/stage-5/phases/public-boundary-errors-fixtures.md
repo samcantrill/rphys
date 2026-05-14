@@ -206,6 +206,6 @@ git diff --check
 - Pre-submit blocker gate: passed; no root exports, parent Stage 5 re-exports, public synthetic fixture, public concat API, or unimplemented public placeholder names are present.
 - PR preparation: PR body drafted at `docs/roadmap/stage-5/phases/public-boundary-errors-fixtures-pr-body.md`; PR #29 opened and verified against `develop`.
 - Automated review: manager review passed before PR submission; GitHub checks pending/not configured at open.
-- Merge result: pending.
-- Cleanup: pending.
+- Merge result: PR #29 squash-merged to `develop` at `d1fc25ff3a1defcead441e414fcf0142ce1a1232` on 2026-05-14.
+- Cleanup: pending worktree removal after metadata commit.
 - Remaining blockers: none.
