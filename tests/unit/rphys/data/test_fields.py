@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+from dataclasses import FrozenInstanceError
 
 import pytest
 
@@ -31,6 +32,19 @@ def test_field_spec_copy_and_deepcopy_preserve_value() -> None:
 
     assert copy.copy(spec) == spec
     assert copy.deepcopy(spec) == spec
+
+
+def test_field_spec_is_frozen_and_explicitly_unhashable() -> None:
+    spec = FieldSpec("video.rgb", "video", "video.rgb.v1")
+
+    with pytest.raises(FrozenInstanceError):
+        spec.key = DataKey("signal.bvp.reference")  # type: ignore[misc]
+    with pytest.raises(FrozenInstanceError):
+        spec.data_type = DataType("signal")  # type: ignore[misc]
+    with pytest.raises(FrozenInstanceError):
+        spec.schema = SchemaName("signal.bvp.v1")  # type: ignore[misc]
+    with pytest.raises(TypeError):
+        hash(spec)
 
 
 def test_field_spec_rejects_invalid_vocabulary_without_rich_fields() -> None:

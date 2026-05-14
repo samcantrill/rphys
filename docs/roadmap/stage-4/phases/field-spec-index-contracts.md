@@ -441,10 +441,20 @@ git diff --check
 - Draft plan: completed in
   `docs/roadmap/stage-4/phases/field-spec-index-contracts.md`
 - Final phase execution plan: ready for execution after this planning commit
-- Implementation summary: pending executor
-- Implementation validation: pending executor
-- Refinement summary: not needed for planning
-- Pre-submit blocker gate: pending executor
+- Implementation summary:
+  - Changed `FieldSpec` to a frozen slotted dataclass while preserving constructor coercion through `object.__setattr__`.
+  - Explicitly kept `FieldSpec` unhashable with `FieldSpec.__hash__ = None`.
+  - Added focused tests for `FieldSpec` immutability, copy/deepcopy value behavior, unhashability, and unchanged minimal schema vocabulary.
+  - Added datasource schema coverage proving stored `FieldSpec` declarations cannot be mutated through `DataSourceSchema.fields` while remaining direct stored declarations.
+  - Updated `FieldIndex` wording from protocol to base class and preserved current no-registry/no-factory behavior.
+- Implementation validation:
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/unit/rphys/data/test_fields.py tests/unit/rphys/datasources/test_datasource_schemas.py tests/unit/rphys/io/test_indexes.py`: passed, 29 tests.
+  - `make test-unit`: passed, 259 tests.
+  - `make test-contract`: passed, 25 tests.
+  - `make test-package`: passed, 18 tests.
+  - `git diff --check`: clean.
+- Refinement summary: not needed; targeted and required validation passed.
+- Pre-submit blocker gate: pending manager review
 - PR preparation: pending executor
 - Automated review: pending PR
 - Merge result: pending PR
