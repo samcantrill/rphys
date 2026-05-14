@@ -5,7 +5,7 @@ Roadmap version: `v4`
 Planning document: `docs/roadmap/stage-4/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Preparation Phase 2 pending
+Current phase: Primary Phase 1 pending
 Blockers: none identified by implementation-readiness review
 
 ## Summary
@@ -39,7 +39,7 @@ Blockers: none identified by implementation-readiness review
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Prep 1 | `field-container-protocol` | merged | `agent/codecs-lazy-samples-prep1-field-container-protocol` | [#21](https://github.com/samcantrill/rphys/pull/21) | `src/rphys/data/containers.py`, `src/rphys/data/contracts.py`, `src/rphys/data/collation.py`, `src/rphys/data/__init__.py`, runtime unit/contract/package tests | Add the public field-container protocol and public field-iteration surface before lazy fields widen runtime semantics. | `make validate-pr`; targeted runtime/unit/package/contract checks; `git diff --check` | Runtime compatibility and no private collation hook |
-| Prep 2 | `field-spec-index-contracts` | pending | `agent/codecs-lazy-samples-prep2-field-spec-index-contracts` | pending | `src/rphys/data/fields.py`, datasource schema tests, IO index docs/tests, package/contract tests | Freeze `FieldSpec` and clarify `FieldIndex` as a subclass-based base interface. | targeted `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | Immutable datasource declarations and explicit index extension boundary |
+| Prep 2 | `field-spec-index-contracts` | merged | `agent/codecs-lazy-samples-prep2-field-spec-index-contracts` | [#22](https://github.com/samcantrill/rphys/pull/22) | `src/rphys/data/fields.py`, datasource schema tests, IO index docs/tests, package/contract tests | Freeze `FieldSpec` and clarify `FieldIndex` as a subclass-based base interface. | `make validate-pr`; targeted field/schema/index checks; `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | Immutable datasource declarations and explicit index extension boundary |
 | 1 | `codec-contract-foundation` | pending | `agent/codecs-lazy-samples-p1-codec-contract-foundation` | pending | `src/rphys/io/codecs.py`, conditional `src/rphys/io/__init__.py`, exercised `src/rphys/errors.py`, package/unit import tests | Establish the Stage 4 IO public contract without runtime sample behavior. | `make test-package`; targeted `make test-unit`; `git diff --check` | EX-3, EX-6 |
 | 2 | `codec-registry-synthetic-ops` | pending | `agent/codecs-lazy-samples-p2-codec-registry-synthetic-ops` | pending | `src/rphys/io/codecs.py`, tests/support synthetic codec, IO unit/contract tests | Prove explicit codec resolution and dependency-light probe/load/save behavior. | targeted `make test-unit`; `make test-contract`; `make test-package` if exports change | EX-2, EX-3, EX-4, EX-5 |
 | 3 | `lazy-sample-field-runtime` | pending | `agent/codecs-lazy-samples-p3-lazy-sample-field-runtime` | pending | `src/rphys/data/sample_fields.py`, additive `src/rphys/data/containers.py` updates, conditional `src/rphys/data/__init__.py`, data unit/contract tests | Add lazy `SampleField` handles while preserving loaded `Sample` semantics. | targeted `make test-unit`; `make test-contract` including runtime core coverage | EX-1 |
@@ -143,11 +143,11 @@ Workflow path: fast path
 
 ## Preparation Phase 2: FieldSpec And FieldIndex Contract Tightening
 
-Status: pending
+Status: merged
 Slug: `field-spec-index-contracts`
 Branch: `agent/codecs-lazy-samples-prep2-field-spec-index-contracts`
 Worktree: `/home/samcantrill/work/rphys-worktrees/codecs-lazy-samples-prep2-field-spec-index-contracts`
-PR: pending
+PR: [#22](https://github.com/samcantrill/rphys/pull/22)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -190,13 +190,13 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed in `docs/roadmap/stage-4/phases/field-spec-index-contracts.md`
 - Planning/refinement budget: one phase planner pass; one refiner pass only if immutability exposes unexpected compatibility pressure
 - Implementation/refinement budget: one executor pass; targeted refiner pass if runtime or lazy descriptor contracts regress
 - PR review budget: one reviewer pass focused on compatibility and public API wording
 - Blocker-resolution budget: return to planning if `FieldSpec` immutability breaks a documented public workflow or if `FieldIndex` needs a real extension protocol
-- Pre-submit blocker gate: runtime, datasource schema, and lazy IO contracts remain green
-- Merge record: pending
+- Pre-submit blocker gate: passed; automated PR review found no blockers
+- Merge record: PR [#22](https://github.com/samcantrill/rphys/pull/22) squash-merged to `develop` at `6fbf5481f6c217fb31a1ddadbaac1d37abd73a17`
 
 ### Risks And Stop Conditions
 
@@ -206,11 +206,28 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: froze `FieldSpec` while preserving coercion and value behavior, explicitly kept `FieldSpec` unhashable, proved `DataSourceSchema` direct declarations cannot be mutated through the schema mapping, and corrected `FieldIndex` wording to base class without adding registry/factory behavior.
+- Validation: `make validate-pr` passed: package 18, unit 259, contract 25, integration 1, e2e/acceptance not present, build succeeded, and `git diff --check` clean. Focused field/schema/index tests, `make test-unit`, `make test-contract`, and `make test-package` also passed.
+- PR: [#22](https://github.com/samcantrill/rphys/pull/22) opened against `develop`; PR title and target verified.
+- Merge: squash-merged to `develop` 2026-05-14 at `6fbf5481f6c217fb31a1ddadbaac1d37abd73a17` via GitHub merge API after local validation and automated review.
+- Follow-up: downstream scratch code that mutates `FieldSpec` will now fail as intended; no public `FieldSpec` serialization or `FieldIndex` registry/factory was added. Cleanup of the phase worktree/branch is pending after metadata push.
+
+### Merge Record
+
+- Phase: Preparation Phase 2, `field-spec-index-contracts`
+- Branch: `agent/codecs-lazy-samples-prep2-field-spec-index-contracts`
+- PR: [#22](https://github.com/samcantrill/rphys/pull/22)
+- Base branch: `develop`
+- Merge command: `gh api --method PUT repos/samcantrill/rphys/pulls/22/merge --field merge_method=squash ...`
+- Merge result: merged
+- Merge commit: `6fbf5481f6c217fb31a1ddadbaac1d37abd73a17`
+- Branch cleanup: pending metadata push
+- Worktree cleanup: pending metadata push
+- Behavior implemented: frozen/unhashable `FieldSpec`, immutable direct datasource schema declarations, and `FieldIndex` base-class terminology with no registry/factory behavior.
+- Tests and validation: targeted field/schema/index checks passed; `make validate-pr` passed with 303 total tests across present suites.
+- Documentation: phase assignment, execution plan, PR body, and this merge record updated.
+- Scientific contract implications: descriptor declarations became immutable; no schema manifest, fingerprint, codec, builder, sampling, alignment, or new index semantics were introduced.
+- Remaining blockers: none.
 
 ## Phase 1: Codec Public Contract Foundation
 
