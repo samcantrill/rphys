@@ -271,7 +271,12 @@ git diff --check
 - Pre-submit blocker gate: passed
 - PR preparation: completed in
   `docs/roadmap/stage-6/phases/final-validation-readiness-pr-body.md`
-- Automated review: pending
+- Automated review: completed; no blocking findings. Residual non-blocking
+  observation: package tests manually cover exact `rphys.ops` root-export
+  absence and most Stage 6 root error absence, while two concrete Stage 6
+  operation errors are not included in that root-error loop; manual review
+  verified all seven concrete Stage 6 operation/pipeline errors are absent from
+  root `rphys`.
 - Merge result: pending
 - Cleanup: pending
 - Remaining blockers: none known

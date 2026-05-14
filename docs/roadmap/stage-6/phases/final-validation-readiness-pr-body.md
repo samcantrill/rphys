@@ -89,3 +89,8 @@ classes, raw-output APIs, ordered mapping/named-entry pipelines,
 `SampleOp`/`BatchOp` locator permissions, export/save/cache/workflow behavior,
 concrete rPPG kernels, heavy optional dependencies, root exports, and placeholder
 future packages.
+
+Automated review found one non-blocking test gap: the package test root-error
+loop does not list every concrete Stage 6 operation error, but manual review
+verified all seven concrete Stage 6 operation/pipeline errors are absent from
+root `rphys`.
