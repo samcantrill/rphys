@@ -210,6 +210,6 @@ git diff --check
 - Pre-submit blocker gate: passed; no view/filter coupling, hidden IO, registry, real SDK dependency, or parent/root export promotion.
 - PR preparation: PR body drafted at `docs/roadmap/stage-5/phases/adapters-validation-pr-body.md`; PR #30 opened and verified against `develop`.
 - Automated review: manager expanded-path review passed before PR submission; GitHub checks pending/not configured at open.
-- Merge result: pending.
-- Cleanup: pending.
+- Merge result: PR #30 squash-merged to `develop` at `4725f6f7f192e0a0c34946cb0df8f4eafb42594d` on 2026-05-14.
+- Cleanup: pending worktree and branch removal after metadata commit.
 - Remaining blockers: none.
