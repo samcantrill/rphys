@@ -2,8 +2,7 @@
 
 ## Metadata
 
-- Status: draft phase execution plan; expanded-path refinement required before
-  implementation
+- Status: refined phase execution plan; ready for implementation
 - Roadmap stage: `v6`
 - Feature focus: Sequence-only generic operation pipeline composition
 - Stage descriptor: Operation Foundations And Functional Kernels
@@ -17,20 +16,21 @@
 - Source phase: Phase 3, `ordered-pipeline-composition`
 - Base branch: `develop`
 - Target branch: `develop`
-- Merge eligibility: eligible after expanded-path refinement, automated review,
-  local validation, and CI pass
+- Merge eligibility: eligible after automated review, local validation, and CI
+  pass
 - Workflow path: expanded path
 - Phase isolation: existing dedicated branch and worktree verified; do not
   create a new worktree
 - Plan quality gate: Stage 6 implementation plan approved; draft pass completed
   with expanded-path refinement required because Phase 3 adds public pipeline
   construction, `OperationResult.output` forwarding semantics, step diagnostics,
-  and Stage 7 step-naming pressure.
+  and Stage 7 step-naming pressure. Expanded-path refinement completed with
+  public API, compatibility, error, diagnostic, and scope boundaries locked.
 - Draft pass: completed 2026-05-14
-- Refine pass: pending / required
+- Refine pass: completed 2026-05-15
 - Setup limitations: no product code, tests, PR body, PR, broad checks, or new
-  worktree created during this draft planning pass
-- Blockers: expanded-path refinement must complete before implementation starts
+  worktree created during this draft or refinement planning pass
+- Blockers: none before implementation, assuming phase isolation remains clean
 
 ## Objective
 
@@ -57,23 +57,27 @@ named step APIs.
 
 - Goal: add generic ordered `OperationPipeline` composition over approved
   operation/result behavior.
-- Required scope: sequence-only construction; non-empty ordered tuple storage of
-  concrete `Operation` instances; rejection of mappings, ordered mappings, named
+- Required scope: `OperationPipeline(operations: Sequence[Operation])`
+  construction only; non-empty read-only tuple storage of concrete `Operation`
+  instances; rejection of mappings, ordered mappings, strings/bytes, named
   entries, and non-operation entries; adjacent declared output/input
-  compatibility validation; unchanged context propagation; `result.output`
-  forwarding; final `OperationResult` return; step-aware typed pipeline errors
-  with zero-based step index, operation name, and cause where applicable.
+  compatibility validation; unchanged context propagation through
+  `.run(input_value, context=None)` and `__call__(input_value, context=None)`;
+  `result.output` forwarding; final `OperationResult` return; step-aware typed
+  pipeline errors with zero-based step index, operation name, phase, cause type,
+  and preserved cause where applicable.
 - Required checkpoints: unit coverage for construction, ordering,
   compatibility, context propagation, result forwarding, and step diagnostics;
   contract coverage for public pipeline semantics and future-roadmap guardrails;
   package/import regression coverage for exports and lightweight boundaries;
   `git diff --check`.
 - Acceptance criteria: pipelines reject unsupported construction forms, preserve
-  order, propagate one context, validate declared compatibility, report
-  step-aware validation/execution failures, return the last step's
-  `OperationResult`, and leave mapping/named-entry construction, DAG/routing,
-  retry/resume/workflow state, `SampleOpPipeline`, `BatchProgram`, export
-  pipelines, and private helper APIs absent.
+  order, expose only an `operations` tuple, propagate one context, validate
+  declared compatibility, report step-aware validation/execution failures,
+  return the last step's `OperationResult`, and leave mapping/named-entry
+  construction, stable step names, pipeline names, DAG/routing,
+  retry/resume/workflow state, `SampleOpPipeline`, `BatchProgram`, export/cache
+  pipelines, runtime-container imports, and private helper APIs absent.
 
 ## Current Source And Harness Findings
 
@@ -97,8 +101,10 @@ named step APIs.
   step-result aggregation, cache keys, workflow state, or durable serialization.
 - Existing files or modules that constrain this phase: `src/rphys/errors.py`
   currently has broad `RemotePhysPipelineError` but no concrete pipeline errors.
-  Any concrete pipeline error must be exercised by Phase 3 public behavior and
-  remain under `RemotePhysPipelineError`.
+  Phase 3 may add only exercised `InvalidOperationPipelineError` for
+  construction/static compatibility failures and
+  `OperationPipelineExecutionError` for runtime step failures and invalid
+  provided execution context; both must subclass `RemotePhysPipelineError`.
 - Existing tests or harness behavior: `tests/package/test_import.py` asserts
   exact `rphys.ops.__all__`, focused submodule `__all__`, no root operation
   exports, and exact operation error exports. Phase 3 must update these only for
@@ -111,7 +117,7 @@ named step APIs.
   `rphys.ops.pipelines`.
 - Existing tests or harness behavior: current unit and contract coverage exists
   for operation contracts, context/result records, kernels, and `Operation`
-  execution. Phase 3 should add `tests/unit/rphys/ops/test_pipelines.py` and
+  execution. Phase 3 adds `tests/unit/rphys/ops/test_pipelines.py` and
   `tests/contracts/test_operation_pipeline_contract.py`.
 - Import-boundary or dependency constraints: `rphys.ops.pipelines` and any
   private validators may use stdlib collection/typing utilities, existing
@@ -134,7 +140,8 @@ named step APIs.
 - Earlier phase dependency status: Phase 1 and Phase 2 are merged into the
   current base, including docs merge records and the code/test surfaces Phase 3
   depends on.
-- Push/PR infrastructure status: not exercised in this planning pass.
+- Push/PR infrastructure status: not exercised in this planning/refinement
+  pass.
 - Stop condition if isolation cannot be maintained: stop before implementation
   if the worktree is not on the assigned branch, if unrelated dirty files appear
   in touched paths, if `develop` advances in a way that invalidates Phase 1/2
@@ -142,28 +149,40 @@ named step APIs.
 
 ## In-Scope Work
 
-- Add `OperationPipeline` as the only new public composition name, likely in
-  `src/rphys/ops/pipelines.py`, and export it from `rphys.ops` only after it is
-  implemented and tested.
+- Add `OperationPipeline` as the only new public composition name in
+  `src/rphys/ops/pipelines.py`, with constructor signature
+  `OperationPipeline(operations: Sequence[Operation])`; export it from
+  `rphys.ops` only after it is implemented and tested.
 - Accept only a single ordered sequence of concrete `Operation` objects; reject
   empty sequences, mappings, ordered mappings, named entries such as
   `(name, operation)` pairs, strings/bytes, and non-`Operation` entries.
-- Store operations as an ordered tuple and expose only read-only inspection that
-  does not create stable step names or mutable step state.
-- Validate adjacent declared output/input compatibility using
+- Store operations as an ordered tuple and expose only the read-only
+  `operations` tuple; do not add a public pipeline name, metadata, provenance,
+  steps, context, workflow, stable step names, or mutable step state.
+- Validate adjacent declared output/input compatibility only when both
   `OperationContract.output_type` from step `i` and `input_type` from step
-  `i + 1` without coercion, schema adapters, or implicit conversion.
-- Execute steps sequentially in stored order, using one resolved
-  `OperationContext` object for every operation invocation.
+  `i + 1` are declared. Treat one declared type as a one-item set, require every
+  upstream declared output type to satisfy at least one downstream input type via
+  `issubclass(output, input)`, and reject downstream-narrowing or partial-overlap
+  cases such as upstream `object` into downstream `int` or upstream
+  `(int, str)` into downstream `int`.
+- Execute steps sequentially in stored order through `.run(input_value,
+  context=None)` and `__call__(input_value, context=None)`, using one resolved
+  `OperationContext` object for every operation invocation. Omitted context
+  resolves one empty `OperationContext()` once and passes the same object to
+  every step.
 - Forward each completed step's `OperationResult.output` as the next step's
   input; do not forward the whole result object unless it is itself the payload.
 - Return the final step's `OperationResult` exactly as validated by that
   operation; do not synthesize a pipeline-level result, aggregate metadata, or
   collect per-step results in public state.
-- Wrap construction, validation, and execution failures in exercised typed
-  pipeline errors that subclass `RemotePhysPipelineError`, preserve the original
-  exception as `__cause__` where applicable, and include zero-based step index,
-  operation name, and cause type/context useful for diagnosis.
+- Raise `InvalidOperationPipelineError` for construction and static
+  compatibility failures. Wrap runtime step failures, including
+  `RemotePhysOperationError` from wrapped operations and unexpected exceptions,
+  as `OperationPipelineExecutionError` with `step_index`, `operation_name`,
+  `phase`, `cause_type`, and preserved `__cause__`. Invalid provided context
+  before step execution is also an `OperationPipelineExecutionError`, with
+  `step_index=None` or no step index and the cause preserved.
 - Update package/import-boundary tests for `rphys.ops.pipelines`,
   `OperationPipeline`, and any exercised concrete pipeline errors.
 - Add unit and contract tests for ordering, construction rejection, static
@@ -202,14 +221,14 @@ named step APIs.
 
 - `OperationPipeline` is a lightweight wrapper over existing `Operation`
   instances, not a base class, protocol, registry entry, or workflow object.
-- The public constructor should stay narrow, e.g.
-  `OperationPipeline(operations: Sequence[Operation])`, with no `name`, `steps`,
-  `metadata`, `provenance`, `context`, retry, routing, cache, export, or
-  workflow parameters.
+- The public constructor is exactly
+  `OperationPipeline(operations: Sequence[Operation])`, with no `name`,
+  `metadata`, `provenance`, `steps`, `context`, retry, routing, cache, export,
+  or workflow parameters.
 - The pipeline must contain at least one operation because public execution
   returns the final step's `OperationResult`.
-- Public inspection may expose an `operations` tuple. It must not expose mutable
-  step state or stable named-step APIs.
+- Public inspection exposes only an `operations` tuple. It must not expose
+  mutable step state, stable named-step APIs, or a pipeline name.
 - Static adjacent compatibility is checked only when both adjacent declarations
   are present. If either side omits a declared type, runtime validation by the
   next `Operation` remains the enforcement point.
@@ -218,85 +237,112 @@ named step APIs.
   downstream step's declared input type using `issubclass`-style checks aligned
   with `isinstance` runtime validation.
 - A single `OperationContext` object is resolved before execution. If callers
-  omit context, the pipeline may create one empty `OperationContext()` once and
-  pass that same object to every step; if callers provide context, object
+  omit context, the pipeline creates one empty `OperationContext()` once and
+  passes that same object to every step; if callers provide context, object
   identity is preserved for every step.
 - Runtime operation failures are wrapped by pipeline errors without discarding
   the original operation error or callable cause chain.
-- Exact concrete pipeline error names are public API and must be confirmed in
-  the required refinement pass before implementation. The draft expectation is a
-  minimal exercised subset for invalid pipeline construction/compatibility and
-  pipeline step execution failures only.
+- Exact concrete pipeline error names are
+  `InvalidOperationPipelineError` for construction/static compatibility and
+  `OperationPipelineExecutionError` for runtime pipeline execution failures
+  only; both subclass `RemotePhysPipelineError`.
 
 ## Scope Contract
 
 Phase 3 changes public behavior only by adding generic ordered pipeline
 composition over existing Stage 6 operations. The only new `rphys.ops` public
-name should be `OperationPipeline`, plus any exercised concrete pipeline error
-names exposed from `rphys.errors`. No `SampleOp`, `BatchOp`, transform,
+name is `OperationPipeline`, plus exercised concrete pipeline error names
+exposed from `rphys.errors`: `InvalidOperationPipelineError` and
+`OperationPipelineExecutionError`. No `SampleOp`, `BatchOp`, transform,
 pipeline-name, export, workflow, registry, protocol/base, or root `rphys` export
 is allowed.
 
 `OperationPipeline` construction must accept ordered sequences only. Accepted
 inputs are list/tuple-like sequences whose items are concrete `Operation`
-instances. The constructor must copy the sequence into an immutable tuple in the
-same order. It must fail loudly for mappings and ordered mappings even though
-they preserve order, because Stage 7 owns named-entry pressure. It must also
-fail for named pairs such as `("scale", operation)`, non-operation entries,
-strings/bytes, and empty sequences. Rejections must raise a typed pipeline error
-with structured context describing the field, expected shape, actual shape, and
-step index when a specific entry is invalid.
+instances passed to `OperationPipeline(operations: Sequence[Operation])`. The
+constructor must copy the sequence into an immutable tuple in the same order and
+expose it through the read-only `operations` tuple only. It must fail loudly for
+mappings and ordered mappings even though they preserve order, because Stage 7
+owns named-entry pressure. It must also fail for named pairs such as
+`("scale", operation)`, non-operation entries, strings/bytes, and empty
+sequences. Rejections must raise `InvalidOperationPipelineError` with structured
+context describing the field, expected shape, actual shape, and step index when
+a specific entry is invalid.
 
 Adjacent compatibility validation must inspect only declared runtime type
 expectations. For every adjacent pair, if the upstream operation declares
 `output_type` and the downstream operation declares `input_type`, the upstream
-declared output set must be accepted by the downstream declared input set. A
+declared output set must be accepted by the downstream declared input set using
+`issubclass(output, input)`; a single type is treated as a one-item set. A
 declared `output_type=int` feeding `input_type=(int, float)` is compatible; a
-declared `output_type=(int, str)` feeding `input_type=int` is incompatible
-because one possible declared output is not accepted. If either adjacent type is
-`None`, construction should not fail on that pair; the downstream operation's
-normal runtime input validation still applies during execution. Compatibility
+declared `output_type=object` feeding `input_type=int` is incompatible because
+the downstream step narrows the upstream declaration; and a declared
+`output_type=(int, str)` feeding `input_type=int` is incompatible because one
+possible declared output is not accepted. If either adjacent type is `None`,
+construction does not fail on that pair; the downstream operation's normal
+runtime input validation still applies during execution. Compatibility failures
+raise `InvalidOperationPipelineError` and include upstream/downstream step
+indexes and names plus expected and actual type declarations. Compatibility
 must not coerce values, inspect schemas, materialize lazy fields, move devices,
 or infer container field semantics.
 
 Pipeline execution must be sequential and transparent. `run(input_value,
-context=None)` and `__call__(input_value, context=None)` should have matching
-semantics and return the final `OperationResult`. The pipeline resolves one
-`OperationContext` object before the first step, validates that provided context
-is an `OperationContext`, and passes that exact object to each operation. Step
-`0` receives the original `input_value`; each later step receives only the
-previous step's `OperationResult.output`. The final result is the final step's
-validated result, not a pipeline wrapper result or a collected result list.
+context=None)` and `__call__(input_value, context=None)` have matching semantics
+and return the final `OperationResult`. The pipeline resolves one
+`OperationContext` object before the first step, creates one empty
+`OperationContext()` when context is omitted, validates provided context before
+step execution, and passes that exact object to each operation. Invalid provided
+context raises `OperationPipelineExecutionError`, not a construction error, with
+`step_index=None` or no step index and the validation cause preserved. Step `0`
+receives the original `input_value`; each later step receives only the previous
+step's `OperationResult.output`. The final result is the final step's validated
+result, not a pipeline wrapper result or a collected result list.
 
 Step diagnostics use zero-based tuple position plus `Operation.name`. Any
-pipeline validation or execution error tied to a step must include
-`step_index`, `operation_name`, and relevant `expected`/`actual` information.
-When wrapping an operation error or callable failure, use exception chaining so
-the original error remains available through `__cause__`; do not stringify and
-drop causes. Static adjacent compatibility errors should identify both
-operations where useful, including upstream step index/name and downstream step
-index/name.
+pipeline execution error tied to a step must include `step_index`,
+`operation_name`, `phase`, `cause_type`, and relevant `expected`/`actual`
+information where applicable. When wrapping `RemotePhysOperationError` from a
+wrapped operation or any unexpected exception, raise
+`OperationPipelineExecutionError` with exception chaining so the original error
+remains available through `__cause__`; do not stringify and drop causes. Static
+adjacent compatibility errors identify both operations with upstream step
+index/name and downstream step index/name plus expected and actual type
+declarations.
 
 Pipeline public behavior must not imply workflow semantics. There is no
 per-step context policy, retry, resume, routing, scheduling, artifact store,
 cache key, export target, run identity, or persistent provenance trace. If the
 implementation needs any of those to satisfy tests, stop for manager review.
 
-## Required Refinement Topics
+## Refinement Decisions Locked
 
-- Confirm the exact public constructor and execution signatures, including
-  whether `OperationPipeline.run`/`__call__` allow omitted context by resolving a
-  single empty `OperationContext()`.
-- Confirm the exact static compatibility rule for tuple type expectations and
-  subclass relationships, especially whether the rule requires every upstream
-  possible output type to satisfy the downstream input expectation.
-- Confirm the exact exercised concrete pipeline error names before editing
-  `src/rphys/errors.py`; avoid adding unexercised placeholders.
-- Confirm the public inspection surface, likely an `operations` tuple only, and
-  explicitly reject pipeline names or step-name APIs until Stage 7 pressure.
-- Pressure-test diagnostics wording and context keys so every step error carries
-  step index, operation name, and cause without freezing Stage 7 named-entry
-  semantics.
+- Public API: `OperationPipeline(operations: Sequence[Operation])`;
+  `operations` read-only tuple inspection only; `.run(input_value,
+  context=None)` and `__call__(input_value, context=None)` return the final
+  `OperationResult`.
+- Construction: reject mappings and ordered mappings, strings/bytes, empty
+  sequences, `(name, operation)` pairs, and every non-`Operation` entry through
+  `InvalidOperationPipelineError`.
+- Context propagation: omitted context resolves one empty `OperationContext()`
+  once; provided context must be an `OperationContext`; the same object is
+  passed to every step.
+- Static compatibility: check only adjacent pairs with both declarations
+  present; treat a single type as a one-item set; every upstream declared output
+  type must satisfy at least one downstream declared input type via
+  `issubclass(output, input)`; reject downstream narrowing and partial tuple
+  overlap.
+- Error names: add only exercised `InvalidOperationPipelineError` and
+  `OperationPipelineExecutionError`, both under `RemotePhysPipelineError`.
+- Runtime diagnostics: runtime step failures wrap `RemotePhysOperationError`
+  and unexpected exceptions in `OperationPipelineExecutionError` with
+  `step_index`, `operation_name`, `phase`, `cause_type`, and preserved
+  `__cause__`; invalid provided context before step execution is also a
+  pipeline execution error with no concrete step.
+- Static diagnostics: compatibility errors include upstream/downstream step
+  indexes and names plus expected and actual type declarations.
+- Deferred behavior: no stable step names, pipeline name, metadata/provenance
+  constructor arguments, helper public API, DAG/routing/retry/resume/workflow,
+  `SampleOp`, `BatchOp`, export/cache, or runtime-container imports.
 
 ## Scientific Contract Notes
 
@@ -388,29 +434,34 @@ implementation needs any of those to satisfy tests, stop for manager review.
 - Scope-control checks: `OperationPipeline` is the only new `rphys.ops`
   composition name; no mapping/named-entry construction; no step-name API; no
   DAG/routing/retry/resume/workflow behavior; no SampleOp/BatchOp/export
-  pipelines; no raw-output API; no runtime-container, IO, datasource, codec,
-  test-support, workflow, or heavy imports; no private helper exports/docs/tests;
-  no unexercised public errors.
+  pipelines or cache behavior; no raw-output API; no runtime-container, IO,
+  datasource, codec, test-support, workflow, or heavy imports; no private helper
+  exports/docs/tests; no unexercised public errors.
 
 ## Implementation Steps
 
-1. Add `src/rphys/ops/pipelines.py` with a narrow `OperationPipeline` class,
-   constructor validation for non-empty ordered sequences of concrete
-   `Operation` instances, immutable tuple storage, read-only tuple inspection,
-   and no pipeline/step naming fields.
+1. Add `src/rphys/ops/pipelines.py` with `OperationPipeline(operations:
+   Sequence[Operation])`, constructor validation for non-empty ordered sequences
+   of concrete `Operation` instances, immutable tuple storage, read-only
+   `operations` tuple inspection, and no pipeline/step naming fields.
 2. Add private adjacent-compatibility validation using
-   `OperationContract.output_type` and `input_type`, raising typed pipeline
-   validation errors with zero-based upstream/downstream step context and no
-   coercion, schema inspection, runtime-container imports, or public helper
-   exposure.
+   `OperationContract.output_type` and `input_type` only when both adjacent
+   declarations are present. Normalize single types to one-item sets; require
+   every upstream declared output type to satisfy at least one downstream input
+   type via `issubclass(output, input)`; raise
+   `InvalidOperationPipelineError` with upstream/downstream index/name and
+   expected/actual declarations; add no coercion, schema inspection,
+   runtime-container imports, or public helper exposure.
 3. Implement `.run(input_value, context=None)` and `__call__` parity with one
    resolved `OperationContext`, unchanged context object identity for every
    step, sequential execution, `OperationResult.output` forwarding, final
-   `OperationResult` return, and step-aware wrapping of operation/context/result
-   failures with preserved causes.
-4. Add only exercised concrete pipeline errors under `RemotePhysPipelineError`
-   after refinement confirms names, and update `rphys.errors.__all__`,
-   inheritance tests, package export tests, and structured context assertions.
+   `OperationResult` return, invalid provided context reported as
+   `OperationPipelineExecutionError`, and step-aware wrapping of operation,
+   context, result, or unexpected failures with preserved causes.
+4. Add only exercised concrete pipeline errors
+   `InvalidOperationPipelineError` and `OperationPipelineExecutionError` under
+   `RemotePhysPipelineError`, and update `rphys.errors.__all__`, inheritance
+   tests, package export tests, and structured context assertions.
 5. Update `rphys.ops` exports and import-boundary tests for
    `OperationPipeline` and `rphys.ops.pipelines`, keeping root `rphys` free of
    operation exports and forbidding data, datasource, IO, codec, test-support,
@@ -433,10 +484,12 @@ implementation needs any of those to satisfy tests, stop for manager review.
   `SampleOp`, `BatchOp`, `Transform`, named-step, registry, workflow, export, or
   raw-output names; `rphys.ops.pipelines.__all__` exposes exactly
   `["OperationPipeline"]`; root `rphys` still does not re-export operation
-  names; `rphys.errors.__all__` includes only exercised concrete pipeline errors
-  after refinement confirms names; importing `rphys.ops.pipelines` does not load
-  heavy optional modules, `rphys.data`, `rphys.datasources`, `rphys.io`, codec
-  modules, `tests.support`, workflow/artifact packages, or Stage 7/8 modules.
+  names; `rphys.errors.__all__` includes only
+  `InvalidOperationPipelineError` and `OperationPipelineExecutionError` as
+  concrete pipeline errors; importing `rphys.ops.pipelines` does not load heavy
+  optional modules, `rphys.data`, `rphys.datasources`, `rphys.io`, codec modules,
+  `tests.support`, workflow/artifact packages, runtime-container modules, cache
+  modules, or Stage 7/8 modules.
 
 ### Unit Suite
 
@@ -447,13 +500,19 @@ implementation needs any of those to satisfy tests, stop for manager review.
   concrete `Operation` instances and stores an ordered tuple; constructor rejects
   empty sequences, mappings, ordered mappings, named pairs, strings/bytes,
   non-operation entries, and private helper exposure; adjacent declared
-  `output_type`/`input_type` compatibility passes and fails according to refined
-  type rules; `.run()` and `__call__` return the same final-result semantics;
-  one `OperationContext` object identity reaches every step; each next step sees
-  the previous step's `result.output`; step errors include zero-based step index,
-  operation name, expected/actual details where useful, and preserved
-  `__cause__`; concrete pipeline errors subclass `RemotePhysPipelineError` and
-  keep `RemotePhysError.context`.
+  `output_type`/`input_type` compatibility passes only when every upstream
+  declared output type satisfies at least one downstream input type and fails for
+  downstream narrowing or partial tuple overlap; `.run()` and `__call__` return
+  the same final-result semantics; omitted context creates one empty
+  `OperationContext()` reused by every step; explicit context object identity
+  reaches every step; invalid provided context raises
+  `OperationPipelineExecutionError` before step execution; each next step sees
+  the previous step's `result.output`; runtime step errors include zero-based
+  step index, operation name, phase, cause type, expected/actual details where
+  useful, and preserved `__cause__`; static compatibility errors include
+  upstream/downstream indexes and names plus expected/actual type declarations;
+  concrete pipeline errors subclass `RemotePhysPipelineError` and keep
+  `RemotePhysError.context`.
 
 ### Contract Suite
 
@@ -465,9 +524,10 @@ implementation needs any of those to satisfy tests, stop for manager review.
   runtime mismatches fail loudly; explicit context is propagated unchanged; final
   return is the last `OperationResult`; users can rely on `result.output`
   forwarding; diagnostics identify step index and operation name while avoiding
-  stable named-step semantics; no DAG/routing/retry/resume/workflow,
-  SampleOp/BatchOp, export pipeline, raw-output, registry, public Protocol/base,
-  or runtime-container behavior is present.
+  stable named-step semantics; no constructor args beyond `operations`; no
+  pipeline name; no DAG/routing/retry/resume/workflow, SampleOp/BatchOp, export
+  pipeline, cache behavior, raw-output, registry, public Protocol/base, or
+  runtime-container behavior is present.
 
 ### Integration Suite
 
@@ -508,6 +568,10 @@ implementation needs any of those to satisfy tests, stop for manager review.
   IO, datasource, codec, or test-support utilities.
 - Public concrete pipeline error names are hard to remove and must remain
   limited to exercised behavior.
+- Static compatibility tests must cover downstream narrowing and partial tuple
+  overlap so permissive overlap logic does not become public behavior.
+- Invalid provided context is easy to classify as construction-like validation;
+  Phase 3 tests must keep it under `OperationPipelineExecutionError`.
 
 ## Validation Commands
 
@@ -539,15 +603,22 @@ git diff --check
   focused unit pipeline tests after constructor, compatibility, and execution
   behavior; unit error tests after any `errors.py` change; contract tests after
   public pipeline semantics settle.
-- Decisions the executor must not revisit: sequence-only construction; reject
-  mappings/named entries; store an ordered tuple of concrete `Operation`
-  instances; no stable step names; validate adjacent declared compatibility only
-  from `output_type` to `input_type`; propagate one `OperationContext` unchanged;
-  forward `OperationResult.output`; return final `OperationResult`; step errors
-  include zero-based index, operation name, and preserved cause; no DAG/routing,
-  retry/resume/workflow, SampleOp/BatchOp/export, raw-output, registry,
-  Protocol/base, runtime-container import, hidden schema conversion, or private
-  helper public API.
+- Decisions the executor must not revisit:
+  `OperationPipeline(operations: Sequence[Operation])` only; `operations`
+  read-only tuple only; reject mappings/ordered mappings, strings/bytes, empty
+  sequences, named pairs, and non-`Operation` entries; no stable step names or
+  pipeline name; validate adjacent declared compatibility only when both
+  declarations are present and require every upstream declared output type to
+  satisfy at least one downstream declared input type via `issubclass`; propagate
+  one `OperationContext` unchanged, including one empty context for omitted
+  context; forward `OperationResult.output`; return final `OperationResult`;
+  use only `InvalidOperationPipelineError` and
+  `OperationPipelineExecutionError`; runtime step errors include zero-based
+  index, operation name, phase, cause type, and preserved cause; invalid
+  provided context is a pipeline execution error with no concrete step; no
+  DAG/routing, retry/resume/workflow, SampleOp/BatchOp/export/cache, raw-output,
+  registry, Protocol/base, runtime-container import, hidden schema conversion,
+  or private helper public API.
 - Conditions that require stopping for the manager: implementation needs
   ordered mappings, named entries, per-step context policy, pipeline-level
   metadata/provenance aggregation, intermediate result collection, DAG/routing,
@@ -557,7 +628,7 @@ git diff --check
 
 ## Refinement And Review Budget Status
 
-- Phase execution plan refinement: required / pending
+- Phase execution plan refinement: completed
 - Phase implementation refinement: unused
 - PR review: unused
 - Blocker resolution: 0/3 used
@@ -565,16 +636,16 @@ git diff --check
 ## Completion Notes
 
 - Draft plan: completed 2026-05-14 in the assigned worktree
-- Final phase execution plan: pending; expanded-path refinement required before
-  implementation
+- Final phase execution plan: completed 2026-05-15 in the assigned worktree
 - Implementation summary: pending
 - Implementation validation: pending
-- Refinement summary: pending; must lock constructor/execution signatures,
+- Refinement summary: completed; locked constructor/execution signatures,
   compatibility type rules, concrete pipeline error names, inspection surface,
-  and step diagnostics before code edits
+  context handling, and step diagnostics before code edits
 - Pre-submit blocker gate: pending
 - PR preparation: pending
 - Automated review: pending
 - Merge result: pending
 - Cleanup: pending
-- Remaining blockers: expanded-path refinement is required before implementation
+- Remaining blockers: none in the execution plan; product implementation remains
+  pending
