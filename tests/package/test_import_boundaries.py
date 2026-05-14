@@ -36,9 +36,14 @@ LIGHTWEIGHT_IMPORTS = [
     "rphys.data.splits",
     "rphys.data.types",
     "rphys.datasources",
+    "rphys.datasources.adapters",
+    "rphys.datasources.filters",
+    "rphys.datasources.indexes",
     "rphys.datasources.index_items",
     "rphys.datasources.refs",
     "rphys.datasources.schemas",
+    "rphys.datasources.splits",
+    "rphys.datasources.validation",
     "rphys.errors",
     "rphys.evaluation",
     "rphys.io",
@@ -102,6 +107,7 @@ def test_core_imports_do_not_load_heavy_optional_modules() -> None:
 def test_rphys_does_not_define_generic_workflow_or_artifact_runtime_packages() -> None:
     forbidden_packages = [
         "rphys.artifacts",
+        "rphys.datasets",
         "rphys.stages",
         "rphys.workflow",
         "rphys.workflows",
@@ -270,3 +276,26 @@ def test_deferred_packages_do_not_define_duplicate_vocabulary_surfaces() -> None
         package = __import__(package_name, fromlist=["__all__"])
         for vocabulary_name in vocabulary_names:
             assert not hasattr(package, vocabulary_name)
+
+
+def test_stage_5_private_synthetic_fixtures_are_not_public_imports() -> None:
+    import rphys
+    import rphys.datasources
+
+    assert importlib.util.find_spec("tests.support.synthetic_datasources") is not None
+
+    forbidden_packages = [
+        "rphys.datasources.synthetic",
+        "rphys.datasources.synthetic_datasources",
+        "rphys.synthetic_datasources",
+    ]
+    for package_name in forbidden_packages:
+        assert importlib.util.find_spec(package_name) is None
+
+    for public_name in [
+        "SyntheticDataSource",
+        "SyntheticDataSourceAdapter",
+        "ConcatDataSourceIndex",
+    ]:
+        assert not hasattr(rphys, public_name)
+        assert not hasattr(rphys.datasources, public_name)

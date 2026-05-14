@@ -181,6 +181,14 @@ STAGE_3_DATASOURCE_MODULES = {
     "rphys.datasources.index_items": ["IndexItem"],
 }
 
+STAGE_5_DATASOURCE_MODULES = {
+    "rphys.datasources.adapters": [],
+    "rphys.datasources.validation": [],
+    "rphys.datasources.filters": [],
+    "rphys.datasources.splits": [],
+    "rphys.datasources.indexes": [],
+}
+
 STAGE_3_DATASOURCE_ERROR_NAMES = [
     "InvalidDataSourceRefError",
     "InvalidDataSourceSchemaError",
@@ -288,6 +296,44 @@ def test_stage_3_datasource_submodules_export_only_code_backed_names() -> None:
         assert module.__all__ == expected_all
         for public_name in expected_all:
             assert hasattr(module, public_name)
+
+
+def test_stage_5_datasource_submodules_start_with_empty_public_surfaces() -> None:
+    for module_name, expected_all in STAGE_5_DATASOURCE_MODULES.items():
+        module = importlib.import_module(module_name)
+
+        assert module.__doc__
+        assert module.__all__ == expected_all
+
+
+def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
+    import rphys
+    import rphys.datasources
+
+    forbidden_names = [
+        "DataSourceSpec",
+        "DataSourceAdapter",
+        "DataSourceScanResult",
+        "ValidationIssue",
+        "DataSourceValidationReport",
+        "ValidationIOPolicy",
+        "DataSourceView",
+        "FilterChain",
+        "IndexCandidate",
+        "GroupPlan",
+        "SplitPlan",
+        "DataSourceIndex",
+        "DataSourceIndexEntry",
+        "DataSourceIndexManifest",
+        "DataSourceIndexCodec",
+        "CompositeDataSourceIndex",
+        "ConcatDataSourceIndex",
+        "SyntheticDataSource",
+    ]
+
+    for public_name in forbidden_names:
+        assert not hasattr(rphys, public_name)
+        assert not hasattr(rphys.datasources, public_name)
 
 
 def test_stage_1_data_modules_import_with_intentional_public_surfaces() -> None:
