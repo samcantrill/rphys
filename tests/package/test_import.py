@@ -269,6 +269,7 @@ def test_import_ops_public_all_exports() -> None:
         "Operation",
         "OperationContext",
         "OperationResult",
+        "OperationPipeline",
         "FunctionalKernel",
     ]
     assert not hasattr(rphys, "OperationRole")
@@ -277,11 +278,12 @@ def test_import_ops_public_all_exports() -> None:
     assert not hasattr(rphys, "OperationContext")
     assert not hasattr(rphys, "OperationResult")
     assert not hasattr(rphys, "Operation")
+    assert not hasattr(rphys, "OperationPipeline")
     assert not hasattr(rphys, "FunctionalKernel")
 
 
 def test_import_ops_module_exports_are_scoped() -> None:
-    from rphys.ops import contracts, context, core, kernels
+    from rphys.ops import contracts, context, core, kernels, pipelines
 
     assert contracts.__all__ == [
         "OperationRole",
@@ -291,6 +293,7 @@ def test_import_ops_module_exports_are_scoped() -> None:
     assert context.__all__ == ["OperationContext", "OperationResult"]
     assert core.__all__ == ["Operation"]
     assert kernels.__all__ == ["FunctionalKernel"]
+    assert pipelines.__all__ == ["OperationPipeline"]
 
 
 def test_import_errors_phase_6_exports_are_scoped() -> None:
@@ -302,6 +305,8 @@ def test_import_errors_phase_6_exports_are_scoped() -> None:
         "InvalidOperationResultError",
         "InvalidOperationInputError",
         "OperationExecutionError",
+        "InvalidOperationPipelineError",
+        "OperationPipelineExecutionError",
     ]
 
     assert errors.__all__ == [
@@ -336,6 +341,8 @@ def test_errors_import_and_expose_approved_error_categories() -> None:
         "InvalidOperationResultError",
         "InvalidOperationInputError",
         "OperationExecutionError",
+        "InvalidOperationPipelineError",
+        "OperationPipelineExecutionError",
     ]
 
     assert errors.__all__ == [
@@ -371,6 +378,8 @@ def test_root_package_does_not_reexport_error_classes() -> None:
         "InvalidOperationContractError",
         "InvalidOperationContextError",
         "InvalidOperationResultError",
+        "InvalidOperationPipelineError",
+        "OperationPipelineExecutionError",
     ]:
         assert not hasattr(rphys, error_name)
 

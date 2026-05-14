@@ -42,6 +42,8 @@ __all__ = [
     "InvalidOperationResultError",
     "InvalidOperationInputError",
     "OperationExecutionError",
+    "InvalidOperationPipelineError",
+    "OperationPipelineExecutionError",
     "RemotePhysAnalysisError",
     "RemotePhysCodecError",
     "RemotePhysCollateError",
@@ -125,6 +127,14 @@ class OperationExecutionError(RemotePhysOperationError):
 
 class RemotePhysPipelineError(RemotePhysError):
     """Base error for pipeline composition and execution failures."""
+
+
+class InvalidOperationPipelineError(RemotePhysPipelineError):
+    """Raised when operation pipeline declarations are invalid."""
+
+
+class OperationPipelineExecutionError(RemotePhysPipelineError):
+    """Raised when operation pipeline execution fails."""
 
 
 class RemotePhysMethodError(RemotePhysError):
