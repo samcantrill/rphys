@@ -21,6 +21,8 @@ DEFAULT_MARKER_EXPR = (
 LOCAL_ALL_MARKER_EXPR = "not network and not optional_dependency and not acceptance"
 SUMMARY_OUTPUT = Path("build/test-summary.md")
 SUMMARY_ARTIFACT_DIR = Path("build/test-summary")
+PR_SUMMARY_OUTPUT = Path("build/test-pr-summary.md")
+PR_SUMMARY_ARTIFACT_DIR = Path("build/test-pr-summary")
 SOURCE_COVERAGE_ROOT = "src/rphys"
 UV_CACHE_DIR = "/tmp/uv-cache"
 
@@ -102,6 +104,13 @@ class SuiteSummary:
     counts: Counts
     groups: Mapping[str, Counts]
     coverage: Mapping[str, CoverageMetric]
+
+
+@dataclass(frozen=True)
+class ValidationCheck:
+    check: str
+    result: str
+    evidence: str
 
 
 SUITES: dict[str, Suite] = {
@@ -246,8 +255,36 @@ def main(argv: Sequence[str] | None = None) -> int:
     summary_parser.add_argument(
         "--output",
         type=Path,
-        default=SUMMARY_OUTPUT,
-        help=f"Summary path. Defaults to {SUMMARY_OUTPUT}.",
+        default=None,
+        help=(
+            "Summary path. Defaults to build/test-summary.md for detailed "
+            "summaries and build/test-pr-summary.md for PR summaries."
+        ),
+    )
+    summary_parser.add_argument(
+        "--format",
+        choices=("detailed", "pr"),
+        default="detailed",
+        help="Summary format. Defaults to detailed.",
+    )
+    summary_parser.add_argument(
+        "--artifact-dir",
+        type=Path,
+        default=None,
+        help=(
+            "Directory for per-suite JUnit and coverage artifacts. Defaults to "
+            "build/test-summary for detailed summaries and build/test-pr-summary "
+            "for PR summaries."
+        ),
+    )
+    summary_parser.add_argument(
+        "--checks",
+        type=Path,
+        default=None,
+        help=(
+            "Optional JSON file of manual Check/Result/Evidence rows. "
+            "Only valid with --format pr."
+        ),
     )
 
     args = parser.parse_args(argv)
@@ -258,10 +295,31 @@ def main(argv: Sequence[str] | None = None) -> int:
         return result.returncode
 
     if args.command == "summary":
+        if args.checks is not None and args.format != "pr":
+            summary_parser.error("--checks requires --format pr")
         suite_names = list(args.suites) or list(SUITES)
-        results = [run_summary_suite(name) for name in suite_names]
-        write_summary(args.output, results)
-        print(f"Wrote test summary to {args.output}")
+        output_path = args.output or (
+            PR_SUMMARY_OUTPUT if args.format == "pr" else SUMMARY_OUTPUT
+        )
+        artifact_dir = args.artifact_dir or (
+            PR_SUMMARY_ARTIFACT_DIR
+            if args.format == "pr"
+            else SUMMARY_ARTIFACT_DIR
+        )
+        if args.format == "pr":
+            try:
+                checks = load_validation_checks(args.checks)
+            except ValueError as exc:
+                print(f"error: {exc}", file=sys.stderr)
+                return 2
+        else:
+            checks = []
+        results = [run_summary_suite(name, artifact_dir) for name in suite_names]
+        if args.format == "pr":
+            write_pr_summary(output_path, results, checks)
+        else:
+            write_summary(output_path, results)
+        print(f"Wrote test summary to {output_path}")
         for result in results:
             print(
                 f"{result.suite}: {result.status} "
@@ -274,7 +332,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     raise AssertionError(f"unhandled command: {args.command}")
 
 
-def run_summary_suite(name: str) -> SuiteSummary:
+def run_summary_suite(
+    name: str,
+    artifact_root: Path = SUMMARY_ARTIFACT_DIR,
+) -> SuiteSummary:
     suite = SUITES[name]
     if not has_tests(suite.path):
         counts = Counts()
@@ -290,7 +351,7 @@ def run_summary_suite(name: str) -> SuiteSummary:
             coverage={},
         )
 
-    artifact_dir = SUMMARY_ARTIFACT_DIR / name
+    artifact_dir = artifact_root / name
     artifact_dir.mkdir(parents=True, exist_ok=True)
     junit_path = artifact_dir / "junit.xml"
     coverage_data_path = artifact_dir / ".coverage"
@@ -724,6 +785,112 @@ def write_summary(path: Path, results: Sequence[SuiteSummary]) -> None:
             ]
         )
     path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def load_validation_checks(path: Path | None) -> list[ValidationCheck]:
+    if path is None:
+        return []
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{path} is not valid JSON: {exc.msg}") from exc
+    except OSError as exc:
+        raise ValueError(f"could not read {path}: {exc}") from exc
+    return parse_validation_checks(raw, label=str(path))
+
+
+def parse_validation_checks(
+    raw: object,
+    *,
+    label: str = "validation checks",
+) -> list[ValidationCheck]:
+    if not isinstance(raw, list):
+        raise ValueError(f"{label} must be a JSON array")
+
+    checks: list[ValidationCheck] = []
+    for index, item in enumerate(raw):
+        row_label = f"{label}[{index}]"
+        if not isinstance(item, dict):
+            raise ValueError(f"{row_label} must be an object")
+        values: dict[str, str] = {}
+        for field in ("check", "result", "evidence"):
+            value = item.get(field)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{row_label}.{field} must be a non-empty string")
+            values[field] = value.strip()
+        checks.append(ValidationCheck(**values))
+    return checks
+
+
+def write_pr_summary(
+    path: Path,
+    results: Sequence[SuiteSummary],
+    checks: Sequence[ValidationCheck] = (),
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    validation_rows = [
+        *checks,
+        ValidationCheck(
+            check="Automated suite summary",
+            result=validation_result(results),
+            evidence="Suite summary below",
+        ),
+    ]
+    lines = [
+        "## Tests And Validation",
+        "",
+        "| Check | Result | Evidence |",
+        "| --- | --- | --- |",
+    ]
+    for check in validation_rows:
+        lines.append(
+            "| "
+            + " | ".join(
+                [
+                    markdown_table_cell(check.check),
+                    markdown_table_cell(check.result),
+                    markdown_table_cell(check.evidence),
+                ]
+            )
+            + " |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "### Test Suite Summary",
+            "",
+            "| Suite | Status | Passed | Failed | Errors | Skipped | Deselected |",
+            "| --- | --- | ---: | ---: | ---: | ---: | ---: |",
+        ]
+    )
+    for result in results:
+        lines.append(
+            "| "
+            + " | ".join(
+                [
+                    markdown_table_cell(result.suite),
+                    markdown_table_cell(result.status),
+                    str(result.counts.passed),
+                    str(result.counts.failed),
+                    str(result.counts.errors),
+                    str(result.counts.skipped),
+                    str(result.counts.deselected),
+                ]
+            )
+            + " |"
+        )
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
+def validation_result(results: Sequence[SuiteSummary]) -> str:
+    if any(result.returncode != 0 for result in results):
+        return "Failed"
+    return "Passed"
+
+
+def markdown_table_cell(value: str) -> str:
+    return value.replace("\n", "<br>").replace("|", "\\|")
 
 
 def aggregate_counts(counts: Sequence[Counts]) -> Counts:

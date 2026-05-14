@@ -2,7 +2,7 @@
 .PHONY: test-integration test-e2e test-acceptance test-all
 .PHONY: test-package-summary test-unit-summary test-contract-summary
 .PHONY: test-integration-summary test-e2e-summary test-acceptance-summary
-.PHONY: test-summary
+.PHONY: test-summary test-pr-summary
 
 TEST_HARNESS := python -m tools.test_harness
 TEST_UV_RUN := uv run
@@ -25,6 +25,7 @@ test-help:
 	@printf '\n'
 	@printf 'Summary reports:\n'
 	@printf '  make test-summary                 Write all suite summaries to build/test-summary.md\n'
+	@printf '  make test-pr-summary              Write PR-ready validation summary to build/test-pr-summary.md\n'
 	@printf '  make test-package-summary         Write package suite summary\n'
 	@printf '  make test-unit-summary            Write unit suite summary\n'
 	@printf '  make test-contract-summary        Write contract suite summary\n'
@@ -79,3 +80,6 @@ test-acceptance-summary:
 
 test-summary:
 	$(TEST_UV_LOCKED_DEV) $(TEST_HARNESS) summary
+
+test-pr-summary:
+	$(TEST_UV_LOCKED_DEV) $(TEST_HARNESS) summary --format pr --output build/test-pr-summary.md --artifact-dir build/test-pr-summary $(if $(TEST_REPORT_CHECKS),--checks $(TEST_REPORT_CHECKS),)

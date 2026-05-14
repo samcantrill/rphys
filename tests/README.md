@@ -52,6 +52,7 @@ make test-e2e
 make test-acceptance
 make test-all
 make test-summary
+make test-pr-summary
 ```
 
 `make test` runs the default local suite and excludes tests marked `slow`,
@@ -59,6 +60,11 @@ make test-summary
 `not present` while their directories do not yet contain test files.
 
 Summary targets run suites through `tools.test_harness`, write JUnit XML and
-optional coverage artifacts under `build/test-summary/`, and emit Markdown
-summaries suitable for PR validation notes. Use `make test-<suite>-summary` for
-a focused report or `make test-summary` for all suites.
+optional coverage artifacts, and emit Markdown summaries suitable for PR
+validation notes. Use `make test-<suite>-summary` for a focused detailed report
+or `make test-summary` for all suites. Use `make test-pr-summary` for a compact
+PR-ready validation section under `build/test-pr-summary.md`; pass
+`TEST_REPORT_CHECKS=path/to/checks.json` to include explicit manual
+Check/Result/Evidence rows. Detailed summaries write artifacts under
+`build/test-summary/`; PR summaries write artifacts under
+`build/test-pr-summary/`.
