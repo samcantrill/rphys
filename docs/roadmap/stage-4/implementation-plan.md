@@ -5,7 +5,7 @@ Roadmap version: `v4`
 Planning document: `docs/roadmap/stage-4/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Primary Phase 3 pending
+Current phase: Primary Phase 4 pending
 Blockers: none identified by implementation-readiness review
 
 ## Summary
@@ -42,7 +42,7 @@ Blockers: none identified by implementation-readiness review
 | Prep 2 | `field-spec-index-contracts` | merged | `agent/codecs-lazy-samples-prep2-field-spec-index-contracts` | [#22](https://github.com/samcantrill/rphys/pull/22) | `src/rphys/data/fields.py`, datasource schema tests, IO index docs/tests, package/contract tests | Freeze `FieldSpec` and clarify `FieldIndex` as a subclass-based base interface. | `make validate-pr`; targeted field/schema/index checks; `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | Immutable datasource declarations and explicit index extension boundary |
 | 1 | `codec-contract-foundation` | merged | `agent/codecs-lazy-samples-p1-codec-contract-foundation` | [#23](https://github.com/samcantrill/rphys/pull/23) | `src/rphys/io/codecs.py`, conditional `src/rphys/io/__init__.py`, exercised `src/rphys/errors.py`, package/unit import tests | Establish the Stage 4 IO public contract without runtime sample behavior. | `make validate-pr`; targeted codec/package/error checks; `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | EX-3, EX-6 |
 | 2 | `codec-registry-synthetic-ops` | merged | `agent/codecs-lazy-samples-p2-codec-registry-synthetic-ops` | [#24](https://github.com/samcantrill/rphys/pull/24) | `src/rphys/io/codecs.py`, tests/support synthetic codec, IO unit/contract tests | Prove explicit codec resolution and dependency-light probe/load/save behavior. | `make validate-pr`; targeted codec/package/error checks; `make test-unit`; `make test-contract`; `make test-package`; `git diff --check`; PR-range `git diff --check` after blocker fix | EX-2, EX-3, EX-4, EX-5 |
-| 3 | `lazy-sample-field-runtime` | pending | `agent/codecs-lazy-samples-p3-lazy-sample-field-runtime` | pending | `src/rphys/data/sample_fields.py`, additive `src/rphys/data/containers.py` updates, conditional `src/rphys/data/__init__.py`, data unit/contract tests | Add lazy `SampleField` handles while preserving loaded `Sample` semantics. | targeted `make test-unit`; `make test-contract` including runtime core coverage | EX-1 |
+| 3 | `lazy-sample-field-runtime` | merged | `agent/codecs-lazy-samples-p3-lazy-sample-field-runtime` | [#25](https://github.com/samcantrill/rphys/pull/25) | `src/rphys/data/sample_fields.py`, additive `src/rphys/data/containers.py` updates, conditional `src/rphys/data/__init__.py`, data unit/contract tests | Add lazy `SampleField` handles while preserving loaded `Sample` semantics. | `make validate-pr`; targeted lazy-field/container/collation/package/contract checks; `make test-unit`; `make test-contract`; `make test-package`; PR-range `git diff --check` | EX-1 |
 | 4 | `sample-builder-provenance` | pending | `agent/codecs-lazy-samples-p4-sample-builder-provenance` | pending | `src/rphys/data/sample_builders.py`, conditional `src/rphys/data/__init__.py`, builder/provenance unit/contract tests | Build lazy `Sample`s from one `IndexItem` with all/subset/one/probe/eager paths. | targeted `make test-unit`; `make test-contract`; optional `make test-integration` only for one adopted vertical slice | EX-1, EX-2, EX-5 |
 | 5 | `closeout-docs-validation` | pending | `agent/codecs-lazy-samples-p5-closeout-docs-validation` | pending | public docstrings/docs/examples, package expectations, final validation evidence | Harden docs, examples, contracts, import checks, and final validation without adding new behavior. | `make test-package`; `make test-unit`; `make test-contract`; `git diff --check`; broaden as needed | EX-1 through EX-6 |
 
@@ -409,11 +409,11 @@ Workflow path: fast path
 
 ## Phase 3: Lazy `SampleField` Runtime Compatibility
 
-Status: pending
+Status: merged
 Slug: `lazy-sample-field-runtime`
 Branch: `agent/codecs-lazy-samples-p3-lazy-sample-field-runtime`
 Worktree: `/home/samcantrill/work/rphys-worktrees/codecs-lazy-samples-p3-lazy-sample-field-runtime`
-PR: pending
+PR: [#25](https://github.com/samcantrill/rphys/pull/25)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path if runtime compatibility review finds accessor ambiguity; otherwise fast path
@@ -458,13 +458,13 @@ Workflow path: expanded path if runtime compatibility review finds accessor ambi
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed in `docs/roadmap/stage-4/phases/lazy-sample-field-runtime.md`
 - Planning/refinement budget: one phase planner pass; one refiner pass expected if accessor semantics need test clarification
 - Implementation/refinement budget: one executor pass; one targeted refiner pass if loaded runtime contracts regress
 - PR review budget: one reviewer pass with emphasis on compatibility
 - Blocker-resolution budget: return to planning if loaded `Sample` behavior cannot remain additive or if a parallel `LazySample` container becomes necessary
-- Pre-submit blocker gate: existing runtime core contract must remain green or any failure must be explicitly accepted before continuing
-- Merge record: pending
+- Pre-submit blocker gate: passed after local validation, automated review, and payload-assignment blocker resolution
+- Merge record: PR [#25](https://github.com/samcantrill/rphys/pull/25) squash-merged to `develop` at `5f35a55d8efe400be875842aab46b884b01451ea`
 
 ### Risks And Stop Conditions
 
@@ -474,11 +474,28 @@ Workflow path: expanded path if runtime compatibility review finds accessor ambi
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added `rphys.data.sample_fields.SampleField` and `SampleFieldState`; `SampleField` subclasses `FieldValue`, stores `LoadContext` and a private loader, loads through the retained `CodecLoadResult` path exactly once, retains failed errors without retry, and prevents direct payload assignment from resetting lazy state.
+- Validation: `make validate-pr` passed after blocker fix: package 21, unit 299, contract 33, integration 1, e2e/acceptance not present, build succeeded, lock check passed, and `git diff --check` clean. Focused lazy-field/container/collation/package/contract checks passed, and `git diff --check origin/develop...HEAD` passed.
+- PR: [#25](https://github.com/samcantrill/rphys/pull/25) opened against `develop`; PR title and target verified.
+- Merge: squash-merged to `develop` 2026-05-14 at `5f35a55d8efe400be875842aab46b884b01451ea` via GitHub merge API after local validation, blocker resolution, and automated review.
+- Follow-up: Phase 4 still owns `SampleBuilder`, datasource provenance joining, requested locator selection, and eager sample construction. Phase worktree and branch cleanup pending after merge metadata push.
+
+### Merge Record
+
+- Phase: Primary Phase 3, `lazy-sample-field-runtime`
+- Branch: `agent/codecs-lazy-samples-p3-lazy-sample-field-runtime`
+- PR: [#25](https://github.com/samcantrill/rphys/pull/25)
+- Base branch: `develop`
+- Merge command: `gh api --method PUT repos/samcantrill/rphys/pulls/25/merge --field merge_method=squash ...`
+- Merge result: merged
+- Merge commit: `5f35a55d8efe400be875842aab46b884b01451ea`
+- Branch cleanup: pending merge metadata push
+- Worktree cleanup: pending merge metadata push
+- Behavior implemented: lazy `SampleField` state, retained load result/error, no-load `Sample.field()`/`role()`/`field_items()` access, payload-demanding load semantics, eager handle loading through the same path, package/import boundary coverage, and direct payload-assignment blocker fix.
+- Tests and validation: targeted lazy-field/container/collation/package/contract checks passed; `make validate-pr` passed with 354 total tests across present suites; PR-range `git diff --check` passed.
+- Documentation: phase assignment, execution plan, PR body, and this merge record updated.
+- Scientific contract implications: lazy fields retain datasource-neutral `LoadContext` and codec result/error evidence; no `LazySample`, retry/reset/cache policy, async behavior, public loader handler interface, datasource-aware codec context, builder behavior, sampling conversion, alignment semantics, or collation redesign was introduced.
+- Remaining blockers: none.
 
 ## Phase 4: `SampleBuilder` Bridge And Provenance Contracts
 
