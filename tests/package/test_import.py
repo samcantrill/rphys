@@ -182,8 +182,17 @@ STAGE_3_DATASOURCE_MODULES = {
 }
 
 STAGE_5_DATASOURCE_MODULES = {
-    "rphys.datasources.adapters": [],
-    "rphys.datasources.validation": [],
+    "rphys.datasources.adapters": [
+        "DataSourceAdapter",
+        "DataSourceScanResult",
+        "DataSourceSpec",
+    ],
+    "rphys.datasources.validation": [
+        "DataSourceValidationReport",
+        "ValidationIOPolicy",
+        "ValidationIssue",
+        "validate_scan_result",
+    ],
     "rphys.datasources.filters": [],
     "rphys.datasources.splits": [],
     "rphys.datasources.indexes": [],
@@ -194,6 +203,12 @@ STAGE_3_DATASOURCE_ERROR_NAMES = [
     "InvalidDataSourceSchemaError",
     "InvalidIndexItemError",
     "InvalidRecordRefError",
+]
+
+STAGE_5_DATASOURCE_ERROR_NAMES = [
+    "InvalidDataSourceSpecError",
+    "InvalidDataSourceScanResultError",
+    "InvalidDataSourceValidationError",
 ]
 
 
@@ -222,6 +237,7 @@ def test_errors_import_and_expose_approved_error_categories() -> None:
         *STAGE_1_ERROR_NAMES,
         *STAGE_2_ERROR_NAMES,
         *STAGE_3_DATASOURCE_ERROR_NAMES,
+        *STAGE_5_DATASOURCE_ERROR_NAMES,
         *STAGE_3_IO_ERROR_NAMES,
         *STAGE_4_CODEC_ERROR_NAMES,
         *BROAD_ERROR_NAMES,
@@ -242,6 +258,7 @@ def test_root_package_does_not_reexport_error_classes() -> None:
         *STAGE_1_ERROR_NAMES,
         *STAGE_2_ERROR_NAMES,
         *STAGE_3_DATASOURCE_ERROR_NAMES,
+        *STAGE_5_DATASOURCE_ERROR_NAMES,
         *STAGE_3_IO_ERROR_NAMES,
         *STAGE_4_CODEC_ERROR_NAMES,
     ]:
@@ -317,6 +334,7 @@ def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
         "ValidationIssue",
         "DataSourceValidationReport",
         "ValidationIOPolicy",
+        "validate_scan_result",
         "DataSourceView",
         "FilterChain",
         "IndexCandidate",
