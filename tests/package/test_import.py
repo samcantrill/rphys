@@ -278,6 +278,7 @@ def test_import_ops_public_all_exports() -> None:
     assert not hasattr(rphys, "OperationContext")
     assert not hasattr(rphys, "OperationResult")
     assert not hasattr(rphys, "Operation")
+    assert not hasattr(rphys, "OperationPipeline")
     assert not hasattr(rphys, "FunctionalKernel")
 
 
