@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: draft phase execution plan
+- Status: final phase execution plan; ready for executor implementation
 - Roadmap stage: `v9`
 - Feature focus: index adapters, framework-neutral sample sources, and deterministic source context
 - Stage descriptor: Index Adapters, Torch Data Loading, And Cache
@@ -21,9 +21,9 @@
 - Phase isolation: one dedicated branch, one dedicated worktree, one PR to `develop`; local-only completion is not allowed
 - Plan quality gate: source implementation plan approved 2026-05-15 with no blockers
 - Draft pass: complete in this artifact
-- Refine pass: pending and ready; expanded-path budget is allocated for public API/import-path/data-shape review before executor implementation
+- Refine pass: complete; expanded-path review tightened module-scoped exports, request/context fingerprint evidence, position validation, and executor stop conditions before implementation
 - Setup limitations: no remote fetch or GitHub auth was run during this draft; the supplied worktree already exists, is on the assigned branch, and local `HEAD`, `develop`, and `origin/develop` all resolve to `76585bb`
-- Blockers: none for draft planning
+- Blockers: none for implementation planning
 
 ## Objective
 
@@ -59,7 +59,7 @@ Future work must remain out of this phase: torch datasets and loader plans, cach
 - Import-boundary or dependency constraints:
   - `pyproject.toml` has no runtime dependencies.
   - Phase 1 must keep base imports dependency-light and must not import torch, optimized-storage SDKs, plotting/array/video stacks, trainer/model packages, export operations, or test support from package code.
-  - `rphys` root exports remain empty. `rphys.datasources.sources` may expose public names through its own `__all__`; parent `rphys.datasources` should remain Stage 3-only unless the expanded-path review explicitly approves code-backed parent exports.
+  - `rphys` root exports remain empty. Expanded-path review keeps Phase 1 exports module-scoped to `rphys.datasources.sources.__all__`; parent `rphys.datasources` remains Stage 3-only in this phase.
 
 ## Phase Isolation State
 
@@ -78,15 +78,15 @@ Future work must remain out of this phase: torch datasets and loader plans, cach
   - `WorkerContextFactory`
   - `SampleSource`
   - `IndexSampleSource`
-- Define `SampleRequest` as an immutable request record for requested locators, eager/lazy mode, and optional deterministic materialization or operation fingerprint evidence. `requested=None` means all fields; an explicit empty request is invalid.
-- Define `SampleRuntimeContext` as immutable primitive evidence, not executable workflow/RNG state. It should cover index/source/entry identity, position, request fingerprint, epoch, worker id/count, rank/world size, seed material, and primitive metadata as appropriate for Phase 1.
-- Define `WorkerContextFactory` as a deterministic helper/factory over explicit primitive inputs. It must not call package-level random, inspect torch worker objects in core, or own trainer/workflow state.
+- Define `SampleRequest` as an immutable request record for requested locators, eager/lazy mode, and deterministic primitive fingerprint evidence. `requested=None` means all fields; an explicit empty request is invalid; operation/materialization fingerprints are optional primitive labels only and must not execute operations, cache, or prepared-data logic.
+- Define `SampleRuntimeContext` as immutable primitive evidence, not executable workflow/RNG state. It should cover index/source/entry identity, position, request fingerprint, epoch, worker id/count, rank/world size, seed material, and primitive metadata as appropriate for Phase 1 without changing the returned `Sample` shape.
+- Define `WorkerContextFactory` as a deterministic helper/factory over explicit primitive inputs. It must not call package-level random, use Python's process-local `hash()`, inspect torch worker objects in core, read time/PID/environment state, or own trainer/workflow state.
 - Define `SampleSource` as the framework-neutral source contract with `__len__`, `sample_at(position, request=None, context=None)`, and default-request `__getitem__(position)`.
 - Implement `IndexSampleSource` by composing `DataSourceIndex` or `CompositeDataSourceIndex` and `SampleBuilder`, retrieving aligned `IndexItem` and `DataSourceIndexEntry`, deriving or accepting context evidence, and calling `SampleBuilder.build`.
-- Add failure behavior for invalid source/index/builder inputs, invalid positions, empty/duplicate/malformed requests, invalid context metadata, missing requested locators, and unsupported eager behavior surfaced by `SampleBuilder`/codec paths.
+- Add failure behavior for invalid source/index/builder inputs, non-integer, negative, and out-of-range positions, empty/duplicate/malformed requests, invalid context metadata, missing requested locators, and unsupported eager behavior surfaced by `SampleBuilder`/codec paths.
 - Add tests under package, unit, contract, and integration suites. Add e2e/acceptance deferral notes by test plan, not placeholder files.
 - Add concise docstrings or docs in the owned code/docs surface explaining request semantics, context evidence, FieldLocator preservation, provenance, and derived-source deferral.
-- Add scoped exports only when behavior is implemented and package tests prove they are code-backed and import-light.
+- Add scoped exports in `rphys.datasources.sources.__all__` only when behavior is implemented and package tests prove they are code-backed and import-light. Do not add root or parent `rphys.datasources` exports in Phase 1.
 
 ## Out-of-Scope Work
 
@@ -109,13 +109,13 @@ Future work must remain out of this phase: torch datasets and loader plans, cach
   - `tests/integration/test_stage9_sample_source_flow.py`
   - package import-boundary assertions in `tests/package/test_import.py` and `tests/package/test_import_boundaries.py`
 - Conditional ownership:
-  - `src/rphys/datasources/__init__.py` only for code-backed scoped exports if expanded-path refinement confirms parent exports are intended.
   - `src/rphys/errors.py` and `tests/unit/rphys/test_errors.py` only if existing typed errors cannot express source/request/context failures cleanly.
   - `tests/support/` only for small reusable synthetic helpers needed by the new tests; no public package code may import test support.
 - Do not edit in this phase:
   - `/home/samcantrill/work/rphys` control checkout
   - `docs/roadmap.md`
   - `docs/roadmap/stage-9/implementation-plan.md`
+  - `src/rphys/datasources/__init__.py` unless the manager explicitly reopens the Phase 1 parent-export decision
   - torch, cache, prepared, export, model, trainer, operation, and workflow modules
   - `src/rphys/datasources/indexes.py`, `src/rphys/datasources/index_items.py`, and `src/rphys/data/sample_builders.py` unless a narrow compatibility issue blocks Phase 1 and the manager approves the scope change
 
@@ -133,29 +133,33 @@ Public behavior for Phase 1:
 
 - `SampleSource.sample_at(position, request=None, context=None)` is the primary public access method. `__getitem__(position)` must call the default request path and return the same `Sample` shape.
 - `__len__` reports the backing source length and does not scan or materialize data.
+- Valid positions are non-boolean integers satisfying `0 <= position < len(source)`. Negative positions must not wrap through Python sequence behavior, and invalid positions must fail loudly with typed rphys context.
 - `SampleRequest` with `requested=None` means every locator from the backing `IndexItem`, preserving descriptor order.
 - An explicit `requested` iterable preserves caller order, rejects empty and duplicate locators, parses string locators through `FieldLocator.parse`, and fails loudly when requested locators are absent.
+- `SampleRequest` fingerprints must be derived from a stable primitive representation of requested locator strings, eager mode, and optional primitive fingerprint labels. They must not use Python's process-local `hash()` or include executable objects, loaders, codec instances, torch state, cache state, prepared manifests, or raw payloads.
 - Lazy requests return `Sample` objects containing lazy `SampleField` handles. Eager requests use the same `SampleBuilder` eager path and keep the lazy handles inspectable after loading.
 - `IndexSampleSource` must retrieve `index[position]` and `index.entry_at(position)` for the same position and must not mutate either descriptor or sidecar.
-- Context evidence must remain primitive, deterministic, and inspectable. It can include rank/worker fields as evidence but must not claim stable DDP behavior or own torch worker/trainer state.
+- Context evidence must remain primitive, deterministic, and inspectable on context records/fingerprints. It can include rank/worker fields as evidence but must not claim stable DDP behavior, own torch worker/trainer state, or add a side-channel field/metadata wrapper to the returned `Sample`.
 - Returned samples remain `FieldLocator` keyed and model-neutral; no tuple/dict model formatting is allowed.
 
 Module boundaries:
 
 - Own source foundation in `rphys.datasources.sources`.
 - Compose, do not modify, `rphys.datasources.indexes`, `rphys.datasources.index_items`, and `rphys.data.sample_builders` unless implementation evidence shows a tiny compatibility bug; any such need is a stop condition for manager review if it broadens scope.
+- Keep public imports module-scoped. `rphys.datasources.sources` gets `__all__`; `rphys.datasources` and `rphys` do not gain `SampleRequest`, `SampleRuntimeContext`, `WorkerContextFactory`, `SampleSource`, or `IndexSampleSource` exports in Phase 1.
 - Do not import torch, cache, prepared, export, trainer, model, workflow, test support, or heavy optional modules from `sources.py`.
 - Do not add public helper modules, registries, or placeholder classes.
 
 Data shapes:
 
 - Requests use `FieldLocator` tuples internally and expose stable primitive fingerprints suitable for later cache/prepared equivalence.
-- Runtime context metadata is string/primitive keyed and frozen or otherwise immutable.
+- Runtime context metadata is string/primitive keyed and frozen or otherwise immutable. It may carry IDs/fingerprints copied from `DataSourceIndexEntry`, but not full descriptors, loaders, codec registries, field views, payloads, or mutable mappings.
 - Source access returns `rphys.data.containers.Sample`, not a model tuple, raw payload, `IndexItem`, or `DataSourceIndexEntry`.
 
 Error behavior:
 
 - Invalid source construction, invalid requests, invalid context metadata, and invalid positions must raise typed rphys errors with inspectable context, not bare `KeyError`/`IndexError` leaks where public behavior can reasonably wrap them.
+- Prefer existing `RemotePhysDataSourceError`, `FieldTypeError`, `MissingFieldError`, and locator errors. Add at most one narrow source-specific datasource error only if implementation evidence shows existing categories make public failures unclear; update package/error tests if that happens.
 - Missing requested locators should preserve or wrap `MissingFieldError` semantics with requested, missing, and available locator evidence.
 - Codec/materialization failures during eager loading are allowed to surface through existing `SampleBuilder`/`SampleField` error behavior and should not be hidden by source code.
 
@@ -220,7 +224,6 @@ Edge cases the executor must not redesign:
 - Expected PR size and shape: small to moderate public API PR with one new source module, focused package/unit/contract/integration tests, and concise docstrings or docs.
 - Files and areas to inspect:
   - `src/rphys/datasources/sources.py`
-  - `src/rphys/datasources/__init__.py` only if code-backed scoped parent exports are intentionally added
   - `src/rphys/errors.py` and `tests/unit/rphys/test_errors.py` only if a new source-specific error is justified
   - `tests/package/test_import.py`
   - `tests/package/test_import_boundaries.py`
@@ -233,16 +236,16 @@ Edge cases the executor must not redesign:
   - No torch/cache/prepared/export/trainer/model/workflow imports.
   - No raw dataset fixtures.
   - No placeholder `DerivedIndexSampleSource`.
-  - No parent/root exports unless code-backed and explicitly tested.
+  - No parent/root exports; only `rphys.datasources.sources.__all__` is in scope.
   - No changes to `DataSourceIndex` or `SampleBuilder` unless narrowly necessary and reviewed as scope risk.
 
 ## Implementation Steps
 
-1. Add source records and validation helpers in `src/rphys/datasources/sources.py`: immutable `SampleRequest`, deterministic request fingerprinting, immutable `SampleRuntimeContext`, and a deterministic `WorkerContextFactory` over explicit primitive inputs.
+1. Add source records and validation helpers in `src/rphys/datasources/sources.py`: immutable `SampleRequest`, deterministic primitive request fingerprinting, immutable `SampleRuntimeContext`, and a deterministic `WorkerContextFactory` over explicit primitive inputs.
 2. Add the public `SampleSource` contract with `__len__`, `sample_at(position, request=None, context=None)`, and default-request `__getitem__(position)`, keeping helper implementation private unless public promotion is justified by tests.
-3. Implement `IndexSampleSource` over `DataSourceIndex`/`CompositeDataSourceIndex` plus `SampleBuilder`: validate construction, coerce requests/context, retrieve item and aligned entry, derive context evidence, and call `SampleBuilder.build(..., requested=..., eager=...)`.
+3. Implement `IndexSampleSource` over `DataSourceIndex`/`CompositeDataSourceIndex` plus `SampleBuilder`: validate construction, reject non-integer/negative/out-of-range positions before indexing, coerce requests/context, retrieve item and aligned entry, derive context evidence, and call `SampleBuilder.build(..., requested=..., eager=...)`.
 4. Add typed failure coverage and source-context provenance checks: invalid positions, empty/duplicate/malformed requested locators, missing locators, invalid context metadata, descriptor immutability, and eager/lazy behavior.
-5. Add code-backed public exports and import-boundary tests only after behavior exists. Keep `rphys` root empty and keep `rphys.datasources` parent exports scoped per expanded-path review decision.
+5. Add code-backed `rphys.datasources.sources.__all__` exports and import-boundary tests only after behavior exists. Keep `rphys` root empty and keep `rphys.datasources` parent exports unchanged.
 6. Add concise docstrings or docs for request semantics, deterministic context evidence, FieldLocator preservation, unsupported behavior, and deferred `DerivedIndexSampleSource`.
 
 ## Test Plan
@@ -251,13 +254,13 @@ Edge cases the executor must not redesign:
 
 - Status: required
 - Expected paths: `tests/package/test_import.py`, `tests/package/test_import_boundaries.py`
-- Required assertions or deferral reason: `rphys.datasources.sources.__all__` lists only code-backed public names; package/root exports remain intentional; importing `rphys.datasources.sources` and the existing lightweight import set does not load torch or other heavy optional modules; package source still does not import or call package-level random.
+- Required assertions or deferral reason: `rphys.datasources.sources.__all__` lists only code-backed public names; package/root and parent `rphys.datasources` exports remain intentional and do not expose Phase 1 names; importing `rphys.datasources.sources` and the existing lightweight import set does not load torch or other heavy optional modules; package source still does not import or call package-level random.
 
 ### Unit Suite
 
 - Status: required
 - Expected paths: `tests/unit/rphys/datasources/test_sources.py`; `tests/unit/rphys/test_errors.py` only if a new error class is added
-- Required assertions or deferral reason: validate `SampleRequest`, context records, deterministic fingerprint/context derivation, primitive metadata freezing, invalid metadata/rank/worker inputs, default/all-fields and subset request coercion, invalid/duplicate/empty requests, `IndexSampleSource` construction, invalid positions, missing fields, eager/lazy delegation, descriptor non-mutation, and no placeholder derived class.
+- Required assertions or deferral reason: validate `SampleRequest`, context records, deterministic fingerprint/context derivation without process-local `hash()`, primitive metadata freezing, invalid metadata/rank/worker inputs, default/all-fields and subset request coercion, invalid/duplicate/empty requests, `IndexSampleSource` construction, non-integer/negative/out-of-range positions, missing fields, eager/lazy delegation, descriptor non-mutation, and no placeholder derived class.
 
 ### Contract Suite
 
@@ -288,17 +291,20 @@ Edge cases the executor must not redesign:
 - Public API lock-in around `SampleRequest`, `SampleSource`, and context field names.
 - Context records could drift into workflow, RNG execution, torch-worker, or trainer state if not kept primitive.
 - `IndexSampleSource` might accidentally hide `IndexError`/`KeyError` or silently allow negative indexing in a way that becomes public behavior.
-- Parent package exports could broaden the public surface beyond approved code-backed names.
+- Fingerprints could become process-local or non-reproducible if implemented with `hash()`, object identities, time, environment state, mutable mappings, or non-primitive metadata.
+- Parent package exports could broaden the public surface beyond the refined module-scoped import decision.
 - Duplicate request validation may diverge from existing `SampleBuilder` semantics if rewritten instead of composed carefully.
 - A derived-source placeholder could slip in because the roadmap names derived sources; the approved plan explicitly rejects that until validation is code-backed.
 
 ## Stop Conditions
 
-- Stop before implementation if expanded-path refinement changes the public source protocol, request shape, context record fields, or parent export policy.
+- Stop before implementation if executor implementation appears to require changing the public source protocol, request shape, context record fields, or refined module-scoped export policy.
 - Stop if source behavior requires modifying `DataSourceIndex`, `IndexItem`, `SampleBuilder`, `Sample`, or `SampleField` public contracts.
 - Stop if a distinct `DerivedIndexSampleSource` appears necessary without code-backed derived provenance validation.
 - Stop if Phase 1 cannot remain dependency-light without torch, cache, prepared, export, model, trainer, device, workflow, or optimized-storage imports.
 - Stop if typed source failures require a new error taxonomy broader than one narrow source/request/context error.
+- Stop if `sample_at` needs to return anything other than `Sample`, or if context/source evidence would need to be injected into sample fields, codec `LoadContext`, or model-formatted structures to be inspectable.
+- Stop if deterministic fingerprints require public helper/protocol promotion beyond the approved Phase 1 names.
 - Stop if unrelated local changes appear in Phase 1-owned files or if the branch/worktree is no longer isolated from the control checkout.
 
 ## Validation Commands
@@ -326,43 +332,44 @@ git diff --check
 
 - Behavior evidence: `sample_at` and `__getitem__` return FieldLocator-keyed `Sample` objects for all-fields and subset requests; eager and lazy paths match `SampleBuilder` behavior; subset order is preserved.
 - Failure evidence: explicit empty requests, duplicate requests, malformed locators, missing locators, invalid positions, invalid source construction, and invalid context metadata fail loudly with typed rphys errors and inspectable context.
-- Design-decision evidence: no root exports, no placeholder classes, no model tuple formatting, no raw payload returns, no descriptor mutation, no torch/cache/prepared/export/trainer/model/device/workflow imports.
+- Design-decision evidence: no root or parent exports, no placeholder classes, no model tuple formatting, no raw payload returns, no descriptor mutation, no torch/cache/prepared/export/trainer/model/device/workflow imports.
 - Future-roadmap/reuse evidence: any `DataSourceIndex` or `CompositeDataSourceIndex`, including indexes built from derived records, can be wrapped by `IndexSampleSource`; distinct `DerivedIndexSampleSource` remains deferred.
 - Documentation evidence: docstrings or docs explain request semantics, eager/lazy behavior, deterministic context evidence, provenance boundaries, unsupported behavior, and derived-source deferral.
-- Scientific contract evidence: source/index/entry identity, request fingerprints, record/datasource/split/group sidecar evidence, field windows, and builder provenance remain inspectable without changing sample scientific meaning.
+- Scientific contract evidence: source/index/entry identity, stable primitive request fingerprints, record/datasource/split/group sidecar evidence, field windows, and builder provenance remain inspectable without changing sample scientific meaning or returned sample shape.
 
 ## Handoff Notes For `rphys_phase_executor`
 
 - Safe implementation slices: start with request/context records and tests, then source protocol, then `IndexSampleSource`, then exports/import tests, then docs/docstrings.
 - Tests to run with each slice: unit tests for records first; contract tests after `SampleSource`; integration after `IndexSampleSource`; package import tests after exports/import changes.
-- Decisions the executor must not revisit: `sample_at(position, request=None, context=None)`, `__len__`, default-request `__getitem__`, `rphys.datasources.sources` ownership, no root exports, no placeholder `DerivedIndexSampleSource`, no torch/cache/prepared/export/trainer/model/device/workflow behavior, and context as primitive evidence rather than runtime state.
+- Decisions the executor must not revisit: `sample_at(position, request=None, context=None)`, `__len__`, default-request `__getitem__`, `rphys.datasources.sources` ownership, module-scoped exports only, non-negative integer position semantics, no root or parent exports, no placeholder `DerivedIndexSampleSource`, no torch/cache/prepared/export/trainer/model/device/workflow behavior, and context as primitive evidence rather than runtime state.
 - Conditions that require stopping for the manager:
   - A public helper/protocol beyond the approved names becomes necessary.
   - A distinct derived source class seems necessary without code-backed provenance validation.
   - Implementing source behavior requires changing `DataSourceIndex`, `IndexItem`, or `SampleBuilder` contracts.
   - Cache/prepared/torch/materialization concerns are needed to make the source API work.
   - A heavy optional dependency, package-level random, root export, or generic registry appears necessary.
+  - Parent `rphys.datasources` exports, process-local fingerprints, or sample-shape changes appear necessary.
   - The branch/worktree gets unrelated changes in Phase 1-owned files.
 
 ## Refinement And Review Budget Status
 
 - Expanded-path reason: Phase 1 establishes public `SampleSource` API, import path, request/context records, deterministic fingerprint semantics, and returned sample shape used by later torch/cache/prepared phases.
-- Phase execution plan refinement: required and ready; draft pass has not consumed the refinement pass.
+- Phase execution plan refinement: complete; expanded-path refinement used for plan-only tightening, not implementation
 - Phase implementation refinement: unused
 - PR review: unused
 - Blocker resolution: 0/3 used
-- Refinement focus for reviewer: public API minimality, request/context fingerprint contract, error taxonomy, parent export decision, negative-position behavior, and whether `SampleRuntimeContext` fields are sufficient without implying stable DDP/workflow semantics.
+- Refinement focus resolved: public API stays minimal; request/context fingerprints are primitive and deterministic; error taxonomy remains existing-first with at most one narrow new source error; parent exports are out of scope; negative/non-integer positions fail loudly; `SampleRuntimeContext` remains evidence-only and does not imply stable DDP/workflow semantics.
 
 ## Completion Notes
 
 - Draft plan: complete in `docs/roadmap/stage-9/phases/sample-source-foundation.md`
-- Final phase execution plan: pending expanded-path refinement
+- Final phase execution plan: complete after expanded-path refinement
 - Implementation summary: pending
 - Implementation validation: pending
-- Refinement summary: pending
-- Pre-submit blocker gate: pending; no unresolved source API or derived-source promotion decision in this draft
+- Refinement summary: tightened public API/import-path/data-shape decisions, validation expectations, stop conditions, and executor handoff without changing phase scope
+- Pre-submit blocker gate: pending for implementation; no unresolved source API, parent-export, negative-position, fingerprint, context-shape, or derived-source promotion decision remains in this plan
 - PR preparation: pending
 - Automated review: pending
 - Merge result: pending
 - Cleanup: pending
-- Remaining blockers: none for draft; refinement should run before executor implementation
+- Remaining blockers: none; plan is scope-complete for executor implementation
