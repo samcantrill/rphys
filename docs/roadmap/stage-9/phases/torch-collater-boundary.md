@@ -384,7 +384,7 @@ git diff --check
 - PR preparation: PR opened and verified as non-draft PR #61 against base `develop` from head `agent/stage-9-data-loading-cache-p2-torch-collater-boundary`
 - Automated review: complete; no blocking findings, PR-review budget consumed, and merge eligible assuming PR opens against `develop` and CI matches local validation
 - Merge result: merged into `develop` through PR #61 as squash commit `3f26c5eb5b1b0aadd341923c10c9d7d39af41585`
-- Cleanup: pending after develop metadata commit
+- Cleanup: complete; Phase 2 worktree removed, worktree metadata pruned, and local/remote phase branches deleted
 - Remaining blockers: none identified
 
 ## Automated Phase PR Review Report
@@ -421,8 +421,8 @@ git diff --check
 - Merge command: `gh pr merge 61 --squash --match-head-commit b0aaec7c60bd6acb557116ee675f1866de401cdb --subject "Stage 9 Phase 2: Torch adapter and batch collater" --body "..."`
 - Merge result: merged 2026-05-15
 - Merge commit: `3f26c5eb5b1b0aadd341923c10c9d7d39af41585`
-- Branch cleanup: pending after metadata commit
-- Worktree cleanup: pending after metadata commit
+- Branch cleanup: complete; local and remote Phase 2 branches deleted after merge metadata commit
+- Worktree cleanup: complete; Phase 2 worktree removed and worktree metadata pruned
 
 ## Completion Summary
 
@@ -438,4 +438,4 @@ git diff --check
 - Completion summary recorded: yes
 - Validation evidence recorded: yes
 - Remaining blockers: none
-- Metadata commit: pending
+- Metadata commit: `f1976a0` recorded merge metadata; follow-up cleanup metadata recorded after branch/worktree cleanup

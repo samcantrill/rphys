@@ -219,8 +219,8 @@ Workflow path: fast path
 - Merge command: `gh pr merge 61 --squash --match-head-commit b0aaec7c60bd6acb557116ee675f1866de401cdb --subject "Stage 9 Phase 2: Torch adapter and batch collater" --body "..."`
 - Merge result: merged 2026-05-15
 - Merge commit: `3f26c5eb5b1b0aadd341923c10c9d7d39af41585`
-- Branch cleanup: pending after metadata commit
-- Worktree cleanup: pending after metadata commit
+- Branch cleanup: complete; local and remote Phase 2 branches deleted after merge metadata commit
+- Worktree cleanup: complete; Phase 2 worktree removed and worktree metadata pruned
 - Remaining blockers: none
 
 ## Phase 3: Deterministic Cache Contracts And Local Atomic Store
