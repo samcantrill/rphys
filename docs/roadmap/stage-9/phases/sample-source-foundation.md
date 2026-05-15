@@ -410,7 +410,7 @@ git diff --check
 - PR preparation: PR opened and verified as non-draft PR #60 against base `develop` from head `agent/stage-9-data-loading-cache-p1-sample-source-foundation`
 - Automated review: complete; no blocking findings, PR-review budget consumed, and merge eligible assuming PR opens against `develop` and CI matches local validation
 - Merge result: merged into `develop` through PR #60 as squash commit `249c128339b268ede6bff2624a46d2aa3c526a14`
-- Cleanup: pending after develop metadata commit
+- Cleanup: complete; Phase 1 worktree removed, worktree metadata pruned, and local/remote phase branches deleted
 - Remaining blockers: none identified
 
 ## Automated Phase PR Review Report
@@ -447,8 +447,8 @@ git diff --check
 - Merge command: `gh pr merge 60 --squash --match-head-commit 2e311597648645eaf1c652a2409ad111f2ec78e6 --subject "Stage 9 Phase 1: SampleSource foundation" --body "..."`
 - Merge result: merged 2026-05-15
 - Merge commit: `249c128339b268ede6bff2624a46d2aa3c526a14`
-- Branch cleanup: pending after metadata commit
-- Worktree cleanup: pending after metadata commit
+- Branch cleanup: complete; local and remote Phase 1 branches deleted after merge metadata commit
+- Worktree cleanup: complete; Phase 1 worktree removed and worktree metadata pruned
 
 ## Completion Summary
 
@@ -464,4 +464,4 @@ git diff --check
 - Completion summary recorded: yes
 - Validation evidence recorded: yes
 - Remaining blockers: none
-- Metadata commit: pending
+- Metadata commit: `f5360d5` recorded merge metadata; follow-up cleanup metadata recorded after branch/worktree cleanup

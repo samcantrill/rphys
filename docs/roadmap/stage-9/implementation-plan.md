@@ -133,8 +133,8 @@ Workflow path: fast path
 - Merge command: `gh pr merge 60 --squash --match-head-commit 2e311597648645eaf1c652a2409ad111f2ec78e6 --subject "Stage 9 Phase 1: SampleSource foundation" --body "..."`
 - Merge result: merged 2026-05-15
 - Merge commit: `249c128339b268ede6bff2624a46d2aa3c526a14`
-- Branch cleanup: pending after metadata commit
-- Worktree cleanup: pending after metadata commit
+- Branch cleanup: complete; local and remote Phase 1 branches deleted after merge metadata commit
+- Worktree cleanup: complete; Phase 1 worktree removed and worktree metadata pruned
 - Remaining blockers: none
 
 ## Phase 2: Torch Adapter And FieldLocator Collater Boundary
