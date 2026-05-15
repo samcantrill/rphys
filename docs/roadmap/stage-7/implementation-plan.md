@@ -92,7 +92,7 @@ Blockers: none
 | 4 | `sample-augmentation-views` | merged | `agent/stage-7-p4-sample-augmentation-views` | [#51](https://github.com/samcantrill/rphys/pull/51) | sample augmentation params/replay/view behavior | Add sample augmentation replay and self-supervised view writing. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `make validate-pr`; `make test-summary`; `git diff --check` | replay, linked fields, no global RNG, view locators |
 | 5 | `sample-pipeline` | merged | `agent/stage-7-p5-sample-pipeline` | [#52](https://github.com/samcantrill/rphys/pull/52) | `src/rphys/ops/pipelines.py`, specialized pipeline tests | Add specialized sample pipeline composition. | `make test-unit`; `make test-contract`; `make test-package`; `make validate-pr`; `make test-summary`; `git diff --check` | ordered mapping, step diagnostics, generic pipeline regression |
 | 6 | `batch-surface` | merged | `agent/stage-7-p6-batch-surface` | [#53](https://github.com/samcantrill/rphys/pull/53) | `src/rphys/ops/batch.py`, batch pipeline/equivalence tests | Add provisional batch operation, augmentation, equivalence, and pipeline surface. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `make validate-pr`; `make test-summary`; `git diff --check` | LIST-collated equivalence, batch params, dtype/device metadata |
-| 7 | `docs-validation` | pr_open | `agent/stage-7-p7-docs-validation` | [#54](https://github.com/samcantrill/rphys/pull/54) | public docstrings/docs/examples/final validation evidence | Finalize docs, examples, and PR validation evidence. | `make test`; `make test-summary`; `make test-package`; `make test-unit`; `make test-contract`; `make test-integration`; `uv lock --check`; `git diff --check`; `make validate-pr` if PR breadth warrants | public examples and residual-risk readback |
+| 7 | `docs-validation` | merged | `agent/stage-7-p7-docs-validation` | [#54](https://github.com/samcantrill/rphys/pull/54) | public docstrings/docs/examples/final validation evidence | Finalize docs, examples, and PR validation evidence. | `make test`; `make test-summary`; `make test-package`; `make test-unit`; `make test-contract`; `make test-integration`; `uv lock --check`; `git diff --check`; `make validate-pr` if PR breadth warrants | public examples and residual-risk readback |
 
 ## Implementation Readiness Blockers
 
@@ -948,7 +948,9 @@ Workflow path: expanded path if broad validation exposes prior phase gaps
 - Pre-submit blocker gate: completed; docs align with full public names, no
   private helper docs were introduced, future-stage ownership remains deferred,
   and broad validation passes after the integration test basename hardening
-- Merge record: pending
+- Merge record: merged PR #54 into `develop` on 2026-05-15 as
+  `ea3086b9c005db4cd2fc2d6bdd451deca686e996`; local Phase 7 worktree and
+  branch cleaned up.
 
 ### Risks And Stop Conditions
 
@@ -978,8 +980,10 @@ Workflow path: expanded path if broad validation exposes prior phase gaps
 - PR: [#54](https://github.com/samcantrill/rphys/pull/54) opened against
   `develop` from `agent/stage-7-p7-docs-validation`; target, title, and clean
   merge state verified by `gh pr view`.
-- Merge: pending
-- Follow-up: pending PR review and merge.
+- Merge: PR #54 merged into `develop` on 2026-05-15 as
+  `ea3086b9c005db4cd2fc2d6bdd451deca686e996`.
+- Follow-up: Stage 7 implementation workflow complete; Stage 8 remains
+  separate future roadmap work.
 
 ## Cross-Phase Validation
 

@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: pr_open
+- Status: merged
 - Roadmap stage: `v7`
 - Feature focus: Stage-wide documentation alignment and validation evidence for sample and batch operations
 - Stage descriptor: SampleOps, BatchOps, Transforms, Augmentations, Checks, And Pipelines
@@ -203,6 +203,7 @@ Sample operations enforce declared field additions, replacements, and deletions 
   escalation; `git diff --check` passed; `make validate-pr` passed lock,
   summary, build, and diff checks.
 - PR: [#54](https://github.com/samcantrill/rphys/pull/54)
-- Merge result: pending
-- Cleanup: pending
+- Merge result: merged PR #54 into `develop` on 2026-05-15 as
+  `ea3086b9c005db4cd2fc2d6bdd451deca686e996`
+- Cleanup: local Phase 7 worktree and branch removed after merge
 - Remaining blockers: none known
