@@ -5,7 +5,7 @@ Roadmap version: `v7`
 Planning document: `docs/roadmap/stage-7/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: implementation plan approved
+Current phase: Phase 2 pending after Phase 1 merge
 Blockers: none
 
 ## Summary
@@ -86,7 +86,7 @@ Blockers: none
 
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `operation-foundation` | pr_open | `agent/stage-7-p1-operation-foundation` | [#48](https://github.com/samcantrill/rphys/pull/48) | `src/rphys/ops/core.py`, `src/rphys/ops/pipelines.py`, `src/rphys/ops/__init__.py`, focused errors/tests/docs | Refactor the operation foundation around `OperationStep`. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | OperationStep, custom step pipeline, generic mapping rejection |
+| 1 | `operation-foundation` | merged | `agent/stage-7-p1-operation-foundation` | [#48](https://github.com/samcantrill/rphys/pull/48) | `src/rphys/ops/core.py`, `src/rphys/ops/pipelines.py`, `src/rphys/ops/__init__.py`, focused errors/tests/docs | Refactor the operation foundation around `OperationStep`. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | OperationStep, custom step pipeline, generic mapping rejection |
 | 2 | `sample-foundations` | pending | `agent/stage-7-p2-sample-foundations` | pending | `src/rphys/ops/sample.py`, `src/rphys/ops/__init__.py`, focused errors/tests | Establish sample operation public foundations. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | contract inspection, locator parsing, context/replay records, exports |
 | 3 | `sample-effects-checks` | pending | `agent/stage-7-p3-sample-effects-checks` | pending | sample enforcement, transforms/checks, focused private helpers | Implement sample field-effect enforcement, transforms, and checks. | `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check` | declared mutation, same-locator replacement, lazy fields, route non-policy |
 | 4 | `sample-augmentation-views` | pending | `agent/stage-7-p4-sample-augmentation-views` | pending | sample augmentation params/replay/view behavior | Add sample augmentation replay and self-supervised view writing. | `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check` | replay, linked fields, no global RNG, view locators |
@@ -102,7 +102,7 @@ Blockers: none
 
 ## Phase 1: Operation Foundation Refactor
 
-Status: pr_open
+Status: merged
 Slug: `operation-foundation`
 Branch: `agent/stage-7-p1-operation-foundation`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-7-p1-operation-foundation`
@@ -197,7 +197,8 @@ operation foundation code
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed in
+  `docs/roadmap/stage-7/phases/operation-foundation.md`
 - Planning/refinement budget: one scoped planning pass because shared core
   operation behavior is being refactored
 - Implementation/refinement budget: one implementation pass plus targeted
@@ -210,7 +211,7 @@ operation foundation code
 - Pre-submit blocker gate: Stage 6 operation test regressions, package/import
   regressions, raw-callable pipeline acceptance, registry/workflow behavior, or
   heavy imports block completion
-- Merge record: pending
+- Merge record: completed
 
 ### Risks And Stop Conditions
 
@@ -225,13 +226,27 @@ operation foundation code
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
+- Implementation: added public `OperationStep`, made `Operation` explicitly
+  satisfy the interface, and updated generic `OperationPipeline` to accept
+  ordered `OperationStep` entries while preserving Stage 6 result forwarding,
+  compatibility checks, raw-callable/mapping/tuple-entry rejection, and typed
+  execution diagnostics.
+- Validation: `make test-unit`, `make test-contract`, `make test-package`,
+  `git diff --check`, and `make validate-pr` passed. `make validate-pr`
+  generated `build/test-summary.md` with 529 passing package/unit/contract/
+  integration tests, ran `uv lock --check`, built sdist/wheel artifacts, and
+  reran `git diff --check`.
 - PR: [#48](https://github.com/samcantrill/rphys/pull/48) opened against
   `develop` from `agent/stage-7-p1-operation-foundation`; target and title
   verified by `gh pr view`
-- Merge: pending
-- Follow-up: pending
+- Merge: squash-merged to `develop` on 2026-05-15 at
+  `4c693336ad12eb8db381795963ef7bcb58a0a4a7`; merge command
+  `gh pr merge 48 --squash --delete-branch`; local branch cleanup deferred
+  until worktree removal because the branch was checked out in the phase
+  worktree.
+- Follow-up: later phases must keep `OperationStep` as an execution interface,
+  not a registry, workflow abstraction, export/cache identity, loader policy,
+  or trainer policy.
 
 ## Phase 2: Sample Operation Public Foundations
 
