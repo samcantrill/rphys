@@ -142,5 +142,4 @@ git diff --check
 - Base: `develop`
 - Head: `agent/stage-9-data-loading-cache-p5-materialization-batch-records`
 - Title: `Stage 9 Index Adapters, Torch Data Loading, And Cache - Phase 5: Storage-Neutral Materialization, Layout, Cost, And Batch-Planning Records`
-- Head commit: `a276a007ad22e1fac733a47c7c6ca206752c199c`
 - Initial status checks: no GitHub status checks reported at PR-open verification time.
