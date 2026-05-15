@@ -541,14 +541,29 @@ run `uv lock --check` and record the reason.
 - Draft plan: created in
   `docs/roadmap/stage-7/phases/operation-foundation.md` for Phase 1 only
 - Final phase execution plan: refined for implementation handoff
-- Implementation summary: pending
-- Implementation validation: pending
+- Implementation summary: completed
+  - Added public `OperationStep` interface in `src/rphys/ops/core.py`.
+  - Made `Operation` explicitly satisfy `OperationStep` and kept callable-first
+    constructor/run/call semantics.
+  - Refactored `OperationPipeline` construction to accept `Sequence[OperationStep]`
+    with same sequence/mapping/tuple entry/callable rejection behavior and the same
+    result-forwarding and compatibility checks.
+  - Added focused package/unit/contract tests for protocol conformance and direct step
+    composition.
 - Refinement summary: completed; tightened the public `OperationStep`
   execution-interface contract, clarified that it carries no registry,
   workflow, cache/export, loader, trainer, or durable provenance policy, and
   made required phase-completion and PR-preparation validation commands
   explicit
-- Pre-submit blocker gate: pending implementation
+- Implementation validation: passed
+  - `uv run pytest tests/unit/rphys/ops/test_core.py tests/unit/rphys/ops/test_pipelines.py`
+  - `uv run pytest tests/contracts/test_operation_execution_contract.py tests/contracts/test_operation_pipeline_contract.py tests/contracts/test_operation_runtime_boundary_contract.py`
+  - `uv run pytest tests/package/test_import.py tests/package/test_import_boundaries.py`
+  - `make test-unit`
+  - `make test-contract`
+  - `make test-package`
+  - `git diff --check`
+- Pre-submit blocker gate: no blockers
 - PR preparation: pending implementation
 - Automated review: pending implementation PR
 - Merge result: pending

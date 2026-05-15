@@ -6,6 +6,7 @@ operations.
     from rphys.ops import (
         Operation,
         OperationContract,
+        OperationStep,
         OperationContext,
         OperationResult,
         OperationPipeline,
@@ -30,6 +31,10 @@ context checks, and inspectable execution output:
     result = op(3, context=OperationContext(metadata={"phase": "test"}))
     output = result.output
 
+`Operation` is the ordinary callable-first public extension path.
+`OperationStep` is the minimal execution interface accepted by :class:`OperationPipeline`;
+it exposes ``name``, ``contract``, and ``run`` for advanced adapters.
+
 `Operation` always returns :class:`OperationResult`; users must read payloads through
 the ``.output`` attribute.
 
@@ -43,7 +48,7 @@ from .contracts import (
     OperationMutationPolicy,
     OperationRole,
 )
-from .core import Operation
+from .core import Operation, OperationStep
 from .context import OperationContext, OperationResult
 from .pipelines import OperationPipeline
 from .kernels import FunctionalKernel
@@ -53,6 +58,7 @@ __all__ = [
     "OperationMutationPolicy",
     "OperationContract",
     "Operation",
+    "OperationStep",
     "OperationContext",
     "OperationResult",
     "OperationPipeline",

@@ -11,6 +11,7 @@ from rphys.errors import (
 )
 from rphys.ops import (
     Operation,
+    OperationStep,
     OperationContext,
     OperationContract,
     OperationResult,
@@ -54,6 +55,12 @@ def test_operation_constructor_allows_callable_objects_and_explicit_name() -> No
 
     assert operation.name == "adder"
     assert operation.contract == OperationContract()
+
+
+def test_operation_is_an_operation_step() -> None:
+    operation = Operation(plain_add)
+
+    assert isinstance(operation, OperationStep)
 
 
 def test_constructor_rejects_non_callable() -> None:

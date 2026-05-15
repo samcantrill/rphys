@@ -267,6 +267,7 @@ def test_import_ops_public_all_exports() -> None:
         "OperationMutationPolicy",
         "OperationContract",
         "Operation",
+        "OperationStep",
         "OperationContext",
         "OperationResult",
         "OperationPipeline",
@@ -291,7 +292,7 @@ def test_import_ops_module_exports_are_scoped() -> None:
         "OperationContract",
     ]
     assert context.__all__ == ["OperationContext", "OperationResult"]
-    assert core.__all__ == ["Operation"]
+    assert core.__all__ == ["OperationStep", "Operation"]
     assert kernels.__all__ == ["FunctionalKernel"]
     assert pipelines.__all__ == ["OperationPipeline"]
 

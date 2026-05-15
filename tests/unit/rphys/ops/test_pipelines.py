@@ -38,7 +38,7 @@ def test_operation_pipeline_signature_is_fixed() -> None:
 
     assert len(params) == 1
     assert params[0].name == "operations"
-    assert params[0].annotation == "Sequence[Operation]"
+    assert params[0].annotation == "Sequence[OperationStep]"
 
 
 def test_operation_pipeline_exposes_immutable_operations_tuple() -> None:
@@ -49,6 +49,47 @@ def test_operation_pipeline_exposes_immutable_operations_tuple() -> None:
     assert pipeline.operations == (op_a, op_b)
     with pytest.raises(AttributeError):
         pipeline.operations = ()
+
+
+def test_operation_pipeline_accepts_direct_operation_step_entries() -> None:
+    captured: list[OperationContext] = []
+
+    class ConstantAdder:
+        def __init__(self, offset: int) -> None:
+            self._offset = offset
+
+        @property
+        def name(self) -> str:
+            return "constant-adder"
+
+        @property
+        def contract(self) -> OperationContract:
+            return OperationContract(
+                input_type=int,
+                output_type=int,
+            )
+
+        def run(self, input_value: object, context: OperationContext | None = None) -> OperationResult:
+            assert context is not None
+            captured.append(context)
+            return OperationResult(
+                output=input_value + self._offset,  # type: ignore[arg-type]
+                operation_name=self.name,
+                metadata=context.metadata,
+                provenance=context.provenance,
+            )
+
+    pipeline = OperationPipeline(
+        [
+            ConstantAdder(offset=4),
+            Operation(multiply, name="multiply", contract=OperationContract(input_type=int)),
+        ]
+    )
+    context = OperationContext(metadata={"dataset_id": "ops"})
+    result = pipeline.run(1, context=context)
+
+    assert result.output == 50
+    assert captured == [context]
 
 
 def test_operation_pipeline_runs_steps_and_forwards_result_output() -> None:
