@@ -37,6 +37,7 @@ LIGHTWEIGHT_IMPORTS = [
     "rphys.data.types",
     "rphys.datasources",
     "rphys.datasources.adapters",
+    "rphys.datasources.cache",
     "rphys.datasources.derived",
     "rphys.datasources.filters",
     "rphys.datasources.indexes",
