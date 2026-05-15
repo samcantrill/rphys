@@ -31,9 +31,9 @@
   worktree after inspecting Stage 7 planning, implementation plan, roadmap,
   glossary, operation source, package tests, unit tests, contract tests, and
   test suite layout
-- Refine pass: not run; not needed unless reviewer finds a missing public API,
-  scientific contract, import-boundary, dependency, serialization, provenance,
-  compatibility, or cross-module risk in this artifact
+- Refine pass: completed on expanded path to tighten the public
+  `OperationStep` API contract and validation obligations after reviewer
+  focus on the shared generic operation foundation refactor
 - Setup limitations: GitHub auth/network and phase branch/worktree creation
   were manager-verified before this pass; this planner did not recreate or
   refetch the worktree
@@ -211,12 +211,25 @@ trainer policy.
 ## Scope Contract
 
 The executor must define `OperationStep` as a public operation execution
-interface, not a workflow abstraction. A valid step must expose:
+interface, not a workflow abstraction. A valid step exposes only the execution
+members needed by generic pipelines:
 
-- `name`: a non-empty operation name used for diagnostics.
-- `contract`: an `OperationContract` used for adjacent compatibility checks.
-- `run(input_value, context=None) -> OperationResult`: execution that returns
-  the existing `OperationResult` record.
+- `name`: a non-empty `str` operation name used for local diagnostics and
+  error messages only.
+- `contract`: an `OperationContract` instance used for adjacent compatibility
+  checks only.
+- `run(input_value, context=None) -> OperationResult`: execution that accepts
+  the current input payload plus an optional generic `OperationContext` and
+  returns the existing `OperationResult` record.
+
+The public contract does not include constructor shape, `__call__`,
+serialization hooks, registry keys, symbolic aliases, durable identifiers,
+cache/export identities, workflow graph fields, retry/resume controls, loader
+policy, trainer policy, equality/hash semantics, or provenance schemas beyond
+the existing runtime `OperationContext` and `OperationResult` mappings.
+Pipeline validation must reject objects that are missing these execution
+members or provide them with incompatible runtime shapes, while preserving the
+typed invalid-step diagnostics described below.
 
 `Operation` must remain the ordinary wrapper-first public implementation. Its
 constructor remains `Operation(function, *, name=None, contract=None)`, and
@@ -383,7 +396,8 @@ No public contract change is in scope for `OperationResult`, `OperationContext`,
   submodule `__all__` include `OperationStep`; root `rphys` still does not
   re-export operation names; importing `rphys.ops` and lightweight packages does
   not load heavy optional modules; no generic workflow/artifact runtime package
-  appears.
+  appears. Phase completion requires this coverage to pass through
+  `make test-package`.
 
 ### Unit Suite
 
@@ -396,7 +410,8 @@ No public contract change is in scope for `OperationResult`, `OperationContext`,
   `operations` remains immutable; a minimal custom step composes; text,
   mappings, ordered mappings, tuple named entries, raw callables, non-step
   objects, and empty sequences are rejected; adjacent type compatibility and
-  step failure diagnostics remain intact.
+  step failure diagnostics remain intact. Phase completion requires this
+  coverage to pass through `make test-unit`.
 
 ### Contract Suite
 
@@ -412,7 +427,8 @@ No public contract change is in scope for `OperationResult`, `OperationContext`,
   pipeline names, no raw-output API, no mapping support, no route/retry
   behavior, and no workflow policy; custom step composition preserves final
   `OperationResult`; `Sample`/`Batch` payloads and lazy `SampleField`
-  materialization behavior remain unchanged.
+  materialization behavior remain unchanged. Phase completion requires this
+  coverage to pass through `make test-contract`.
 
 ### Integration Suite
 
@@ -421,7 +437,10 @@ No public contract change is in scope for `OperationResult`, `OperationContext`,
 - Required assertions or deferral reason: Phase 1 changes generic operation
   foundation behavior covered by package, unit, and contract suites. Add or run
   integration coverage only if the implementation reaches across multiple
-  non-ops components beyond the existing runtime-boundary contract test.
+  non-ops components beyond the existing runtime-boundary contract test. No
+  integration-suite command is required for phase completion unless the
+  implementation expands beyond the approved Phase 1 operation-foundation
+  scope.
 
 ### E2E Suite
 
@@ -429,8 +448,9 @@ No public contract change is in scope for `OperationResult`, `OperationContext`,
 - Expected paths: none expected under `tests/e2e`
 - Required assertions or deferral reason: no end-to-end user workflow, dataset
   flow, export/materialization flow, loader/trainer flow, or sample/batch
-  operation family is implemented in Phase 1. E2E coverage belongs to later
-  phases if public workflows emerge.
+  operation family is implemented in Phase 1. No E2E-suite command is required
+  for phase completion; E2E coverage belongs to later phases if public
+  workflows emerge.
 
 ### Acceptance Suite
 
@@ -438,7 +458,8 @@ No public contract change is in scope for `OperationResult`, `OperationContext`,
 - Markers affected: none
 - Required assertions or deferral reason: no real dataset, hardware, GPU,
   network, optional dependency, or long-running validation is required or
-  allowed for this foundation refactor.
+  allowed for this foundation refactor. No acceptance-suite command is required
+  for phase completion.
 
 ## Risks
 
@@ -456,24 +477,28 @@ No public contract change is in scope for `OperationResult`, `OperationContext`,
 
 ## Validation Commands
 
-Targeted development commands:
+Focused development commands may be used while implementing:
 
 ```sh
 uv run pytest tests/unit/rphys/ops/test_core.py tests/unit/rphys/ops/test_pipelines.py
 uv run pytest tests/contracts/test_operation_execution_contract.py tests/contracts/test_operation_pipeline_contract.py tests/contracts/test_operation_runtime_boundary_contract.py
 uv run pytest tests/package/test_import.py tests/package/test_import_boundaries.py
+```
+
+Required phase completion commands:
+
+```sh
 make test-unit
 make test-contract
 make test-package
 git diff --check
 ```
 
-Final PR-preparation commands:
+Final PR-preparation commands if available in the implementation environment:
 
 ```sh
 make validate-pr
 make test-summary
-git diff --check
 ```
 
 `uv lock --check` is not expected to be necessary because this phase should not
@@ -490,7 +515,8 @@ run `uv lock --check` and record the reason.
   package import tests after export/docstring/import-boundary edits. Finish
   with `make test-unit`, `make test-contract`, `make test-package`, and
   `git diff --check`; prepare the PR with `make validate-pr`,
-  `make test-summary`, and `git diff --check`.
+  `make test-summary` if those targets are available in the implementation
+  environment.
 - Decisions the executor must not revisit: keep `OperationResult`,
   `OperationContext`, and `OperationContract` semantics stable; keep
   callable-first wrappers as the ordinary user extension path; keep generic
@@ -505,7 +531,7 @@ run `uv lock --check` and record the reason.
 
 ## Refinement And Review Budget Status
 
-- Phase execution plan refinement: unused / not needed
+- Phase execution plan refinement: completed on expanded path
 - Phase implementation refinement: unused
 - PR review: unused
 - Blocker resolution: 0/3 used
@@ -514,10 +540,14 @@ run `uv lock --check` and record the reason.
 
 - Draft plan: created in
   `docs/roadmap/stage-7/phases/operation-foundation.md` for Phase 1 only
-- Final phase execution plan: pending implementation handoff review
+- Final phase execution plan: refined for implementation handoff
 - Implementation summary: pending
 - Implementation validation: pending
-- Refinement summary: not needed for this draft
+- Refinement summary: completed; tightened the public `OperationStep`
+  execution-interface contract, clarified that it carries no registry,
+  workflow, cache/export, loader, trainer, or durable provenance policy, and
+  made required phase-completion and PR-preparation validation commands
+  explicit
 - Pre-submit blocker gate: pending implementation
 - PR preparation: pending implementation
 - Automated review: pending implementation PR
