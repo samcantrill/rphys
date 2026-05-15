@@ -12,9 +12,21 @@ from .contracts import (
 from .core import Operation, OperationStep
 from .context import OperationContext, OperationResult
 from .kernels import FunctionalKernel
-from .pipelines import OperationPipeline, SampleOperationPipeline
+from .pipelines import BatchOperationPipeline, OperationPipeline, SampleOperationPipeline
 
 if TYPE_CHECKING:
+    from .batch import (
+        BatchAugmentation,
+        BatchAugmentationParams,
+        BatchEquivalenceClaim,
+        BatchEquivalenceReport,
+        BatchFieldEffects,
+        BatchOperation,
+        BatchOperationContext,
+        BatchOperationContract,
+        BatchParameterScope,
+        BatchTransform,
+    )
     from .sample import (
         SampleFieldPermissions,
         SampleOperation,
@@ -43,6 +55,19 @@ _SAMPLE_EXPORTS = {
     "SampleRoute",
 }
 
+_BATCH_EXPORTS = {
+    "BatchParameterScope",
+    "BatchEquivalenceClaim",
+    "BatchFieldEffects",
+    "BatchOperationContext",
+    "BatchOperationContract",
+    "BatchAugmentationParams",
+    "BatchEquivalenceReport",
+    "BatchOperation",
+    "BatchTransform",
+    "BatchAugmentation",
+}
+
 
 def __getattr__(name: str):  # pragma: no cover
     if name in _SAMPLE_EXPORTS:
@@ -52,11 +77,18 @@ def __getattr__(name: str):  # pragma: no cover
         value = getattr(module, name)
         globals()[name] = value
         return value
+    if name in _BATCH_EXPORTS:
+        from importlib import import_module
+
+        module = import_module(".batch", __name__)
+        value = getattr(module, name)
+        globals()[name] = value
+        return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def __dir__() -> list[str]:  # pragma: no cover
-    return sorted(set(globals().keys()) | _SAMPLE_EXPORTS)
+    return sorted(set(globals().keys()) | _SAMPLE_EXPORTS | _BATCH_EXPORTS)
 
 
 __all__ = [
@@ -69,6 +101,7 @@ __all__ = [
     "OperationResult",
     "OperationPipeline",
     "SampleOperationPipeline",
+    "BatchOperationPipeline",
     "FunctionalKernel",
     "SampleFieldPermissions",
     "SampleOperationContract",
@@ -81,4 +114,14 @@ __all__ = [
     "SampleCheck",
     "SampleDecision",
     "SampleRoute",
+    "BatchParameterScope",
+    "BatchEquivalenceClaim",
+    "BatchFieldEffects",
+    "BatchOperationContext",
+    "BatchOperationContract",
+    "BatchAugmentationParams",
+    "BatchEquivalenceReport",
+    "BatchOperation",
+    "BatchTransform",
+    "BatchAugmentation",
 ]

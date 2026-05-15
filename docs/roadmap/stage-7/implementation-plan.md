@@ -5,7 +5,7 @@ Roadmap version: `v7`
 Planning document: `docs/roadmap/stage-7/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 6 pending after Phase 5 merge
+Current phase: Phase 6 PR open after local validation
 Blockers: none
 
 ## Summary
@@ -91,7 +91,7 @@ Blockers: none
 | 3 | `sample-effects-checks` | merged | `agent/stage-7-p3-sample-effects-checks` | [#50](https://github.com/samcantrill/rphys/pull/50) | sample enforcement, transforms/checks, focused private helpers | Implement sample field-effect enforcement, transforms, and checks. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `make validate-pr`; `make test-summary`; `git diff --check` | declared mutation, same-locator replacement, lazy fields, route non-policy |
 | 4 | `sample-augmentation-views` | merged | `agent/stage-7-p4-sample-augmentation-views` | [#51](https://github.com/samcantrill/rphys/pull/51) | sample augmentation params/replay/view behavior | Add sample augmentation replay and self-supervised view writing. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `make validate-pr`; `make test-summary`; `git diff --check` | replay, linked fields, no global RNG, view locators |
 | 5 | `sample-pipeline` | merged | `agent/stage-7-p5-sample-pipeline` | [#52](https://github.com/samcantrill/rphys/pull/52) | `src/rphys/ops/pipelines.py`, specialized pipeline tests | Add specialized sample pipeline composition. | `make test-unit`; `make test-contract`; `make test-package`; `make validate-pr`; `make test-summary`; `git diff --check` | ordered mapping, step diagnostics, generic pipeline regression |
-| 6 | `batch-surface` | pending | `agent/stage-7-p6-batch-surface` | pending | `src/rphys/ops/batch.py`, batch pipeline/equivalence tests | Add provisional batch operation, augmentation, equivalence, and pipeline surface. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `git diff --check` | LIST-collated equivalence, batch params, dtype/device metadata |
+| 6 | `batch-surface` | pr_open | `agent/stage-7-p6-batch-surface` | [#53](https://github.com/samcantrill/rphys/pull/53) | `src/rphys/ops/batch.py`, batch pipeline/equivalence tests | Add provisional batch operation, augmentation, equivalence, and pipeline surface. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `make validate-pr`; `make test-summary`; `git diff --check` | LIST-collated equivalence, batch params, dtype/device metadata |
 | 7 | `docs-validation` | pending | `agent/stage-7-p7-docs-validation` | pending | public docstrings/docs/examples/final validation evidence | Finalize docs, examples, and PR validation evidence. | `make test`; `make test-summary`; `make test-package`; `make test-unit`; `make test-contract`; `make test-integration`; `uv lock --check`; `git diff --check`; `make validate-pr` if PR breadth warrants | public examples and residual-risk readback |
 
 ## Implementation Readiness Blockers
@@ -740,11 +740,11 @@ Workflow path: fast path with explicit Stage 6 regression checks
 
 ## Phase 6: Provisional Batch Operation Surface
 
-Status: pending
+Status: pr_open
 Slug: `batch-surface`
 Branch: `agent/stage-7-p6-batch-surface`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-7-p6-batch-surface`
-PR: pending
+PR: [#53](https://github.com/samcantrill/rphys/pull/53)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path because this adds a provisional public surface
@@ -816,7 +816,8 @@ Workflow path: expanded path because this adds a provisional public surface
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed on the expanded path in
+  `docs/roadmap/stage-7/phases/batch-surface.md`
 - Planning/refinement budget: one scoped pass if equivalence fields imply
   backend policy
 - Implementation/refinement budget: one implementation pass plus import and
@@ -824,8 +825,9 @@ Workflow path: expanded path because this adds a provisional public surface
 - PR review budget: one provisional public-API and future-roadmap review
 - Blocker-resolution budget: reopen planning if batch behavior requires heavy
   backend dependencies or loader/model policy
-- Pre-submit blocker gate: torch/DataLoader/model imports, device movement,
-  broad batch program, or collation policy changes block completion
+- Pre-submit blocker gate: completed; no torch/DataLoader/model imports,
+  device movement, broad batch program, collation policy changes,
+  export/cache/workflow behavior, or root exports remain known
 - Merge record: pending
 
 ### Risks And Stop Conditions
@@ -841,9 +843,20 @@ Workflow path: expanded path because this adds a provisional public surface
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
+- Implementation: added provisional public batch operation records and
+  wrappers, explicit batch/per-sample augmentation params, descriptive
+  dtype/device context metadata, batch equivalence reports, batch field-effect
+  enforcement, `BatchOperationPipeline`, package exports, and LIST-collated
+  integration coverage.
+- Validation: `uv run pytest tests/unit/rphys/ops/test_batch.py tests/contracts/test_batch_operations.py tests/integration/test_batch_operations_integration.py tests/package/test_import.py`,
+  `make test-unit`, `make test-contract`, `make test-integration`, `make
+  test-package`, `make validate-pr`, `make test-summary`, and `git diff
+  --check` passed. `make test-summary` reported 638 passing
+  package/unit/contract/integration tests; e2e and acceptance suites are not
+  present.
+- PR: [#53](https://github.com/samcantrill/rphys/pull/53) opened against
+  `develop` from `agent/stage-7-p6-batch-surface`; target and title verified
+  by `gh pr view`.
 - Merge: pending
 - Follow-up: pending
 

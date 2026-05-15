@@ -272,6 +272,7 @@ def test_import_ops_public_all_exports() -> None:
         "OperationResult",
         "OperationPipeline",
         "SampleOperationPipeline",
+        "BatchOperationPipeline",
         "FunctionalKernel",
         "SampleFieldPermissions",
         "SampleOperationContract",
@@ -284,6 +285,16 @@ def test_import_ops_public_all_exports() -> None:
         "SampleCheck",
         "SampleDecision",
         "SampleRoute",
+        "BatchParameterScope",
+        "BatchEquivalenceClaim",
+        "BatchFieldEffects",
+        "BatchOperationContext",
+        "BatchOperationContract",
+        "BatchAugmentationParams",
+        "BatchEquivalenceReport",
+        "BatchOperation",
+        "BatchTransform",
+        "BatchAugmentation",
     ]
     assert not hasattr(rphys, "OperationRole")
     assert not hasattr(rphys, "OperationMutationPolicy")
@@ -293,6 +304,7 @@ def test_import_ops_public_all_exports() -> None:
     assert not hasattr(rphys, "Operation")
     assert not hasattr(rphys, "OperationPipeline")
     assert not hasattr(rphys, "SampleOperationPipeline")
+    assert not hasattr(rphys, "BatchOperationPipeline")
     assert not hasattr(rphys, "FunctionalKernel")
     assert not hasattr(rphys, "SampleOperation")
     assert not hasattr(rphys, "SampleOperationContract")
@@ -305,6 +317,16 @@ def test_import_ops_public_all_exports() -> None:
     assert not hasattr(rphys, "SampleCheck")
     assert not hasattr(rphys, "SampleDecision")
     assert not hasattr(rphys, "SampleRoute")
+    assert not hasattr(rphys, "BatchParameterScope")
+    assert not hasattr(rphys, "BatchEquivalenceClaim")
+    assert not hasattr(rphys, "BatchFieldEffects")
+    assert not hasattr(rphys, "BatchOperationContext")
+    assert not hasattr(rphys, "BatchOperationContract")
+    assert not hasattr(rphys, "BatchAugmentationParams")
+    assert not hasattr(rphys, "BatchEquivalenceReport")
+    assert not hasattr(rphys, "BatchOperation")
+    assert not hasattr(rphys, "BatchTransform")
+    assert not hasattr(rphys, "BatchAugmentation")
 
 
 def test_import_ops_module_exports_are_scoped() -> None:
@@ -318,7 +340,7 @@ def test_import_ops_module_exports_are_scoped() -> None:
     assert context.__all__ == ["OperationContext", "OperationResult"]
     assert core.__all__ == ["OperationStep", "Operation"]
     assert kernels.__all__ == ["FunctionalKernel"]
-    assert pipelines.__all__ == ["OperationPipeline", "SampleOperationPipeline"]
+    assert pipelines.__all__ == ["OperationPipeline", "SampleOperationPipeline", "BatchOperationPipeline"]
 
 
 def test_import_ops_sample_module_exports() -> None:
@@ -336,6 +358,23 @@ def test_import_ops_sample_module_exports() -> None:
         "SampleCheck",
         "SampleDecision",
         "SampleRoute",
+    ]
+
+
+def test_import_ops_batch_module_exports() -> None:
+    batch_module = __import__("rphys.ops.batch", fromlist=["__all__"])
+
+    assert batch_module.__all__ == [
+        "BatchParameterScope",
+        "BatchEquivalenceClaim",
+        "BatchFieldEffects",
+        "BatchOperationContext",
+        "BatchOperationContract",
+        "BatchAugmentationParams",
+        "BatchEquivalenceReport",
+        "BatchOperation",
+        "BatchTransform",
+        "BatchAugmentation",
     ]
 
 
