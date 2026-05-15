@@ -395,7 +395,9 @@ git diff --check
 - Implementation validation: `uv run pytest tests/unit/rphys/datasources/test_sources.py`; `uv run pytest tests/unit/rphys/datasources/test_sources.py tests/contracts/test_sample_source_contract.py tests/integration/test_stage9_sample_source_flow.py tests/package/test_import.py tests/package/test_import_boundaries.py`; `make test-package`; `make test-contract`; `git diff --check` all passed.
 - Refinement summary: plan refinement tightened public API/import-path/data-shape decisions; implementation refinement now rejects context records whose source-entry or request evidence does not match the requested sample without changing the returned `Sample` shape.
 - Pre-submit blocker gate: no unresolved source API, parent-export, negative-position, fingerprint, context-shape, or derived-source promotion decision remains in this plan
-- PR preparation: pending
+- PR body draft: complete in `docs/roadmap/stage-9/phases/sample-source-foundation-pr-body.md`
+- PR body refine: pending on expanded path
+- PR preparation: PR body artifact prepared; PR not opened in this pass
 - Automated review: pending
 - Merge result: pending
 - Cleanup: pending
