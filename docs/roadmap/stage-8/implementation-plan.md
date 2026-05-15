@@ -5,7 +5,7 @@ Roadmap version: `v8`
 Planning document: `docs/roadmap/stage-8/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: pending Phase 3 implementation
+Current phase: pending Phase 4 implementation
 Blockers: none for implementation-plan drafting
 
 ## Summary
@@ -40,7 +40,7 @@ Blockers: none for implementation-plan drafting
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `export-primitives` | merged | `agent/stage-8-p1-export-primitives` | [#55](https://github.com/samcantrill/rphys/pull/55) | `src/rphys/ops/export.py` or package equivalent; `tests/unit/rphys/ops/`; `tests/contracts/`; package import tests | Establish data-only export request, layout, policy, outcome, result, and report records without writing files. | Targeted unit/contract tests for layout, fingerprint, idempotency, result aggregation, public imports; `git diff --check`. | Idempotency matrix; typed in-memory report records. |
 | 2 | `selection-preflight` | merged | `agent/stage-8-p2-selection-preflight` | [#56](https://github.com/samcantrill/rphys/pull/56) | `rphys.ops.export`; operation contract tests; selection unit tests | Add no-write `CodecSelectionOperation` and prove landed `OperationStep` compatibility. | Contract/unit tests for `OperationStep`, `OperationPipeline`, no side effects, missing/ambiguous/unsupported inputs. | OperationStep export composition; selection preflight produces no writes. |
-| 3 | `save-operation` | pending | `agent/stage-8-p3-save-operation` | pending | `rphys.ops.export`; synthetic codec fixtures; save/codec contract tests | Implement `SaveOperation` through existing codec save contracts and explicit idempotency outcomes. | Unit/contract tests for pipeline output forwarding, `SaveContext(target=FieldRef)`, `CodecSaveResult`, conflict/skip/replace/write, typed failures. | Codec save contract preservation; idempotency matrix. |
+| 3 | `save-operation` | merged | `agent/stage-8-p3-save-operation` | [#57](https://github.com/samcantrill/rphys/pull/57) | `rphys.ops.export`; synthetic codec fixtures; save/codec contract tests | Implement `SaveOperation` through existing codec save contracts and explicit idempotency outcomes. | Unit/contract tests for pipeline output forwarding, `SaveContext(target=FieldRef)`, `CodecSaveResult`, conflict/skip/replace/write, typed failures. | Codec save contract preservation; idempotency matrix. |
 | 4 | `link-copy-lineage` | pending | `agent/stage-8-p4-link-copy-lineage` | pending | Private local helpers under export implementation; lineage/local-link tests; package boundary tests | Add explicit link/copy policy behavior and public ordered source/target `ResourceRef` lineage while keeping helpers private. | Unit tests for linked/copied counts, missing lineage, unsupported/cross-protocol failures, explicit fallback, private helper imports; `make test-package`. | Link/copy lineage preservation. |
 | 5 | `derived-datasource-roundtrip` | pending | `agent/stage-8-p5-derived-datasource-roundtrip` | pending | `src/rphys/datasources/derived.py`; derived datasource unit tests; Stage 8 integration test; docs/package tests | Assemble successful export results into descriptor-only derived datasources and prove the synthetic export-to-reload vertical slice. | Unit/integration tests for no-rescan assembly, no source mutation, no index-manifest reuse, derived index/load; package/docs checks; final broad suite as scope warrants. | Synthetic datasource/index/sample to exported derived datasource reload; optional prediction-like field dry run. |
 
@@ -210,11 +210,11 @@ Workflow path: fast path
 
 ## Phase 3: SaveOperation Through Codec Save And Idempotency
 
-Status: pending
+Status: merged
 Slug: `save-operation`
 Branch: `agent/stage-8-p3-save-operation`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-8-p3-save-operation`
-PR: pending
+PR: [#57](https://github.com/samcantrill/rphys/pull/57)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -277,11 +277,16 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added side-effecting `SaveOperation` as a public
+  `OperationStep` implementation consuming `ExportSelection`. The operation
+  applies write idempotency, calls `CodecRegistry.save` only through
+  `SaveContext(target=FieldRef, metadata_policy=...)`, preserves
+  `CodecSaveResult` evidence, and returns typed `RecordExportResult` output.
+- Validation: `uv run pytest tests/unit/rphys/ops/test_export_save.py tests/contracts/test_export_codec_contract.py tests/contracts/test_export_operation_contract.py`; `uv run pytest tests/contracts/test_codec_contract.py`; `make test-unit`; `make test-contract`; `make test-package`; `make validate-pr`; `make test-summary`; and `git diff --check` passed locally.
+- PR: [#57](https://github.com/samcantrill/rphys/pull/57)
+- Merge: merged to `develop` on 2026-05-15; merge commit `5357da9b9dd18a4e837dff23788581049af31746`.
+- Follow-up: Phase 4 owns link/copy materialization, ordered lineage
+  behavior, and unsupported-protocol failures.
 
 ## Phase 4: Link/Copy Lineage And Private Local Helpers
 
