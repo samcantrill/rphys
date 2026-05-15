@@ -480,14 +480,6 @@ Workflow path: expanded path
 - Stop conditions: a concrete backend adapter is required; batch planning needs active sampler execution; schema choices require new maintainer judgment beyond approved records.
 - Assumptions: descriptive record validation can be implemented without choosing a storage format or trainer runtime.
 
-### Completion Summary
-
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
-
 ## Phase 6: Data-Path Evidence, Integration, Docs, And Package Closeout
 
 Status: pending
