@@ -350,6 +350,14 @@ class BatchAugmentationParams:
                 expected="non-empty sequence of mappings",
                 actual="empty",
             )
+        if scope_value is BatchParameterScope.BATCH and len(per_sample_values) != 0:
+            raise InvalidOperationInputError(
+                "batch-scoped augmentation params must not include per_sample entries.",
+                owner="BatchAugmentationParams",
+                field="per_sample",
+                expected="empty sequence for batch scope",
+                actual=f"{len(per_sample_values)} entries",
+            )
         object.__setattr__(self, "scope", scope_value)
         object.__setattr__(self, "values", _coerce_augmentation_values(values, owner="BatchAugmentationParams", field="values"))
         object.__setattr__(self, "per_sample", per_sample_values)
@@ -630,6 +638,12 @@ class BatchAugmentation(BatchOperation):
                 expected="BatchAugmentationParams",
                 actual=type(params).__name__,
             )
+        _validate_batch_augmentation_scope(
+            self._name,
+            self._batch_contract.parameter_scope,
+            execution_context.parameter_scope,
+            params.scope,
+        )
         return params
 
     def apply_params(
@@ -1064,6 +1078,25 @@ def _validate_no_batch_field_effects(operation_name: str, phase: str, effects: d
             effect_name: tuple(str(locator) for locator in locators)
             for effect_name, locators in effects.items()
         },
+    )
+
+
+def _validate_batch_augmentation_scope(
+    operation_name: str,
+    contract_scope: BatchParameterScope | None,
+    context_scope: BatchParameterScope | None,
+    params_scope: BatchParameterScope,
+) -> None:
+    expected_scope = contract_scope if contract_scope is not None else context_scope
+    if expected_scope is None or expected_scope is params_scope:
+        return
+
+    raise InvalidOperationResultError(
+        "batch augmentation sampled params scope does not match declared scope.",
+        operation_name=operation_name,
+        field="sample_params.scope",
+        expected=expected_scope.value,
+        actual=params_scope.value,
     )
 
 

@@ -112,6 +112,8 @@ def test_batch_augmentation_params_validate_scope_and_lightweight_values() -> No
     with pytest.raises(InvalidOperationInputError):
         BatchAugmentationParams(scope="per_sample")
     with pytest.raises(InvalidOperationInputError):
+        BatchAugmentationParams(scope="batch", per_sample=({"offset": 1},))
+    with pytest.raises(InvalidOperationInputError):
         BatchAugmentationParams(values={"payload": object()})
 
 
@@ -233,6 +235,58 @@ def test_batch_augmentation_rejects_sampler_field_mutation_before_apply() -> Non
 
     assert exc.value.context["field"] == "sample_params"
     assert exc.value.context["expected"] == "no batch field mutations"
+
+
+def test_batch_augmentation_enforces_declared_parameter_scope() -> None:
+    apply_calls: list[str] = []
+
+    def sample_params(batch: Batch, *, context: BatchOperationContext) -> BatchAugmentationParams:
+        return BatchAugmentationParams(scope="per_sample", per_sample=({"offset": 1}, {"offset": 2}))
+
+    def apply_params(batch: Batch, params: BatchAugmentationParams, *, context: BatchOperationContext) -> Batch:
+        apply_calls.append("apply")
+        return batch
+
+    operation = BatchAugmentation(
+        sample_params,
+        apply_params,
+        name="scope-mismatch",
+        contract=BatchOperationContract(
+            field_permissions=SampleFieldPermissions(reads=(VIDEO,), writes=(VIEW,)),
+            parameter_scope="batch",
+        ),
+    )
+
+    with pytest.raises(InvalidOperationResultError) as exc:
+        operation(_batch())
+
+    assert exc.value.context["field"] == "sample_params.scope"
+    assert exc.value.context["expected"] == "batch"
+    assert exc.value.context["actual"] == "per_sample"
+    assert apply_calls == []
+
+
+def test_batch_augmentation_context_parameter_scope_is_enforced_when_contract_scope_is_unset() -> None:
+    def sample_params(batch: Batch, *, context: BatchOperationContext) -> BatchAugmentationParams:
+        return BatchAugmentationParams(scope="batch", values={"gain": 1})
+
+    def apply_params(batch: Batch, params: BatchAugmentationParams, *, context: BatchOperationContext) -> Batch:
+        return batch
+
+    operation = BatchAugmentation(
+        sample_params,
+        apply_params,
+        name="context-scope-mismatch",
+        contract=BatchOperationContract(
+            field_permissions=SampleFieldPermissions(reads=(VIDEO,), writes=(VIEW,)),
+        ),
+    )
+
+    with pytest.raises(InvalidOperationResultError) as exc:
+        operation(_batch(), context=BatchOperationContext(parameter_scope="per_sample"))
+
+    assert exc.value.context["expected"] == "per_sample"
+    assert exc.value.context["actual"] == "batch"
 
 
 def test_batch_pipeline_runs_ordered_mapping_and_wraps_step_diagnostics() -> None:

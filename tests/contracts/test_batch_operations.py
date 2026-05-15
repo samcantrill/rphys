@@ -5,6 +5,7 @@ from __future__ import annotations
 from rphys.data import Batch, FieldValue
 from rphys.data.locators import FieldLocator
 from rphys.ops import (
+    BatchAugmentationParams,
     BatchEquivalenceReport,
     BatchOperation,
     BatchOperationPipeline,
@@ -68,3 +69,6 @@ def test_batch_pipeline_is_specialized_mapping_surface_only() -> None:
 def test_batch_parameter_scope_is_explicit_public_vocabulary() -> None:
     assert BatchParameterScope.BATCH.value == "batch"
     assert BatchParameterScope.PER_SAMPLE.value == "per_sample"
+
+    params = BatchAugmentationParams(scope=BatchParameterScope.PER_SAMPLE, per_sample=({"offset": 1},))
+    assert params.scope is BatchParameterScope.PER_SAMPLE

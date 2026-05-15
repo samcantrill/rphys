@@ -851,7 +851,7 @@ Workflow path: expanded path because this adds a provisional public surface
 - Validation: `uv run pytest tests/unit/rphys/ops/test_batch.py tests/contracts/test_batch_operations.py tests/integration/test_batch_operations_integration.py tests/package/test_import.py`,
   `make test-unit`, `make test-contract`, `make test-integration`, `make
   test-package`, `make validate-pr`, `make test-summary`, and `git diff
-  --check` passed. `make test-summary` reported 636 passing
+  --check` passed. `make test-summary` reported 638 passing
   package/unit/contract/integration tests; e2e and acceptance suites are not
   present.
 - PR: [#53](https://github.com/samcantrill/rphys/pull/53) opened against

@@ -2,7 +2,7 @@
 
 Implements roadmap Stage 7 Phase 6 by adding the provisional, dependency-light batch operation surface.
 
-The PR adds `BatchOperation`, `BatchTransform`, `BatchAugmentation`, `BatchOperationContext`, `BatchOperationContract`, `BatchAugmentationParams`, `BatchEquivalenceReport`, and `BatchOperationPipeline`. The implementation includes exact field-effect enforcement, explicit batch/per-sample augmentation parameter scope, descriptive dtype/device context, runtime batch equivalence metadata, and synthetic LIST-collated integration coverage.
+The PR adds `BatchOperation`, `BatchTransform`, `BatchAugmentation`, `BatchOperationContext`, `BatchOperationContract`, `BatchAugmentationParams`, `BatchEquivalenceReport`, and `BatchOperationPipeline`. The implementation includes exact field-effect enforcement, enforced batch/per-sample augmentation parameter scope, descriptive dtype/device context, runtime batch equivalence metadata, and synthetic LIST-collated integration coverage.
 
 # Links
 
@@ -23,7 +23,7 @@ The PR adds `BatchOperation`, `BatchTransform`, `BatchAugmentation`, `BatchOpera
 
 - Inputs/outputs: batch operations accept and return `Batch` objects through `OperationResult`; intermediate pipeline results forward `OperationResult.output`.
 - Units/shapes/dtypes: dtype and device are descriptive metadata only. The base library does not allocate arrays, move devices, or interpret backend layouts.
-- Sampling/alignment/provenance: batch augmentation sampling and deterministic application are split. Equivalence reports describe identical, approximate, diagnostic, or unsupported sample-side replacement claims.
+- Sampling/alignment/provenance: batch augmentation sampling and deterministic application are split. Sampled parameter scope is enforced against declared contract/context scope. Equivalence reports describe identical, approximate, diagnostic, or unsupported sample-side replacement claims.
 - Pipeline-order implications: `BatchOperationPipeline` preserves sequence or insertion-ordered mapping order; mapping keys are diagnostic names only.
 - Leakage or subject/split implications: no subject, split, loader, DataLoader, cache, trainer, model, export, workflow, or device policy is introduced.
 - Legacy parity or intentional behavior changes: this is additive provisional Stage 7 behavior and preserves existing LIST collation, generic pipeline, and sample pipeline contracts.
@@ -56,7 +56,7 @@ Suite evidence from `make test-summary`:
 | Suite | Result | Evidence |
 | --- | --- | --- |
 | package | passed | 33 passed |
-| unit | passed | 501 passed |
+| unit | passed | 503 passed |
 | contract | passed | 91 passed |
 | integration | passed | 11 passed |
 | e2e | not present | 0 tests |

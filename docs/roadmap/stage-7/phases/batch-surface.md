@@ -334,8 +334,8 @@ git diff --check
 
 - Phase execution plan refinement: unused / not needed
 - Phase implementation refinement: unused
-- PR review: unused
-- Blocker resolution: 0/3 used
+- PR review: used once / completed
+- Blocker resolution: 1/3 used
 
 ## Completion Notes
 
@@ -351,7 +351,7 @@ git diff --check
   `uv run pytest tests/unit/rphys/ops/test_batch.py tests/contracts/test_batch_operations.py tests/integration/test_batch_operations_integration.py tests/package/test_import.py`,
   `make test-unit`, `make test-contract`, `make test-integration`, `make
   test-package`, `make validate-pr`, `make test-summary`, and `git diff
-  --check` passed on 2026-05-15. `make test-summary` reported 636 passing
+  --check` passed on 2026-05-15. `make test-summary` reported 638 passing
   package/unit/contract/integration tests; e2e and acceptance suites are not
   present.
 - Refinement summary: not needed
@@ -363,7 +363,46 @@ git diff --check
 - PR: [#53](https://github.com/samcantrill/rphys/pull/53) opened against
   `develop` from `agent/stage-7-p6-batch-surface`; target and title verified
   by `gh pr view`
-- Automated review: pending
+- Automated review: completed; found one blocking augmentation parameter-scope
+  enforcement issue that was resolved before merge
 - Merge result: pending
 - Cleanup: pending
 - Remaining blockers: none
+
+## Phase PR Review Report
+
+## Assigned Review
+
+- Review target: PR #53, Stage 7 Phase 6 provisional batch operation surface.
+- Review focus: public batch API contracts, equivalence claims, backend/import
+  boundaries, field permissions, augmentation replay, pipeline behavior,
+  validation evidence, and PR metadata.
+- Budget use: PR review completed; blocker resolution 1/3 used.
+
+## Findings
+
+- Blocking finding: batch augmentation parameter scope was only recorded, not
+  enforced. A contract declaring `parameter_scope="batch"` could accept sampled
+  `BatchAugmentationParams(scope="per_sample")`, and batch-scoped params could
+  carry `per_sample` entries.
+
+## Resolution
+
+- Changes made: `BatchAugmentationParams` now rejects `per_sample` entries
+  when `scope="batch"`. `BatchAugmentation.sample_params()` validates sampled
+  params against the declared contract scope, or against context
+  `parameter_scope` when the contract leaves scope unset, before
+  `apply_params()` can run.
+- Tests added: unit regressions for contradictory batch-scoped params,
+  contract-versus-sampled scope mismatch, and context-versus-sampled scope
+  mismatch; contract coverage keeps `BatchParameterScope` explicit.
+- Validation rerun: targeted Phase 6 tests, `make test-unit`, `make
+  test-contract`, `make test-integration`, `make test-package`, `make
+  validate-pr`, `make test-summary`, and `git diff --check` passed after the
+  blocker fix.
+
+## Result
+
+- Blocker resolved: yes.
+- Remaining blocker: none known.
+- Recommended next gate: push the blocker-resolution commit and recheck the PR.
