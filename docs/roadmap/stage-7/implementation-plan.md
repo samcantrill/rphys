@@ -5,7 +5,7 @@ Roadmap version: `v7`
 Planning document: `docs/roadmap/stage-7/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 5 PR open after local validation
+Current phase: Phase 6 pending after Phase 5 merge
 Blockers: none
 
 ## Summary
@@ -90,7 +90,7 @@ Blockers: none
 | 2 | `sample-foundations` | merged | `agent/stage-7-p2-sample-foundations` | [#49](https://github.com/samcantrill/rphys/pull/49) | `src/rphys/ops/sample.py`, `src/rphys/ops/__init__.py`, focused errors/tests | Establish sample operation public foundations. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | contract inspection, locator parsing, context/replay records, exports |
 | 3 | `sample-effects-checks` | merged | `agent/stage-7-p3-sample-effects-checks` | [#50](https://github.com/samcantrill/rphys/pull/50) | sample enforcement, transforms/checks, focused private helpers | Implement sample field-effect enforcement, transforms, and checks. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `make validate-pr`; `make test-summary`; `git diff --check` | declared mutation, same-locator replacement, lazy fields, route non-policy |
 | 4 | `sample-augmentation-views` | merged | `agent/stage-7-p4-sample-augmentation-views` | [#51](https://github.com/samcantrill/rphys/pull/51) | sample augmentation params/replay/view behavior | Add sample augmentation replay and self-supervised view writing. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `make validate-pr`; `make test-summary`; `git diff --check` | replay, linked fields, no global RNG, view locators |
-| 5 | `sample-pipeline` | pr_open | `agent/stage-7-p5-sample-pipeline` | [#52](https://github.com/samcantrill/rphys/pull/52) | `src/rphys/ops/pipelines.py`, specialized pipeline tests | Add specialized sample pipeline composition. | `make test-unit`; `make test-contract`; `make test-package`; `make validate-pr`; `make test-summary`; `git diff --check` | ordered mapping, step diagnostics, generic pipeline regression |
+| 5 | `sample-pipeline` | merged | `agent/stage-7-p5-sample-pipeline` | [#52](https://github.com/samcantrill/rphys/pull/52) | `src/rphys/ops/pipelines.py`, specialized pipeline tests | Add specialized sample pipeline composition. | `make test-unit`; `make test-contract`; `make test-package`; `make validate-pr`; `make test-summary`; `git diff --check` | ordered mapping, step diagnostics, generic pipeline regression |
 | 6 | `batch-surface` | pending | `agent/stage-7-p6-batch-surface` | pending | `src/rphys/ops/batch.py`, batch pipeline/equivalence tests | Add provisional batch operation, augmentation, equivalence, and pipeline surface. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `git diff --check` | LIST-collated equivalence, batch params, dtype/device metadata |
 | 7 | `docs-validation` | pending | `agent/stage-7-p7-docs-validation` | pending | public docstrings/docs/examples/final validation evidence | Finalize docs, examples, and PR validation evidence. | `make test`; `make test-summary`; `make test-package`; `make test-unit`; `make test-contract`; `make test-integration`; `uv lock --check`; `git diff --check`; `make validate-pr` if PR breadth warrants | public examples and residual-risk readback |
 
@@ -623,7 +623,7 @@ Workflow path: fast path unless parameter records require new public fields
 
 ## Phase 5: Specialized Sample Pipeline Composition
 
-Status: pr_open
+Status: merged
 Slug: `sample-pipeline`
 Branch: `agent/stage-7-p5-sample-pipeline`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-7-p5-sample-pipeline`
@@ -699,7 +699,7 @@ Workflow path: fast path with explicit Stage 6 regression checks
 - Pre-submit blocker gate: completed; no generic mapping support, workflow
   semantics, tuple named entries, batch behavior, or public step helper
   leakage remains known
-- Merge record: pending
+- Merge record: completed; cleanup completed
 
 ### Risks And Stop Conditions
 
@@ -726,8 +726,17 @@ Workflow path: fast path with explicit Stage 6 regression checks
 - PR: [#52](https://github.com/samcantrill/rphys/pull/52) opened against
   `develop` from `agent/stage-7-p5-sample-pipeline`; target and title verified
   by `gh pr view`.
-- Merge: pending
-- Follow-up: pending
+- Merge: squash-merged to `develop` on 2026-05-15 at
+  `1b3171b2549445a2b8d0d1c1c23b8674001f98df`; merge command
+  `gh pr merge 52 --squash --delete-branch`. The command merged the PR, then
+  reported local branch deletion was blocked because the phase worktree was
+  still checked out.
+- Cleanup: removed
+  `/home/samcantrill/work/rphys-worktrees/stage-7-p5-sample-pipeline`, ran
+  `git worktree prune`, and deleted the local and remote
+  `agent/stage-7-p5-sample-pipeline` branches.
+- Follow-up: Phase 6 owns provisional batch operations and batch pipeline
+  composition.
 
 ## Phase 6: Provisional Batch Operation Surface
 

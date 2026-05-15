@@ -368,6 +368,10 @@ git diff --check
   `develop` from `agent/stage-7-p5-sample-pipeline`; target and title verified
   by `gh pr view`
 - Automated review: completed; no blocking findings
-- Merge result: pending
-- Cleanup: pending
+- Merge result: squash-merged to `develop` on 2026-05-15 at
+  `1b3171b2549445a2b8d0d1c1c23b8674001f98df`; merge command
+  `gh pr merge 52 --squash --delete-branch`
+- Cleanup: completed; removed the phase worktree, pruned git worktree
+  metadata, and deleted the local and remote
+  `agent/stage-7-p5-sample-pipeline` branches
 - Remaining blockers: none
