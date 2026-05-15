@@ -383,9 +383,9 @@ git diff --check
 - PR body draft: complete in `docs/roadmap/stage-9/phases/torch-collater-boundary-pr-body.md`
 - PR preparation: PR opened and verified as non-draft PR #61 against base `develop` from head `agent/stage-9-data-loading-cache-p2-torch-collater-boundary`
 - Automated review: complete; no blocking findings, PR-review budget consumed, and merge eligible assuming PR opens against `develop` and CI matches local validation
-- Merge result: pending
-- Cleanup: pending
-- Remaining blockers: none identified for implementation
+- Merge result: merged into `develop` through PR #61 as squash commit `3f26c5eb5b1b0aadd341923c10c9d7d39af41585`
+- Cleanup: pending after develop metadata commit
+- Remaining blockers: none identified
 
 ## Automated Phase PR Review Report
 
@@ -409,3 +409,33 @@ git diff --check
 - Head: `agent/stage-9-data-loading-cache-p2-torch-collater-boundary`
 - Title: `Stage 9 Index Adapters, Torch Data Loading, And Cache - Phase 2: Torch Adapter And FieldLocator Collater Boundary`
 - Initial status checks: no GitHub status checks reported at PR-open verification time.
+
+# Phase Merge Record: Stage 9 Phase 2 Torch Adapter And FieldLocator Collater Boundary
+
+## Merge Facts
+
+- Phase: Phase 2 `torch-collater-boundary`
+- Branch: `agent/stage-9-data-loading-cache-p2-torch-collater-boundary`
+- PR: https://github.com/samcantrill/rphys/pull/61
+- Base branch: `develop`
+- Merge command: `gh pr merge 61 --squash --match-head-commit b0aaec7c60bd6acb557116ee675f1866de401cdb --subject "Stage 9 Phase 2: Torch adapter and batch collater" --body "..."`
+- Merge result: merged 2026-05-15
+- Merge commit: `3f26c5eb5b1b0aadd341923c10c9d7d39af41585`
+- Branch cleanup: pending after metadata commit
+- Worktree cleanup: pending after metadata commit
+
+## Completion Summary
+
+- Behavior implemented: module-scoped `rphys.datasources.torch` with optional torch dataset/loader adapters and framework-neutral `BatchCollater` in `rphys.data.collation`.
+- Tests and validation: `UV_CACHE_DIR=/tmp/uv-cache make validate-pr` and `UV_CACHE_DIR=/tmp/uv-cache make test-summary` passed with package 38, unit 583, contract 108, integration 15, total 744; no GitHub status checks were configured for PR #61.
+- Documentation: phase plan, PR body, implementation-plan PR state, automated review, and merge facts recorded.
+- Scientific contract implications: dataset wrappers return FieldLocator-keyed `Sample`; collater returns FieldLocator-keyed `Batch`; torch remains optional/import-gated; no trainer/device/model-formatting/stack/pad/drop behavior was added.
+- Follow-up notes for later phases: Phase 3 cache wrappers can wrap `SampleSource` before torch datasets; real torch execution remains fake/missing-tested until an optional torch extra or CI job exists.
+
+## Implementation Plan Update
+
+- Phase status: merged
+- Completion summary recorded: yes
+- Validation evidence recorded: yes
+- Remaining blockers: none
+- Metadata commit: pending

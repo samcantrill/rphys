@@ -1,11 +1,11 @@
 # Roadmap Stage 9 Implementation Plan
 
-Status: approved; Phase 2 PR open through implementation workflow
+Status: approved; Phase 2 merged, ready for Phase 3 execution through implementation workflow
 Roadmap version: `v9`
 Planning document: `docs/roadmap/stage-9/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: `torch-collater-boundary`
+Current phase: none
 Blockers: none
 
 ## Summary
@@ -39,7 +39,7 @@ Blockers: none
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `sample-source-foundation` | merged | `agent/stage-9-data-loading-cache-p1-sample-source-foundation` | [#60](https://github.com/samcantrill/rphys/pull/60) | `src/rphys/datasources/sources.py`; source/context tests; scoped docs/docstrings | Add `SampleRequest`, `SampleRuntimeContext`, `WorkerContextFactory`, `SampleSource`, and `IndexSampleSource`. | Focused source/context unit, contract, integration, package import, and diff checks. | Synthetic `DataSourceIndex` to lazy/eager `Sample`; derived index via ordinary source path. |
-| 2 | `torch-collater-boundary` | pr_open | `agent/stage-9-data-loading-cache-p2-torch-collater-boundary` | [#61](https://github.com/samcantrill/rphys/pull/61) | `src/rphys/datasources/torch.py`; `src/rphys/data/collation.py`; adapter/collater/package tests | Add optional torch adapters and a FieldLocator-preserving `BatchCollater`. | Package import-boundary, missing/fake torch, collater, adapter, and diff checks. | Optional torch dataset over `SampleSource`; `BatchCollater` over FieldLocator-keyed samples. |
+| 2 | `torch-collater-boundary` | merged | `agent/stage-9-data-loading-cache-p2-torch-collater-boundary` | [#61](https://github.com/samcantrill/rphys/pull/61) | `src/rphys/datasources/torch.py`; `src/rphys/data/collation.py`; adapter/collater/package tests | Add optional torch adapters and a FieldLocator-preserving `BatchCollater`. | Package import-boundary, missing/fake torch, collater, adapter, and diff checks. | Optional torch dataset over `SampleSource`; `BatchCollater` over FieldLocator-keyed samples. |
 | 3 | `deterministic-cache-store` | pending | `agent/stage-9-data-loading-cache-p3-deterministic-cache-store` | pending | `src/rphys/datasources/cache.py`; cache unit/contract/temp-dir tests; cache docs/docstrings | Add deterministic cache records, local atomic store, fake/minimal explicit value strategy, and `CachedSampleSource`. | Cache key/manifest/policy/result, temp-dir atomic store, cached-source, package import, and diff checks. | Local cache hit/miss/stale/corrupt matrix; request-specific cache adversarial source. |
 | 4 | `prepared-reader-source` | pending | `agent/stage-9-data-loading-cache-p4-prepared-reader-source` | pending | `src/rphys/datasources/prepared.py`; prepared manifest/reader/source tests; provisional docs | Add `PreparedDataManifest`, public provisional `PreparedSampleReader`, `PreparedSampleSource`, and equivalence checks. | Prepared manifest, fake reader, equivalence matrix, package import, and diff checks. | Prepared manifest equivalence success/failure; fake prepared reader/backend boundary. |
 | 5 | `materialization-batch-records` | pending | `agent/stage-9-data-loading-cache-p5-materialization-batch-records` | pending | `src/rphys/datasources/prepared.py` or a code-backed sibling if implementation evidence requires it; materialization/batch record tests | Add storage-neutral materialization, layout, cost, and batch-planning records. | Record validator, package import, contract, docs, and diff checks. | Batch cost metadata and sampler plan; storage-neutral materialization records. |
@@ -139,7 +139,7 @@ Workflow path: fast path
 
 ## Phase 2: Torch Adapter And FieldLocator Collater Boundary
 
-Status: pr_open
+Status: merged
 Slug: `torch-collater-boundary`
 Branch: `agent/stage-9-data-loading-cache-p2-torch-collater-boundary`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-9-data-loading-cache-p2-torch-collater-boundary`
@@ -194,7 +194,7 @@ Workflow path: fast path
 - PR review budget: consumed by managing-agent pre-submit review; no blocking findings
 - Blocker-resolution budget: standard
 - Pre-submit blocker gate: no hard torch dependency or collation semantic expansion
-- Merge record: pending PR merge
+- Merge record: complete; squash merged via PR #61 as `3f26c5eb5b1b0aadd341923c10c9d7d39af41585`
 
 ### Risks And Stop Conditions
 
@@ -206,9 +206,22 @@ Workflow path: fast path
 
 - Implementation: complete; `rphys.datasources.torch` adds optional torch dataset/loader adapters and `rphys.data.collation` adds `BatchCollater`
 - Validation: `UV_CACHE_DIR=/tmp/uv-cache make validate-pr` and `UV_CACHE_DIR=/tmp/uv-cache make test-summary` passed with package 38, unit 583, contract 108, integration 15, total 744
-- PR: open as https://github.com/samcantrill/rphys/pull/61 against `develop`
-- Merge: pending
-- Follow-up: pending
+- PR: https://github.com/samcantrill/rphys/pull/61 merged into `develop`
+- Merge: squash merged as `3f26c5eb5b1b0aadd341923c10c9d7d39af41585`
+- Follow-up: Phase 3 `deterministic-cache-store` may now start from updated `develop`; preserve Phase 1 source and Phase 2 optional torch/collater boundaries
+
+### Phase Merge Record
+
+- Phase: Phase 2 `torch-collater-boundary`
+- Branch: `agent/stage-9-data-loading-cache-p2-torch-collater-boundary`
+- PR: https://github.com/samcantrill/rphys/pull/61
+- Base branch: `develop`
+- Merge command: `gh pr merge 61 --squash --match-head-commit b0aaec7c60bd6acb557116ee675f1866de401cdb --subject "Stage 9 Phase 2: Torch adapter and batch collater" --body "..."`
+- Merge result: merged 2026-05-15
+- Merge commit: `3f26c5eb5b1b0aadd341923c10c9d7d39af41585`
+- Branch cleanup: pending after metadata commit
+- Worktree cleanup: pending after metadata commit
+- Remaining blockers: none
 
 ## Phase 3: Deterministic Cache Contracts And Local Atomic Store
 
