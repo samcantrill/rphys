@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: draft phase execution plan
+- Status: implementation complete; PR preparation pending
 - Roadmap stage: `v7`
 - Feature focus: provisional batch operations, batch augmentations, equivalence, and pipeline surface
 - Stage descriptor: SampleOps, BatchOps, Transforms, Augmentations, Checks, And Pipelines
@@ -22,7 +22,7 @@
   `develop`; local-only completion is not allowed
 - Plan quality gate: implementation-plan quality gate already passed
 - Draft pass: completed in this artifact
-- Refine pass: pending only if equivalence fields imply backend, loader, or model policy
+- Refine pass: not needed; equivalence fields remained dependency-light and descriptive
 - Setup limitations: none; branch and worktree created from `develop`
 - Blockers: none
 
@@ -332,7 +332,7 @@ git diff --check
 
 ## Refinement And Review Budget Status
 
-- Phase execution plan refinement: unused / not needed unless backend policy is implicated
+- Phase execution plan refinement: unused / not needed
 - Phase implementation refinement: unused
 - PR review: unused
 - Blocker resolution: 0/3 used
@@ -340,11 +340,24 @@ git diff --check
 ## Completion Notes
 
 - Draft plan: completed in this artifact
-- Final phase execution plan: pending
-- Implementation summary: pending
-- Implementation validation: pending
-- Refinement summary: pending
-- Pre-submit blocker gate: pending
+- Final phase execution plan: completed in this artifact
+- Implementation summary: implemented on 2026-05-15 in
+  `agent/stage-7-p6-batch-surface`; added provisional public batch operation
+  records and wrappers, batch augmentation params with explicit scope, batch
+  equivalence reports, batch field-effect enforcement, batch augmentation
+  replay metadata, `BatchOperationPipeline`, package exports, and synthetic
+  LIST-collated integration coverage.
+- Implementation validation: targeted
+  `uv run pytest tests/unit/rphys/ops/test_batch.py tests/contracts/test_batch_operations.py tests/integration/test_batch_operations_integration.py tests/package/test_import.py`,
+  `make test-unit`, `make test-contract`, `make test-integration`, `make
+  test-package`, `make validate-pr`, `make test-summary`, and `git diff
+  --check` passed on 2026-05-15. `make test-summary` reported 636 passing
+  package/unit/contract/integration tests; e2e and acceptance suites are not
+  present.
+- Refinement summary: not needed
+- Pre-submit blocker gate: completed; no backend arrays or imports,
+  DataLoader/model/trainer/device movement, collation changes, broad batch
+  planner, export/cache/workflow behavior, or root exports remain known.
 - PR preparation: pending
 - Automated review: pending
 - Merge result: pending
