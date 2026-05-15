@@ -117,8 +117,8 @@ git diff --check
 - PR body draft: complete in `docs/roadmap/stage-9/phases/materialization-batch-records-pr-body.md`
 - PR preparation: PR opened and verified as non-draft PR #64 against base `develop` from head `agent/stage-9-data-loading-cache-p5-materialization-batch-records`
 - Automated review: complete; managing-agent local pre-submit review found no blocking findings
-- Merge result: pending
-- Cleanup: pending
+- Merge result: merged into `develop` through PR #64 as squash commit `9d6a7d84bb89b2686babec619d8bfb9bd4d0d946`
+- Cleanup: complete; Phase 5 worktree removed, worktree metadata pruned, and local/remote phase branches deleted
 - Remaining blockers: none identified for implementation
 
 ## Automated Phase PR Review Report
@@ -137,9 +137,39 @@ git diff --check
 
 - PR: https://github.com/samcantrill/rphys/pull/64
 - Number: 64
-- State: open
+- State: merged
 - Draft: no
 - Base: `develop`
 - Head: `agent/stage-9-data-loading-cache-p5-materialization-batch-records`
 - Title: `Stage 9 Index Adapters, Torch Data Loading, And Cache - Phase 5: Storage-Neutral Materialization, Layout, Cost, And Batch-Planning Records`
 - Initial status checks: no GitHub status checks reported at PR-open verification time.
+
+# Phase Merge Record: Stage 9 Phase 5 Storage-Neutral Materialization, Layout, Cost, And Batch-Planning Records
+
+## Merge Facts
+
+- Phase: Phase 5 `materialization-batch-records`
+- Branch: `agent/stage-9-data-loading-cache-p5-materialization-batch-records`
+- PR: https://github.com/samcantrill/rphys/pull/64
+- Base branch: `develop`
+- Merge command: `gh pr merge 64 --squash --match-head-commit ddbc5cf15d96a611a5ec9065df7dccfaa0dd1816 --subject "Stage 9 Phase 5: materialization and batch records" --body "..."`
+- Merge result: merged 2026-05-15
+- Merge commit: `9d6a7d84bb89b2686babec619d8bfb9bd4d0d946`
+- Branch cleanup: complete; local and remote Phase 5 branches deleted after merge
+- Worktree cleanup: complete; Phase 5 worktree removed and worktree metadata pruned
+
+## Completion Summary
+
+- Behavior implemented: module-scoped `rphys.datasources.prepared` with public provisional optimized storage, materialization layout/manifest, record layout, batch cost, batch shape, and batch sampler descriptor records.
+- Tests and validation: `make validate-pr` and `make test-summary` passed with package 40, unit 615, contract 116, integration 17, total 788; no GitHub status checks were configured for PR #64.
+- Documentation: phase plan, PR body, automated review, implementation-plan PR state, and merge facts recorded.
+- Scientific contract implications: records preserve FieldLocator-keyed layout/cost evidence, validate deterministic cross-record references, serialize through primitive `to_dict`/`from_dict` payloads, and do not execute IO, materialization, trainer sampling, model formatting, tensor conversion, device movement, or DDP behavior.
+- Follow-up notes for later phases: Phase 6 can add data-path evidence/profile records and close Stage 9 docs while preserving the descriptor-only materialization and batch-planning boundary.
+
+## Implementation Plan Update
+
+- Phase status: merged
+- Completion summary recorded: yes
+- Validation evidence recorded: yes
+- Remaining blockers: none
+- Metadata commit: this direct `develop` metadata commit records merge and cleanup facts

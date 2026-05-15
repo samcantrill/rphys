@@ -42,7 +42,7 @@ Blockers: none
 | 2 | `torch-collater-boundary` | merged | `agent/stage-9-data-loading-cache-p2-torch-collater-boundary` | [#61](https://github.com/samcantrill/rphys/pull/61) | `src/rphys/datasources/torch.py`; `src/rphys/data/collation.py`; adapter/collater/package tests | Add optional torch adapters and a FieldLocator-preserving `BatchCollater`. | Package import-boundary, missing/fake torch, collater, adapter, and diff checks. | Optional torch dataset over `SampleSource`; `BatchCollater` over FieldLocator-keyed samples. |
 | 3 | `deterministic-cache-store` | merged | `agent/stage-9-data-loading-cache-p3-deterministic-cache-store` | [#62](https://github.com/samcantrill/rphys/pull/62) | `src/rphys/datasources/cache.py`; cache unit/contract/temp-dir tests; cache docs/docstrings | Add deterministic cache records, local atomic store, fake/minimal explicit value strategy, and `CachedSampleSource`. | Cache key/manifest/policy/result, temp-dir atomic store, cached-source, package import, and diff checks. | Local cache hit/miss/stale/corrupt matrix; request-specific cache adversarial source. |
 | 4 | `prepared-reader-source` | merged | `agent/stage-9-data-loading-cache-p4-prepared-reader-source` | [#63](https://github.com/samcantrill/rphys/pull/63) | `src/rphys/datasources/prepared.py`; prepared manifest/reader/source tests; provisional docs | Add `PreparedDataManifest`, public provisional `PreparedSampleReader`, `PreparedSampleSource`, and equivalence checks. | Prepared manifest, fake reader, equivalence matrix, package import, and diff checks. | Prepared manifest equivalence success/failure; fake prepared reader/backend boundary. |
-| 5 | `materialization-batch-records` | PR open | `agent/stage-9-data-loading-cache-p5-materialization-batch-records` | [#64](https://github.com/samcantrill/rphys/pull/64) | `src/rphys/datasources/prepared.py`; materialization/batch record tests; phase docs | Add storage-neutral materialization, layout, cost, and batch-planning records. | Record validator, package import, contract, docs, and diff checks. | Batch cost metadata and sampler plan; storage-neutral materialization records. |
+| 5 | `materialization-batch-records` | merged | `agent/stage-9-data-loading-cache-p5-materialization-batch-records` | [#64](https://github.com/samcantrill/rphys/pull/64) | `src/rphys/datasources/prepared.py`; materialization/batch record tests; phase docs | Add storage-neutral materialization, layout, cost, and batch-planning records. | Record validator, package import, contract, docs, and diff checks. | Batch cost metadata and sampler plan; storage-neutral materialization records. |
 | 6 | `datapath-evidence-closeout` | pending | `agent/stage-9-data-loading-cache-p6-datapath-evidence-closeout` | pending | data-path evidence records; synthetic integration; public exports/docs/package closeout | Add data-path evidence/profile records and close Stage 9 docs, examples, exports, and focused integration. | Data-path record tests, integration smoke, package/import checks, relevant unit/contract suites, `git diff --check`, and broadened validation as needed. | Synthetic source-to-collater/cache/prepared smoke; data-path profile/benchmark evidence. |
 
 ## Implementation Readiness Blockers
@@ -397,7 +397,7 @@ Workflow path: expanded path
 
 ## Phase 5: Storage-Neutral Materialization, Layout, Cost, And Batch-Planning Records
 
-Status: PR open
+Status: merged
 Slug: `materialization-batch-records`
 Branch: `agent/stage-9-data-loading-cache-p5-materialization-batch-records`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-9-data-loading-cache-p5-materialization-batch-records`
@@ -409,7 +409,7 @@ Workflow path: expanded path
 ### Scope
 
 - Goal: add descriptive records for materialized/prepared storage layout and cost-aware batching without implementing concrete backends, trainers, or samplers.
-- Files/modules owned: `src/rphys/datasources/prepared.py` or a code-backed sibling module if implementation evidence shows the record set should be split; focused materialization, layout, cost, and batch-planning tests; docs/docstrings for backend neutrality and descriptive-only batching.
+- Files/modules owned: `src/rphys/datasources/prepared.py`; focused materialization, layout, cost, and batch-planning tests; docs/docstrings for backend neutrality and descriptive-only batching.
 - Behavior implemented: `OptimizedStorageFormat`; `OptimizedDataPlan`; `MaterializationPlan`; `MaterializationManifest`; `ShardManifest`; `ChunkMetadata`; `AccessPatternPlan`; `RecordLayoutMetadata`; `BatchCostMetadata`; `BatchSamplerPlan`; `BatchShapePolicy`.
 - Decisions applied: DD-7, DD-8, DD-9, DD-10, DD-11.
 - Future-roadmap/reuse constraints: records must serve future Stage 12 batching, Stage 14 synthetic smoke, and Stage 15 backend/profile work while keeping concrete adapters and execution planners deferred.
@@ -452,7 +452,27 @@ Workflow path: expanded path
 - PR review budget: complete; managing-agent local pre-submit review found no blocking findings
 - Blocker-resolution budget: expanded
 - Pre-submit blocker gate: no trainer/backend execution behavior or concrete dependencies
-- Merge record: pending
+- Merge record: complete; squash merged via PR #64 as `9d6a7d84bb89b2686babec619d8bfb9bd4d0d946`
+
+### Completion Summary
+
+- Implementation: complete; `rphys.datasources.prepared` adds public provisional materialization/layout/cost and batch-planning descriptor records.
+- Validation: `make validate-pr` and `make test-summary` passed with package 40, unit 615, contract 116, integration 17, total 788.
+- PR: https://github.com/samcantrill/rphys/pull/64 merged into `develop`.
+- Merge: squash merged as `9d6a7d84bb89b2686babec619d8bfb9bd4d0d946`.
+- Follow-up: Phase 6 `datapath-evidence-closeout` can start from updated `develop`; preserve descriptor-only materialization/batch records and avoid concrete backend/trainer execution.
+
+### Phase Merge Record
+
+- Phase: Phase 5 `materialization-batch-records`
+- Branch: `agent/stage-9-data-loading-cache-p5-materialization-batch-records`
+- PR: https://github.com/samcantrill/rphys/pull/64
+- Base branch: `develop`
+- Merge command: `gh pr merge 64 --squash --match-head-commit ddbc5cf15d96a611a5ec9065df7dccfaa0dd1816 --subject "Stage 9 Phase 5: materialization and batch records" --body "..."`
+- Merge result: merged 2026-05-15
+- Merge commit: `9d6a7d84bb89b2686babec619d8bfb9bd4d0d946`
+- Branch cleanup: complete; local and remote Phase 5 branches deleted after merge
+- Worktree cleanup: complete; Phase 5 worktree removed and worktree metadata pruned
 
 ### Risks And Stop Conditions
 
