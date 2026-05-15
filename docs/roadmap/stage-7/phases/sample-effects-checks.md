@@ -621,12 +621,15 @@ residual risk if either target is unavailable.
   test-integration`, `make test-package`, `make validate-pr`, `make
   test-summary`, and `git diff --check` passed.
 - PR preparation: PR body draft completed at
-  `docs/roadmap/stage-7/phases/sample-effects-checks-pr-body.md`; PR body
-  refine pending; PR opening deferred by manager instruction.
+  `docs/roadmap/stage-7/phases/sample-effects-checks-pr-body.md`; expanded-path
+  PR body refine completed by manager after reading the draft against the final
+  diff and validation evidence. PR opening pending.
 - Automated review: pending.
 - Merge result: pending.
 - Cleanup: pending.
-- Remaining blockers: no blockers identified in scoped implementation; `make validate-pr` and `make test-summary` were not run in this pass by scope.
+- Remaining blockers: none identified in scoped implementation or PR-prep
+  evidence. `make validate-pr` and `make test-summary` passed before PR
+  opening.
 
 ## Phase Refinement Report: SampleCheck Metadata Presence
 
