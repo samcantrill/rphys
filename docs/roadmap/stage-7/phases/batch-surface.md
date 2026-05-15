@@ -360,6 +360,9 @@ git diff --check
   planner, export/cache/workflow behavior, or root exports remain known.
 - PR preparation: durable PR body drafted in
   `docs/roadmap/stage-7/phases/batch-surface-pr-body.md`
+- PR: [#53](https://github.com/samcantrill/rphys/pull/53) opened against
+  `develop` from `agent/stage-7-p6-batch-surface`; target and title verified
+  by `gh pr view`
 - Automated review: pending
 - Merge result: pending
 - Cleanup: pending
