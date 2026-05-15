@@ -358,7 +358,8 @@ git diff --check
 - Pre-submit blocker gate: completed; no backend arrays or imports,
   DataLoader/model/trainer/device movement, collation changes, broad batch
   planner, export/cache/workflow behavior, or root exports remain known.
-- PR preparation: pending
+- PR preparation: durable PR body drafted in
+  `docs/roadmap/stage-7/phases/batch-surface-pr-body.md`
 - Automated review: pending
 - Merge result: pending
 - Cleanup: pending
