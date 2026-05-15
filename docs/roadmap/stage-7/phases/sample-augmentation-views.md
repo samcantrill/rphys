@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: draft phase execution plan
+- Status: refined phase execution plan
 - Roadmap stage: `v7`
 - Feature focus: reproducible `SampleAugmentation` behavior, dependency-light
   augmentation params, runtime replay metadata, linked-field synchronization,
@@ -23,23 +23,26 @@
 - Target branch: `develop`
 - Merge eligibility: eligible after automated review, local validation, and CI
   pass during the implementation workflow
-- Workflow path: fast path. The public params and replay metadata shapes are
-  additive and bounded by approved DD-4/DD-5; no expanded refinement pass is
-  needed unless implementation requires new public param fields beyond this
-  artifact, backend array params, durable serialization, hidden RNG, nested
-  view `Sample`s, or loader/cache/export semantics.
+- Workflow path: expanded path. Manager review reclassified Phase 4 because it
+  introduces the public `SampleAugmentation`/`SampleAugmentationParams` data
+  shape plus stochastic replay and scientific contracts that must be precise
+  before implementation. Budget state: this phase execution-plan refinement is
+  used; implementation refinement, PR review, and blocker-resolution budgets
+  remain unused.
 - Phase isolation: one dedicated branch, one dedicated worktree, one PR to
   `develop`; local-only completion is not allowed for the implementation pass
 - Plan quality gate: refreshed gate passed and final maintainer approval
   recorded in `docs/roadmap/stage-7/planning.md` and
   `docs/roadmap/stage-7/implementation-plan.md`
-- Draft pass: fast-path plan created in the existing dedicated worktree after
+- Draft pass: initial plan created in the existing dedicated worktree after
   inspecting `AGENTS.md`, the phase-plan prompt and template, the Stage 7
   implementation plan, Stage 7 planning decisions, Phase 1 through Phase 3
   completion notes, current sample operation source, package/unit/contract/
   integration tests, and `tests/README.md`
-- Refine pass: not needed; the approved DD-4/DD-5 contract can be made precise
-  in this execution plan without broadening Phase 4
+- Refine pass: completed with
+  `.codex/prompts/phase-execution-plan-refine.md` to address manager review on
+  expanded-path status, public API shape, direct replay semantics, reserved
+  metadata, RNG limits, exact view-locator permissions, and package validation
 - Setup limitations: manager provided the existing branch, worktree, and
   current `develop` base; this pass did not create another branch or worktree,
   refetch remotes, push, open a PR, or modify the control checkout
@@ -73,8 +76,8 @@ scope here.
 
 - Goal: add reproducible sample augmentation behavior and the initial
   self-supervised view-writing path.
-- Required scope: `SampleAugmentation`, immutable lightweight params,
-  `sample_params(sample, context)`, deterministic
+- Required scope: `SampleAugmentation`, public immutable lightweight
+  `SampleAugmentationParams`, `sample_params(sample, context)`, deterministic
   `apply_params(sample, params, context)`, replay metadata, synchronized linked
   fields, declared view locator writes, focused public exports, public
   docstrings, and package/unit/contract/integration tests.
@@ -82,13 +85,15 @@ scope here.
   `apply_params()` is deterministic for fixed sample, params, and context;
   `run()` samples params exactly once, applies them exactly once, writes only
   declared locators, and records replay evidence; invalid params fail loudly
-  before partial mutation where practical; no package code uses global/default
-  `random`, NumPy, Torch, or backend RNG state.
-- Acceptance criteria: fixed params/context replay produces deterministic
-  output and replay metadata; linked fields and view locators are synchronized
-  through inspectable params and declared field permissions; replay remains
-  runtime metadata only; no export/cache/loader/trainer/model/pipeline/batch
-  behavior appears.
+  before partial mutation where practical; package base code must not import
+  `random` or call module-level `random.*`, NumPy, Torch, or backend RNG state.
+- Acceptance criteria: `run()` produces deterministic replay metadata and
+  deterministic outputs for fixed sampled params/context; direct
+  `apply_params()` produces deterministic field changes for fixed
+  params/context without promising replay metadata; linked fields and view
+  locators are synchronized through inspectable params and declared field
+  permissions; replay remains runtime metadata only; no
+  export/cache/loader/trainer/model/pipeline/batch behavior appears.
 
 ## Current Source And Harness Findings
 
@@ -120,8 +125,8 @@ scope here.
   import boundaries.
 - Import-boundary or dependency constraints: package code may use standard
   library records and existing `rphys.ops`/`rphys.data` primitives only. It
-  must not import NumPy, torch, OpenCV, PyAV, scipy, pandas, plotting stacks,
-  datasource builders, codec/runtime IO, loader/cache/export modules,
+  must not import `random`, NumPy, torch, OpenCV, PyAV, scipy, pandas, plotting
+  stacks, datasource builders, codec/runtime IO, loader/cache/export modules,
   model/trainer modules, or `tests.support`.
 
 ## Phase Isolation State
@@ -148,22 +153,30 @@ scope here.
 
 ## In-Scope Work
 
-- Add code-backed `SampleAugmentation` as the public sample-specialized
+- Add code-backed public names `SampleAugmentation` and
+  `SampleAugmentationParams`. `SampleAugmentation` is the sample-specialized
   stochastic wrapper over the Phase 3 `SampleOperation` execution skeleton.
-  The ordinary extension path should be callable-first with separate
-  parameter-sampling and deterministic-application callables or equivalent
-  overridable methods:
-  `sample_params(sample, context) -> SampleAugmentationParams` and
-  `apply_params(sample, params, context) -> Sample | OperationResult`.
-- Add an immutable, dependency-light `SampleAugmentationParams` record or
-  equivalent public params record. The approved public shape is:
-  `values: Mapping[str, object]`, `linked_fields: tuple[tuple[FieldLocator, ...], ...]`,
-  and `view_locators: Mapping[str, FieldLocator]`. Keys must be non-empty
-  strings. `values` must be recursively immutable and limited to `None`, bool,
-  int, float, str, tuples of supported values, and string-keyed mappings of
-  supported values. Locator-bearing fields must normalize from
-  `FieldLocator | str` to `FieldLocator` and must not live inside arbitrary
-  backend objects.
+  Its public constructor shape is callable-first and must be implemented as:
+  `SampleAugmentation(sample_params, apply_params, *, name=None, contract=None,
+  copy_mode=None)`. The `sample_params` callable must accept
+  `(sample, context)` and return `SampleAugmentationParams`. The
+  `apply_params` callable must accept `(sample, params, context)` and return
+  `Sample | OperationResult`. The class must expose
+  `sample_params(sample, context)` and `apply_params(sample, params, context)`
+  methods that delegate to those callables, and `run()` must call each public
+  method exactly once.
+- Add immutable, dependency-light public record `SampleAugmentationParams` with
+  exactly these fields: `values`, `linked_fields`, and `view_locators`. The
+  accepted public shape is `values: Mapping[str, object]`,
+  `linked_fields: tuple[tuple[FieldLocator, ...], ...]`, and
+  `view_locators: Mapping[str, FieldLocator]`. Mapping keys must be non-empty
+  strings. `values` must normalize to a recursively immutable value grammar:
+  `None`, bool, int, float, str, tuples of supported values, and string-keyed
+  mappings of supported values. Constructor inputs may normalize lists or other
+  non-string sequences to tuples only when every element is supported. Locator
+  fields accept only `FieldLocator | str` inputs and normalize to exact
+  `FieldLocator` instances; locators must not live inside arbitrary backend
+  objects.
 - Keep params free of backend arrays, payloads, RNG objects, file handles,
   mutable containers, `Sample`, `FieldValue`, `SampleField`, NumPy arrays,
   Torch tensors, or backend-specific scalar wrappers. Reject unsupported params
@@ -174,24 +187,36 @@ scope here.
   shape must be dependency-light and inspectable: operation name, params
   evidence, context replay evidence, linked field groups as locator strings,
   view locators as `view_name -> locator string`, and no payloads or durable
-  artifact identifiers. This metadata is runtime evidence only, not a stable
-  serialization, manifest, cache key, export identity, or workflow artifact.
+  artifact identifiers. `sample_augmentation_replay` is a reserved key:
+  user-provided result metadata that already contains it must fail instead of
+  being overwritten. The key must coexist with Phase 3 `sample_field_effects`
+  metadata in the final `run()` result. This metadata is runtime evidence only,
+  not a stable serialization, manifest, cache key, export identity, or workflow
+  artifact.
 - Ensure `run()` samples params exactly once by calling `sample_params()` before
   deterministic application, then calls `apply_params()` exactly once with the
   sampled params and the coerced `SampleOperationContext`. `run()` must return
   an `OperationResult` with `output` as the execution `Sample`, existing
   `sample_field_effects` metadata preserved, and `sample_augmentation_replay`
   added without reserved-key collisions.
-- Define direct replay behavior through `apply_params(sample, params, context)`:
-  fixed params plus compatible context must produce deterministic sample field
-  effects and metadata. `apply_params()` must not call `sample_params()`,
-  consume `context.rng_stream`, derive new seed material, or use global/default
-  RNGs.
+- Define direct deterministic application behavior through
+  `apply_params(sample, params, context)`: fixed params plus compatible context
+  must apply the same field changes each time. Direct `apply_params()` calls do
+  not guarantee Phase 3 declared mutation enforcement, `sample_field_effects`,
+  or `sample_augmentation_replay`; those guarantees are provided by `run()`
+  because it owns preflight, snapshots, permission validation, result
+  normalization, and metadata attachment. `apply_params()` must not call
+  `sample_params()`, consume `context.rng_stream`, derive new seed material, or
+  use hidden/global/default RNGs.
 - Keep all randomness at the `sample_params()` boundary. Package code must not
-  import or call module-level `random.*`, NumPy default RNGs, Torch default
-  generators, or backend RNG state. Synthetic tests may use explicitly seeded
-  standard-library `random.Random` objects or simple deterministic fake RNGs as
-  caller-provided context streams, but no example should imply hidden globals.
+  import `random`, call module-level `random.*`, call NumPy default RNGs, call
+  Torch default generators, or touch backend RNG state. Synthetic tests may use
+  explicitly seeded standard-library `random.Random` objects or simple
+  deterministic fake RNGs as caller-provided context streams outside package
+  code. The base class is not required to prove arbitrary user callables never
+  use hidden RNG; deterministic `sample_params()`/`apply_params()` behavior is
+  an extension contract, and tests should enforce it for package-provided
+  examples.
 - Support linked-field synchronization by making params identify the locator
   groups and sampled values that must be shared across fields. The base wrapper
   should make those groups inspectable in params/replay metadata; synthetic
@@ -199,13 +224,14 @@ scope here.
   should not inspect or transform payload internals beyond what the user
   `apply_params()` callable does.
 - Add self-supervised view-writing examples using one wide-window `Sample` and
-  declared exact writes or exact dynamic writes for locators such as
-  `inputs/video.rgb.view_a` and `inputs/video.rgb.view_b`. The examples must
-  write `FieldValue` payloads that are tiny synthetic placeholders, not real
-  video data or codec-backed arrays.
+  declared exact writes or exact `dynamic_writes` for locators such as
+  `inputs/video.rgb.view_a` and `inputs/video.rgb.view_b`. Broader generated
+  view-family permissions remain out of scope and require manager review. The
+  examples must write `FieldValue` payloads that are tiny synthetic
+  placeholders, not real video data or codec-backed arrays.
 - Add or update package exports only for implemented code-backed public names:
-  likely `SampleAugmentation` and `SampleAugmentationParams` if the params
-  record is public. Preserve no root `rphys` exports and no shorthand aliases.
+  `SampleAugmentation` and `SampleAugmentationParams`. Preserve no root
+  `rphys` exports and no shorthand aliases.
 - Add focused docstrings for RNG/replay boundaries, params immutability,
   linked fields, view locator writes, lazy-field limits, invalid-param
   failures, and explicit deferrals.
@@ -248,9 +274,11 @@ scope here.
   linked field groups, and view locator mappings is sufficient for synthetic
   view-writing examples and future backend adapters.
 - The base operation cannot prevent arbitrary user-provided callables from
-  using hidden RNGs internally, so the enforceable contract is: package code,
-  provided examples, and tests use no hidden global/default RNG; public docs
-  state that custom `apply_params()` implementations must be deterministic.
+  using hidden RNGs internally, so the enforceable contract is: package base
+  code and package-provided examples do not import or call hidden/default RNGs;
+  public docs state that custom `sample_params()`/`apply_params()` callables
+  must keep randomness at the explicit sampling boundary and make application
+  deterministic for fixed params.
 - No dependency metadata change is expected. Any dependency addition is a
   stop-and-review condition.
 
@@ -260,6 +288,30 @@ The executor must preserve the public operation shape as
 `Sample -> OperationResult`, with `OperationResult.output` holding the resulting
 execution `Sample`. `SampleAugmentation` must remain a `SampleOperation`
 specialization and use the same field-permission enforcement path:
+
+Public constructor shape:
+
+```python
+SampleAugmentation(
+    sample_params,
+    apply_params,
+    *,
+    name=None,
+    contract=None,
+    copy_mode=None,
+)
+```
+
+- `sample_params` is a callable with the method-compatible signature
+  `(sample, context) -> SampleAugmentationParams`.
+- `apply_params` is a callable with the method-compatible signature
+  `(sample, params, context) -> Sample | OperationResult`.
+- `name`, `contract`, and `copy_mode` follow the existing `SampleOperation`
+  keyword style and conflict behavior.
+- The class exposes public methods `sample_params(sample, context)` and
+  `apply_params(sample, params, context)` that delegate to the constructor
+  callables after validation/normalization. `run()` must call each method
+  exactly once.
 
 1. Coerce `None`, `OperationContext`, or `SampleOperationContext` into a
    `SampleOperationContext` whose `operation_name` matches the augmentation.
@@ -273,22 +325,35 @@ specialization and use the same field-permission enforcement path:
    the same execution sample object.
 8. Enforce declared writes/deletes/exact dynamic writes through the Phase 3
    before/after snapshot path.
-9. Return metadata that includes both `sample_field_effects` and
-   `sample_augmentation_replay`.
+9. Reject result metadata that already contains the reserved
+   `sample_augmentation_replay` key, then return metadata that includes both
+   Phase 3 `sample_field_effects` and Phase 4 `sample_augmentation_replay`.
 
-Public params shape:
+Public params constructor and shape:
+
+```python
+SampleAugmentationParams(
+    *,
+    values=None,
+    linked_fields=None,
+    view_locators=None,
+)
+```
 
 - `values`: string-keyed immutable mapping of sampled parameter names to
   dependency-light primitive values. Accepted leaves are `None`, bool, int,
   float, and str. Lists/sequences supplied by users should normalize to tuples
   only when every element is supported. String-keyed nested mappings may be
-  accepted only if recursively immutable. Unsupported objects fail loudly.
+  accepted only when recursively normalized to immutable mappings. Unsupported
+  objects fail loudly.
 - `linked_fields`: tuple of locator groups. Each group must contain at least
-  two distinct parsed `FieldLocator`s when present. Groups describe fields that
-  share sampled params; they do not grant write permission by themselves.
+  two distinct exact parsed `FieldLocator`s when present, and one locator must
+  not appear in multiple groups. Groups describe fields that share sampled
+  params; they do not grant read or write permission by themselves.
 - `view_locators`: string-keyed mapping from non-empty view names, such as
-  `view_a` and `view_b`, to parsed `FieldLocator`s. These locators do not grant
-  write permission by themselves.
+  `view_a` and `view_b`, to exact parsed `FieldLocator`s. View names and
+  locators must be unique. These locators do not grant read or write permission
+  by themselves.
 
 Replay metadata shape:
 
@@ -303,6 +368,9 @@ Replay metadata shape:
   derived from params.
 - `sample_augmentation_replay.view_locators`: mapping of view names to locator
   strings derived from params.
+- `sample_augmentation_replay` is reserved runtime metadata. If user metadata
+  already contains that key, `run()` fails instead of merging or overwriting it.
+  The returned metadata must also preserve Phase 3 `sample_field_effects`.
 
 Error behavior:
 
@@ -315,16 +383,19 @@ Error behavior:
   parameter sampling or application.
 - `sample_params()` callable failures are wrapped in `OperationExecutionError`
   with phase/context indicating parameter sampling.
-- `sample_params()` returning the wrong record type or unsupported values
+- `sample_params()` returning anything other than `SampleAugmentationParams`
   raises `InvalidOperationResultError` during `run()`; direct params
-  construction or direct `apply_params()` with invalid params should raise
-  `InvalidOperationInputError` or the narrowest existing operation-input
-  failure available.
-- `apply_params()` callable failures are wrapped in `OperationExecutionError`
-  with phase/context indicating deterministic application.
-- `apply_params()` returning a result whose output is not the execution sample,
-  or metadata that collides with `sample_augmentation_replay`, raises
-  `InvalidOperationResultError`.
+  construction with unsupported values or direct `apply_params()` with invalid
+  params should raise `InvalidOperationInputError` or the narrowest existing
+  operation-input failure available.
+- `apply_params()` callable failures during `run()` are wrapped in
+  `OperationExecutionError` with phase/context indicating deterministic
+  application.
+- During `run()`, an `apply_params()` result whose output is not the execution
+  sample, or whose metadata collides with reserved
+  `sample_augmentation_replay`, raises `InvalidOperationResultError`. Direct
+  `apply_params()` calls are deterministic application helpers; they do not
+  attach replay metadata or promise full Phase 3 mutation enforcement.
 - Undeclared writes to view fields or linked fields continue to raise
   `UndeclaredSampleFieldMutationError` with the Phase 3 field-effect context.
 - If the implementation needs a new params-specific public error, add at most
@@ -425,7 +496,8 @@ No public contract change is in scope for generic `OperationStep`,
   `apply_params()`, replay metadata attachment, reserved metadata collision
   checks, declared view writes, linked-field synchronization tests, public
   exports, import-boundary tests, and lazy-field non-materialization.
-- Scope-control checks: verify no global/default RNG, no NumPy/Torch imports,
+- Scope-control checks: verify no package `random` import, no module-level or
+  hidden/default RNG use in package-provided examples, no NumPy/Torch imports,
   no backend arrays in params, no concrete algorithms, no nested samples, no
   multi-member index items, no sample pipeline class, no batch class, no
   export/cache/loader/trainer/model behavior, no root exports, and no
@@ -448,8 +520,10 @@ No public contract change is in scope for generic `OperationStep`,
    augmentation names while preserving root-export absence and lightweight
    imports.
 5. Add focused unit and contract coverage for params immutability, invalid
-   params, call counts, deterministic direct replay, no hidden base RNG use,
-   declared/undeclared view writes, and linked-field synchronization.
+   params, call counts, deterministic direct application without replay
+   metadata guarantees, no package `random` import or hidden RNG in
+   package-provided examples, declared/undeclared view writes, and linked-field
+   synchronization.
 6. Add tiny integration coverage for one wide-window lazy `Sample` that writes
    `inputs/video.rgb.view_a` and `inputs/video.rgb.view_b` from synthetic
    placeholders without materializing unrelated lazy fields or invoking
@@ -480,9 +554,10 @@ No public contract change is in scope for generic `OperationStep`,
   invalid linked-field and view-locator shapes, constructor validation,
   `sample_params()` called exactly once by `run()`, `apply_params()` called
   exactly once, direct `apply_params()` does not call the sampler, deterministic
-  replay for fixed params/context, reserved metadata collision behavior,
-  context replay evidence, no base use of global/default RNG, declared view
-  writes pass, undeclared view writes fail, and invalid params fail before
+  direct application for fixed params/context without expecting replay
+  metadata, reserved metadata collision behavior, context replay evidence, no
+  package `random` import or hidden RNG in package-provided examples, declared
+  view writes pass, undeclared view writes fail, and invalid params fail before
   application where practical.
 
 ### Contract Suite
@@ -491,13 +566,14 @@ No public contract change is in scope for generic `OperationStep`,
 - Expected paths: `tests/contracts/test_sample_operations.py` or a focused
   `tests/contracts/test_sample_augmentations.py`
 - Required assertions or deferral reason: public `SampleAugmentation` and
-  params behavior through public imports; fixed params/context produce
-  deterministic output and replay metadata; `sample_params()` is the only
-  sampling boundary; `apply_params()` is deterministic and writes only declared
-  locators; linked fields share sampled values; view locators are explicit
-  fields on one `Sample`; invalid params and reserved metadata collisions are
-  typed failures; replay metadata is documented as runtime-only and not a
-  durable export/cache schema.
+  params behavior through public imports; `run()` with fixed sampled
+  params/context produces deterministic output and replay metadata;
+  `sample_params()` is the only sampling boundary; direct `apply_params()` is
+  deterministic, does not attach replay metadata, and writes only declared
+  locators when executed through `run()`; linked fields share sampled values;
+  view locators are explicit fields on one `Sample`; invalid params and
+  reserved metadata collisions are typed failures; replay metadata is
+  documented as runtime-only and not a durable export/cache schema.
 
 ### Integration Suite
 
@@ -533,8 +609,9 @@ No public contract change is in scope for generic `OperationStep`,
 ## Risks
 
 - Hidden RNG inside user-provided callables cannot be mechanically prevented by
-  the base wrapper. Tests must prove package/examples avoid hidden RNG, and
-  docs must make deterministic `apply_params()` a public contract.
+  the base wrapper. Tests must prove package-provided examples avoid hidden RNG,
+  and docs must make deterministic `apply_params()` a public extension
+  contract.
 - Params could become a back door for backend arrays or payload objects. Keep
   validation strict and reject unsupported values loudly.
 - Replay metadata may be mistaken for durable serialization. Keep field names
@@ -577,21 +654,21 @@ git diff --check
   package tests after export changes; contract tests after public behavior is
   wired; integration tests after linked view fixtures are added; `git diff
   --check` before PR prep.
-- Decisions the executor must not revisit: no global/default RNG, no backend
-  array params, no durable replay serialization, no nested view samples, no
-  multi-member index items, no Phase 5 pipelines, no Phase 6 batch work, no
-  loader/cache/export/trainer/model behavior, and no broad dynamic permission
-  matching without manager approval.
+- Decisions the executor must not revisit: no package `random` import, no
+  global/default RNG, no backend array params, no durable replay serialization,
+  no nested view samples, no multi-member index items, no Phase 5 pipelines, no
+  Phase 6 batch work, no loader/cache/export/trainer/model behavior, and no
+  broad dynamic permission matching without manager approval.
 - Conditions that require stopping for the manager: params need backend arrays
   or non-primitive public fields; replay needs durable serialization or stable
   artifact identity; `SampleReplayRecord` requires incompatible field changes;
   exact locator declarations cannot express the required view examples;
-  implementation requires importing NumPy/Torch/backend RNGs; or the
+  implementation requires importing `random`, NumPy/Torch/backend RNGs; or the
   augmentation base cannot reuse Phase 3 sample operation enforcement.
 
 ## Refinement And Review Budget Status
 
-- Phase execution plan refinement: unused / not needed
+- Phase execution plan refinement: used once / completed for expanded path
 - Phase implementation refinement: unused
 - PR review: unused
 - Blocker resolution: 0/3 used
@@ -599,11 +676,14 @@ git diff --check
 ## Completion Notes
 
 - Draft plan: completed in this artifact
-- Final phase execution plan: this artifact is intended as the fast-path
-  execution plan unless a stop condition above is hit
+- Final phase execution plan: refined expanded-path execution plan completed in
+  this artifact
 - Implementation summary: pending
 - Implementation validation: pending
-- Refinement summary: pending
+- Refinement summary: completed; manager review findings addressed for
+  expanded-path status, public constructor and params shape, direct
+  `apply_params()` limits, reserved metadata behavior, RNG restrictions, exact
+  locator permissions, and targeted `make test-package` validation
 - Pre-submit blocker gate: pending
 - PR preparation: pending
 - Automated review: pending
