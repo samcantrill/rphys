@@ -540,6 +540,11 @@ def test_sample_transform_requires_output_write_or_dynamic_writes() -> None:
     with pytest.raises(InvalidOperationContractError):
         SampleTransform(_identity, name="transform-invalid")
 
+    with pytest.raises(InvalidOperationContractError) as exc_info:
+        SampleTransform(_identity, name="bad-contract", contract={})  # type: ignore[arg-type]
+    assert exc_info.value.context["owner"] == "SampleTransform"
+    assert exc_info.value.context["field"] == "contract"
+
     result = SampleTransform(
         _identity,
         name="transform-valid",

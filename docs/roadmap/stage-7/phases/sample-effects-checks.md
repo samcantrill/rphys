@@ -597,8 +597,8 @@ residual risk if either target is unavailable.
 - Phase execution plan refinement: completed on the expanded path
 - Phase implementation refinement: completed for the expanded-path
   `SampleCheck` metadata/report-field blocker cluster
-- PR review: unused
-- Blocker resolution: 1/3 used
+- PR review: completed; budget consumed
+- Blocker resolution: 2/3 used
 
 ## Completion Notes
 
@@ -625,7 +625,8 @@ residual risk if either target is unavailable.
   PR body refine completed by manager after reading the draft against the final
   diff and validation evidence. PR #50 opened against `develop` and verified
   with the canonical title.
-- Automated review: pending.
+- Automated review: completed; one blocking `SampleTransform` contract-type
+  finding was resolved locally with focused validation.
 - Merge result: pending.
 - Cleanup: pending.
 - Remaining blockers: none identified in scoped implementation or PR-prep
@@ -673,3 +674,49 @@ residual risk if either target is unavailable.
 - `src/rphys/ops/sample.py`
 - `tests/unit/rphys/ops/test_sample.py`
 - `docs/roadmap/stage-7/phases/sample-effects-checks.md`
+
+## Phase PR Review Report: SampleTransform Contract Validation
+
+### Findings
+
+| Severity | Finding | Evidence | Required change |
+| --- | --- | --- | --- |
+| blocking | `SampleTransform` could raise an untyped `AttributeError` for invalid public `contract` inputs before inherited `SampleOperation` validation. | Reviewer reproduced `SampleTransform(..., contract={})` and found `src/rphys/ops/sample.py` inspected `field_permissions` before checking `SampleOperationContract`. | Validate the contract type inside `SampleTransform` before reading output permissions and add focused unit coverage for `InvalidOperationContractError`. |
+
+### Scope And Acceptance
+
+- Phase scope satisfied: yes after blocker resolution.
+- Future-phase work avoided: yes; no augmentation, sample pipeline mapping,
+  batch API, export/cache/loader/trainer workflow, payload-internal mutation
+  detection, or transparent read tracking was added.
+- Acceptance criteria satisfied: yes.
+- PR body matches diff: yes.
+
+### Validation Review
+
+- Suite evidence: `make test-unit`, `make test-contract`, `make
+  test-integration`, `make test-package`, `make validate-pr`, `make
+  test-summary`, and `git diff --check` passed before PR review; focused
+  blocker validation reran `uv run pytest tests/unit/rphys/ops/test_sample.py`,
+  `make test-unit`, `make test-contract`, and `git diff --check`.
+- Unavailable checks: e2e and acceptance suites are not present for this
+  phase.
+- Test gaps: none blocking.
+- CI status: no GitHub status checks are configured for PR #50.
+
+### Scientific Contract Review
+
+- Contract implications documented: yes.
+- Failure behavior covered: yes after `SampleTransform` invalid-contract
+  failure was typed.
+- Leakage/provenance risks: none introduced.
+- Import/dependency boundary risks: none identified.
+
+### Review Decision
+
+- Blocking findings remain: no after manager blocker-resolution pass.
+- PR-review budget consumed: yes.
+- Merge eligible: yes after final validation and PR branch push.
+- Residual risks: payload-internal mutation is not detected, transparent read
+  tracking remains explicit/out of scope, and exact-locator `dynamic_writes`
+  may need broader Phase 4 view-family semantics.

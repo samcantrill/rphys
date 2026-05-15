@@ -569,6 +569,14 @@ class SampleTransform(SampleOperation):
         copy_mode: str | None = None,
     ) -> None:
         resolved_contract = SampleOperationContract() if contract is None else contract
+        if not isinstance(resolved_contract, SampleOperationContract):
+            raise InvalidOperationContractError(
+                "operation contract must be a SampleOperationContract.",
+                owner="SampleTransform",
+                field="contract",
+                expected="SampleOperationContract",
+                actual=type(contract).__name__,
+            )
         if (
             len(resolved_contract.field_permissions.writes) == 0
             and len(resolved_contract.field_permissions.dynamic_writes) == 0

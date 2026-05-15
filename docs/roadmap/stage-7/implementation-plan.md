@@ -452,9 +452,11 @@ error wrapping broadly
 - Planning/refinement budget: completed with one expanded-path refinement pass
 - Implementation/refinement budget: completed with one implementation pass and
   one focused expanded-path metadata/report-field refinement
-- PR review budget: one deterministic behavior/scientific-boundary review
-- Blocker-resolution budget: 1/3 used for `SampleCheck` reserved metadata and
-  report-field coverage hardening
+- PR review budget: completed; one deterministic behavior/scientific-boundary
+  review found a typed-constructor blocker that was resolved locally
+- Blocker-resolution budget: 2/3 used for `SampleCheck` reserved metadata and
+  report-field coverage hardening, plus `SampleTransform` invalid-contract
+  typed failure hardening
 - Pre-submit blocker gate: completed; no lazy-field materialization,
   route/drop policy, or public private-helper leakage blocker found
 - Merge record: pending
@@ -483,7 +485,9 @@ error wrapping broadly
   suites are not present.
 - PR: [#50](https://github.com/samcantrill/rphys/pull/50) opened against
   `develop` from `agent/stage-7-p3-sample-effects-checks`; target and title
-  verified by `gh pr view`.
+  verified by `gh pr view`. Automated PR review found one blocking
+  `SampleTransform` invalid-contract typed-failure issue; it was resolved with
+  focused unit coverage and rerun validation.
 - Merge: pending
 - Follow-up: Phase 4 owns augmentation params, replay, stochastic sampling, and
   generated view writes; Phase 5 owns specialized sample pipeline composition.
