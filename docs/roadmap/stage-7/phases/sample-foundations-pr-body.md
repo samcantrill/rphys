@@ -86,13 +86,13 @@ Test summary from `build/test-summary.md`:
 
 | Suite | Status | Passed | Failed | Errors | Skipped | Deselected | Total | Duration | Coverage |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| package | passed | 31 | 0 | 0 | 0 | 0 | 31 | 1.52s | 40% |
-| unit | passed | 442 | 0 | 0 | 0 | 0 | 442 | 2.19s | 93% |
+| package | passed | 31 | 0 | 0 | 0 | 0 | 31 | 1.79s | 40% |
+| unit | passed | 444 | 0 | 0 | 0 | 0 | 444 | 2.33s | 93% |
 | contract | passed | 78 | 0 | 0 | 0 | 0 | 78 | 1.28s | 82% |
-| integration | passed | 3 | 0 | 0 | 0 | 0 | 3 | 1.14s | 62% |
+| integration | passed | 3 | 0 | 0 | 0 | 0 | 3 | 1.10s | 62% |
 | e2e | not present | 0 | 0 | 0 | 0 | 0 | 0 | 0.00s | N/A |
 | acceptance | not present | 0 | 0 | 0 | 0 | 0 | 0 | 0.00s | N/A |
-| Overall | passed | 554 | 0 | 0 | 0 | 0 | 554 | 6.12s | - |
+| Overall | passed | 556 | 0 | 0 | 0 | 0 | 556 | 6.50s | - |
 
 # Risks And Follow-Up
 
