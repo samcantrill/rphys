@@ -573,7 +573,9 @@ run `uv lock --check` and record the reason.
   - `make test-package`
   - `git diff --check`
 - Pre-submit blocker gate: no blockers
-- PR preparation: pending implementation
+- PR preparation: completed; durable PR body recorded in
+  `docs/roadmap/stage-7/phases/operation-foundation-pr-body.md` with
+  `make validate-pr` suite evidence
 - Automated review: pending implementation PR
 - Merge result: pending
 - Cleanup: pending after merge
