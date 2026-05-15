@@ -17,7 +17,7 @@ Declared read validation and field snapshots only use non-payload APIs.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from types import MappingProxyType
 
@@ -29,6 +29,7 @@ from rphys.errors import (
     InvalidOperationContractError,
     InvalidOperationContextError,
     InvalidOperationResultError,
+    InvalidOperationInputError,
     MissingFieldError,
     OperationExecutionError,
     UndeclaredSampleFieldMutationError,
@@ -54,6 +55,8 @@ __all__ = [
     "SampleOperationContract",
     "SampleOperationContext",
     "SampleReplayRecord",
+    "SampleAugmentationParams",
+    "SampleAugmentation",
     "SampleOperation",
     "SampleTransform",
     "SampleCheck",
@@ -386,6 +389,75 @@ class SampleReplayRecord:
         )
 
 
+@dataclass(frozen=True, init=False, slots=True)
+class SampleAugmentationParams:
+    """Immutable lightweight parameters for reproducible sample augmentation.
+
+    Allowed value leaves are dependency-light primitives and nested immutable
+    structures. Field locators are normalized to exact ``FieldLocator`` objects,
+    and string-keyed payload maps stay immutable. The record intentionally does
+    not carry backend arrays, RNG objects, codecs, or field payload objects.
+    """
+
+    values: Mapping[str, object]
+    linked_fields: tuple[tuple[FieldLocator, ...], ...]
+    view_locators: Mapping[str, FieldLocator]
+
+    def __init__(
+        self,
+        *,
+        values: Mapping[str, object] | None = None,
+        linked_fields: Sequence[Sequence[FieldLocator | str] | FieldLocator | str] | None = None,
+        view_locators: Mapping[object, object] | None = None,
+    ) -> None:
+        object.__setattr__(
+            self,
+            "values",
+            _coerce_augmentation_values(
+                values,
+                owner="SampleAugmentationParams",
+                field="values",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "linked_fields",
+            _coerce_augmentation_linked_fields(
+                linked_fields,
+                owner="SampleAugmentationParams",
+                field="linked_fields",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "view_locators",
+            _coerce_augmentation_view_locators(
+                view_locators,
+                owner="SampleAugmentationParams",
+                field="view_locators",
+            ),
+        )
+
+    def to_mapping(self) -> Mapping[str, object]:
+        """Export lightweight parameter evidence for replay records."""
+
+        return MappingProxyType(
+            {
+                "values": self.values,
+                "linked_fields": tuple(
+                    tuple(str(locator) for locator in group)
+                    for group in self.linked_fields
+                ),
+                "view_locators": MappingProxyType(
+                    {
+                        name: str(locator)
+                        for name, locator in self.view_locators.items()
+                    }
+                ),
+            }
+        )
+
+
 class SampleOperation(OperationStep):
     """Callable-first sample adapter implementing :class:`OperationStep`."""
 
@@ -710,6 +782,224 @@ class SampleCheck(SampleOperation):
         return result
 
 
+class SampleAugmentation(SampleOperation):
+    """Sample operation with explicit sampling and deterministic application steps."""
+
+    def __init__(
+        self,
+        sample_params: Callable[[Sample, SampleOperationContext], SampleAugmentationParams],
+        apply_params: Callable[[Sample, SampleAugmentationParams, SampleOperationContext], Sample | OperationResult],
+        *,
+        name: str | None = None,
+        contract: SampleOperationContract | None = None,
+        copy_mode: str | None = None,
+    ) -> None:
+        if not callable(sample_params):
+            raise InvalidOperationContractError(
+                "sample augmentation sampler must be callable.",
+                owner="SampleAugmentation",
+                field="sample_params",
+                expected="callable",
+                actual=type(sample_params).__name__,
+            )
+        if not callable(apply_params):
+            raise InvalidOperationContractError(
+                "sample augmentation apply function must be callable.",
+                owner="SampleAugmentation",
+                field="apply_params",
+                expected="callable",
+                actual=type(apply_params).__name__,
+            )
+
+        super().__init__(
+            _identity_sample,
+            name=name,
+            contract=contract,
+            copy_mode=copy_mode,
+        )
+        self._sample_params_kernel = sample_params
+        self._apply_params_kernel = apply_params
+
+    @property
+    def sample_params_kernel(self) -> Callable[[Sample, SampleOperationContext], SampleAugmentationParams]:
+        """Expose the sampler for diagnostics and testing."""
+
+        return self._sample_params_kernel
+
+    @property
+    def apply_params_kernel(self) -> Callable[
+        [Sample, SampleAugmentationParams, SampleOperationContext],
+        Sample | OperationResult,
+    ]:
+        """Expose the deterministic parameter application function."""
+
+        return self._apply_params_kernel
+
+    def sample_params(
+        self,
+        sample: Sample,
+        context: OperationContext | SampleOperationContext,
+    ) -> SampleAugmentationParams:
+        """Sample deterministic parameters using the wrapped callable."""
+
+        execution_context = _coerce_sample_operation_context(
+            context,
+            operation_name=self._name,
+        )
+        _validate_input(
+            self._contract.input_type,
+            sample,
+            operation_name=self._name,
+        )
+        try:
+            params = self._sample_params_kernel(sample, context=execution_context)
+        except Exception as exc:
+            raise OperationExecutionError(
+                "sample augmentation sampling callable raised during execution.",
+                operation_name=self._name,
+                role=self._contract.role.value,
+                phase="sample_params",
+            ) from exc
+        if not isinstance(params, SampleAugmentationParams):
+            raise InvalidOperationResultError(
+                "sample augmentation sampler must return SampleAugmentationParams.",
+                operation_name=self._name,
+                field="sample_params",
+                expected="SampleAugmentationParams",
+                actual=type(params).__name__,
+            )
+        return params
+
+    def apply_params(
+        self,
+        sample: Sample,
+        params: SampleAugmentationParams,
+        context: OperationContext | SampleOperationContext,
+    ) -> Sample | OperationResult:
+        """Apply pre-sampled augmentation parameters deterministically."""
+
+        execution_context = _coerce_sample_operation_context(
+            context,
+            operation_name=self._name,
+        )
+        _validate_input(
+            self._contract.input_type,
+            sample,
+            operation_name=self._name,
+        )
+        if not isinstance(params, SampleAugmentationParams):
+            raise InvalidOperationInputError(
+                "sample augmentation apply params must be SampleAugmentationParams.",
+                owner="SampleAugmentation",
+                field="params",
+                expected="SampleAugmentationParams",
+                actual=type(params).__name__,
+            )
+        try:
+            result = self._apply_params_kernel(
+                sample,
+                params,
+                context=execution_context,
+            )
+        except Exception as exc:
+            raise OperationExecutionError(
+                "sample augmentation apply callable raised during execution.",
+                operation_name=self._name,
+                role=self._contract.role.value,
+                phase="apply_params",
+            ) from exc
+
+        if not isinstance(result, (Sample, OperationResult)):
+            raise InvalidOperationResultError(
+                "sample augmentation apply callable must return a Sample or OperationResult.",
+                operation_name=self._name,
+                field="apply_params",
+                expected="Sample | OperationResult",
+                actual=type(result).__name__,
+            )
+
+        return result
+
+    def run(
+        self,
+        input_value: object,
+        context: OperationContext | SampleOperationContext | None = None,
+    ) -> OperationResult:
+        execution_context = _coerce_sample_operation_context(
+            context,
+            operation_name=self._name,
+        )
+        _validate_required_context(
+            self._sample_contract.required_context,
+            execution_context.metadata,
+            operation_name=self._name,
+            role=self._contract.role,
+        )
+        _validate_input(
+            self._contract.input_type,
+            input_value,
+            operation_name=self._name,
+        )
+        _validate_required_reads(
+            input_value,
+            self._sample_contract.field_permissions.reads,
+            operation_name=self._name,
+        )
+
+        execution_sample = _prepare_execution_sample(input_value, self._copy_mode)
+        before_snapshot = _snapshot_field_items(execution_sample)
+
+        params = self.sample_params(execution_sample, execution_context)
+        result = self.apply_params(
+            execution_sample,
+            params,
+            execution_context,
+        )
+
+        normalized_result = _coerce_and_validate_result(
+            result,
+            operation_name=self._name,
+            contract=self._contract,
+            context=execution_context.to_operation_context(),
+        )
+        if normalized_result.output is not execution_sample:
+            raise InvalidOperationResultError(
+                "sample augmentation must return the execution sample object.",
+                operation_name=self._name,
+                field="output",
+                expected="execution sample object",
+                actual=type(normalized_result.output).__name__,
+            )
+        if "sample_augmentation_replay" in normalized_result.metadata:
+            raise InvalidOperationResultError(
+                "sample augmentation result metadata collides with reserved key.",
+                operation_name=self._name,
+                field="metadata.sample_augmentation_replay",
+                expected="absent",
+                actual="present",
+            )
+
+        after_snapshot = _snapshot_field_items(execution_sample)
+        effects = _compute_sample_field_effects(before_snapshot, after_snapshot)
+        _validate_sample_field_permissions(
+            self._name,
+            self._sample_contract.field_permissions,
+            effects,
+        )
+
+        effect_result = _attach_sample_field_effects(
+            normalized_result,
+            self._copy_mode,
+            effects,
+        )
+        return _attach_sample_augmentation_replay(
+            effect_result,
+            augmentation_name=self._name,
+            params=params,
+            context=execution_context.to_replay_record(),
+        )
+
+
 def _infer_name(
     explicit_name: str | None,
     function: FunctionalKernel,
@@ -745,6 +1035,211 @@ def _coerce_copy_mode(
             actual=normalized,
         )
     return normalized
+
+
+def _coerce_augmentation_values(
+    values: Mapping[object, object] | None,
+    *,
+    owner: str,
+    field: str,
+) -> Mapping[str, object]:
+    if values is None:
+        return MappingProxyType({})
+    if not isinstance(values, Mapping):
+        raise InvalidOperationInputError(
+            f"{owner} {field} must be a mapping.",
+            owner=owner,
+            field=field,
+            expected="mapping[str, object]",
+            actual=type(values).__name__,
+        )
+
+    normalized: dict[str, object] = {}
+    for key, value in values.items():
+        normalized_key = coerce_non_empty_string(
+            key,
+            owner=owner,
+            field=f"{field}.key",
+            expected="non-empty string keys",
+            error_type=InvalidOperationInputError,
+        )
+        normalized[normalized_key] = _coerce_augmentation_value(
+            value,
+            owner=owner,
+            field=f"{field}[{normalized_key}]",
+        )
+    return MappingProxyType(normalized)
+
+
+def _coerce_augmentation_value(value: object, *, owner: str, field: str) -> object:
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+
+    if isinstance(value, Mapping):
+        return _coerce_augmentation_values(
+            value,
+            owner=owner,
+            field=field,
+        )
+
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return tuple(
+            _coerce_augmentation_value(
+                item,
+                owner=owner,
+                field=f"{field}[{index}]",
+            )
+            for index, item in enumerate(value)
+        )
+
+    raise InvalidOperationInputError(
+        f"{owner} {field} contains unsupported augmentation value.",
+        owner=owner,
+        field=field,
+        expected="None, bool, int, float, str, tuple, or string-keyed mapping",
+        actual=type(value).__name__,
+    )
+
+
+def _coerce_augmentation_linked_fields(
+    linked_fields: Sequence[Sequence[FieldLocator | str] | FieldLocator | str] | None,
+    *,
+    owner: str,
+    field: str,
+) -> tuple[tuple[FieldLocator, ...], ...]:
+    if linked_fields is None:
+        return ()
+    if isinstance(linked_fields, (str, bytes, bytearray)):
+        raise InvalidOperationInputError(
+            f"{owner} {field} must be a sequence of locator groups.",
+            owner=owner,
+            field=field,
+            expected="tuple[tuple[FieldLocator, ...], ...]",
+            actual=type(linked_fields).__name__,
+        )
+    if not isinstance(linked_fields, Sequence):
+        raise InvalidOperationInputError(
+            f"{owner} {field} must be a sequence of locator groups.",
+            owner=owner,
+            field=field,
+            expected="tuple[tuple[FieldLocator, ...], ...]",
+            actual=type(linked_fields).__name__,
+        )
+
+    groups: list[tuple[FieldLocator, ...]] = []
+    seen: set[FieldLocator] = set()
+
+    for group_index, group in enumerate(linked_fields):
+        if not isinstance(group, Sequence) or isinstance(group, (str, bytes, bytearray)):
+            raise InvalidOperationInputError(
+                f"{owner} {field} groups must be sequences of locators.",
+                owner=owner,
+                field=f"{field}[{group_index}]",
+                expected="tuple[FieldLocator | str, ...]",
+                actual=type(group).__name__,
+            )
+        parsed_group = _coerce_locator_sequence(
+            group,
+            owner=owner,
+            field_name=f"{field}[{group_index}]",
+        )
+        if len(parsed_group) < 2:
+            raise InvalidOperationInputError(
+                f"{owner} {field}[{group_index}] must include at least two locators.",
+                owner=owner,
+                field=f"{field}[{group_index}]",
+                expected="tuple with at least two locators",
+                actual=parsed_group,
+            )
+        if len(set(parsed_group)) != len(parsed_group):
+            raise InvalidOperationInputError(
+                f"{owner} {field}[{group_index}] must not repeat locators.",
+                owner=owner,
+                field=f"{field}[{group_index}]",
+                expected="distinct locators",
+                actual=tuple(str(item) for item in parsed_group),
+            )
+        for locator in parsed_group:
+            if locator in seen:
+                raise InvalidOperationInputError(
+                    f"{owner} {field} locators must be unique across groups.",
+                    owner=owner,
+                    field=field,
+                    expected="disjoint locator groups",
+                    actual=str(locator),
+                )
+            seen.add(locator)
+        groups.append(parsed_group)
+    return tuple(groups)
+
+
+def _coerce_augmentation_view_locators(
+    view_locators: Mapping[object, object] | None,
+    *,
+    owner: str,
+    field: str,
+) -> Mapping[str, FieldLocator]:
+    if view_locators is None:
+        return MappingProxyType({})
+    if not isinstance(view_locators, Mapping):
+        raise InvalidOperationInputError(
+            f"{owner} {field} must be a mapping.",
+            owner=owner,
+            field=field,
+            expected="mapping[str, FieldLocator]",
+            actual=type(view_locators).__name__,
+        )
+
+    normalized: dict[str, FieldLocator] = {}
+    for name, locator in view_locators.items():
+        normalized_name = coerce_non_empty_string(
+            name,
+            owner=owner,
+            field=f"{field}.key",
+            expected="non-empty string keys",
+            error_type=InvalidOperationInputError,
+        )
+        normalized[normalized_name] = _coerce_locator(
+            locator,
+            owner=owner,
+            field_name=f"{field}[{normalized_name}]",
+        )
+    return MappingProxyType(normalized)
+
+
+def _identity_sample(payload: Sample, *, context: SampleOperationContext) -> Sample:
+    """No-op deterministic identity kernel for parent constructor initialization."""
+
+    return payload
+
+
+def _attach_sample_augmentation_replay(
+    result: OperationResult,
+    *,
+    augmentation_name: str,
+    params: SampleAugmentationParams,
+    context: SampleReplayRecord,
+) -> OperationResult:
+    """Attach lightweight augmentation replay evidence."""
+
+    replay = {
+        "operation_name": augmentation_name,
+        "context": context.to_mapping(),
+        "params": params.to_mapping(),
+        "linked_fields": params.to_mapping()["linked_fields"],
+        "view_locators": params.to_mapping()["view_locators"],
+    }
+    metadata = dict(result.metadata)
+    metadata["sample_augmentation_replay"] = replay
+
+    return OperationResult(
+        output=result.output,
+        operation_name=result.operation_name,
+        role=result.role,
+        metadata=metadata,
+        provenance=result.provenance,
+        side_effect_evidence=result.side_effect_evidence,
+    )
 
 
 def _prepare_execution_sample(
@@ -1137,3 +1632,5 @@ SampleOperationContext.__hash__ = None  # type: ignore[assignment]
 SampleReplayRecord.__hash__ = None  # type: ignore[assignment]
 SampleOperationContract.__hash__ = None  # type: ignore[assignment]
 SampleFieldPermissions.__hash__ = None  # type: ignore[assignment]
+SampleAugmentationParams.__hash__ = None  # type: ignore[assignment]
+SampleAugmentation.__hash__ = None  # type: ignore[assignment]

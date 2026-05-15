@@ -276,6 +276,8 @@ def test_import_ops_public_all_exports() -> None:
         "SampleOperationContract",
         "SampleOperationContext",
         "SampleReplayRecord",
+        "SampleAugmentationParams",
+        "SampleAugmentation",
         "SampleOperation",
         "SampleTransform",
         "SampleCheck",
@@ -295,6 +297,8 @@ def test_import_ops_public_all_exports() -> None:
     assert not hasattr(rphys, "SampleFieldPermissions")
     assert not hasattr(rphys, "SampleOperationContext")
     assert not hasattr(rphys, "SampleReplayRecord")
+    assert not hasattr(rphys, "SampleAugmentationParams")
+    assert not hasattr(rphys, "SampleAugmentation")
     assert not hasattr(rphys, "SampleTransform")
     assert not hasattr(rphys, "SampleCheck")
     assert not hasattr(rphys, "SampleDecision")
@@ -323,6 +327,8 @@ def test_import_ops_sample_module_exports() -> None:
         "SampleOperationContract",
         "SampleOperationContext",
         "SampleReplayRecord",
+        "SampleAugmentationParams",
+        "SampleAugmentation",
         "SampleOperation",
         "SampleTransform",
         "SampleCheck",
