@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: implemented; PR pending
+- Status: pr_open
 - Roadmap stage: `v7`
 - Feature focus: Stage-wide documentation alignment and validation evidence for sample and batch operations
 - Stage descriptor: SampleOps, BatchOps, Transforms, Augmentations, Checks, And Pipelines
@@ -57,7 +57,8 @@ Future work that must remain out of scope includes export/save/materialization, 
 - Dedicated branch/worktree status: `agent/stage-7-p7-docs-validation` is checked out at `/home/samcantrill/work/rphys-worktrees/stage-7-p7-docs-validation`.
 - Current `develop` base: `1f84e37` (`docs: record stage 7 phase 6 merge`).
 - Earlier phase dependency status: Phases 1 through 6 are merged and recorded in `develop`.
-- Push/PR infrastructure status: pending branch push and PR creation.
+- Push/PR infrastructure status: branch pushed and PR #54 opened against
+  `develop`; target, title, and clean merge state verified.
 - Stop condition if isolation cannot be maintained: stop before implementation if the branch leaves the dedicated worktree, if `develop` advances with conflicting Stage 7 changes, or if validation exposes a behavior gap requiring an owning-phase fix.
 
 ## In-Scope Work
@@ -201,7 +202,7 @@ Sample operations enforce declared field additions, replacements, and deletions 
   the sandbox could not write a uv cache temp file and then passed with
   escalation; `git diff --check` passed; `make validate-pr` passed lock,
   summary, build, and diff checks.
-- PR: pending
+- PR: [#54](https://github.com/samcantrill/rphys/pull/54)
 - Merge result: pending
 - Cleanup: pending
 - Remaining blockers: none known
