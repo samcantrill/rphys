@@ -262,6 +262,19 @@ STAGE_9_DATASOURCE_TORCH_EXPORTS = [
     "TorchDataLoaderBuilder",
 ]
 
+STAGE_9_DATASOURCE_CACHE_EXPORTS = [
+    "CacheKey",
+    "CachePolicy",
+    "CacheContext",
+    "CacheEntry",
+    "CacheManifest",
+    "CacheLookupResult",
+    "CacheWriteResult",
+    "CacheStore",
+    "LocalCacheStore",
+    "CachedSampleSource",
+]
+
 STAGE_3_DATASOURCE_ERROR_NAMES = [
     "InvalidDataSourceRefError",
     "InvalidDataSourceSchemaError",
@@ -605,6 +618,14 @@ def test_stage_9_torch_adapter_module_exports_only_code_backed_names() -> None:
         assert hasattr(module, public_name)
 
 
+def test_stage_9_cache_module_exports_only_code_backed_names() -> None:
+    module = importlib.import_module("rphys.datasources.cache")
+
+    assert module.__all__ == STAGE_9_DATASOURCE_CACHE_EXPORTS
+    for public_name in STAGE_9_DATASOURCE_CACHE_EXPORTS:
+        assert hasattr(module, public_name)
+
+
 def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
     import rphys
     import rphys.datasources
@@ -656,6 +677,16 @@ def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
         "TorchIndexSampleDataset",
         "TorchDataLoaderPlan",
         "TorchDataLoaderBuilder",
+        "CacheKey",
+        "CachePolicy",
+        "CacheContext",
+        "CacheEntry",
+        "CacheManifest",
+        "CacheLookupResult",
+        "CacheWriteResult",
+        "CacheStore",
+        "LocalCacheStore",
+        "CachedSampleSource",
     ]
 
     for public_name in forbidden_names:
