@@ -5,7 +5,7 @@ Roadmap version: `v7`
 Planning document: `docs/roadmap/stage-7/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 2 PR open
+Current phase: Phase 3 pending after Phase 2 merge
 Blockers: none
 
 ## Summary
@@ -87,7 +87,7 @@ Blockers: none
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `operation-foundation` | merged | `agent/stage-7-p1-operation-foundation` | [#48](https://github.com/samcantrill/rphys/pull/48) | `src/rphys/ops/core.py`, `src/rphys/ops/pipelines.py`, `src/rphys/ops/__init__.py`, focused errors/tests/docs | Refactor the operation foundation around `OperationStep`. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | OperationStep, custom step pipeline, generic mapping rejection |
-| 2 | `sample-foundations` | pr_open | `agent/stage-7-p2-sample-foundations` | [#49](https://github.com/samcantrill/rphys/pull/49) | `src/rphys/ops/sample.py`, `src/rphys/ops/__init__.py`, focused errors/tests | Establish sample operation public foundations. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | contract inspection, locator parsing, context/replay records, exports |
+| 2 | `sample-foundations` | merged | `agent/stage-7-p2-sample-foundations` | [#49](https://github.com/samcantrill/rphys/pull/49) | `src/rphys/ops/sample.py`, `src/rphys/ops/__init__.py`, focused errors/tests | Establish sample operation public foundations. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | contract inspection, locator parsing, context/replay records, exports |
 | 3 | `sample-effects-checks` | pending | `agent/stage-7-p3-sample-effects-checks` | pending | sample enforcement, transforms/checks, focused private helpers | Implement sample field-effect enforcement, transforms, and checks. | `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check` | declared mutation, same-locator replacement, lazy fields, route non-policy |
 | 4 | `sample-augmentation-views` | pending | `agent/stage-7-p4-sample-augmentation-views` | pending | sample augmentation params/replay/view behavior | Add sample augmentation replay and self-supervised view writing. | `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check` | replay, linked fields, no global RNG, view locators |
 | 5 | `sample-pipeline` | pending | `agent/stage-7-p5-sample-pipeline` | pending | `src/rphys/ops/pipelines.py`, specialized pipeline tests | Add specialized sample pipeline composition. | `make test-unit`; `make test-contract`; `git diff --check` | ordered mapping, step diagnostics, generic pipeline regression |
@@ -250,7 +250,7 @@ operation foundation code
 
 ## Phase 2: Sample Operation Public Foundations
 
-Status: pr_open
+Status: merged
 Slug: `sample-foundations`
 Branch: `agent/stage-7-p2-sample-foundations`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-7-p2-sample-foundations`
@@ -324,7 +324,8 @@ adapter conflict
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed in
+  `docs/roadmap/stage-7/phases/sample-foundations.md`
 - Planning/refinement budget: one scoped planning pass if operation-step
   adaptation is ambiguous
 - Implementation/refinement budget: one implementation pass plus targeted fixes
@@ -333,7 +334,7 @@ adapter conflict
   adaptation conflicts with approved DD-1/DD-4
 - Pre-submit blocker gate: package/import regressions, placeholder exports, or
   heavy imports block completion
-- Merge record: pending
+- Merge record: completed
 
 ### Risks And Stop Conditions
 
@@ -348,15 +349,30 @@ adapter conflict
 
 ### Completion Summary
 
-- Implementation: complete; 2026-05-15 refinement hardened public record
-  construction and direct sample import boundaries.
-- Validation: focused refinement checks passed; phase validation remains
-  recorded in the phase execution plan.
+- Implementation: added code-backed public `SampleOperation`,
+  `SampleOperationContract`, `SampleFieldPermissions`,
+  `SampleOperationContext`, and `SampleReplayRecord`; preserved generic
+  `OperationResult` semantics and exposed an adapted generic
+  `OperationContract` without expanding Stage 6 records. Required-read
+  preflight uses non-payload `Sample.has()` access and no sample transforms,
+  checks, augmentations, pipelines, or batch APIs were added. Review-blocker
+  resolution rejects mismatched `SampleOperationContext.operation_name` values
+  to keep replay/provenance evidence aligned with the executing operation.
+- Validation: `make test-unit`, `make test-contract`, `make test-package`,
+  `git diff --check`, `git diff --check develop...HEAD`, and
+  `make validate-pr` passed after blocker resolution. The final
+  `make validate-pr` generated `build/test-summary.md` with 556 passing
+  package/unit/contract/integration tests, ran `uv lock --check`, built
+  sdist/wheel artifacts, and reran `git diff --check`.
 - PR: [#49](https://github.com/samcantrill/rphys/pull/49) opened against
   `develop` from `agent/stage-7-p2-sample-foundations`; target and title
   verified by `gh pr view`
-- Merge: pending
-- Follow-up: PR prep only; no remaining Phase 2 blocker recorded.
+- Merge: squash-merged to `develop` on 2026-05-15 at
+  `f9b1850fe0e9793150574bd387d7081f53b28ed0`; merge command
+  `gh pr merge 49 --squash`.
+- Follow-up: Phase 3 owns write/delete/dynamic mutation enforcement, snapshot
+  evidence, transforms/checks, and route/decision records on top of the Phase 2
+  foundation.
 
 ## Phase 3: Sample Field Effects, Transforms, And Checks
 
