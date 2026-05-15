@@ -232,6 +232,13 @@ STAGE_5_DATASOURCE_MODULES = {
     ],
 }
 
+STAGE_8_DATASOURCE_MODULES = {
+    "rphys.datasources.derived": [
+        "DerivedDataSourceAssembly",
+        "DerivedDataSourceBuilder",
+    ],
+}
+
 STAGE_3_DATASOURCE_ERROR_NAMES = [
     "InvalidDataSourceRefError",
     "InvalidDataSourceSchemaError",
@@ -549,6 +556,16 @@ def test_stage_5_datasource_submodules_start_with_empty_public_surfaces() -> Non
         assert module.__all__ == expected_all
 
 
+def test_stage_8_datasource_submodules_export_only_code_backed_names() -> None:
+    for module_name, expected_all in STAGE_8_DATASOURCE_MODULES.items():
+        module = importlib.import_module(module_name)
+
+        assert module.__doc__
+        assert module.__all__ == expected_all
+        for public_name in expected_all:
+            assert hasattr(module, public_name)
+
+
 def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
     import rphys
     import rphys.datasources
@@ -589,6 +606,8 @@ def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
         "CompositeDataSourceIndex",
         "ConcatDataSourceIndex",
         "SyntheticDataSource",
+        "DerivedDataSourceAssembly",
+        "DerivedDataSourceBuilder",
     ]
 
     for public_name in forbidden_names:
