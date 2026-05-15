@@ -277,6 +277,10 @@ def test_import_ops_public_all_exports() -> None:
         "SampleOperationContext",
         "SampleReplayRecord",
         "SampleOperation",
+        "SampleTransform",
+        "SampleCheck",
+        "SampleDecision",
+        "SampleRoute",
     ]
     assert not hasattr(rphys, "OperationRole")
     assert not hasattr(rphys, "OperationMutationPolicy")
@@ -291,6 +295,10 @@ def test_import_ops_public_all_exports() -> None:
     assert not hasattr(rphys, "SampleFieldPermissions")
     assert not hasattr(rphys, "SampleOperationContext")
     assert not hasattr(rphys, "SampleReplayRecord")
+    assert not hasattr(rphys, "SampleTransform")
+    assert not hasattr(rphys, "SampleCheck")
+    assert not hasattr(rphys, "SampleDecision")
+    assert not hasattr(rphys, "SampleRoute")
 
 
 def test_import_ops_module_exports_are_scoped() -> None:
@@ -316,6 +324,10 @@ def test_import_ops_sample_module_exports() -> None:
         "SampleOperationContext",
         "SampleReplayRecord",
         "SampleOperation",
+        "SampleTransform",
+        "SampleCheck",
+        "SampleDecision",
+        "SampleRoute",
     ]
 
 
@@ -330,6 +342,7 @@ def test_import_errors_phase_6_exports_are_scoped() -> None:
         "OperationExecutionError",
         "InvalidOperationPipelineError",
         "OperationPipelineExecutionError",
+        "UndeclaredSampleFieldMutationError",
     ]
 
     assert errors.__all__ == [
@@ -366,6 +379,7 @@ def test_errors_import_and_expose_approved_error_categories() -> None:
         "OperationExecutionError",
         "InvalidOperationPipelineError",
         "OperationPipelineExecutionError",
+        "UndeclaredSampleFieldMutationError",
     ]
 
     assert errors.__all__ == [
@@ -401,8 +415,11 @@ def test_root_package_does_not_reexport_error_classes() -> None:
         "InvalidOperationContractError",
         "InvalidOperationContextError",
         "InvalidOperationResultError",
+        "InvalidOperationInputError",
+        "OperationExecutionError",
         "InvalidOperationPipelineError",
         "OperationPipelineExecutionError",
+        "UndeclaredSampleFieldMutationError",
     ]:
         assert not hasattr(rphys, error_name)
 

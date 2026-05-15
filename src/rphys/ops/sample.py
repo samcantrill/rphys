@@ -1,9 +1,18 @@
 """Sample operation foundations for Stage 7.
 
-This module adds the first concrete public sample-bound execution primitive:
-``SampleOperation``. It is a callable-first :class:`OperationStep` adapter that
-keeps sample declarations, required-field preflight, and runtime result typing
-separate from the generic Stage 6 operation contract and result schema.
+This module adds deterministic sample operation execution primitives and declared
+field-effect enforcement on top of mutable sample containers.
+
+Implemented primitives:
+
+- :class:`SampleOperation`
+- :class:`SampleTransform`
+- :class:`SampleCheck`
+- :class:`SampleDecision`
+- :class:`SampleRoute`
+
+Payload materialization is intentionally not intercepted for mutation detection.
+Declared read validation and field snapshots only use non-payload APIs.
 """
 
 from __future__ import annotations
@@ -13,13 +22,16 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 
 from rphys.data import Sample
+from rphys.data.fields import FieldValue
 from rphys.data.locators import FieldLocator
 from rphys.errors import (
     InvalidFieldLocatorError,
     InvalidOperationContractError,
     InvalidOperationContextError,
+    InvalidOperationResultError,
     MissingFieldError,
     OperationExecutionError,
+    UndeclaredSampleFieldMutationError,
 )
 
 from ._validation import coerce_non_empty_string, coerce_string_mapping
@@ -43,7 +55,14 @@ __all__ = [
     "SampleOperationContext",
     "SampleReplayRecord",
     "SampleOperation",
+    "SampleTransform",
+    "SampleCheck",
+    "SampleDecision",
+    "SampleRoute",
 ]
+
+
+_COPY_MODES = ("in_place", "shallow", "deep")
 
 
 @dataclass(frozen=True, init=False, slots=True)
@@ -113,6 +132,8 @@ class SampleOperationContract:
     failure_modes: tuple[str, ...]
     mutation_policy: OperationMutationPolicy
     side_effects: tuple[str, ...]
+    copy_mode: str
+    _copy_mode_explicit: bool = field(init=False, repr=False)
     _operation_contract: OperationContract = field(init=False, repr=False)
 
     def __init__(
@@ -123,6 +144,7 @@ class SampleOperationContract:
         failure_modes: Sequence[str] | None = None,
         mutation_policy: OperationMutationPolicy | str = OperationMutationPolicy.PURE,
         side_effects: Sequence[str] | None = None,
+        copy_mode: str | None = None,
     ) -> None:
         if field_permissions is not None and not isinstance(field_permissions, SampleFieldPermissions):
             raise InvalidOperationContractError(
@@ -152,11 +174,17 @@ class SampleOperationContract:
         object.__setattr__(self, "failure_modes", operation_contract.failure_modes)
         object.__setattr__(self, "mutation_policy", operation_contract.mutation_policy)
         object.__setattr__(self, "side_effects", operation_contract.side_effects)
+        if copy_mode is None:
+            object.__setattr__(self, "copy_mode", "in_place")
+            object.__setattr__(self, "_copy_mode_explicit", False)
+        else:
+            object.__setattr__(self, "copy_mode", _coerce_copy_mode(copy_mode))
+            object.__setattr__(self, "_copy_mode_explicit", True)
         object.__setattr__(self, "_operation_contract", operation_contract)
 
     @property
     def contract(self) -> OperationContract:
-        """Adapted generic operation contract."""
+        """Adapted generic contract for pipeline compatibility."""
 
         return self._operation_contract
 
@@ -367,6 +395,7 @@ class SampleOperation(OperationStep):
         *,
         name: str | None = None,
         contract: SampleOperationContract | None = None,
+        copy_mode: str | None = None,
     ) -> None:
         if not callable(function):
             raise InvalidOperationContractError(
@@ -397,9 +426,23 @@ class SampleOperation(OperationStep):
                 actual=repr(resolved_name),
             )
 
+        resolved_copy_mode = resolved_contract.copy_mode
+        if copy_mode is not None:
+            requested_copy_mode = _coerce_copy_mode(copy_mode, owner="SampleOperation")
+            if resolved_contract._copy_mode_explicit and resolved_copy_mode != requested_copy_mode:
+                raise InvalidOperationContractError(
+                    "sample operation copy_mode conflicts with contract copy_mode.",
+                    owner="SampleOperation",
+                    field="copy_mode",
+                    expected=resolved_copy_mode,
+                    actual=requested_copy_mode,
+                )
+            resolved_copy_mode = requested_copy_mode
+
         self._function = function
         self._name = resolved_name
         self._sample_contract = resolved_contract
+        self._copy_mode = resolved_copy_mode
         self._contract = resolved_contract.contract
 
     @property
@@ -413,6 +456,12 @@ class SampleOperation(OperationStep):
         """Specialized sample contract retained for field-aware inspection."""
 
         return self._sample_contract
+
+    @property
+    def copy_mode(self) -> str:
+        """Execution copy policy."""
+
+        return self._copy_mode
 
     @property
     def contract(self) -> OperationContract:
@@ -446,8 +495,11 @@ class SampleOperation(OperationStep):
             operation_name=self._name,
         )
 
+        execution_sample = _prepare_execution_sample(input_value, self._copy_mode)
+        before_snapshot = _snapshot_field_items(execution_sample)
+
         try:
-            result = self._function(input_value, context=execution_context)
+            result = self._function(execution_sample, context=execution_context)
         except Exception as exc:
             raise OperationExecutionError(
                 "sample operation callable raised during execution.",
@@ -456,11 +508,43 @@ class SampleOperation(OperationStep):
                 phase="run",
             ) from exc
 
-        return _coerce_and_validate_result(
+        normalized_result = _coerce_and_validate_result(
             result,
             operation_name=self._name,
             contract=self._contract,
             context=execution_context.to_operation_context(),
+        )
+
+        if normalized_result.output is not execution_sample:
+            raise InvalidOperationResultError(
+                "sample operation must return the execution sample object.",
+                operation_name=self._name,
+                field="output",
+                expected="execution sample object",
+                actual=type(normalized_result.output).__name__,
+            )
+
+        if "sample_field_effects" in normalized_result.metadata:
+            raise InvalidOperationResultError(
+                "sample operation result metadata collides with runtime field-effect key.",
+                operation_name=self._name,
+                field="metadata.sample_field_effects",
+                expected="absent",
+                actual="present",
+            )
+
+        after_snapshot = _snapshot_field_items(execution_sample)
+        effects = _compute_sample_field_effects(before_snapshot, after_snapshot)
+        _validate_sample_field_permissions(
+            self._name,
+            self._sample_contract.field_permissions,
+            effects,
+        )
+
+        return _attach_sample_field_effects(
+            normalized_result,
+            self._copy_mode,
+            effects,
         )
 
     def __call__(
@@ -471,6 +555,159 @@ class SampleOperation(OperationStep):
         """Execute and return a normalized :class:`OperationResult`."""
 
         return self.run(input_value, context=context)
+
+
+class SampleTransform(SampleOperation):
+    """Deterministic transform wrapper with output intent checks."""
+
+    def __init__(
+        self,
+        function: FunctionalKernel,
+        *,
+        name: str | None = None,
+        contract: SampleOperationContract | None = None,
+        copy_mode: str | None = None,
+    ) -> None:
+        resolved_contract = SampleOperationContract() if contract is None else contract
+        if not isinstance(resolved_contract, SampleOperationContract):
+            raise InvalidOperationContractError(
+                "operation contract must be a SampleOperationContract.",
+                owner="SampleTransform",
+                field="contract",
+                expected="SampleOperationContract",
+                actual=type(contract).__name__,
+            )
+        if (
+            len(resolved_contract.field_permissions.writes) == 0
+            and len(resolved_contract.field_permissions.dynamic_writes) == 0
+        ):
+            raise InvalidOperationContractError(
+                "sample transform operations must declare output fields via writes or dynamic_writes.",
+                owner="SampleTransform",
+                field="contract.field_permissions",
+                expected="writes or dynamic_writes",
+                actual="none",
+            )
+        super().__init__(
+            function,
+            name=name,
+            contract=resolved_contract,
+            copy_mode=copy_mode,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class SampleDecision:
+    """Informational deterministic decision output from a sample check."""
+
+    label: str
+    reason: str | None = None
+    metadata: Mapping[str, object] | None = None
+
+    def __post_init__(self) -> None:
+        label = coerce_non_empty_string(
+            self.label,
+            owner="SampleDecision",
+            field="label",
+            expected="non-empty string",
+            error_type=InvalidOperationResultError,
+        )
+        reason = (
+            coerce_non_empty_string(
+                self.reason,
+                owner="SampleDecision",
+                field="reason",
+                expected="non-empty string or None",
+                error_type=InvalidOperationResultError,
+            )
+            if self.reason is not None
+            else None
+        )
+        object.__setattr__(
+            self,
+            "label",
+            label,
+        )
+        object.__setattr__(
+            self,
+            "reason",
+            reason,
+        )
+        object.__setattr__(
+            self,
+            "metadata",
+            coerce_string_mapping(
+                self.metadata,
+                owner="SampleDecision",
+                field="metadata",
+                error_type=InvalidOperationResultError,
+            ),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class SampleRoute:
+    """Informational routing record emitted by a sample check."""
+
+    label: str
+    reason: str | None = None
+    metadata: Mapping[str, object] | None = None
+
+    def __post_init__(self) -> None:
+        label = coerce_non_empty_string(
+            self.label,
+            owner="SampleRoute",
+            field="label",
+            expected="non-empty string",
+            error_type=InvalidOperationResultError,
+        )
+        reason = (
+            coerce_non_empty_string(
+                self.reason,
+                owner="SampleRoute",
+                field="reason",
+                expected="non-empty string or None",
+                error_type=InvalidOperationResultError,
+            )
+            if self.reason is not None
+            else None
+        )
+        object.__setattr__(
+            self,
+            "label",
+            label,
+        )
+        object.__setattr__(
+            self,
+            "reason",
+            reason,
+        )
+        object.__setattr__(
+            self,
+            "metadata",
+            coerce_string_mapping(
+                self.metadata,
+                owner="SampleRoute",
+                field="metadata",
+                error_type=InvalidOperationResultError,
+            ),
+        )
+
+
+class SampleCheck(SampleOperation):
+    """Deterministic sample check wrapper with optional decision/route records."""
+
+    def run(
+        self,
+        input_value: object,
+        context: OperationContext | SampleOperationContext | None = None,
+    ) -> OperationResult:
+        result = super().run(input_value, context=context)
+        _validate_sample_check_metadata(
+            result.metadata,
+            operation_name=self._name,
+        )
+        return result
 
 
 def _infer_name(
@@ -484,6 +721,213 @@ def _infer_name(
     if isinstance(explicit_name, str) and explicit_name.strip():
         return explicit_name
     return function.__class__.__name__
+
+
+def _coerce_copy_mode(
+    value: str,
+    *,
+    owner: str = "SampleOperationContract",
+    field: str = "copy_mode",
+) -> str:
+    normalized = coerce_non_empty_string(
+        value,
+        owner=owner,
+        field=field,
+        expected="in_place, shallow, or deep",
+        error_type=InvalidOperationContractError,
+    )
+    if normalized not in _COPY_MODES:
+        raise InvalidOperationContractError(
+            f"{owner} {field} must be one of {_COPY_MODES}.",
+            owner=owner,
+            field=field,
+            expected=_COPY_MODES,
+            actual=normalized,
+        )
+    return normalized
+
+
+def _prepare_execution_sample(
+    sample: Sample,
+    copy_mode: str,
+) -> Sample:
+    if copy_mode == "in_place":
+        return sample
+    if copy_mode == "shallow":
+        return sample.shallow_copy()
+    return sample.deep_copy()
+
+
+def _snapshot_field_items(sample: Sample) -> tuple[tuple[FieldLocator, FieldValue], ...]:
+    """Snapshot field identity from non-payload access."""
+
+    return tuple(sample.field_items())
+
+
+def _compute_sample_field_effects(
+    before_snapshot: tuple[tuple[FieldLocator, FieldValue], ...],
+    after_snapshot: tuple[tuple[FieldLocator, FieldValue], ...],
+) -> dict[str, tuple[FieldLocator, ...]]:
+    before_map = {locator: value for locator, value in before_snapshot}
+    after_map = {locator: value for locator, value in after_snapshot}
+
+    added = tuple(locator for locator in after_map if locator not in before_map)
+    removed = tuple(locator for locator in before_map if locator not in after_map)
+    replaced = tuple(
+        locator
+        for locator, value in after_map.items()
+        if locator in before_map and before_map[locator] is not value
+    )
+    return {"added": added, "removed": removed, "replaced": replaced}
+
+
+def _validate_sample_field_permissions(
+    operation_name: str,
+    permissions: SampleFieldPermissions,
+    effects: dict[str, tuple[FieldLocator, ...]],
+) -> None:
+    writes = set(permissions.writes)
+    deletes = set(permissions.deletes)
+    dynamic_writes = set(permissions.dynamic_writes)
+    allowed_add = writes | dynamic_writes
+    allowed_replace = writes | dynamic_writes
+
+    for locator in effects["added"]:
+        if locator not in allowed_add:
+            raise UndeclaredSampleFieldMutationError(
+                "sample operation attempted undeclared field addition.",
+                operation_name=operation_name,
+                effect_type="added",
+                locator=str(locator),
+                declared_writes=tuple(str(item) for item in permissions.writes),
+                declared_deletes=tuple(str(item) for item in permissions.deletes),
+                declared_dynamic_writes=tuple(str(item) for item in permissions.dynamic_writes),
+                detected_added=tuple(str(item) for item in effects["added"]),
+                detected_removed=tuple(str(item) for item in effects["removed"]),
+                detected_replaced=tuple(str(item) for item in effects["replaced"]),
+            )
+
+    for locator in effects["removed"]:
+        if locator not in deletes:
+            raise UndeclaredSampleFieldMutationError(
+                "sample operation attempted undeclared field deletion.",
+                operation_name=operation_name,
+                effect_type="removed",
+                locator=str(locator),
+                declared_writes=tuple(str(item) for item in permissions.writes),
+                declared_deletes=tuple(str(item) for item in permissions.deletes),
+                declared_dynamic_writes=tuple(str(item) for item in permissions.dynamic_writes),
+                detected_added=tuple(str(item) for item in effects["added"]),
+                detected_removed=tuple(str(item) for item in effects["removed"]),
+                detected_replaced=tuple(str(item) for item in effects["replaced"]),
+            )
+
+    for locator in effects["replaced"]:
+        if locator not in allowed_replace:
+            raise UndeclaredSampleFieldMutationError(
+                "sample operation attempted undeclared field replacement.",
+                operation_name=operation_name,
+                effect_type="replaced",
+                locator=str(locator),
+                declared_writes=tuple(str(item) for item in permissions.writes),
+                declared_deletes=tuple(str(item) for item in permissions.deletes),
+                declared_dynamic_writes=tuple(str(item) for item in permissions.dynamic_writes),
+                detected_added=tuple(str(item) for item in effects["added"]),
+                detected_removed=tuple(str(item) for item in effects["removed"]),
+                detected_replaced=tuple(str(item) for item in effects["replaced"]),
+            )
+
+
+def _attach_sample_field_effects(
+    result: OperationResult,
+    copy_mode: str,
+    effects: dict[str, tuple[FieldLocator, ...]],
+) -> OperationResult:
+    if "sample_field_effects" in result.metadata:
+        raise InvalidOperationResultError(
+            "sample operation result metadata collides with runtime field-effect key.",
+            operation_name=result.operation_name,
+            field="metadata.sample_field_effects",
+            expected="absent",
+            actual="present",
+        )
+
+    metadata = dict(result.metadata)
+    metadata["sample_field_effects"] = {
+        "copy_mode": copy_mode,
+        "added": tuple(str(locator) for locator in effects["added"]),
+        "removed": tuple(str(locator) for locator in effects["removed"]),
+        "replaced": tuple(str(locator) for locator in effects["replaced"]),
+    }
+
+    return OperationResult(
+        output=result.output,
+        operation_name=result.operation_name,
+        role=result.role,
+        metadata=metadata,
+        provenance=result.provenance,
+        side_effect_evidence=result.side_effect_evidence,
+    )
+
+
+def _validate_sample_check_metadata(
+    metadata: Mapping[str, object],
+    *,
+    operation_name: str,
+) -> None:
+    if "sample_decision" in metadata:
+        _validate_sample_check_meta_record(
+            metadata["sample_decision"],
+            "sample_decision",
+            SampleDecision,
+            operation_name=operation_name,
+        )
+
+    if "sample_route" in metadata:
+        _validate_sample_check_meta_record(
+            metadata["sample_route"],
+            "sample_route",
+            SampleRoute,
+            operation_name=operation_name,
+        )
+
+
+def _validate_sample_check_meta_record(
+    value: object,
+    field_name: str,
+    record_type: type[SampleDecision] | type[SampleRoute],
+    *,
+    operation_name: str,
+) -> None:
+    if isinstance(value, record_type):
+        return
+
+    if isinstance(value, tuple):
+        if not value:
+            raise InvalidOperationResultError(
+                "sample check metadata tuple must be non-empty.",
+                operation_name=operation_name,
+                field=f"metadata.{field_name}",
+                expected=f"non-empty tuple[{record_type.__name__}]",
+                actual="empty tuple",
+            )
+        if not all(isinstance(item, record_type) for item in value):
+            raise InvalidOperationResultError(
+                "sample check metadata tuple types must be homogeneous.",
+                operation_name=operation_name,
+                field=f"metadata.{field_name}",
+                expected=f"tuple[{record_type.__name__}]",
+                actual=tuple(type(item).__name__ for item in value),
+            )
+        return
+
+    raise InvalidOperationResultError(
+        "sample check metadata field must be a record or a non-empty tuple of records.",
+        operation_name=operation_name,
+        field=f"metadata.{field_name}",
+        expected=f"{record_type.__name__} | tuple[{record_type.__name__}]",
+        actual=type(value).__name__,
+    )
 
 
 def _coerce_locator(
@@ -687,6 +1131,8 @@ def _coerce_optional_int(
     return value
 
 
+SampleDecision.__hash__ = None  # type: ignore[assignment]
+SampleRoute.__hash__ = None  # type: ignore[assignment]
 SampleOperationContext.__hash__ = None  # type: ignore[assignment]
 SampleReplayRecord.__hash__ = None  # type: ignore[assignment]
 SampleOperationContract.__hash__ = None  # type: ignore[assignment]

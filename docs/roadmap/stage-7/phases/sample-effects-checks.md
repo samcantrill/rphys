@@ -1,0 +1,722 @@
+# Phase 3 Execution Plan: Sample Field Effects, Transforms, And Checks
+
+## Metadata
+
+- Status: refined phase execution plan
+- Roadmap stage: `v7`
+- Feature focus: deterministic sample field-effect enforcement, transform
+  wrappers, check wrappers, and non-policy decision/route metadata over
+  `SampleOperation`
+- Stage descriptor: SampleOps, BatchOps, Transforms, Augmentations, Checks, And
+  Pipelines
+- Phase descriptor: Sample Field Effects, Transforms, And Checks
+- PR title: `Stage 7 SampleOps, BatchOps, Transforms, Augmentations, Checks, And Pipelines - Phase 3: Sample Field Effects, Transforms, And Checks`
+- Branch: `agent/stage-7-p3-sample-effects-checks`
+- Worktree:
+  `/home/samcantrill/work/rphys-worktrees/stage-7-p3-sample-effects-checks`
+- Phase execution plan path:
+  `docs/roadmap/stage-7/phases/sample-effects-checks.md`
+- Full plan: `docs/roadmap/stage-7/implementation-plan.md`
+- Planning document: `docs/roadmap/stage-7/planning.md`
+- Source phase: `## Phase 3: Sample Field Effects, Transforms, And Checks`
+- Base branch: `develop`
+- Target branch: `develop`
+- Merge eligibility: eligible after automated review, local validation, and CI
+  pass during the implementation workflow
+- Workflow path: expanded path because this adds public transform/check
+  behavior and scientific mutation-snapshot enforcement over sample fields
+- Phase isolation: one dedicated branch, one dedicated worktree, one PR to
+  `develop`; local-only completion is not allowed for the implementation pass
+- Plan quality gate: refreshed gate passed and final maintainer approval
+  recorded in `docs/roadmap/stage-7/planning.md` and
+  `docs/roadmap/stage-7/implementation-plan.md`
+- Draft pass: expanded-path plan created in the existing dedicated worktree
+  after inspecting Stage 7 planning, the implementation plan, Phase 1 and
+  Phase 2 completion notes, roadmap/glossary guidance, current operation and
+  sample source, package tests, unit tests, contract tests, integration lazy
+  fixtures, and test suite layout
+- Refine pass: completed on the expanded path; tightened copy-mode naming and
+  accepted values, runtime mutation-evidence metadata keys, exact-locator
+  write/delete/dynamic enforcement, focused error behavior, and
+  `SampleCheck` decision/route metadata validation without reopening scope
+- Setup limitations: GitHub auth, remote `develop`, branch, and push/PR
+  infrastructure were manager-verified; this pass did not refetch, recreate the
+  worktree, open a PR, or modify the control checkout
+- Blockers: none
+
+## Objective
+
+Implement deterministic sample operation execution semantics on top of the
+Phase 2 `SampleOperation` foundation: non-payload declared-read preflight,
+explicit in-place/shallow/deep copy modes, before/after field inventory
+snapshots, enforcement of declared field additions, deletions, renames, and
+same-locator `FieldValue` replacements, plus code-backed `SampleTransform`,
+`SampleCheck`, `SampleDecision`, and `SampleRoute` behavior.
+
+## Full-Plan Context
+
+Phase 1 merged the public `OperationStep` foundation and Phase 2 merged the
+code-backed `SampleOperation`, `SampleOperationContract`,
+`SampleFieldPermissions`, `SampleOperationContext`, and `SampleReplayRecord`
+surface. Phase 2 already performs declared-read preflight with `Sample.has()`
+and normalizes results to `OperationResult`, but it intentionally does not
+enforce write/delete/dynamic permissions or expose transform/check classes.
+
+This phase locks the core deterministic sample mutation boundary that later
+Stage 7 phases will rely on. Phase 4 must add stochastic augmentation replay
+and view-writing on top of these field-effect checks. Phase 5 must add
+specialized sample pipelines on top of these operation semantics. Phase 6 must
+use sample-side behavior as the correctness reference for provisional batch
+operations. Those later phases remain out of scope here.
+
+## Source Phase Summary
+
+- Goal: implement deterministic sample operation behavior with declared-read
+  preflight, field-effect snapshots, transforms, checks, and informational
+  route/decision records.
+- Required scope: `src/rphys/ops/sample.py`, `src/rphys/ops/__init__.py`,
+  focused exercised errors in `src/rphys/errors.py`, package/unit/contract/
+  integration tests, and public docstrings for mutation/copy/check boundaries.
+- Required checkpoints: before/after `field_items()` snapshots detect added
+  locators, removed locators, rename-as-remove-plus-add effects, and
+  same-locator `FieldValue` identity replacements; declared writes/deletes/
+  dynamic permissions pass; undeclared field-set mutation fails loudly; lazy
+  fields are not materialized by preflight, snapshots, or copy setup; checks
+  return `Sample` output and route labels stay informational metadata.
+- Acceptance criteria: field effects are recoverable from declarations and
+  runtime metadata; payload-internal mutation and transparent read tracking are
+  explicitly documented as outside automatic enforcement; no stochastic
+  augmentation, specialized pipeline mapping support, batch APIs, export/cache,
+  loader/drop/retry/split, trainer, or workflow policy is added.
+
+## Current Source And Harness Findings
+
+- Existing files or modules that constrain this phase:
+  `src/rphys/ops/sample.py` currently exports `SampleFieldPermissions`,
+  `SampleOperationContract`, `SampleOperationContext`, `SampleReplayRecord`,
+  and `SampleOperation`. `SampleOperation.run()` coerces context, validates
+  required context keys, validates `Sample` input, preflights declared reads
+  with `Sample.has()`, invokes the callable, and normalizes results through
+  Stage 6 `_coerce_and_validate_result()`.
+- `SampleFieldPermissions` currently stores immutable parsed locator tuples for
+  `reads`, `writes`, `deletes`, and `dynamic_writes`, rejects duplicates within
+  each category, rejects write/delete overlap, and rejects dynamic/write
+  duplication. Enforcement is not implemented yet.
+- `SampleOperationContract` adapts to generic `OperationContract` with
+  `input_type=Sample` and `output_type=Sample`; generic Stage 6
+  `OperationContract`, `OperationContext`, `OperationResult`,
+  `OperationStep`, and `OperationPipeline` must not be expanded for sample
+  field semantics.
+- `src/rphys/data/containers.py` exposes the required non-payload and mutation
+  APIs: `has()`, `field()`, `field_items()`, `set_field()`, `delete_field()`,
+  `rename_field()`, `shallow_copy()`, and `deep_copy()`. Payload-demanding APIs
+  are `get()` and `require()`, and must not be used for preflight or snapshots.
+- `src/rphys/data/sample_fields.py` defines lazy `SampleField` handles.
+  Existing unit and contract tests prove `has()`, `field_items()`, and copy
+  paths can preserve lazy handles without materializing payloads.
+- `src/rphys/errors.py` currently has broad operation errors and Stage 6
+  concrete operation/pipeline errors only. A single focused sample mutation
+  error may be justified if tests exercise distinct undeclared field-effect
+  semantics; broad public error taxonomies are not justified.
+- Existing tests or harness behavior: `tests/unit/rphys/ops/test_sample.py` and
+  `tests/contracts/test_sample_operations.py` cover Phase 2 sample operation
+  records, context coercion, required-read preflight, lazy non-materialization,
+  explicit `OperationResult` validation, generic pipeline compatibility, and
+  callable error wrapping.
+- Package tests lock `rphys.ops.__all__`, `rphys.ops.sample.__all__`, no root
+  `rphys` re-exports, and lightweight imports. Adding
+  `SampleTransform`, `SampleCheck`, `SampleDecision`, or `SampleRoute` requires
+  package test updates.
+- Import-boundary or dependency constraints: this phase may import
+  `dataclasses`, `collections.abc`, Stage 6 operation primitives, `Sample`,
+  `FieldLocator`, and `FieldValue`-compatible handles. It must not import
+  NumPy, torch, OpenCV, PyAV, scipy, pandas, plotting stacks, datasource
+  builders, loader/cache/export modules, model/trainer modules, or
+  `tests.support` in package code.
+
+## Phase Isolation State
+
+- Control checkout dirty-state review: `/home/samcantrill/work/rphys` is on
+  `develop...origin/develop` with unrelated untracked `docs/roadmap/stage-8/`;
+  it was inspected only for status and left untouched.
+- Dedicated branch/worktree status:
+  `/home/samcantrill/work/rphys-worktrees/stage-7-p3-sample-effects-checks` is
+  on `agent/stage-7-p3-sample-effects-checks` at `6403262` and was clean before
+  this plan file was created.
+- Current `develop` base: `6403262 docs: record stage 7 phase 2 merge`; local
+  `develop`, `origin/develop`, and this worktree `HEAD` all resolve to that
+  metadata commit.
+- Earlier phase dependency status: Phase 1 and Phase 2 are merged to
+  `develop`. Phase 1 merged in PR #48 at
+  `4c693336ad12eb8db381795963ef7bcb58a0a4a7`; Phase 2 merged in PR #49 at
+  `f9b1850fe0e9793150574bd387d7081f53b28ed0`, with latest metadata commit
+  `6403262`.
+- Push/PR infrastructure status: manager verified GitHub auth and remote
+  `develop`; this planning pass did not push or open a PR.
+- Stop condition if isolation cannot be maintained: stop before editing the
+  control checkout, committing product code during the planning pass, rebasing
+  onto an unverified base, broadening into later phases, or committing files
+  beyond this phase execution plan.
+
+## In-Scope Work
+
+- Extend the sample operation execution path to prepare an execution sample
+  using a public `copy_mode` contract field or keyword with exactly three
+  accepted string values: default `in_place`, explicit `shallow`, and explicit
+  `deep`. Invalid values fail during operation/contract construction with
+  `InvalidOperationContractError`; no enum, root export, or heavy dependency is
+  added for copy selection.
+- Preserve declared-read preflight using non-payload `Sample.has()` before
+  callable invocation and before any payload-demanding operation code can run.
+- Add private inventory snapshot/diff helpers that read only `field_items()`
+  and compare locators plus `FieldValue` object identity. Validate these
+  helpers only through public `SampleOperation`, `SampleTransform`, and
+  `SampleCheck` behavior.
+- Enforce declared field effects for additions, deletions, renames, and
+  same-locator `FieldValue` replacements. Treat rename as the observable
+  combination of one removed locator and one added locator; both halves must be
+  permitted by declarations.
+- Allow explicit `writes` to cover only exactly matching added locators and
+  same-locator `FieldValue` replacements. Allow explicit `deletes` to cover
+  only exactly matching removed locators. Allow the existing `dynamic_writes`
+  declaration only as an additional exact-locator write allowance for added or
+  replaced fields. Phase 3 must not add prefix, family, glob, role-wide, schema-
+  wide, or callable permission matching.
+- Add runtime field-effect evidence under the reserved
+  `OperationResult.metadata["sample_field_effects"]` key. The value must be a
+  dependency-light mapping with exactly `copy_mode`, `added`, `removed`, and
+  `replaced` keys, where effect values are tuples of locator strings. This
+  evidence is runtime metadata only, not a cache key, export manifest, or
+  durable serialization schema; it must not include payloads, `FieldValue`
+  objects, hashes, or stable artifact identifiers.
+- Add code-backed `SampleTransform` as a deterministic `SampleOperation`
+  specialization for declared output-producing work. It should reuse the same
+  copy, preflight, snapshot, result, and enforcement path and should not add
+  concrete physiological algorithms.
+- Add code-backed `SampleCheck` as a deterministic `SampleOperation`
+  specialization whose output remains a `Sample`. It may raise typed errors,
+  write declared diagnostic/report fields, and include optional informational
+  decision/route records in `OperationResult.metadata`.
+- Add small frozen public `SampleDecision` and `SampleRoute` records with
+  non-empty labels, optional non-empty reason strings, and optional
+  string-keyed metadata mappings. Route labels are opaque information for
+  callers only; Phase 3 must not validate labels against a policy vocabulary or
+  connect them to loader drop/retry/split/workflow behavior.
+- Add at most one focused public error for undeclared field-set effects, named
+  `UndeclaredSampleFieldMutationError` if added, under
+  `RemotePhysOperationError`. Do not add a broad sample-operation error
+  taxonomy. The focused error must carry operation name, effect type, locator,
+  declared `writes`, declared `deletes`, declared `dynamic_writes`, and the
+  detected `added`/`removed`/`replaced` evidence in context.
+- Update `rphys.ops` lazy exports and `rphys.ops.sample.__all__` only for
+  names implemented in this phase. Preserve no root `rphys` exports and no
+  placeholder future names.
+- Add public docstrings and tests that state the payload-internal mutation
+  limitation, transparent read-tracking limitation, lazy boundary, copy
+  behavior, and non-policy route/check boundary.
+
+## Out-of-Scope Work
+
+- `SampleAugmentation`, augmentation params, `sample_params()`,
+  `apply_params()`, linked-field synchronization, replay sampling,
+  self-supervised view writes, generated view-family permissions, global RNG
+  checks, backend-specific RNG integration, and durable replay serialization.
+- `SampleOperationPipeline`, ordered mapping support, tuple named entries,
+  step normalization records, pipeline context propagation, DAGs, routing
+  graphs, retries, resume, workflow stages, DataLoader orchestration, or
+  generic `OperationPipeline` constructor changes.
+- `BatchOperation`, `BatchTransform`, `BatchAugmentation`,
+  `BatchOperationContext`, `BatchOperationPipeline`, batch equivalence reports,
+  dtype/device declarations, collation policy changes, and model tuple layouts.
+- Transparent read tracking, container proxies, payload-internal mutation
+  detection, payload hashing, deep comparison of payload values, or replacing
+  `Sample`, `FieldLocator`, `FieldValue`, or `SampleField` semantics.
+- Datasource scanning/filtering/splitting, loader drop/retry policy, trainer
+  policy, backend device movement, export/save/cache/materialization files,
+  operation fingerprints as durable identity, public registries, root
+  `rphys` exports, shorthand `SampleOp` aliases, concrete CHROM/POS/rPPG
+  algorithms, and heavy optional imports.
+
+## Assumptions
+
+- Phase 2 public records are the implementation baseline and should remain
+  backward compatible unless a narrow additive field is required for copy mode.
+- `Sample.field_items()` returns stable `FieldLocator` keys and stored
+  `FieldValue` objects without materializing lazy `SampleField` payloads.
+- `FieldValue` object identity is the approved replacement boundary. In-place
+  mutation of a payload inside an unchanged `FieldValue` object is outside
+  automatic enforcement and must be documented and tested as a limitation.
+- The current exact `dynamic_writes` locator tuple is sufficient for this
+  deterministic phase. If implementation needs prefix, family, glob, role-wide,
+  schema-wide, or callable permissions for generated view fields, stop and
+  leave that design to Phase 4.
+- Field-effect metadata can be added to `OperationResult.metadata` without
+  changing the generic `OperationResult` schema.
+- No dependency metadata change is expected. Any dependency addition is a
+  stop-and-review condition.
+
+## Scope Contract
+
+The executor must keep the public operation shape as `Sample -> OperationResult`
+with `OperationResult.output` holding the resulting `Sample`. `SampleOperation`,
+`SampleTransform`, and `SampleCheck` all use the same execution skeleton:
+
+1. Validate input is a `Sample` and coerce `SampleOperationContext`.
+2. Preflight declared reads with non-payload access.
+3. Select the execution sample by public `copy_mode`: `in_place` passes the
+   original sample, `shallow` passes `sample.shallow_copy()`, and `deep` passes
+   `sample.deep_copy()`. The accepted value set is exactly `{"in_place",
+   "shallow", "deep"}` and invalid values are contract errors.
+4. Capture a before snapshot of the execution sample with `field_items()`.
+5. Invoke the wrapped callable with the execution sample and sample context.
+6. Normalize and validate the result as an `OperationResult` whose output is
+   the same execution sample object. Arbitrary replacement of the whole sample
+   is not part of this phase's copy contract.
+7. Capture an after snapshot with `field_items()`.
+8. Enforce the diff against `SampleFieldPermissions` and return an
+   `OperationResult` augmented with field-effect metadata.
+
+The snapshot diff contract is locator and `FieldValue` identity based:
+
+- `added`: locators present after execution but absent before execution.
+- `removed`: locators present before execution but absent after execution.
+- `replaced`: locators present before and after execution whose stored
+  `FieldValue` object identity changed.
+- `unchanged`: locators present before and after execution with the same
+  `FieldValue` object identity. Payload-internal mutation under this category
+  is not detected.
+
+Allowed effects:
+
+- Added locators must exactly match a locator declared in `writes` or
+  `dynamic_writes`.
+- Removed locators must exactly match a locator declared in `deletes`.
+- Replaced locators must exactly match a locator declared in `writes` or
+  `dynamic_writes`.
+- Renames are observed as one removal and one addition. A rename passes only
+  when the removed locator exactly matches `deletes` and the added locator
+  exactly matches `writes` or `dynamic_writes`.
+- No declared permission is required for unchanged locators, even if the
+  payload object was mutated in place.
+
+Failure behavior must be fail-loud and typed. Missing declared reads continue
+to raise `MissingFieldError` before callable invocation. Undeclared additions,
+deletions, renames, and same-locator replacements should raise the focused
+`UndeclaredSampleFieldMutationError` if the error is added; otherwise they must
+raise the narrowest existing operation error available with operation name,
+locator, effect type, declared permissions, and detected effects in context.
+Invalid `copy_mode` values must raise `InvalidOperationContractError`.
+Whole-sample replacement, invalid field-effect metadata collision with
+`sample_field_effects`, and invalid check decision or route metadata must raise
+`InvalidOperationResultError`.
+
+`SampleTransform` must be a deterministic, callable-first sample operation
+specialization. It should require declared output intent through explicit
+`writes` or `dynamic_writes` unless implementation finds an existing Phase 2
+compatibility concern; it must not add algorithm catalogs or numerical kernels.
+
+`SampleCheck` must remain a deterministic `SampleOperation` whose output is a
+`Sample`. It may write declared report/diagnostic fields and may attach
+`SampleDecision` and `SampleRoute` records to result metadata. The reserved
+metadata keys are exactly `sample_decision` and `sample_route`; if present, each
+value must be either the matching public record or a non-empty tuple of matching
+records. Lists, dictionaries, bare strings, booleans, mixed record types, and
+empty tuples under those keys are invalid operation results. The records are
+informational and must not encode datasource filters, DataLoader drop/retry
+behavior, split assignment, trainer policy, workflow branching, or a fixed
+route-label vocabulary.
+
+No public contract change is in scope for generic `OperationStep`,
+`Operation`, `OperationPipeline`, `OperationResult`, `OperationContext`,
+`OperationContract`, `OperationRole`, `OperationMutationPolicy`,
+`FieldLocator`, `Sample`, `SampleField`, or `FieldValue`.
+
+## Scientific Contract Notes
+
+- Sampling and temporal alignment: this phase does not resample, window,
+  filter, align, pad, or normalize payloads. Any transform kernel that touches
+  scientific values must document its own shapes, units, sample rates, and
+  alignment assumptions when concrete algorithms are added later.
+- Field roles, locators, schemas, and provenance: permissions are parsed
+  `FieldLocator` declarations. Field-effect evidence must report locator
+  strings under `sample_field_effects.added`, `sample_field_effects.removed`,
+  and `sample_field_effects.replaced`, plus the executing `copy_mode`, so later
+  export/cache/materialization planning can inspect what changed without
+  treating this metadata as durable identity.
+- Masking, filtering, normalization, and aggregation order: no concrete
+  masking/filtering/normalization/aggregation operation is implemented in this
+  phase. The only ordering contract is operation wrapper order around preflight,
+  copy selection, snapshot, callable execution, diff enforcement, and metadata
+  recording.
+- Subject identity, splits, leakage, and grouping: this phase does not inspect
+  subject IDs, split labels, group assignments, datasource records, or loader
+  policies. Checks and routes may report loaded-sample decisions only after a
+  `Sample` exists; datasource/index filters remain separate.
+- NaNs, flat signals, missing fields, short inputs, invalid rates, and
+  unsupported slices: missing declared fields fail during preflight. Payload
+  validity such as NaNs, flat signals, temporal length, sample rate, dtype,
+  device, masks, and unsupported slices belongs to concrete transform/check
+  kernels and their declared report fields, not to the generic field-effect
+  wrapper.
+
+## Design Impact
+
+- Maintainability: keep inventory snapshot and diff logic private and central
+  so `SampleOperation`, `SampleTransform`, `SampleCheck`, and later
+  augmentations use the same enforcement path.
+- Extensibility: public extension remains callable-first through specialized
+  wrappers; direct `OperationStep` remains the advanced adapter path from Phase
+  1. Do not introduce registries or symbolic operation names.
+- Lightweight import policy: `rphys.ops` should continue to avoid importing
+  `rphys.data` until sample names are accessed through the existing lazy export
+  mechanism. `rphys.ops.sample` must avoid heavy optional stacks and
+  datasource/IO/trainer modules.
+- Source-tree boundaries: sample operation policy stays in `rphys.ops.sample`.
+  `Sample`, `Batch`, `FieldLocator`, `SampleField`, and codecs must not learn
+  operation permission or route semantics.
+
+## Future Compatibility
+
+- Stage 8/9 export, materialization, and cache planning may inspect
+  deterministic field-effect evidence, but Phase 3 must not create cache keys,
+  manifests, export schemas, operation fingerprints, or file outputs.
+- Phase 4 augmentation and view-writing should reuse the same field-effect
+  enforcement path. Generated view-family permissions beyond exact-locator
+  `dynamic_writes` are a Phase 4 design pressure, not a hidden Phase 3
+  addition.
+- Phase 5 specialized pipelines should be able to rely on `SampleOperation`
+  failures carrying operation names and effect details. Pipeline step
+  diagnostics are still Phase 5 scope.
+- Phase 6 provisional batch operations must reference these sample-side
+  mutation semantics when claiming equivalence. No batch API should be added in
+  this phase.
+
+## Alternatives Rejected
+
+| Alternative | Reason rejected |
+| --- | --- |
+| Container proxies for reads/writes | Too invasive for current mutable `Sample` semantics and likely to materialize or obscure lazy handles. |
+| Payload hashing or deep payload comparison | Heavy, backend-specific, and outside the approved limitation that payload-internal mutation is not automatically detected. |
+| Public dynamic write predicate callables | Not inspectable enough for provenance, export/cache planning, or stable tests. |
+| Prefix, family, glob, role-wide, or schema-wide dynamic write matching | Broadens Phase 3 beyond exact locator enforcement and belongs with Phase 4 view-field design if needed. |
+| Boolean-only `SampleCheck` return | Underspecified and conflicts with the approved `Sample` output plus metadata/declared-field behavior. |
+| Route labels as loader or workflow policy | Explicitly rejected by DD-7; labels are information for callers only. |
+| Public snapshot helper API | Premature API surface; helpers may be private and validated through public behavior tests. |
+
+## Debt Introduced
+
+| Debt | Reason accepted | Revisit trigger |
+| --- | --- | --- |
+| Payload-internal mutation is invisible to enforcement | Approved DD-3 trade-off avoids intrusive proxies and backend-specific payload inspection. | A later operation family needs automatic payload mutation detection and can supply a lightweight, lazy-safe instrumentation design. |
+| Exact `dynamic_writes` semantics may be too narrow for generated views | Phase 3 can enforce current declarations without designing Phase 4 view-family permissions early. | Phase 4 self-supervised view-writing requires prefix/family permissions that exact locators cannot express. |
+| Field-effect metadata is runtime-only metadata, not a public durable schema | Keeps Stage 8/9 export/cache identity deferred. | Export/materialization stages need stable manifest fields and can promote or replace the metadata shape intentionally. |
+
+## Reviewability
+
+- Expected PR size and shape: one focused deterministic sample behavior PR
+  touching `src/rphys/ops/sample.py`, `src/rphys/ops/__init__.py`,
+  `src/rphys/errors.py` only if a focused error is added, package tests,
+  sample unit tests, sample contract tests, lazy integration tests, and
+  docstrings. No broad docs-only pass is expected beyond public API docstrings.
+- Files and areas to inspect: copy-mode setup, snapshot helper diffing,
+  undeclared mutation failures, result metadata augmentation, public exports,
+  import-boundary tests, check/route record validation, and lazy-field
+  non-materialization tests.
+- Scope-control checks: verify no augmentation params, no sample pipeline
+  class, no batch module, no datasource/loader/export/cache/trainer imports,
+  no root exports, no public private-helper docs, no concrete physiological
+  kernels, and no generic `OperationPipeline` constructor changes.
+
+## Implementation Steps
+
+1. Add the minimal copy-mode and snapshot enforcement foundation in
+   `rphys.ops.sample`: private before/after inventory helpers, copy-mode
+   coercion, field-effect diffing, typed undeclared-mutation failure, and
+   `sample_field_effects` metadata augmentation. Preserve existing Phase 2 read
+   preflight and context behavior.
+2. Wire enforcement into `SampleOperation.run()` so declared writes, deletes,
+   exact-locator dynamic writes, renames, and same-locator replacements are
+   checked for bare `Sample` and explicit `OperationResult` returns. Add unit
+   tests for allowed and disallowed add/delete/rename/replacement cases plus
+   invalid `copy_mode`, `in_place`, `shallow`, and `deep` behavior.
+3. Add `SampleTransform` as a deterministic specialization over the same
+   execution path. Update package exports and tests for public names and import
+   boundaries.
+4. Add `SampleDecision`, `SampleRoute`, and `SampleCheck` with validation for
+   optional reserved metadata records, declared diagnostic/report field writes,
+   and explicit non-policy route wording. Add unit and contract tests for pass,
+   fail, report-field, decision, route, route-label opacity, and invalid
+   metadata behavior.
+5. Add lazy integration coverage proving preflight, snapshots, copy setup,
+   transform wrappers, and check wrappers do not materialize `SampleField`
+   payloads unless the user callable accesses payload-demanding APIs.
+6. Refresh public docstrings and tests to document payload-internal mutation
+   limits, transparent read-tracking limits, field-effect metadata status, and
+   route/check deferrals away from loader/drop/split/workflow policy.
+
+## Test Plan
+
+### Package Suite
+
+- Status: required
+- Expected paths: `tests/package/test_import.py`;
+  `tests/package/test_import_boundaries.py`
+- Required assertions or deferral reason: `rphys.ops.__all__` and
+  `rphys.ops.sample.__all__` include only implemented Phase 3 public names;
+  root `rphys` still does not re-export operation names; errors are exported
+  only if a concrete sample mutation error is added; `rphys.ops` remains
+  lightweight and `rphys.ops.sample` does not import heavy optional,
+  datasource, IO, model, trainer, or `tests.support` modules.
+
+### Unit Suite
+
+- Status: required
+- Expected paths: `tests/unit/rphys/ops/test_sample.py`; possibly focused
+  additions under the same source-mirrored file rather than a new file unless
+  it improves readability
+- Required assertions or deferral reason: copy-mode coercion and behavior;
+  declared add/delete/replacement success; undeclared add/delete/rename/
+  same-locator replacement failures; replacement detection by `FieldValue`
+  identity; exact-locator `dynamic_writes` without prefix/family matching;
+  payload-internal mutation limitation; `sample_field_effects` metadata shape
+  and reserved-key collision behavior; `SampleTransform` construction/output
+  enforcement; `SampleCheck` decision, route, report-field, typed-failure,
+  route-label opacity, and invalid-metadata behavior.
+
+### Contract Suite
+
+- Status: required
+- Expected paths: `tests/contracts/test_sample_operations.py`; possible new
+  focused contract file only if the existing file becomes too broad
+- Required assertions or deferral reason: public `SampleOperation`,
+  `SampleTransform`, and `SampleCheck` semantics through public imports;
+  declared-read preflight still halts before callable invocation when missing;
+  declared mutation passes and undeclared mutation fails with catchable typed
+  failures carrying effect evidence; route labels are metadata only and not a
+  policy vocabulary; generic `OperationPipeline` compatibility remains
+  sequence-only and result-forwarding still works for sample operations.
+
+### Integration Suite
+
+- Status: required
+- Expected paths: `tests/integration/` with tiny synthetic `SampleField`
+  fixtures; reuse existing lazy fixture patterns where practical
+- Required assertions or deferral reason: lazy `SampleField` handles remain
+  unloaded after declared-read preflight, snapshot capture, field-effect
+  enforcement, and shallow/deep copy setup when callables avoid payload access;
+  payload access from inside the user callable materializes exactly through the
+  existing lazy field path; no datasource scanning, loader policy, or export
+  behavior is introduced.
+
+### E2E Suite
+
+- Status: deferred
+- Expected paths: none for this phase
+- Required assertions or deferral reason: no end-to-end public pipeline,
+  datasource, export, loader, or batch workflow is implemented in Phase 3.
+  Later pipeline/export/loading phases should own e2e coverage once composition
+  and downstream boundaries exist.
+
+### Acceptance Suite
+
+- Status: deferred
+- Markers affected: none
+- Required assertions or deferral reason: no real datasets, hardware, network,
+  GPU, or long-running validation is required. Synthetic package/unit/contract/
+  integration coverage is sufficient for this deterministic sample behavior
+  phase.
+
+## Risks
+
+- Snapshot enforcement can miss in-place payload mutations inside an unchanged
+  `FieldValue`; tests and docstrings must make this limitation visible.
+- Copy-mode behavior may be confused with generic `OperationMutationPolicy`.
+  Keep sample copy mode explicit and avoid changing Stage 6 mutation policy
+  semantics.
+- Adding route labels can look like loader/drop/split policy. Keep the record
+  vocabulary small, informational, and clearly outside workflow control.
+- Field-effect metadata could be mistaken for durable export/cache identity.
+  Keep it runtime-only and avoid stable manifest language.
+- Public export additions can accidentally force eager `rphys.data` imports
+  from `rphys.ops`; preserve the existing lazy export pattern.
+
+## Validation Commands
+
+Targeted development commands:
+
+```sh
+make test-unit
+make test-contract
+make test-integration
+make test-package
+git diff --check
+```
+
+Final PR-preparation commands:
+
+```sh
+make test-unit
+make test-contract
+make test-integration
+make test-package
+make validate-pr
+make test-summary
+git diff --check
+```
+
+`make validate-pr` and `make test-summary` are expected during PR preparation
+when those targets are available in the checkout; record an explicit blocker or
+residual risk if either target is unavailable.
+
+## Handoff Notes For `rphys_phase_executor`
+
+- Safe implementation slices: first enforcement/copy helpers behind existing
+  `SampleOperation`, then public transform/check/decision/route names, then
+  lazy integration and import-boundary hardening.
+- Tests to run with each slice: run `make test-unit` after enforcement helper
+  work, `make test-contract` after public behavior is wired, `make
+  test-package` after export changes, and `make test-integration` after lazy
+  fixture coverage.
+- Decisions the executor must not revisit: snapshot enforcement is locator plus
+  `FieldValue` identity based; `copy_mode` accepts only `in_place`, `shallow`,
+  and `deep`; `dynamic_writes` is exact-locator only; payload-internal mutation
+  and transparent read tracking are out of scope; route labels are not policy;
+  generic `OperationResult` and `OperationPipeline` schemas are not expanded;
+  helpers remain private.
+- Conditions that require stopping for the manager: enforcement needs
+  container proxies or payload instrumentation; exact `dynamic_writes` cannot
+  express a required Phase 3 case; implementation needs prefix, family, glob,
+  role-wide, schema-wide, callable, or other broad public dynamic permission
+  vocabulary; copy mode requires changing `Sample` semantics; result metadata
+  needs a durable export/cache schema; or any dependency, loader, trainer,
+  export, cache, batch, augmentation, or pipeline behavior is needed to
+  complete tests.
+
+## Refinement And Review Budget Status
+
+- Phase execution plan refinement: completed on the expanded path
+- Phase implementation refinement: completed for the expanded-path
+  `SampleCheck` metadata/report-field blocker cluster
+- PR review: completed; budget consumed
+- Blocker resolution: 2/3 used
+
+## Completion Notes
+
+- Draft plan: completed in this file in the existing dedicated worktree.
+- Final phase execution plan: completed after expanded-path refinement; ready
+  for implementation workflow review.
+- Implementation summary: completed for deterministic copy/effects enforcement, transform/check wrappers, mutation metadata, and lazy-materialization coverage.
+- Implementation validation: completed for phase scope.
+- Refinement summary: tightened public `copy_mode` values, exact-locator
+  `writes`/`deletes`/`dynamic_writes` enforcement, `sample_field_effects`
+  metadata keys, focused undeclared-mutation error behavior, and
+  `SampleCheck` decision/route metadata validation while keeping route labels
+  non-policy.
+- Implementation refinement summary: fixed present-but-`None` reserved
+  `SampleCheck` metadata handling, added focused report-field and route-label
+  opacity coverage, and kept optional `copy_mode` owner hygiene scoped to
+  `SampleOperation`.
+- Pre-submit blocker gate: completed by manager after implementation
+  refinement; `make test-unit`, `make test-contract`, `make
+  test-integration`, `make test-package`, `make validate-pr`, `make
+  test-summary`, and `git diff --check` passed.
+- PR preparation: PR body draft completed at
+  `docs/roadmap/stage-7/phases/sample-effects-checks-pr-body.md`; expanded-path
+  PR body refine completed by manager after reading the draft against the final
+  diff and validation evidence. PR #50 opened against `develop` and verified
+  with the canonical title.
+- Automated review: completed; one blocking `SampleTransform` contract-type
+  finding was resolved locally with focused validation.
+- Merge result: pending.
+- Cleanup: pending.
+- Remaining blockers: none identified in scoped implementation or PR-prep
+  evidence. `make validate-pr` and `make test-summary` passed before PR
+  opening.
+
+## Phase Refinement Report: SampleCheck Metadata Presence
+
+### Assigned Blocker
+
+- Blocker: expanded-path implementation refinement pass before PR prep; fix
+  `SampleCheck` reserved metadata validation so present `None` values are
+  invalid, add report-field mutation coverage, and prove route labels remain
+  opaque metadata.
+- Source: implementation-test refinement request for Stage 7 Phase 3.
+- Scope: `src/rphys/ops/sample.py`, `tests/unit/rphys/ops/test_sample.py`,
+  and this phase artifact.
+- Budget use: implementation refinement completed; blocker resolution 1/3
+  used.
+
+### Resolution
+
+- Changes made: `SampleCheck` now validates reserved metadata by explicit key
+  presence instead of `Mapping.get(...)`, so `sample_decision=None` and
+  `sample_route=None` are invalid operation results. Invalid
+  `SampleOperation(..., copy_mode=...)` errors now report owner
+  `SampleOperation`.
+- Tests or docs updated: added focused unit coverage for declared diagnostic
+  report-field writes, undeclared report-field mutation enforcement, opaque
+  arbitrary route labels, and invalid present reserved metadata values
+  including `None`, lists, dictionaries, strings, booleans, empty tuples, and
+  mixed record tuples.
+- Validation rerun: `uv run pytest tests/unit/rphys/ops/test_sample.py`;
+  `make test-unit`; `make test-contract`; `git diff --check`.
+
+### Result
+
+- Blocker resolved: yes.
+- Remaining blocker: none identified in this refinement.
+- Recommended next gate: PR preparation after the manager-requested
+  pre-submit gate.
+
+### Files Changed
+
+- `src/rphys/ops/sample.py`
+- `tests/unit/rphys/ops/test_sample.py`
+- `docs/roadmap/stage-7/phases/sample-effects-checks.md`
+
+## Phase PR Review Report: SampleTransform Contract Validation
+
+### Findings
+
+| Severity | Finding | Evidence | Required change |
+| --- | --- | --- | --- |
+| blocking | `SampleTransform` could raise an untyped `AttributeError` for invalid public `contract` inputs before inherited `SampleOperation` validation. | Reviewer reproduced `SampleTransform(..., contract={})` and found `src/rphys/ops/sample.py` inspected `field_permissions` before checking `SampleOperationContract`. | Validate the contract type inside `SampleTransform` before reading output permissions and add focused unit coverage for `InvalidOperationContractError`. |
+
+### Scope And Acceptance
+
+- Phase scope satisfied: yes after blocker resolution.
+- Future-phase work avoided: yes; no augmentation, sample pipeline mapping,
+  batch API, export/cache/loader/trainer workflow, payload-internal mutation
+  detection, or transparent read tracking was added.
+- Acceptance criteria satisfied: yes.
+- PR body matches diff: yes.
+
+### Validation Review
+
+- Suite evidence: `make test-unit`, `make test-contract`, `make
+  test-integration`, `make test-package`, `make validate-pr`, `make
+  test-summary`, and `git diff --check` passed before PR review; focused
+  blocker validation reran `uv run pytest tests/unit/rphys/ops/test_sample.py`,
+  `make test-unit`, `make test-contract`, and `git diff --check`.
+- Unavailable checks: e2e and acceptance suites are not present for this
+  phase.
+- Test gaps: none blocking.
+- CI status: no GitHub status checks are configured for PR #50.
+
+### Scientific Contract Review
+
+- Contract implications documented: yes.
+- Failure behavior covered: yes after `SampleTransform` invalid-contract
+  failure was typed.
+- Leakage/provenance risks: none introduced.
+- Import/dependency boundary risks: none identified.
+
+### Review Decision
+
+- Blocking findings remain: no after manager blocker-resolution pass.
+- PR-review budget consumed: yes.
+- Merge eligible: yes after final validation and PR branch push.
+- Residual risks: payload-internal mutation is not detected, transparent read
+  tracking remains explicit/out of scope, and exact-locator `dynamic_writes`
+  may need broader Phase 4 view-family semantics.
