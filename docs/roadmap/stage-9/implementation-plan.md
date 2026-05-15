@@ -43,7 +43,7 @@ Blockers: none
 | 3 | `deterministic-cache-store` | merged | `agent/stage-9-data-loading-cache-p3-deterministic-cache-store` | [#62](https://github.com/samcantrill/rphys/pull/62) | `src/rphys/datasources/cache.py`; cache unit/contract/temp-dir tests; cache docs/docstrings | Add deterministic cache records, local atomic store, fake/minimal explicit value strategy, and `CachedSampleSource`. | Cache key/manifest/policy/result, temp-dir atomic store, cached-source, package import, and diff checks. | Local cache hit/miss/stale/corrupt matrix; request-specific cache adversarial source. |
 | 4 | `prepared-reader-source` | merged | `agent/stage-9-data-loading-cache-p4-prepared-reader-source` | [#63](https://github.com/samcantrill/rphys/pull/63) | `src/rphys/datasources/prepared.py`; prepared manifest/reader/source tests; provisional docs | Add `PreparedDataManifest`, public provisional `PreparedSampleReader`, `PreparedSampleSource`, and equivalence checks. | Prepared manifest, fake reader, equivalence matrix, package import, and diff checks. | Prepared manifest equivalence success/failure; fake prepared reader/backend boundary. |
 | 5 | `materialization-batch-records` | merged | `agent/stage-9-data-loading-cache-p5-materialization-batch-records` | [#64](https://github.com/samcantrill/rphys/pull/64) | `src/rphys/datasources/prepared.py`; materialization/batch record tests; phase docs | Add storage-neutral materialization, layout, cost, and batch-planning records. | Record validator, package import, contract, docs, and diff checks. | Batch cost metadata and sampler plan; storage-neutral materialization records. |
-| 6 | `datapath-evidence-closeout` | pending | `agent/stage-9-data-loading-cache-p6-datapath-evidence-closeout` | pending | data-path evidence records; synthetic integration; public exports/docs/package closeout | Add data-path evidence/profile records and close Stage 9 docs, examples, exports, and focused integration. | Data-path record tests, integration smoke, package/import checks, relevant unit/contract suites, `git diff --check`, and broadened validation as needed. | Synthetic source-to-collater/cache/prepared smoke; data-path profile/benchmark evidence. |
+| 6 | `datapath-evidence-closeout` | PR open | `agent/stage-9-data-loading-cache-p6-datapath-evidence-closeout` | [#65](https://github.com/samcantrill/rphys/pull/65) | `src/rphys/datasources/datapath.py`; synthetic integration; public exports/docs/package closeout | Add data-path evidence/profile records and close Stage 9 docs, examples, exports, and focused integration. | Data-path record tests, integration smoke, package/import checks, relevant unit/contract suites, `git diff --check`, and broadened validation as needed. | Synthetic source-to-collater/cache/prepared smoke; data-path profile/benchmark evidence. |
 
 ## Implementation Readiness Blockers
 
@@ -482,11 +482,11 @@ Workflow path: expanded path
 
 ## Phase 6: Data-Path Evidence, Integration, Docs, And Package Closeout
 
-Status: pending
+Status: PR open
 Slug: `datapath-evidence-closeout`
 Branch: `agent/stage-9-data-loading-cache-p6-datapath-evidence-closeout`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-9-data-loading-cache-p6-datapath-evidence-closeout`
-PR: pending
+PR: [#65](https://github.com/samcantrill/rphys/pull/65)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -494,7 +494,7 @@ Workflow path: expanded path
 ### Scope
 
 - Goal: close Stage 9 with inspectable data-path evidence records, synthetic integration, docs, scoped exports, and package/import validation.
-- Files/modules owned: data-path evidence records in the Stage 9 owning module chosen during phases 4-5; synthetic integration tests; package/import tests; docs/docstrings for Stage 9 public surfaces and deferrals.
+- Files/modules owned: `src/rphys/datasources/datapath.py`; synthetic integration tests; package/import tests; docs/docstrings for Stage 9 public surfaces and deferrals.
 - Behavior implemented: `StreamingReadPlan`; `DataLoaderState`; `DataPathProfile`; `DataPathBenchmark`; synthetic source-to-collater/cache/prepared integration; final code-backed package exports.
 - Decisions applied: DD-1, DD-5, DD-9, DD-10, DD-11 plus all prior locked source/cache/prepared decisions.
 - Future-roadmap/reuse constraints: records support Stage 15 profiling/restartability and later trainers without implementing active resume, stable distributed cache coordination, system profilers, or trainer event schemas.
@@ -533,10 +533,10 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: complete
 - Planning/refinement budget: expanded
-- Implementation/refinement budget: expanded
-- PR review budget: expanded
+- Implementation/refinement budget: complete
+- PR review budget: complete; managing-agent local pre-submit review found no blocking findings
 - Blocker-resolution budget: expanded
 - Pre-submit blocker gate: no active runtime/profiler/trainer behavior slipped in; public exports are code-backed
 - Merge record: pending
