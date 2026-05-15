@@ -1,12 +1,12 @@
 # Roadmap Stage 7 Implementation Plan
 
-Status: draft; refreshed plan-quality gate passed; implementation-plan approval pending
+Status: approved; ready for implementation workflow
 Roadmap version: `v7`
 Planning document: `docs/roadmap/stage-7/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: implementation planning
-Blockers: implementation-plan approval pending
+Current phase: implementation plan approved
+Blockers: none
 
 ## Summary
 
@@ -65,11 +65,11 @@ Blockers: implementation-plan approval pending
 
 ## Implementation Workflow State
 
-- Implementation-plan quality gate: plan-quality passed; final approval pending
+- Implementation-plan quality gate: passed
 - Review pass: completed by managing agent for the revised seven-phase shape;
   refreshed plan-quality approval passed
-- Refinement pass: pending
-- Confirmation review: pending
+- Refinement pass: not needed before approval
+- Confirmation review: maintainer approval recorded
 - Automatic merge mode: enabled for later implementation workflow only
 - Worktree root: `/home/samcantrill/work/rphys-worktrees`
 - Phase status vocabulary: `pending`, `in_progress`, `pr_open`, `approved`,
@@ -98,7 +98,7 @@ Blockers: implementation-plan approval pending
 
 | Blocker | Source | Required resolution | Status |
 | --- | --- | --- | --- |
-| Final implementation-plan approval pending. | `planning.md` Stage Gates, Stage Readbacks, Plan Quality Gate; this implementation plan | Refreshed plan quality passed and seven-phase alignment is complete; maintainer or implementation-plan reviewer approval remains required before code implementation begins. | pending approval |
+| None. | `planning.md` Stage Gates, Stage Readbacks, Plan Quality Gate; this implementation plan | Refreshed plan quality passed, seven-phase alignment is complete, and maintainer approval is recorded. | resolved |
 
 ## Phase 1: Operation Foundation Refactor
 
@@ -877,13 +877,13 @@ Workflow path: expanded path if broad validation exposes prior phase gaps
 
 | Finding | Severity | Resolution | Status |
 | --- | --- | --- | --- |
-| Managing-agent implementation-plan review completed for revised plan. | note | The phases, ownership hints, validation expectations, boundaries, risks, and stop conditions now include operation-foundation Phase 1, the second Stage 6 foundation design pass, and compatibility guardrails from revised `planning.md`; final approval remains pending. | reviewed |
+| Managing-agent implementation-plan review completed for revised plan. | note | The phases, ownership hints, validation expectations, boundaries, risks, and stop conditions now include operation-foundation Phase 1, the second Stage 6 foundation design pass, and compatibility guardrails from revised `planning.md`. | reviewed |
 | Refreshed plan-quality gate passed. | note | Standalone reviewer confirmed `planning.md` and this implementation plan are coherent around the revised seven-phase plan, with no blockers and no reopened functionality/design queues. | passed |
-| Implementation-plan approval remains pending. | note | Maintainer or implementation-plan reviewer should approve before later implementation work begins. | pending |
+| Implementation-plan approval recorded. | note | Maintainer approved this seven-phase implementation plan before code implementation begins. | approved |
 
 Gate result:
 
-- Status: ready for final implementation-plan approval
+- Status: approved for implementation workflow
 - Review evidence: this artifact is revised from the operation-foundation
   update in `planning.md`; the prior independent plan-quality gate is
   superseded for final approval, and refreshed plan-quality confirmation has
@@ -905,11 +905,10 @@ Gate result:
 
 ## Final Approval
 
-- Approval status: pending
-- Approved scope: not yet approved for implementation; proposed scope is the
-  seven phases above.
-- Accepted risks: pending approval; proposed risks are listed in the plan review
-  and phase stop conditions.
+- Approval status: approved by maintainer on 2026-05-15
+- Approved scope: the seven phases above.
+- Accepted risks: approved as listed in the plan review and phase stop
+  conditions.
 - Deferred items: concrete algorithms; export/save/cache/materialization;
   datasource scanning/filtering; DataLoader adapters; trainer/device movement;
   model formatting; workflow/artifact runtime behavior; broad batch planning;

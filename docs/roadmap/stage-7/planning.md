@@ -150,7 +150,7 @@ Implementation plan: `docs/roadmap/stage-7/implementation-plan.md`
 | Context checkpoint if applicable | resume checkpoint, refreshed context if needed | Context scaffold checkpoint recorded below; no compaction blocker. | not needed | 2026-05-15 / context scaffold | Resume state is recorded in this artifact. |
 | Design-agreement review | proposed implementation shape, design decisions, design-agreement queue, design implication review, future-roadmap/reuse safety review | DD-1 has been revised by maintainer guidance and a second design pass: use a broad compatibility-preserving operation-foundation refactor before specialized Stage 7 operations, including a public `OperationStep` execution interface where it improves robustness. DD-2 through DD-8 remain approved; DD-9 is recorded recommendation; DD-10 is auto-approved only while private. | revision applied | 2026-05-15 / second design pass | Refresh validation, phase shaping, and implementation-plan handoff around the new foundation phase. |
 | Validation and phase shaping | validation strategy, phase shaping | Prior six-phase shape was stale because DD-1 now includes a broad foundation refactor. Revised seven-phase shape is recorded below. | revision applied | 2026-05-15 / operation-foundation revision | No code implementation performed. Revised validation and phase shaping include operation-step interface compatibility and Stage 6 behavior preservation before sample/batch phases. |
-| Plan quality gate | traceability review, specialist evidence check | None. Refreshed standalone review confirms DD-1, the seven-phase shape, validation coverage, Stage 6 compatibility guardrails, and implementation-plan coherence. | passed | 2026-05-15 / refreshed plan-quality gate | Implementation-plan drafting is no longer blocked by plan quality. Final implementation-plan approval remains a separate gate. |
+| Plan quality gate | traceability review, specialist evidence check | None. Refreshed standalone review confirms DD-1, the seven-phase shape, validation coverage, Stage 6 compatibility guardrails, and implementation-plan coherence. | passed | 2026-05-15 / refreshed plan-quality gate | Implementation-plan drafting is no longer blocked by plan quality. Final implementation-plan approval is now passed. |
 | Implementation plan approved | implementation-plan review and approval | None. Implementation plan has been revised to add the operation-foundation refactor phase before existing phases, is coherent with `planning.md`, and has maintainer approval. | passed | 2026-05-15 / maintainer implementation-plan approval | Stage 7 is ready to enter the implementation workflow. |
 
 ## Stage Readbacks
@@ -612,8 +612,8 @@ Gate result:
   artifact's revised seven-phase sequence, including Phase 1 operation
   foundation cleanup, Stage 6 semantic-regression tests, raw-callable and
   mapping rejection guardrails, callable-first wrapper documentation, and
-  phase stop conditions. It correctly leaves final implementation-plan
-  approval pending and does not authorize code implementation by itself.
+  phase stop conditions. Final implementation-plan approval is now recorded,
+  which authorizes entering the implementation workflow.
 - Revisit triggers: Stage 6 implementation differs from approved Stage 6 plan;
   maintainer asks to include concrete algorithm implementations in Stage 7;
   BatchOperation scope requires heavy optional backend dependencies; pipeline
@@ -818,8 +818,22 @@ Gate result:
   entries. Changes to `OperationResult`, generic `OperationContext`, generic
   `OperationContract`, mapping rejection, raw callable rejection, or
   workflow-like pipeline behavior reopen DD-1.
-- Next step: maintainer or implementation-plan reviewer approval before code
-  implementation begins.
+- Next step: completed by maintainer implementation-plan approval below.
+
+### After Implementation-Plan Approval
+
+- Approval result: passed on 2026-05-15 by maintainer approval.
+- Approved scope: the seven-phase implementation plan in
+  `docs/roadmap/stage-7/implementation-plan.md`: operation foundation;
+  sample public foundations; sample enforcement, transforms, and checks;
+  sample augmentation/replay/views; specialized sample pipeline; provisional
+  batch operation/augmentation/equivalence/pipeline; docs, examples, and final
+  validation evidence.
+- Accepted risks and guardrails: DD-1 reopen triggers, payload-internal
+  mutation limitation, runtime-only replay records, informational route/check
+  records, dependency-light provisional BatchOperation scope, and no
+  export/cache/loader/trainer/workflow behavior remain binding.
+- Next step: run Stage 7 through `.codex/workflows/roadmap-version-implementation.md`.
 
 ## Workflow Feedback Routing
 
@@ -853,4 +867,5 @@ Gate result:
 | 2026-05-15 / plan-quality reviewer | Independently audited specialist evidence, gate ordering, queue states, roadmap-to-requirement-to-design-to-example-to-validation-to-phase traceability, future-roadmap/reuse safety, public interface guardrails, phase granularity, blockers, and validation obligations. Confirmed the Plan Quality Gate remains passed; no blockers, missing evidence, stale statuses, contradictory queue states, or reopen actions were found. No code was implemented and no `implementation-plan.md` was created. |
 | 2026-05-15 / maintainer operation-foundation revision | Revised DD-1 from constrained inheritance/adaptation to a broad operation-foundation refactor: add `OperationStep`, make `Operation` implement it, update generic pipelines to compose operation steps while preserving Stage 6 behavior, keep ordinary custom work callable-first through wrappers, and reshape Stage 7 from six phases to seven phases with the foundation refactor first. Marked prior plan-quality confirmation superseded for final approval until the revised phase plan is reviewed. |
 | 2026-05-15 / second design pass | Recorded the Stage 6 behavior-refactor consideration: compatibility-preserving foundation cleanup is recommended to make `Operation`, advanced `OperationStep`s, and future sample/batch adapters share one cohesive execution path; semantic changes to result/context/contract/pipeline behavior are DD-1 reopen triggers. |
-| 2026-05-15 / refreshed plan-quality gate | Audited the revised seven-phase planning against read-only `implementation-plan.md`, roadmap/workflow evidence, AGENTS guidance, and Stage 6 operation code/tests. Passed the Plan Quality Gate, cleared the prior refresh-pending blocker, confirmed no queue item is reopened, and recorded that implementation-plan approval is the remaining gate before code implementation. |
+| 2026-05-15 / refreshed plan-quality gate | Audited the revised seven-phase planning against read-only `implementation-plan.md`, roadmap/workflow evidence, AGENTS guidance, and Stage 6 operation code/tests. Passed the Plan Quality Gate, cleared the prior refresh blocker, confirmed no queue item is reopened, and recorded the then-current need for final implementation-plan approval before code implementation. |
+| 2026-05-15 / maintainer implementation-plan approval | Recorded maintainer approval of the Stage 7 seven-phase implementation plan and marked Stage 7 ready for the implementation workflow. |
