@@ -681,7 +681,9 @@ git diff --check
   this artifact
 - Implementation summary: implemented on 2026-05-15 in
   `agent/stage-7-p4-sample-augmentation-views`
-- Implementation validation: passing targeted suite for unit/contract/integration/package suite
+- Implementation validation: `make test-unit`, `make test-contract`, `make
+  test-integration`, `make test-package`, `make validate-pr`, `make
+  test-summary`, and `git diff --check` passed on 2026-05-15.
 - Implementation refinement: completed on 2026-05-15 for assigned blocker
   cluster covering duplicate view locator rejection, constructor callable
   validation coverage, undeclared view-write enforcement coverage,
@@ -691,8 +693,11 @@ git diff --check
   expanded-path status, public constructor and params shape, direct
   `apply_params()` limits, reserved metadata behavior, RNG restrictions, exact
   locator permissions, and targeted `make test-package` validation
-- Pre-submit blocker gate: pending (evaluate `make validate-pr` and `make test-summary`)
-- PR preparation: not started
+- Pre-submit blocker gate: completed; no global/default RNG, backend-heavy
+  import, nested sample view, durable replay serialization, or scope-expansion
+  blocker remains known.
+- PR preparation: durable PR body drafted in
+  `docs/roadmap/stage-7/phases/sample-augmentation-views-pr-body.md`
 - Automated review: not started
 - Merge result: pending
 - Cleanup: pending
