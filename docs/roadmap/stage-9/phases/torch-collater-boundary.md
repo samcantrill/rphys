@@ -376,10 +376,11 @@ git diff --check
 
 - Draft plan: complete in `docs/roadmap/stage-9/phases/torch-collater-boundary.md`
 - Final phase execution plan: complete after expanded-path self-refinement
-- Implementation summary: pending
-- Implementation validation: pending
+- Implementation summary: complete; added module-scoped optional torch adapters in `rphys.datasources.torch`, a framework-neutral `BatchCollater` wrapper over `collate_samples`, code-backed `rphys.data`/`rphys.data.collation` exports for `BatchCollater`, and focused package/unit/contract/integration coverage.
+- Implementation validation: `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/unit/rphys/data/test_collation.py tests/unit/rphys/datasources/test_torch.py`; `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/contracts/test_batch_collater_contract.py tests/contracts/test_torch_adapter_contract.py`; `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/integration/test_stage9_torch_collater_flow.py`; `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/package/test_import.py tests/package/test_import_boundaries.py`; `UV_CACHE_DIR=/tmp/uv-cache make test-package`; `UV_CACHE_DIR=/tmp/uv-cache make test-unit`; `UV_CACHE_DIR=/tmp/uv-cache make test-contract`; `UV_CACHE_DIR=/tmp/uv-cache make test-integration`; `UV_CACHE_DIR=/tmp/uv-cache make validate-pr`; `UV_CACHE_DIR=/tmp/uv-cache make test-summary`; and `git diff --check` passed. Final summary: package 38, unit 583, contract 108, integration 15, total 744; e2e and acceptance not present.
 - Refinement summary: plan refinement complete; no implementation refinement used
-- Pre-submit blocker gate: no unresolved plan-level blocker identified
+- Pre-submit blocker gate: no unresolved implementation, import-boundary, optional-dependency, collater-shape, trainer/device/model-formatting, cache/prepared, or parent/root export blocker identified after implementation
+- PR body draft: complete in `docs/roadmap/stage-9/phases/torch-collater-boundary-pr-body.md`
 - PR preparation: pending
 - Automated review: pending
 - Merge result: pending
