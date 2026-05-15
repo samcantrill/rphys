@@ -348,11 +348,13 @@ adapter conflict
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
+- Implementation: complete; 2026-05-15 refinement hardened public record
+  construction and direct sample import boundaries.
+- Validation: focused refinement checks passed; phase validation remains
+  recorded in the phase execution plan.
 - PR: pending
 - Merge: pending
-- Follow-up: pending
+- Follow-up: PR prep only; no remaining Phase 2 blocker recorded.
 
 ## Phase 3: Sample Field Effects, Transforms, And Checks
 

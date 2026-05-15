@@ -493,9 +493,10 @@ than planned.
 ## Refinement And Review Budget Status
 
 - Phase execution plan refinement: not needed
-- Phase implementation refinement: unused
+- Phase implementation refinement: used for narrow public-record/import-boundary
+  hardening on 2026-05-15
 - PR review: unused
-- Blocker resolution: 0/3 used
+- Blocker resolution: 1/3 used
 
 ## Completion Notes
 
@@ -504,12 +505,18 @@ than planned.
 - Final phase execution plan: this artifact is ready for Phase 2 execution
 - Implementation summary: complete
 - Implementation validation: complete
-- Refinement summary: not needed for planning
+- Refinement summary: narrow public-record/import-boundary hardening complete;
+  `SampleOperationContract.field_permissions` now rejects non-permission
+  records, direct `SampleReplayRecord` construction validates typed context
+  fields consistently with `SampleOperationContext`, and direct
+  `rphys.ops.sample` import has package-boundary coverage.
 - Pre-submit blocker gate: package/import regressions, placeholder exports,
   generic contract expansion, lazy-field materialization during preflight,
   operation-step adapter conflicts, root exports, heavy imports, or
   export/cache/loader/trainer/workflow behavior block completion
 - Validation commands run:
+- `uv run pytest tests/unit/rphys/ops/test_sample.py` (pass; 19 tests)
+- `uv run pytest tests/package/test_import_boundaries.py -k ops_sample` (pass; 1 selected)
 - `make test-unit` (pass)
 - `make test-contract` (pass)
 - `make test-package` (pass)

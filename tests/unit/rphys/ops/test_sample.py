@@ -126,6 +126,11 @@ def test_sample_operation_contract_defaults_and_generic_contract_binding() -> No
     assert contract.operation_contract is generic
 
 
+def test_sample_operation_contract_rejects_invalid_field_permissions_record() -> None:
+    with pytest.raises(InvalidOperationContractError):
+        SampleOperationContract(field_permissions={"reads": (VIDEO,)})  # type: ignore[arg-type]
+
+
 def test_sample_operation_context_coercion_paths() -> None:
     base = SampleOperationContext(
         metadata={"dataset_id": "synth"},
@@ -172,6 +177,18 @@ def test_sample_operation_replay_record_is_immutable_mapping() -> None:
 
     with pytest.raises(TypeError):
         mapping["run_seed"] = "bad"
+
+
+@pytest.mark.parametrize("field_name", ["epoch", "operation_index"])
+def test_sample_replay_record_rejects_non_integer_context_fields(field_name: str) -> None:
+    with pytest.raises(InvalidOperationContextError):
+        SampleReplayRecord(**{field_name: "1"})  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("field_name", ["operation_name", "view_name"])
+def test_sample_replay_record_rejects_blank_context_names(field_name: str) -> None:
+    with pytest.raises(InvalidOperationContextError):
+        SampleReplayRecord(**{field_name: "   "})  # type: ignore[arg-type]
 
 
 def test_sample_operation_run_wraps_bare_sample_output() -> None:

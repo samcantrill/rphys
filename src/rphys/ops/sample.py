@@ -124,6 +124,15 @@ class SampleOperationContract:
         mutation_policy: OperationMutationPolicy | str = OperationMutationPolicy.PURE,
         side_effects: Sequence[str] | None = None,
     ) -> None:
+        if field_permissions is not None and not isinstance(field_permissions, SampleFieldPermissions):
+            raise InvalidOperationContractError(
+                "SampleOperationContract field_permissions must be a SampleFieldPermissions record.",
+                owner="SampleOperationContract",
+                field="field_permissions",
+                expected="SampleFieldPermissions | None",
+                actual=type(field_permissions).__name__,
+            )
+
         operation_contract = OperationContract(
             role=OperationRole.GENERIC,
             input_type=Sample,
@@ -290,6 +299,46 @@ class SampleReplayRecord:
     operation_name: str | None = None
     view_name: str | None = None
     rng_stream: object | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "epoch",
+            _coerce_optional_int(
+                self.epoch,
+                field_name="epoch",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "operation_index",
+            _coerce_optional_int(
+                self.operation_index,
+                field_name="operation_index",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "operation_name",
+            coerce_non_empty_string(
+                self.operation_name,
+                owner="SampleReplayRecord",
+                field="operation_name",
+                expected="non-empty string or None",
+                error_type=InvalidOperationContextError,
+            ) if self.operation_name is not None else None,
+        )
+        object.__setattr__(
+            self,
+            "view_name",
+            coerce_non_empty_string(
+                self.view_name,
+                owner="SampleReplayRecord",
+                field="view_name",
+                expected="non-empty string or None",
+                error_type=InvalidOperationContextError,
+            ) if self.view_name is not None else None,
+        )
 
     def to_mapping(self) -> Mapping[str, object | None]:
         """Export immutable scalar fields for lightweight evidence snapshots."""
@@ -615,7 +664,7 @@ def _validate_required_reads(
 
 
 def _coerce_optional_int(
-    value: int | None,
+    value: object | None,
     *,
     field_name: str,
 ) -> int | None:
