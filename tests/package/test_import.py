@@ -250,6 +250,20 @@ STAGE_5_DATASOURCE_ERROR_NAMES = [
     "InvalidSplitAssignmentError",
 ]
 
+STAGE_8_EXPORT_EXPORTS = [
+    "ExportMaterialization",
+    "ExportPolicy",
+    "ExportReport",
+    "ExportResult",
+    "ExportSpec",
+    "ExportTarget",
+    "FieldExportOutcome",
+    "FieldExportResult",
+    "IdempotencyPolicy",
+    "OutputLayout",
+    "RecordExportResult",
+]
+
 
 def test_import_rphys() -> None:
     import rphys
@@ -330,7 +344,7 @@ def test_import_ops_public_all_exports() -> None:
 
 
 def test_import_ops_module_exports_are_scoped() -> None:
-    from rphys.ops import contracts, context, core, kernels, pipelines
+    from rphys.ops import contracts, context, core, export, kernels, pipelines
 
     assert contracts.__all__ == [
         "OperationRole",
@@ -339,6 +353,7 @@ def test_import_ops_module_exports_are_scoped() -> None:
     ]
     assert context.__all__ == ["OperationContext", "OperationResult"]
     assert core.__all__ == ["OperationStep", "Operation"]
+    assert export.__all__ == STAGE_8_EXPORT_EXPORTS
     assert kernels.__all__ == ["FunctionalKernel"]
     assert pipelines.__all__ == ["OperationPipeline", "SampleOperationPipeline", "BatchOperationPipeline"]
 
@@ -574,6 +589,22 @@ def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
     for public_name in forbidden_names:
         assert not hasattr(rphys, public_name)
         assert not hasattr(rphys.datasources, public_name)
+
+
+def test_stage_8_export_names_are_scoped_to_export_module() -> None:
+    import rphys
+    import rphys.ops
+    import rphys.ops.export
+
+    assert rphys.ops.export.__all__ == STAGE_8_EXPORT_EXPORTS
+    for public_name in STAGE_8_EXPORT_EXPORTS:
+        assert hasattr(rphys.ops.export, public_name)
+        assert not hasattr(rphys.ops, public_name)
+        assert not hasattr(rphys, public_name)
+    for shorthand_name in ["SaveOp", "CodecSelectionOp"]:
+        assert not hasattr(rphys.ops.export, shorthand_name)
+        assert not hasattr(rphys.ops, shorthand_name)
+        assert not hasattr(rphys, shorthand_name)
 
 
 def test_stage_1_data_modules_import_with_intentional_public_surfaces() -> None:
