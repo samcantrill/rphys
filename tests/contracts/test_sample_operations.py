@@ -150,4 +150,3 @@ def test_sample_operation_explicit_result_without_context_merge_is_preserved() -
     assert result.metadata == {"from": "kernel"}
     assert result.provenance == {"phase": "contract"}
     assert isinstance(result.side_effect_evidence, MappingProxyType)
-

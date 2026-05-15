@@ -496,7 +496,7 @@ than planned.
 - Phase implementation refinement: used for narrow public-record/import-boundary
   hardening on 2026-05-15
 - PR review: unused
-- Blocker resolution: 1/3 used
+- Blocker resolution: 2/3 used
 
 ## Completion Notes
 
@@ -510,6 +510,10 @@ than planned.
   records, direct `SampleReplayRecord` construction validates typed context
   fields consistently with `SampleOperationContext`, and direct
   `rphys.ops.sample` import has package-boundary coverage.
+- Blocker-resolution summary: PR #49 review blockers resolved on 2026-05-15;
+  `SampleOperation` now rejects a `SampleOperationContext.operation_name` that
+  differs from the executing operation while accepting a matching name, and the
+  committed contract-test diff no longer contains a trailing blank line at EOF.
 - Pre-submit blocker gate: package/import regressions, placeholder exports,
   generic contract expansion, lazy-field materialization during preflight,
   operation-step adapter conflicts, root exports, heavy imports, or
@@ -521,6 +525,12 @@ than planned.
 - `make test-contract` (pass)
 - `make test-package` (pass)
 - `git diff --check` (pass)
+- `uv run pytest tests/unit/rphys/ops/test_sample.py` (pass; 21 tests)
+- `make test-unit` (pass; 444 tests)
+- `make test-contract` (pass; 78 tests)
+- `make test-package` (pass; 31 tests)
+- `git diff --check` (pass)
+- `git diff --check develop...HEAD` (pass)
 - `make test-unit` had one transient failure while validating locator fixtures; corrected test input and re-ran.
 - PR preparation: ready to handoff
 - Automated review: not run

@@ -629,6 +629,13 @@ def _coerce_sample_operation_context(
                 view_name=context.view_name,
                 rng_stream=context.rng_stream,
             )
+        if context.operation_name != operation_name:
+            raise InvalidOperationContextError(
+                "sample operation context operation_name must match the executing operation.",
+                field="context.operation_name",
+                expected=operation_name,
+                actual=context.operation_name,
+            )
         return context
 
     if not isinstance(context, OperationContext):

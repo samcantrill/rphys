@@ -163,6 +163,27 @@ def test_sample_operation_context_infers_operation_name_from_run_context() -> No
     assert op.contract.input_type is Sample
 
 
+def test_sample_operation_context_accepts_matching_operation_name() -> None:
+    op = SampleOperation(_identity, name="op-run")
+    context = SampleOperationContext(operation_name="op-run", epoch=3)
+
+    result = op(Sample(), context=context)
+
+    assert result.operation_name == "op-run"
+
+
+def test_sample_operation_context_rejects_mismatched_operation_name() -> None:
+    op = SampleOperation(_identity, name="op-run")
+    context = SampleOperationContext(operation_name="other-op", epoch=3)
+
+    with pytest.raises(InvalidOperationContextError) as exc:
+        op(Sample(), context=context)
+
+    assert exc.value.context["field"] == "context.operation_name"
+    assert exc.value.context["expected"] == "op-run"
+    assert exc.value.context["actual"] == "other-op"
+
+
 def test_sample_operation_replay_record_is_immutable_mapping() -> None:
     record = SampleReplayRecord(
         run_seed="seed",
