@@ -44,6 +44,7 @@ __all__ = [
     "OperationExecutionError",
     "InvalidOperationPipelineError",
     "OperationPipelineExecutionError",
+    "UndeclaredSampleFieldMutationError",
     "RemotePhysAnalysisError",
     "RemotePhysCodecError",
     "RemotePhysCollateError",
@@ -123,6 +124,10 @@ class InvalidOperationInputError(RemotePhysOperationError):
 
 class OperationExecutionError(RemotePhysOperationError):
     """Raised when an operation callable raises during execution."""
+
+
+class UndeclaredSampleFieldMutationError(RemotePhysOperationError):
+    """Raised when a sample operation mutates an undeclared field."""
 
 
 class RemotePhysPipelineError(RemotePhysError):

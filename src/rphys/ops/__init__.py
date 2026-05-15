@@ -21,6 +21,10 @@ if TYPE_CHECKING:
         SampleOperationContext,
         SampleOperationContract,
         SampleReplayRecord,
+        SampleTransform,
+        SampleCheck,
+        SampleDecision,
+        SampleRoute,
     )
 
 _SAMPLE_EXPORTS = {
@@ -29,6 +33,10 @@ _SAMPLE_EXPORTS = {
     "SampleOperationContext",
     "SampleReplayRecord",
     "SampleOperation",
+    "SampleTransform",
+    "SampleCheck",
+    "SampleDecision",
+    "SampleRoute",
 }
 
 
@@ -62,4 +70,8 @@ __all__ = [
     "SampleOperationContext",
     "SampleReplayRecord",
     "SampleOperation",
+    "SampleTransform",
+    "SampleCheck",
+    "SampleDecision",
+    "SampleRoute",
 ]

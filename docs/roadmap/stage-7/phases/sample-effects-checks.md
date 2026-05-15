@@ -604,8 +604,8 @@ residual risk if either target is unavailable.
 - Draft plan: completed in this file in the existing dedicated worktree.
 - Final phase execution plan: completed after expanded-path refinement; ready
   for implementation workflow review.
-- Implementation summary: pending.
-- Implementation validation: pending.
+- Implementation summary: completed for deterministic copy/effects enforcement, transform/check wrappers, mutation metadata, and lazy-materialization coverage.
+- Implementation validation: completed for phase scope.
 - Refinement summary: tightened public `copy_mode` values, exact-locator
   `writes`/`deletes`/`dynamic_writes` enforcement, `sample_field_effects`
   metadata keys, focused undeclared-mutation error behavior, and
@@ -616,4 +616,4 @@ residual risk if either target is unavailable.
 - Automated review: pending.
 - Merge result: pending.
 - Cleanup: pending.
-- Remaining blockers: none known.
+- Remaining blockers: no blockers identified in scoped implementation; `make validate-pr` and `make test-summary` were not run in this pass by scope.

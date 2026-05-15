@@ -21,6 +21,14 @@ from rphys.ops import (
     SampleOperation,
     SampleOperationContract,
     SampleOperationContext,
+    SampleTransform,
+    SampleCheck,
+    SampleDecision,
+    SampleRoute,
+)
+from rphys.errors import (
+    InvalidOperationContractError,
+    UndeclaredSampleFieldMutationError,
 )
 
 VIDEO = FieldLocator.parse("inputs/video.rgb")
@@ -147,6 +155,80 @@ def test_sample_operation_explicit_result_without_context_merge_is_preserved() -
 
     result = operation(sample, context=SampleOperationContext(metadata={"from": "sample"}))
 
-    assert result.metadata == {"from": "kernel"}
+    assert result.metadata["from"] == "kernel"
+    assert result.metadata["sample_field_effects"]["copy_mode"] == "in_place"
     assert result.provenance == {"phase": "contract"}
     assert isinstance(result.side_effect_evidence, MappingProxyType)
+
+
+def test_sample_transform_requires_output_permissions() -> None:
+    with pytest.raises(InvalidOperationContractError):
+        SampleTransform(_identity, name="transform-invalid")
+
+
+def test_sample_transform_and_check_are_sample_operations() -> None:
+    transform = SampleTransform(
+        _identity,
+        name="transform",
+        contract=SampleOperationContract(
+            field_permissions=SampleFieldPermissions(writes=(VIDEO,)),
+        ),
+    )
+    check = SampleCheck(_identity, name="check")
+
+    assert isinstance(transform, SampleOperation)
+    assert isinstance(check, SampleOperation)
+
+    sample = Sample({VIDEO: FieldValue((1,), schema="video.rgb.v1")})
+
+    assert transform(sample).operation_name == "transform"
+    check_result = check(sample)
+    assert check_result.operation_name == "check"
+    assert check_result.metadata["sample_field_effects"]["copy_mode"] == "in_place"
+
+
+def test_sample_check_declares_optional_decision_records() -> None:
+    def decision_kernel(payload: Sample, *, context: SampleOperationContext) -> OperationResult:
+        return OperationResult(
+            output=payload,
+            operation_name="decision",
+            metadata={
+                "sample_decision": SampleDecision(
+                    label="accept",
+                    reason="valid",
+                ),
+                "sample_route": (
+                    SampleRoute(label="continue", reason="ready"),
+                ),
+            },
+        )
+
+    result = SampleCheck(
+        decision_kernel,
+        name="decision",
+    )(Sample({VIDEO: FieldValue((1,), schema="video.rgb.v1")}))
+
+    assert isinstance(result.metadata["sample_decision"], SampleDecision)
+    assert isinstance(result.metadata["sample_route"], tuple)
+    assert result.metadata["sample_route"][0].label == "continue"
+
+
+def test_sample_transform_fails_with_undeclared_mutation() -> None:
+    def add_flag(payload: Sample, *, context: SampleOperationContext) -> Sample:
+        payload.set_field("outputs/quality.flag", FieldValue(1, schema="quality.flag.v1"))
+        return payload
+
+    operation = SampleTransform(
+        add_flag,
+        name="add-flag",
+        contract=SampleOperationContract(
+            field_permissions=SampleFieldPermissions(
+                writes=(VIDEO,),
+            )
+        ),
+    )
+
+    with pytest.raises(UndeclaredSampleFieldMutationError) as exc:
+        operation(Sample({VIDEO: FieldValue((1,), schema="video.rgb.v1")}))
+
+    assert exc.value.context["effect_type"] == "added"

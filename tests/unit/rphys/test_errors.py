@@ -83,6 +83,7 @@ STAGE_6_OPERATION_ERROR_NAMES = [
     "OperationExecutionError",
     "InvalidOperationPipelineError",
     "OperationPipelineExecutionError",
+    "UndeclaredSampleFieldMutationError",
 ]
 
 
