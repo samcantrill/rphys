@@ -407,7 +407,7 @@ git diff --check
 - Pre-submit blocker gate: no unresolved source API, parent-export, negative-position, fingerprint, context-shape, or derived-source promotion decision remains in this plan
 - PR body draft: complete in `docs/roadmap/stage-9/phases/sample-source-foundation-pr-body.md`
 - PR body refine: complete on expanded path
-- PR preparation: PR body artifact prepared; PR not opened in this pass
+- PR preparation: PR opened and verified as non-draft PR #60 against base `develop` from head `agent/stage-9-data-loading-cache-p1-sample-source-foundation`
 - Automated review: complete; no blocking findings, PR-review budget consumed, and merge eligible assuming PR opens against `develop` and CI matches local validation
 - Merge result: pending
 - Cleanup: pending
@@ -424,3 +424,14 @@ git diff --check
 - Target branch expectation: PR must open against `develop`; `origin/develop` is an ancestor of branch head `6b63e97`.
 - Review decision: blocking findings remain no; PR-review budget consumed yes; merge eligible yes, assuming PR CI matches local validation.
 - Residual risks: context rank/world/worker fields are evidence only, not distributed coordination; future cache/prepared phases must preserve request/context equivalence without expanding Phase 1 sample shape.
+
+## PR Submission Metadata
+
+- PR: https://github.com/samcantrill/rphys/pull/60
+- Number: 60
+- State: open
+- Draft: no
+- Base: `develop`
+- Head: `agent/stage-9-data-loading-cache-p1-sample-source-foundation`
+- Title: `Stage 9 Index Adapters, Torch Data Loading, And Cache - Phase 1: SampleSource Foundation And Deterministic Context`
+- Initial status checks: no GitHub status checks reported at PR-open verification time.
