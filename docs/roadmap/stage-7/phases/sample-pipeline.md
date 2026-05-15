@@ -362,7 +362,8 @@ git diff --check
 - Pre-submit blocker gate: completed; no generic mapping support, tuple named
   entries, public step helper leakage, batch behavior, workflow semantics, or
   heavy imports remain known.
-- PR preparation: pending
+- PR preparation: durable PR body drafted in
+  `docs/roadmap/stage-7/phases/sample-pipeline-pr-body.md`
 - Automated review: pending
 - Merge result: pending
 - Cleanup: pending
