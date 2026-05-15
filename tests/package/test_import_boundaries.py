@@ -41,6 +41,7 @@ LIGHTWEIGHT_IMPORTS = [
     "rphys.datasources.filters",
     "rphys.datasources.indexes",
     "rphys.datasources.index_items",
+    "rphys.datasources.sources",
     "rphys.datasources.refs",
     "rphys.datasources.schemas",
     "rphys.datasources.splits",

@@ -239,6 +239,14 @@ STAGE_8_DATASOURCE_MODULES = {
     ],
 }
 
+STAGE_9_DATASOURCE_SOURCE_EXPORTS = [
+    "SampleRequest",
+    "SampleRuntimeContext",
+    "WorkerContextFactory",
+    "SampleSource",
+    "IndexSampleSource",
+]
+
 STAGE_3_DATASOURCE_ERROR_NAMES = [
     "InvalidDataSourceRefError",
     "InvalidDataSourceSchemaError",
@@ -566,6 +574,14 @@ def test_stage_8_datasource_submodules_export_only_code_backed_names() -> None:
             assert hasattr(module, public_name)
 
 
+def test_stage_9_sample_source_module_exports_only_code_backed_names() -> None:
+    module = importlib.import_module("rphys.datasources.sources")
+
+    assert module.__all__ == STAGE_9_DATASOURCE_SOURCE_EXPORTS
+    for public_name in STAGE_9_DATASOURCE_SOURCE_EXPORTS:
+        assert hasattr(module, public_name)
+
+
 def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
     import rphys
     import rphys.datasources
@@ -608,6 +624,11 @@ def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
         "SyntheticDataSource",
         "DerivedDataSourceAssembly",
         "DerivedDataSourceBuilder",
+        "SampleRequest",
+        "SampleRuntimeContext",
+        "WorkerContextFactory",
+        "SampleSource",
+        "IndexSampleSource",
     ]
 
     for public_name in forbidden_names:
