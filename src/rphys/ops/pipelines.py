@@ -16,19 +16,20 @@ from rphys.errors import (
     InvalidOperationPipelineError,
     OperationPipelineExecutionError,
 )
+from .core import OperationStep
 
 from .context import OperationContext, OperationResult
-from .core import Operation
+from .contracts import OperationContract
 
 __all__ = ["OperationPipeline"]
 
 
 class OperationPipeline:
-    """Ordered composition over concrete :class:`Operation` steps."""
+    """Ordered composition over :class:`OperationStep` entries."""
 
     __slots__ = ("_operations",)
 
-    def __init__(self, operations: Sequence[Operation]) -> None:
+    def __init__(self, operations: Sequence[OperationStep]) -> None:
         if isinstance(operations, (str, bytes, bytearray)):
             raise InvalidOperationPipelineError(
                 "operation pipeline operations must be a sequence, not text.",
@@ -54,7 +55,10 @@ class OperationPipeline:
                 actual=type(operations).__name__,
             )
 
-        self._operations = tuple(self._coerce_operation(entry, index) for index, entry in enumerate(operations))
+        self._operations = tuple(
+            self._validate_operation_step(self._coerce_operation(entry, index), index)
+            for index, entry in enumerate(operations)
+        )
 
         if len(self._operations) == 0:
             raise InvalidOperationPipelineError(
@@ -67,8 +71,8 @@ class OperationPipeline:
         self._validate_compatibility()
 
     @property
-    def operations(self) -> tuple[Operation, ...]:
-        """Ordered tuple of composed operations."""
+    def operations(self) -> tuple[OperationStep, ...]:
+        """Ordered tuple of composed operation steps."""
         return self._operations
 
     def run(self, input_value: object, context: OperationContext | None = None) -> OperationResult:
@@ -123,27 +127,57 @@ class OperationPipeline:
                 )
 
     @staticmethod
-    def _coerce_operation(entry: object, index: int) -> Operation:
+    def _coerce_operation(entry: object, index: int) -> OperationStep:
         if isinstance(entry, (tuple, list)) and len(entry) == 2 and isinstance(entry[0], str):
             raise InvalidOperationPipelineError(
-                "operation pipeline entries must be concrete Operation instances.",
+                "operation pipeline entries must be OperationStep instances.",
                 field=f"operations[{index}]",
-                expected="Operation",
+                expected="OperationStep",
                 actual="tuple[str, Operation]",
                 step_index=index,
             )
 
-        if not isinstance(entry, Operation):
+        if not isinstance(entry, OperationStep):
             raise InvalidOperationPipelineError(
-                "operation pipeline entries must be concrete Operation instances.",
+                "operation pipeline entries must be OperationStep instances.",
                 field=f"operations[{index}]",
-                expected="Operation",
+                expected="OperationStep",
                 actual=type(entry).__name__,
                 step_index=index,
             )
 
         return entry
 
+    @staticmethod
+    def _validate_operation_step(operation: OperationStep, index: int) -> OperationStep:
+        if not isinstance(operation.name, str) or not operation.name.strip():
+            raise InvalidOperationPipelineError(
+                "operation pipeline entries must expose non-empty string names.",
+                field=f"operations[{index}]",
+                expected="OperationStep with non-empty str name",
+                actual=repr(operation.name),
+                step_index=index,
+            )
+
+        if not isinstance(operation.contract, OperationContract):
+            raise InvalidOperationPipelineError(
+                "operation pipeline entries must expose OperationContract objects.",
+                field=f"operations[{index}]",
+                expected="OperationContract",
+                actual=type(operation.contract).__name__,
+                step_index=index,
+            )
+
+        if not hasattr(operation, "run") or not callable(getattr(operation, "run")):
+            raise InvalidOperationPipelineError(
+                "operation pipeline entries must expose a callable run method.",
+                field=f"operations[{index}]",
+                expected="OperationStep.run",
+                actual=type(operation).__name__,
+                step_index=index,
+            )
+
+        return operation
 
 def _coerce_context(context: OperationContext | None) -> OperationContext:
     if context is None:
@@ -184,13 +218,24 @@ def _render_type_tuple(declared_types: tuple[type, ...]) -> tuple[str, ...]:
 
 
 def _run_step(
-    operation: Operation,
+    operation: OperationStep,
     step_index: int,
     input_value: object,
     context: OperationContext,
 ) -> OperationResult:
     try:
-        return operation.run(input_value, context=context)
+        result = operation.run(input_value, context=context)
+        if not isinstance(result, OperationResult):
+            raise TypeError("step.run() must return OperationResult.")
+        return result
+    except AttributeError as exc:
+        raise OperationPipelineExecutionError(
+            "operation pipeline step failed to return an operation result.",
+            step_index=step_index,
+            operation_name=operation.name,
+            phase="run",
+            cause_type=type(exc).__name__,
+        ) from exc
     except Exception as exc:
         raise OperationPipelineExecutionError(
             "operation pipeline step failed during execution.",

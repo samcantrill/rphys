@@ -12,6 +12,7 @@ from rphys.errors import (
 )
 from rphys.ops import (
     Operation,
+    OperationStep,
     OperationContract,
     OperationContext,
     OperationResult,
@@ -67,6 +68,12 @@ def test_operation_call_signature_is_fixed_and_returns_result() -> None:
     assert [param.name for param in call_params] == ["input_value", "context"]
     assert run_params[1].default is None
     assert call_params[1].default is None
+
+
+def test_operation_is_operation_step() -> None:
+    operation = Operation(plain_kernel)
+
+    assert isinstance(operation, OperationStep)
 
 
 def test_operation_context_key_checks_only_use_metadata() -> None:

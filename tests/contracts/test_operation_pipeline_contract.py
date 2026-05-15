@@ -26,6 +26,7 @@ def test_operation_pipeline_public_api_is_sequence_only() -> None:
 
     assert len(params) == 1
     assert params[0].name == "operations"
+    assert params[0].annotation == "Sequence[OperationStep]"
 
 
 def test_operation_pipeline_exposes_only_operations_tuple() -> None:

@@ -14,6 +14,7 @@ Operation payloads are ordinary Python objects, including runtime containers suc
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import Protocol, runtime_checkable
 
 from rphys.errors import (
     InvalidOperationContextError,
@@ -31,10 +32,30 @@ from .contracts import (
 )
 from .kernels import FunctionalKernel
 
-__all__ = ["Operation"]
+__all__ = ["OperationStep", "Operation"]
 
 
-class Operation:
+@runtime_checkable
+class OperationStep(Protocol):
+    """Execution interface shared by generic operation pipeline steps."""
+
+    @property
+    def name(self) -> str:
+        ...
+
+    @property
+    def contract(self) -> OperationContract:
+        ...
+
+    def run(
+        self,
+        input_value: object,
+        context: OperationContext | None = None,
+    ) -> OperationResult:
+        ...
+
+
+class Operation(OperationStep):
     """Concrete wrapper around a callable that returns :class:`OperationResult`.
 
     Plain kernel call sites should still call the underlying function directly when
@@ -42,6 +63,9 @@ class Operation:
 
     Wrapped execution always returns ``OperationResult``; call sites must unwrap the
     payload via ``result.output``.
+
+    ``Operation`` remains the ordinary callable-first extension path.
+    ``OperationStep`` implementations are an advanced adapter path.
     """
 
     def __init__(

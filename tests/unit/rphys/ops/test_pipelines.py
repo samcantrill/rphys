@@ -38,7 +38,7 @@ def test_operation_pipeline_signature_is_fixed() -> None:
 
     assert len(params) == 1
     assert params[0].name == "operations"
-    assert params[0].annotation == "Sequence[Operation]"
+    assert params[0].annotation == "Sequence[OperationStep]"
 
 
 def test_operation_pipeline_exposes_immutable_operations_tuple() -> None:
@@ -49,6 +49,47 @@ def test_operation_pipeline_exposes_immutable_operations_tuple() -> None:
     assert pipeline.operations == (op_a, op_b)
     with pytest.raises(AttributeError):
         pipeline.operations = ()
+
+
+def test_operation_pipeline_accepts_direct_operation_step_entries() -> None:
+    captured: list[OperationContext] = []
+
+    class ConstantAdder:
+        def __init__(self, offset: int) -> None:
+            self._offset = offset
+
+        @property
+        def name(self) -> str:
+            return "constant-adder"
+
+        @property
+        def contract(self) -> OperationContract:
+            return OperationContract(
+                input_type=int,
+                output_type=int,
+            )
+
+        def run(self, input_value: object, context: OperationContext | None = None) -> OperationResult:
+            assert context is not None
+            captured.append(context)
+            return OperationResult(
+                output=input_value + self._offset,  # type: ignore[arg-type]
+                operation_name=self.name,
+                metadata=context.metadata,
+                provenance=context.provenance,
+            )
+
+    pipeline = OperationPipeline(
+        [
+            ConstantAdder(offset=4),
+            Operation(multiply, name="multiply", contract=OperationContract(input_type=int)),
+        ]
+    )
+    context = OperationContext(metadata={"dataset_id": "ops"})
+    result = pipeline.run(1, context=context)
+
+    assert result.output == 50
+    assert captured == [context]
 
 
 def test_operation_pipeline_runs_steps_and_forwards_result_output() -> None:
@@ -109,6 +150,83 @@ def test_operation_pipeline_rejects_non_operation_entries() -> None:
     with pytest.raises(InvalidOperationPipelineError) as exc:
         OperationPipeline([object()])
 
+    assert exc.value.context["step_index"] == 0
+
+
+def test_operation_pipeline_rejects_raw_callable_entries_as_invalid_steps() -> None:
+    with pytest.raises(InvalidOperationPipelineError) as exc:
+        OperationPipeline([increment])
+
+    assert exc.value.context["field"] == "operations[0]"
+    assert exc.value.context["expected"] == "OperationStep"
+    assert exc.value.context["actual"] == "function"
+    assert exc.value.context["step_index"] == 0
+
+
+@pytest.mark.parametrize(
+    ("step", "expected", "actual"),
+    [
+        (
+            type(
+                "BlankNameStep",
+                (),
+                {
+                    "name": " ",
+                    "contract": OperationContract(),
+                    "run": lambda self, input_value, context=None: OperationResult(
+                        output=input_value,
+                        operation_name="blank",
+                    ),
+                },
+            )(),
+            "OperationStep with non-empty str name",
+            "' '",
+        ),
+        (
+            type(
+                "NonStringNameStep",
+                (),
+                {
+                    "name": 123,
+                    "contract": OperationContract(),
+                    "run": lambda self, input_value, context=None: OperationResult(
+                        output=input_value,
+                        operation_name="non-string",
+                    ),
+                },
+            )(),
+            "OperationStep with non-empty str name",
+            "123",
+        ),
+        (
+            type(
+                "InvalidContractStep",
+                (),
+                {
+                    "name": "invalid-contract",
+                    "contract": object(),
+                    "run": lambda self, input_value, context=None: OperationResult(
+                        output=input_value,
+                        operation_name="invalid-contract",
+                    ),
+                },
+            )(),
+            "OperationContract",
+            "object",
+        ),
+    ],
+)
+def test_operation_pipeline_rejects_malformed_structural_steps(
+    step: object,
+    expected: str,
+    actual: str,
+) -> None:
+    with pytest.raises(InvalidOperationPipelineError) as exc:
+        OperationPipeline([step])
+
+    assert exc.value.context["field"] == "operations[0]"
+    assert exc.value.context["expected"] == expected
+    assert exc.value.context["actual"] == actual
     assert exc.value.context["step_index"] == 0
 
 
@@ -207,6 +325,31 @@ def test_pipeline_execution_errors_wrap_cause_and_include_step() -> None:
     assert exc.value.context["cause_type"] == "OperationExecutionError"
     assert exc.value.__cause__.__class__.__name__ == "OperationExecutionError"
     assert exc.value.__cause__.__cause__.__class__.__name__ == "ValueError"
+
+
+def test_pipeline_wraps_direct_step_non_operation_result_return() -> None:
+    class BadReturnStep:
+        @property
+        def name(self) -> str:
+            return "bad-return"
+
+        @property
+        def contract(self) -> OperationContract:
+            return OperationContract(input_type=int)
+
+        def run(self, input_value: object, context: OperationContext | None = None) -> object:
+            return input_value
+
+    pipeline = OperationPipeline([BadReturnStep()])
+
+    with pytest.raises(OperationPipelineExecutionError) as exc:
+        pipeline.run(1)
+
+    assert exc.value.context["step_index"] == 0
+    assert exc.value.context["operation_name"] == "bad-return"
+    assert exc.value.context["phase"] == "run"
+    assert exc.value.context["cause_type"] == "TypeError"
+    assert isinstance(exc.value.__cause__, TypeError)
 
 
 def test_pipeline_wraps_runtime_step_input_mismatch() -> None:
