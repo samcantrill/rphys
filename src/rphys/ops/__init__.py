@@ -1,47 +1,8 @@
-"""Public entrypoint for Stage 6 operation bindings.
+"""Public entrypoint for runtime operation bindings."""
 
-Importing from :mod:`rphys.ops` is the package boundary for Stage 6 runtime
-operations.
+from __future__ import annotations
 
-    from rphys.ops import (
-        Operation,
-        OperationContract,
-        OperationStep,
-        OperationContext,
-        OperationResult,
-        OperationPipeline,
-        FunctionalKernel,
-    )
-
-Plain callables remain plain callables: define a runtime kernel and call it
-directly when no declaration/context/result envelope is needed.
-
-    def add_one(value: int, *, context: OperationContext) -> int:
-        return value + 1
-
-    add_one(3, context=OperationContext())
-
-Wrap a kernel with :class:`Operation` when you need explicit boundary declarations,
-context checks, and inspectable execution output:
-
-    op = Operation(
-        add_one,
-        contract=OperationContract(input_type=int, output_type=int),
-    )
-    result = op(3, context=OperationContext(metadata={"phase": "test"}))
-    output = result.output
-
-`Operation` is the ordinary callable-first public extension path.
-`OperationStep` is the minimal execution interface accepted by :class:`OperationPipeline`;
-it exposes ``name``, ``contract``, and ``run`` for advanced adapters.
-
-`Operation` always returns :class:`OperationResult`; users must read payloads through
-the ``.output`` attribute.
-
-Operations do not define pipeline names, stable step APIs, export/save/cache
-bindings, workflow provenance, or Stage 7/8/9 specialized operation families.
-Those concerns are explicitly deferred to later stages.
-"""
+from typing import TYPE_CHECKING
 
 from .contracts import (
     OperationContract,
@@ -50,8 +11,41 @@ from .contracts import (
 )
 from .core import Operation, OperationStep
 from .context import OperationContext, OperationResult
-from .pipelines import OperationPipeline
 from .kernels import FunctionalKernel
+from .pipelines import OperationPipeline
+
+if TYPE_CHECKING:
+    from .sample import (
+        SampleFieldPermissions,
+        SampleOperation,
+        SampleOperationContext,
+        SampleOperationContract,
+        SampleReplayRecord,
+    )
+
+_SAMPLE_EXPORTS = {
+    "SampleFieldPermissions",
+    "SampleOperationContract",
+    "SampleOperationContext",
+    "SampleReplayRecord",
+    "SampleOperation",
+}
+
+
+def __getattr__(name: str):  # pragma: no cover
+    if name in _SAMPLE_EXPORTS:
+        from importlib import import_module
+
+        module = import_module(".sample", __name__)
+        value = getattr(module, name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__() -> list[str]:  # pragma: no cover
+    return sorted(set(globals().keys()) | _SAMPLE_EXPORTS)
+
 
 __all__ = [
     "OperationRole",
@@ -63,4 +57,9 @@ __all__ = [
     "OperationResult",
     "OperationPipeline",
     "FunctionalKernel",
+    "SampleFieldPermissions",
+    "SampleOperationContract",
+    "SampleOperationContext",
+    "SampleReplayRecord",
+    "SampleOperation",
 ]

@@ -5,7 +5,7 @@ Roadmap version: `v7`
 Planning document: `docs/roadmap/stage-7/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 2 pending after Phase 1 merge
+Current phase: Phase 2 PR open
 Blockers: none
 
 ## Summary
@@ -87,7 +87,7 @@ Blockers: none
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `operation-foundation` | merged | `agent/stage-7-p1-operation-foundation` | [#48](https://github.com/samcantrill/rphys/pull/48) | `src/rphys/ops/core.py`, `src/rphys/ops/pipelines.py`, `src/rphys/ops/__init__.py`, focused errors/tests/docs | Refactor the operation foundation around `OperationStep`. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | OperationStep, custom step pipeline, generic mapping rejection |
-| 2 | `sample-foundations` | pending | `agent/stage-7-p2-sample-foundations` | pending | `src/rphys/ops/sample.py`, `src/rphys/ops/__init__.py`, focused errors/tests | Establish sample operation public foundations. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | contract inspection, locator parsing, context/replay records, exports |
+| 2 | `sample-foundations` | pr_open | `agent/stage-7-p2-sample-foundations` | [#49](https://github.com/samcantrill/rphys/pull/49) | `src/rphys/ops/sample.py`, `src/rphys/ops/__init__.py`, focused errors/tests | Establish sample operation public foundations. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | contract inspection, locator parsing, context/replay records, exports |
 | 3 | `sample-effects-checks` | pending | `agent/stage-7-p3-sample-effects-checks` | pending | sample enforcement, transforms/checks, focused private helpers | Implement sample field-effect enforcement, transforms, and checks. | `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check` | declared mutation, same-locator replacement, lazy fields, route non-policy |
 | 4 | `sample-augmentation-views` | pending | `agent/stage-7-p4-sample-augmentation-views` | pending | sample augmentation params/replay/view behavior | Add sample augmentation replay and self-supervised view writing. | `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check` | replay, linked fields, no global RNG, view locators |
 | 5 | `sample-pipeline` | pending | `agent/stage-7-p5-sample-pipeline` | pending | `src/rphys/ops/pipelines.py`, specialized pipeline tests | Add specialized sample pipeline composition. | `make test-unit`; `make test-contract`; `git diff --check` | ordered mapping, step diagnostics, generic pipeline regression |
@@ -250,11 +250,11 @@ operation foundation code
 
 ## Phase 2: Sample Operation Public Foundations
 
-Status: pending
+Status: pr_open
 Slug: `sample-foundations`
 Branch: `agent/stage-7-p2-sample-foundations`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-7-p2-sample-foundations`
-PR: pending
+PR: [#49](https://github.com/samcantrill/rphys/pull/49)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path unless implementation discovers an operation-step
@@ -348,11 +348,15 @@ adapter conflict
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
+- Implementation: complete; 2026-05-15 refinement hardened public record
+  construction and direct sample import boundaries.
+- Validation: focused refinement checks passed; phase validation remains
+  recorded in the phase execution plan.
+- PR: [#49](https://github.com/samcantrill/rphys/pull/49) opened against
+  `develop` from `agent/stage-7-p2-sample-foundations`; target and title
+  verified by `gh pr view`
 - Merge: pending
-- Follow-up: pending
+- Follow-up: PR prep only; no remaining Phase 2 blocker recorded.
 
 ## Phase 3: Sample Field Effects, Transforms, And Checks
 
