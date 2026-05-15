@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import shutil
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
@@ -802,13 +804,6 @@ class SaveOperation:
                 field="input_value",
                 actual=type(input_value).__name__,
             )
-        if input_value.request.policy.materialization != ExportMaterialization.WRITE:
-            raise RemotePhysOperationError(
-                "SaveOperation supports only write materialization in Phase 3.",
-                field="policy.materialization",
-                actual=input_value.request.policy.materialization.value,
-            )
-
         field_results = tuple(
             self._save_field(selection, input_value.request.policy)
             for selection in input_value.selected_fields
@@ -856,6 +851,12 @@ class SaveOperation:
         selection: SelectedFieldExport,
         policy: ExportPolicy,
     ) -> FieldExportResult:
+        if policy.materialization in {
+            ExportMaterialization.LINK,
+            ExportMaterialization.COPY,
+        }:
+            return _link_or_copy_field(selection, policy)
+
         target_exists = _target_exists(selection.target)
         if target_exists:
             outcome = policy.existing_target_outcome()
@@ -1519,6 +1520,167 @@ def _target_exists(target: FieldRef) -> bool:
         for resource in target.resources
         if (path := _local_path(resource)) is not None
     )
+
+
+def _link_or_copy_field(
+    selection: SelectedFieldExport,
+    policy: ExportPolicy,
+) -> FieldExportResult:
+    source_resources, target_resources = _resource_lineage_pairs(selection)
+    target_exists = any(_require_local_path(resource).exists() for resource in target_resources)
+    replaced = False
+    if target_exists:
+        outcome = policy.existing_target_outcome()
+        if outcome == FieldExportOutcome.SKIPPED:
+            return FieldExportResult(
+                source_record=selection.source_record,
+                source_field=selection.source_field,
+                target=selection.target,
+                outcome=FieldExportOutcome.SKIPPED,
+                source_resources=source_resources,
+                target_resources=target_resources,
+                metadata={"codec_name": selection.codec_name},
+            )
+        replaced = True
+        for resource in target_resources:
+            _remove_local_target(resource)
+
+    if policy.materialization == ExportMaterialization.COPY:
+        _copy_local_resources(source_resources, target_resources)
+        outcome = FieldExportOutcome.REPLACED if replaced else FieldExportOutcome.COPIED
+    else:
+        copied = _link_local_resources(
+            source_resources,
+            target_resources,
+            allow_copy_fallback=policy.allow_link_copy_fallback,
+        )
+        if copied:
+            outcome = FieldExportOutcome.COPIED
+        else:
+            outcome = FieldExportOutcome.REPLACED if replaced else FieldExportOutcome.LINKED
+
+    return FieldExportResult(
+        source_record=selection.source_record,
+        source_field=selection.source_field,
+        target=selection.target,
+        outcome=outcome,
+        source_resources=source_resources,
+        target_resources=target_resources,
+        metadata={"codec_name": selection.codec_name},
+    )
+
+
+def _resource_lineage_pairs(
+    selection: SelectedFieldExport,
+) -> tuple[tuple[ResourceRef, ...], tuple[ResourceRef, ...]]:
+    source_resources = selection.source_field.resources
+    target_resources = selection.target.resources
+    if not source_resources:
+        raise RemotePhysOperationError(
+            "Link/copy export requires source ResourceRef lineage.",
+            field="source_resources",
+            field_key=str(selection.source_field.key),
+        )
+    if len(source_resources) != len(target_resources):
+        raise RemotePhysOperationError(
+            "Link/copy export requires ordered one-to-one source/target resources.",
+            field="resources",
+            field_key=str(selection.source_field.key),
+            source_count=len(source_resources),
+            target_count=len(target_resources),
+        )
+    for source, target in zip(source_resources, target_resources, strict=True):
+        _validate_local_resource_pair(source, target)
+    return source_resources, target_resources
+
+
+def _validate_local_resource_pair(source: ResourceRef, target: ResourceRef) -> None:
+    if source.protocol != target.protocol:
+        raise RemotePhysOperationError(
+            "Link/copy export does not support cross-protocol resources.",
+            field="resources",
+            source_protocol=source.protocol,
+            target_protocol=target.protocol,
+        )
+    if source.protocol != "file":
+        raise RemotePhysOperationError(
+            "Link/copy export supports only local file resources in Stage 8.",
+            field="resources",
+            protocol=source.protocol,
+        )
+
+
+def _copy_local_resources(
+    sources: tuple[ResourceRef, ...],
+    targets: tuple[ResourceRef, ...],
+) -> None:
+    for source, target in zip(sources, targets, strict=True):
+        source_path = _require_local_path(source)
+        target_path = _require_local_path(target)
+        if not source_path.exists():
+            raise RemotePhysOperationError(
+                "Copy export source path does not exist.",
+                field="source_resources",
+                source_uri=source.uri,
+            )
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source_path, target_path)
+
+
+def _link_local_resources(
+    sources: tuple[ResourceRef, ...],
+    targets: tuple[ResourceRef, ...],
+    *,
+    allow_copy_fallback: bool,
+) -> bool:
+    copied = False
+    for source, target in zip(sources, targets, strict=True):
+        source_path = _require_local_path(source)
+        target_path = _require_local_path(target)
+        if not source_path.exists():
+            raise RemotePhysOperationError(
+                "Link export source path does not exist.",
+                field="source_resources",
+                source_uri=source.uri,
+            )
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            os.symlink(source_path, target_path)
+        except OSError as exc:
+            if not allow_copy_fallback:
+                raise RemotePhysOperationError(
+                    "Link export failed and copy fallback is not enabled.",
+                    field="allow_link_copy_fallback",
+                    source_uri=source.uri,
+                    target_uri=target.uri,
+                ) from exc
+            shutil.copy2(source_path, target_path)
+            copied = True
+    return copied
+
+
+def _remove_local_target(resource: ResourceRef) -> None:
+    path = _require_local_path(resource)
+    if path.is_dir() and not path.is_symlink():
+        raise RemotePhysOperationError(
+            "Replace idempotency cannot remove directory targets.",
+            field="target_resources",
+            target_uri=resource.uri,
+        )
+    if path.exists() or path.is_symlink():
+        path.unlink()
+
+
+def _require_local_path(resource: ResourceRef) -> Path:
+    path = _local_path(resource)
+    if path is None:
+        raise RemotePhysOperationError(
+            "Local filesystem path is required for link/copy export.",
+            field="resources",
+            protocol=resource.protocol,
+            uri=resource.uri,
+        )
+    return path
 
 
 def _local_path(resource: ResourceRef) -> Path | None:
