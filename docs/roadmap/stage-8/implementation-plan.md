@@ -5,7 +5,7 @@ Roadmap version: `v8`
 Planning document: `docs/roadmap/stage-8/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: pending Phase 1 implementation
+Current phase: pending Phase 2 implementation
 Blockers: none for implementation-plan drafting
 
 ## Summary
@@ -38,7 +38,7 @@ Blockers: none for implementation-plan drafting
 
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `export-primitives` | pending | `agent/stage-8-p1-export-primitives` | pending | `src/rphys/ops/export.py` or package equivalent; `tests/unit/rphys/ops/`; `tests/contracts/`; package import tests | Establish data-only export request, layout, policy, outcome, result, and report records without writing files. | Targeted unit/contract tests for layout, fingerprint, idempotency, result aggregation, public imports; `git diff --check`. | Idempotency matrix; typed in-memory report records. |
+| 1 | `export-primitives` | merged | `agent/stage-8-p1-export-primitives` | [#55](https://github.com/samcantrill/rphys/pull/55) | `src/rphys/ops/export.py` or package equivalent; `tests/unit/rphys/ops/`; `tests/contracts/`; package import tests | Establish data-only export request, layout, policy, outcome, result, and report records without writing files. | Targeted unit/contract tests for layout, fingerprint, idempotency, result aggregation, public imports; `git diff --check`. | Idempotency matrix; typed in-memory report records. |
 | 2 | `selection-preflight` | pending | `agent/stage-8-p2-selection-preflight` | pending | `rphys.ops.export`; operation contract tests; selection unit tests | Add no-write `CodecSelectionOperation` and prove landed `OperationStep` compatibility. | Contract/unit tests for `OperationStep`, `OperationPipeline`, no side effects, missing/ambiguous/unsupported inputs. | OperationStep export composition; selection preflight produces no writes. |
 | 3 | `save-operation` | pending | `agent/stage-8-p3-save-operation` | pending | `rphys.ops.export`; synthetic codec fixtures; save/codec contract tests | Implement `SaveOperation` through existing codec save contracts and explicit idempotency outcomes. | Unit/contract tests for pipeline output forwarding, `SaveContext(target=FieldRef)`, `CodecSaveResult`, conflict/skip/replace/write, typed failures. | Codec save contract preservation; idempotency matrix. |
 | 4 | `link-copy-lineage` | pending | `agent/stage-8-p4-link-copy-lineage` | pending | Private local helpers under export implementation; lineage/local-link tests; package boundary tests | Add explicit link/copy policy behavior and public ordered source/target `ResourceRef` lineage while keeping helpers private. | Unit tests for linked/copied counts, missing lineage, unsupported/cross-protocol failures, explicit fallback, private helper imports; `make test-package`. | Link/copy lineage preservation. |
@@ -52,11 +52,11 @@ Blockers: none for implementation-plan drafting
 
 ## Phase 1: Export Primitives, Layout, Policy, And Result Records
 
-Status: pending
+Status: merged
 Slug: `export-primitives`
 Branch: `agent/stage-8-p1-export-primitives`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-8-p1-export-primitives`
-PR: pending
+PR: [#55](https://github.com/samcantrill/rphys/pull/55)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -118,11 +118,17 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added `rphys.ops.export` data-only records for export specs,
+  targets, output layouts, policies, outcomes, field/record/export results, and
+  typed in-memory reports. The phase also added deterministic target
+  `FieldRef` derivation and stable schema-versioned spec fingerprints without
+  save execution, codec selection, link/copy helpers, derived assembly, root
+  exports, shorthand aliases, or public report serialization helpers.
+- Validation: `uv run pytest tests/unit/rphys/ops/test_export_layout.py tests/unit/rphys/ops/test_export_policy.py tests/unit/rphys/ops/test_export_results.py`; `uv run pytest tests/contracts/test_export_result_contract.py`; `make test-package`; `make validate-pr`; `make test-summary`; and `git diff --check` passed locally.
+- PR: [#55](https://github.com/samcantrill/rphys/pull/55)
+- Merge: merged to `develop` on 2026-05-15; merge commit `6d77857ccb28dd68020c3eb358e3b659ca9d022e`.
+- Follow-up: Phase 2 owns no-write codec selection and `OperationStep`
+  compatibility over the Phase 1 records.
 
 ## Phase 2: OperationStep Selection Preflight
 
