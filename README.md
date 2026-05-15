@@ -15,18 +15,20 @@ Start with:
 
 ## Current Status
 
-The rebuild has implemented the early public contracts for naming vocabulary,
-runtime field containers, lazy IO descriptors, codec contracts, explicit codec
-registries, lazy `SampleField` handles, and one-item `SampleBuilder`
-construction from `IndexItem` descriptors. Later roadmap stages still own
-datasource discovery, operations, export orchestration, training adapters, real
-codec catalogs, and project-specific workflows.
+The rebuild has implemented public contracts for naming vocabulary, runtime
+field containers, lazy IO descriptors, datasource/index descriptors and
+validation records, codec contracts, explicit codec registries, lazy
+`SampleField` handles, one-item `SampleBuilder` construction from `IndexItem`
+descriptors, generic operations, and Stage 7 sample/batch operation families.
+Later roadmap stages still own export/save orchestration, cache and
+materialization policy, DataLoader adapters, trainer/device policy, real codec
+catalogs, concrete algorithm catalogs, and project-specific workflows.
 
 Public API stability requires code, tests, and roadmap or docstring coverage to
 agree on the contract. Focused modules such as `rphys.io.codecs`,
-`rphys.data.sample_fields`, and `rphys.data.sample_builders` are the canonical
-homes for Stage 4 names unless package tests explicitly cover a package-level
-re-export.
+`rphys.data.sample_fields`, `rphys.data.sample_builders`, and `rphys.ops` are
+canonical homes for implemented names when package tests cover their public
+exports. The package root intentionally stays small.
 
 Core imports are intentionally lightweight. Importing `rphys`, `rphys.errors`,
 or the planned package homes must not import optional scientific, video,

@@ -1,4 +1,10 @@
-"""Public entrypoint for runtime operation bindings."""
+"""Public entrypoint for dependency-light runtime operation bindings.
+
+Generic operation foundations are imported eagerly. Stage 7 sample and batch
+operation families are exposed through lazy package attributes so importing
+``rphys.ops`` does not load runtime container modules unless those specialized
+names are requested.
+"""
 
 from __future__ import annotations
 
