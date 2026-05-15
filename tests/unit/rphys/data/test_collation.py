@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import pytest
 
-from rphys.data.collation import CollateContext, CollatePolicy, collate_samples
+from rphys.data.collation import (
+    BatchCollater,
+    CollateContext,
+    CollatePolicy,
+    collate_samples,
+)
 from rphys.data.containers import Batch, Sample
 from rphys.data.fields import FieldValue
 from rphys.data.locators import FieldLocator
@@ -118,6 +123,36 @@ def test_collate_context_is_minimal_and_has_no_policy_override() -> None:
     assert context.source == "unit"
     assert not hasattr(context, "policy")
     assert not hasattr(context, "policy_overrides")
+
+
+def test_batch_collater_delegates_to_list_collation_with_context() -> None:
+    collater = BatchCollater(context=CollateContext(operation="unit", source="loader"))
+
+    batch = collater(
+        [
+            _sample("frame-0", metadata={"sample_id": "a"}),
+            _sample("frame-1", metadata={"sample_id": "b"}),
+        ]
+    )
+
+    assert isinstance(batch, Batch)
+    assert batch.require(VIDEO) == ["frame-0", "frame-1"]
+    assert batch.field(VIDEO).metadata[MetadataKey("sample_id")] == ["a", "b"]
+
+
+def test_batch_collater_rejects_invalid_context() -> None:
+    with pytest.raises(CollatePolicyError):
+        BatchCollater(context=object())  # type: ignore[arg-type]
+
+
+def test_batch_collater_preserves_collate_samples_failures() -> None:
+    collater = BatchCollater()
+
+    with pytest.raises(CollatePolicyError):
+        collater([])
+
+    with pytest.raises(CollatePolicyError):
+        collater([_sample("frame-0", policy=None), _sample("frame-1")])
 
 
 def test_collate_samples_list_policy_builds_batch_payloads_and_metadata() -> None:

@@ -19,7 +19,7 @@ from .fields import FieldValue
 from .locators import FieldLocator
 from .metadata import MetadataKey
 
-__all__ = ["CollateContext", "CollatePolicy", "collate_samples"]
+__all__ = ["BatchCollater", "CollateContext", "CollatePolicy", "collate_samples"]
 
 _MISSING = object()
 
@@ -40,6 +40,28 @@ class CollateContext:
 
     operation: str | None = None
     source: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class BatchCollater:
+    """Callable LIST-only collater over ``FieldLocator``-keyed samples.
+
+    The collater is intentionally a thin wrapper around ``collate_samples`` so
+    framework adapters can pass an explicit callable without changing collation
+    policy, field identity, payload shape, device placement, or model format.
+    """
+
+    context: CollateContext | None = None
+
+    def __post_init__(self) -> None:
+        if self.context is not None and not isinstance(self.context, CollateContext):
+            raise CollatePolicyError(
+                "BatchCollater context must be a CollateContext.",
+                actual=type(self.context).__name__,
+            )
+
+    def __call__(self, samples: Sequence[Sample]) -> Batch:
+        return collate_samples(samples, context=self.context)
 
 
 def collate_samples(

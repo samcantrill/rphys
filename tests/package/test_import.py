@@ -81,6 +81,7 @@ STAGE_1_DATA_MODULES = {
 
 STAGE_2_DATA_EXPORTS = [
     "Batch",
+    "BatchCollater",
     "FieldContainer",
     "CollateContext",
     "CollatePolicy",
@@ -91,6 +92,13 @@ STAGE_2_DATA_EXPORTS = [
     "FieldValue",
     "Sample",
     "SampleContract",
+    "collate_samples",
+]
+
+STAGE_2_COLLATION_EXPORTS = [
+    "BatchCollater",
+    "CollateContext",
+    "CollatePolicy",
     "collate_samples",
 ]
 
@@ -245,6 +253,13 @@ STAGE_9_DATASOURCE_SOURCE_EXPORTS = [
     "WorkerContextFactory",
     "SampleSource",
     "IndexSampleSource",
+]
+
+STAGE_9_DATASOURCE_TORCH_EXPORTS = [
+    "TorchSampleSourceDataset",
+    "TorchIndexSampleDataset",
+    "TorchDataLoaderPlan",
+    "TorchDataLoaderBuilder",
 ]
 
 STAGE_3_DATASOURCE_ERROR_NAMES = [
@@ -582,6 +597,14 @@ def test_stage_9_sample_source_module_exports_only_code_backed_names() -> None:
         assert hasattr(module, public_name)
 
 
+def test_stage_9_torch_adapter_module_exports_only_code_backed_names() -> None:
+    module = importlib.import_module("rphys.datasources.torch")
+
+    assert module.__all__ == STAGE_9_DATASOURCE_TORCH_EXPORTS
+    for public_name in STAGE_9_DATASOURCE_TORCH_EXPORTS:
+        assert hasattr(module, public_name)
+
+
 def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
     import rphys
     import rphys.datasources
@@ -629,6 +652,10 @@ def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
         "WorkerContextFactory",
         "SampleSource",
         "IndexSampleSource",
+        "TorchSampleSourceDataset",
+        "TorchIndexSampleDataset",
+        "TorchDataLoaderPlan",
+        "TorchDataLoaderBuilder",
     ]
 
     for public_name in forbidden_names:
@@ -690,3 +717,11 @@ def test_data_package_reexports_only_code_backed_stage_2_runtime_names() -> None
         assert hasattr(rphys.data, public_name)
     for public_name in STAGE_4_DATA_EXPORTS:
         assert not hasattr(rphys.data, public_name)
+
+
+def test_collation_module_exports_only_code_backed_names() -> None:
+    import rphys.data.collation
+
+    assert rphys.data.collation.__all__ == STAGE_2_COLLATION_EXPORTS
+    for public_name in STAGE_2_COLLATION_EXPORTS:
+        assert hasattr(rphys.data.collation, public_name)
