@@ -10,18 +10,20 @@ step input and returns the final :class:`OperationResult`.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 
 from rphys.errors import (
     InvalidOperationContextError,
     InvalidOperationPipelineError,
     OperationPipelineExecutionError,
 )
+from ._validation import coerce_non_empty_string
 from .core import OperationStep
 
 from .context import OperationContext, OperationResult
 from .contracts import OperationContract
 
-__all__ = ["OperationPipeline"]
+__all__ = ["OperationPipeline", "SampleOperationPipeline"]
 
 
 class OperationPipeline:
@@ -241,6 +243,246 @@ def _run_step(
             "operation pipeline step failed during execution.",
             step_index=step_index,
             operation_name=operation.name,
+            phase="run",
+            cause_type=type(exc).__name__,
+        ) from exc
+
+
+@dataclass(frozen=True, slots=True)
+class _SamplePipelineStep:
+    operation: OperationStep
+    diagnostic_name: str
+
+
+class SampleOperationPipeline:
+    """Ordered composition over sample operation steps.
+
+    Sequences use each operation's own name as the diagnostic step name.
+    Mappings preserve insertion order and use keys only as diagnostics; mapping
+    keys do not replace operation identities and are not durable artifact names.
+    """
+
+    __slots__ = ("_steps",)
+
+    def __init__(self, operations: Sequence[object] | Mapping[str, object]) -> None:
+        self._steps = _normalize_sample_pipeline_steps(operations)
+        if len(self._steps) == 0:
+            raise InvalidOperationPipelineError(
+                "sample operation pipeline must contain at least one operation.",
+                field="operations",
+                expected="non-empty sequence or mapping of SampleOperation",
+                actual="empty collection",
+            )
+        self._validate_compatibility()
+
+    @property
+    def operations(self) -> tuple[OperationStep, ...]:
+        """Ordered tuple of composed sample operation steps."""
+
+        return tuple(step.operation for step in self._steps)
+
+    def run(
+        self,
+        input_value: object,
+        context: object | None = None,
+    ) -> OperationResult:
+        """Execute sample steps in order and return the final result."""
+
+        try:
+            execution_context = _coerce_sample_pipeline_context(context)
+        except Exception as exc:
+            raise OperationPipelineExecutionError(
+                "sample operation pipeline context could not be validated.",
+                step_index=None,
+                phase="validate_context",
+                cause_type=type(exc).__name__,
+            ) from exc
+
+        result = None
+        current_value = input_value
+        for step_index, step in enumerate(self._steps):
+            result = _run_sample_step(
+                step,
+                step_index,
+                current_value,
+                execution_context,
+            )
+            current_value = result.output
+        return result
+
+    def __call__(
+        self,
+        input_value: object,
+        context: object | None = None,
+    ) -> OperationResult:
+        """Execute steps with the same semantics as ``run``."""
+
+        return self.run(input_value, context=context)
+
+    def _validate_compatibility(self) -> None:
+        for step_index in range(len(self._steps) - 1):
+            current_step = self._steps[step_index]
+            next_step = self._steps[step_index + 1]
+
+            current_output = _normalize_type_tuple(current_step.operation.contract.output_type)
+            next_input = _normalize_type_tuple(next_step.operation.contract.input_type)
+            if current_output is None or next_input is None:
+                continue
+
+            if not _compatible_type_tuple_pairs(current_output, next_input):
+                raise InvalidOperationPipelineError(
+                    "sample operation pipeline adjacent declarations are not type-compatible.",
+                    upstream_step_index=step_index,
+                    upstream_operation_name=current_step.operation.name,
+                    upstream_step_name=current_step.diagnostic_name,
+                    downstream_step_index=step_index + 1,
+                    downstream_operation_name=next_step.operation.name,
+                    downstream_step_name=next_step.diagnostic_name,
+                    expected=_render_type_tuple(next_input),
+                    actual=_render_type_tuple(current_output),
+                    field="operations",
+                )
+
+
+def _normalize_sample_pipeline_steps(
+    operations: Sequence[object] | Mapping[str, object],
+) -> tuple[_SamplePipelineStep, ...]:
+    if isinstance(operations, (str, bytes, bytearray)):
+        raise InvalidOperationPipelineError(
+            "sample operation pipeline operations must be a sequence or mapping, not text.",
+            field="operations",
+            expected="non-empty sequence or mapping of SampleOperation",
+            actual=type(operations).__name__,
+        )
+
+    if isinstance(operations, Mapping):
+        return tuple(
+            _SamplePipelineStep(
+                operation=_coerce_sample_pipeline_operation(
+                    entry,
+                    index,
+                    diagnostic_name=diagnostic_name,
+                ),
+                diagnostic_name=diagnostic_name,
+            )
+            for index, (name, entry) in enumerate(operations.items())
+            for diagnostic_name in (
+                coerce_non_empty_string(
+                    name,
+                    owner="SampleOperationPipeline",
+                    field=f"operations[{index}].key",
+                    expected="non-empty string mapping key",
+                    error_type=InvalidOperationPipelineError,
+                ),
+            )
+        )
+
+    if not isinstance(operations, Sequence):
+        raise InvalidOperationPipelineError(
+            "sample operation pipeline operations must be a sequence or mapping.",
+            field="operations",
+            expected="Sequence[SampleOperation] | Mapping[str, SampleOperation]",
+            actual=type(operations).__name__,
+        )
+
+    steps: list[_SamplePipelineStep] = []
+    for index, entry in enumerate(operations):
+        operation = _coerce_sample_pipeline_operation(entry, index)
+        steps.append(
+            _SamplePipelineStep(
+                operation=operation,
+                diagnostic_name=operation.name,
+            )
+        )
+    return tuple(steps)
+
+
+def _coerce_sample_pipeline_operation(
+    entry: object,
+    index: int,
+    *,
+    diagnostic_name: str | None = None,
+) -> OperationStep:
+    from .sample import SampleOperation
+
+    if isinstance(entry, (tuple, list)) and len(entry) == 2 and isinstance(entry[0], str):
+        raise InvalidOperationPipelineError(
+            "sample operation pipeline entries must be SampleOperation instances.",
+            field=f"operations[{index}]",
+            expected="SampleOperation",
+            actual="tuple[str, SampleOperation]",
+            step_index=index,
+            step_name=diagnostic_name,
+        )
+
+    if not isinstance(entry, SampleOperation):
+        raise InvalidOperationPipelineError(
+            "sample operation pipeline entries must be SampleOperation instances.",
+            field=f"operations[{index}]",
+            expected="SampleOperation",
+            actual=type(entry).__name__,
+            step_index=index,
+            step_name=diagnostic_name,
+        )
+
+    OperationPipeline._validate_operation_step(entry, index)
+    return entry
+
+
+def _coerce_sample_pipeline_context(context: object | None) -> object:
+    from .sample import SampleOperationContext
+
+    if context is None:
+        return SampleOperationContext()
+    if isinstance(context, SampleOperationContext):
+        if context.operation_name is not None:
+            raise InvalidOperationContextError(
+                "sample operation pipeline context operation_name must be unset.",
+                field="context.operation_name",
+                expected="None",
+                actual=context.operation_name,
+            )
+        return context
+    if isinstance(context, OperationContext):
+        return SampleOperationContext(
+            metadata=context.metadata,
+            provenance=context.provenance,
+        )
+
+    raise InvalidOperationContextError(
+        "sample operation pipeline context must be None, OperationContext, or SampleOperationContext.",
+        field="context",
+        expected="OperationContext | SampleOperationContext | None",
+        actual=type(context).__name__,
+    )
+
+
+def _run_sample_step(
+    step: _SamplePipelineStep,
+    step_index: int,
+    input_value: object,
+    context: object,
+) -> OperationResult:
+    try:
+        result = step.operation.run(input_value, context=context)
+        if not isinstance(result, OperationResult):
+            raise TypeError("step.run() must return OperationResult.")
+        return result
+    except AttributeError as exc:
+        raise OperationPipelineExecutionError(
+            "sample operation pipeline step failed to return an operation result.",
+            step_index=step_index,
+            operation_name=step.operation.name,
+            step_name=step.diagnostic_name,
+            phase="run",
+            cause_type=type(exc).__name__,
+        ) from exc
+    except Exception as exc:
+        raise OperationPipelineExecutionError(
+            "sample operation pipeline step failed during execution.",
+            step_index=step_index,
+            operation_name=step.operation.name,
+            step_name=step.diagnostic_name,
             phase="run",
             cause_type=type(exc).__name__,
         ) from exc
