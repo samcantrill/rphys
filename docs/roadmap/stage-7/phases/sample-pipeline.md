@@ -364,6 +364,9 @@ git diff --check
   heavy imports remain known.
 - PR preparation: durable PR body drafted in
   `docs/roadmap/stage-7/phases/sample-pipeline-pr-body.md`
+- PR: [#52](https://github.com/samcantrill/rphys/pull/52) opened against
+  `develop` from `agent/stage-7-p5-sample-pipeline`; target and title verified
+  by `gh pr view`
 - Automated review: pending
 - Merge result: pending
 - Cleanup: pending
