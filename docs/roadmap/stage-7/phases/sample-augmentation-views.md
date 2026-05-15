@@ -696,8 +696,11 @@ git diff --check
 - Pre-submit blocker gate: completed; no global/default RNG, backend-heavy
   import, nested sample view, durable replay serialization, or scope-expansion
   blocker remains known.
-- PR preparation: durable PR body drafted in
+- PR preparation: completed; durable PR body drafted in
   `docs/roadmap/stage-7/phases/sample-augmentation-views-pr-body.md`
+- PR: [#51](https://github.com/samcantrill/rphys/pull/51) opened against
+  `develop` from `agent/stage-7-p4-sample-augmentation-views`; target and
+  title verified by `gh pr view`
 - Automated review: not started
 - Merge result: pending
 - Cleanup: pending
