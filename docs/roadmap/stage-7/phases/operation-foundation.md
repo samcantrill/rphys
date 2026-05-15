@@ -532,9 +532,9 @@ run `uv lock --check` and record the reason.
 ## Refinement And Review Budget Status
 
 - Phase execution plan refinement: completed on expanded path
-- Phase implementation refinement: unused
+- Phase implementation refinement: completed for expanded-path hardening
 - PR review: unused
-- Blocker resolution: 0/3 used
+- Blocker resolution: 1/3 used
 
 ## Completion Notes
 
@@ -555,6 +555,15 @@ run `uv lock --check` and record the reason.
   workflow, cache/export, loader, trainer, or durable provenance policy, and
   made required phase-completion and PR-preparation validation commands
   explicit
+- Implementation refinement report: completed expanded-path hardening for raw
+  callable rejection, malformed structural `OperationStep` diagnostics, and
+  direct-step non-`OperationResult` execution wrapping. The existing
+  implementation satisfied the pinned behavior, so no source changes were
+  required.
+- Implementation refinement validation: passed
+  - `uv run pytest tests/unit/rphys/ops/test_pipelines.py`
+  - `uv run pytest tests/contracts/test_operation_pipeline_contract.py`
+  - `git diff --check`
 - Implementation validation: passed
   - `uv run pytest tests/unit/rphys/ops/test_core.py tests/unit/rphys/ops/test_pipelines.py`
   - `uv run pytest tests/contracts/test_operation_execution_contract.py tests/contracts/test_operation_pipeline_contract.py tests/contracts/test_operation_runtime_boundary_contract.py`
