@@ -5,7 +5,7 @@ Roadmap version: `v7`
 Planning document: `docs/roadmap/stage-7/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 4 pending after Phase 3 merge
+Current phase: Phase 4 PR open after local validation
 Blockers: none
 
 ## Summary
@@ -89,7 +89,7 @@ Blockers: none
 | 1 | `operation-foundation` | merged | `agent/stage-7-p1-operation-foundation` | [#48](https://github.com/samcantrill/rphys/pull/48) | `src/rphys/ops/core.py`, `src/rphys/ops/pipelines.py`, `src/rphys/ops/__init__.py`, focused errors/tests/docs | Refactor the operation foundation around `OperationStep`. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | OperationStep, custom step pipeline, generic mapping rejection |
 | 2 | `sample-foundations` | merged | `agent/stage-7-p2-sample-foundations` | [#49](https://github.com/samcantrill/rphys/pull/49) | `src/rphys/ops/sample.py`, `src/rphys/ops/__init__.py`, focused errors/tests | Establish sample operation public foundations. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | contract inspection, locator parsing, context/replay records, exports |
 | 3 | `sample-effects-checks` | merged | `agent/stage-7-p3-sample-effects-checks` | [#50](https://github.com/samcantrill/rphys/pull/50) | sample enforcement, transforms/checks, focused private helpers | Implement sample field-effect enforcement, transforms, and checks. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `make validate-pr`; `make test-summary`; `git diff --check` | declared mutation, same-locator replacement, lazy fields, route non-policy |
-| 4 | `sample-augmentation-views` | pending | `agent/stage-7-p4-sample-augmentation-views` | pending | sample augmentation params/replay/view behavior | Add sample augmentation replay and self-supervised view writing. | `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check` | replay, linked fields, no global RNG, view locators |
+| 4 | `sample-augmentation-views` | pr_open | `agent/stage-7-p4-sample-augmentation-views` | [#51](https://github.com/samcantrill/rphys/pull/51) | sample augmentation params/replay/view behavior | Add sample augmentation replay and self-supervised view writing. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `make validate-pr`; `make test-summary`; `git diff --check` | replay, linked fields, no global RNG, view locators |
 | 5 | `sample-pipeline` | pending | `agent/stage-7-p5-sample-pipeline` | pending | `src/rphys/ops/pipelines.py`, specialized pipeline tests | Add specialized sample pipeline composition. | `make test-unit`; `make test-contract`; `git diff --check` | ordered mapping, step diagnostics, generic pipeline regression |
 | 6 | `batch-surface` | pending | `agent/stage-7-p6-batch-surface` | pending | `src/rphys/ops/batch.py`, batch pipeline/equivalence tests | Add provisional batch operation, augmentation, equivalence, and pipeline surface. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `git diff --check` | LIST-collated equivalence, batch params, dtype/device metadata |
 | 7 | `docs-validation` | pending | `agent/stage-7-p7-docs-validation` | pending | public docstrings/docs/examples/final validation evidence | Finalize docs, examples, and PR validation evidence. | `make test`; `make test-summary`; `make test-package`; `make test-unit`; `make test-contract`; `make test-integration`; `uv lock --check`; `git diff --check`; `make validate-pr` if PR breadth warrants | public examples and residual-risk readback |
@@ -500,11 +500,11 @@ error wrapping broadly
 
 ## Phase 4: Sample Augmentation Replay And Views
 
-Status: pending
+Status: pr_open
 Slug: `sample-augmentation-views`
 Branch: `agent/stage-7-p4-sample-augmentation-views`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-7-p4-sample-augmentation-views`
-PR: pending
+PR: [#51](https://github.com/samcantrill/rphys/pull/51)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path unless parameter records require new public fields
@@ -571,15 +571,17 @@ Workflow path: fast path unless parameter records require new public fields
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed on the expanded path in
+  `docs/roadmap/stage-7/phases/sample-augmentation-views.md`
 - Planning/refinement budget: one scoped pass if params need additive fields
 - Implementation/refinement budget: one implementation pass plus replay
   regression fixes
 - PR review budget: one reproducibility/scientific-contract review
 - Blocker-resolution budget: reopen planning if augmentation params need
   backend arrays, durable serialization, or hidden RNG
-- Pre-submit blocker gate: use of global/default NumPy/Torch/random RNG,
-  backend-heavy imports, or nested sample views blocks completion
+- Pre-submit blocker gate: completed; no global/default NumPy/Torch/random RNG,
+  backend-heavy imports, nested sample views, durable replay serialization, or
+  scope-expansion blocker remains known
 - Merge record: pending
 
 ### Risks And Stop Conditions
@@ -594,9 +596,20 @@ Workflow path: fast path unless parameter records require new public fields
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
+- Implementation: added public `SampleAugmentationParams` and
+  `SampleAugmentation`, split sampling from deterministic application, attached
+  runtime `sample_augmentation_replay` metadata beside Phase 3
+  `sample_field_effects`, enforced exact declared writes for generated view
+  fields, and added public import, unit, contract, and lazy integration
+  coverage.
+- Validation: `make test-unit`, `make test-contract`, `make
+  test-integration`, `make test-package`, `make validate-pr`, `make
+  test-summary`, and `git diff --check` passed. `make test-summary` reported
+  610 passing package/unit/contract/integration tests; e2e and acceptance
+  suites are not present.
+- PR: [#51](https://github.com/samcantrill/rphys/pull/51) opened against
+  `develop` from `agent/stage-7-p4-sample-augmentation-views`; target and
+  title verified by `gh pr view`.
 - Merge: pending
 - Follow-up: pending
 
