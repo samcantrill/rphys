@@ -595,9 +595,10 @@ residual risk if either target is unavailable.
 ## Refinement And Review Budget Status
 
 - Phase execution plan refinement: completed on the expanded path
-- Phase implementation refinement: unused
+- Phase implementation refinement: completed for the expanded-path
+  `SampleCheck` metadata/report-field blocker cluster
 - PR review: unused
-- Blocker resolution: 0/3 used
+- Blocker resolution: 1/3 used
 
 ## Completion Notes
 
@@ -611,9 +612,55 @@ residual risk if either target is unavailable.
   metadata keys, focused undeclared-mutation error behavior, and
   `SampleCheck` decision/route metadata validation while keeping route labels
   non-policy.
+- Implementation refinement summary: fixed present-but-`None` reserved
+  `SampleCheck` metadata handling, added focused report-field and route-label
+  opacity coverage, and kept optional `copy_mode` owner hygiene scoped to
+  `SampleOperation`.
 - Pre-submit blocker gate: pending.
 - PR preparation: pending.
 - Automated review: pending.
 - Merge result: pending.
 - Cleanup: pending.
 - Remaining blockers: no blockers identified in scoped implementation; `make validate-pr` and `make test-summary` were not run in this pass by scope.
+
+## Phase Refinement Report: SampleCheck Metadata Presence
+
+### Assigned Blocker
+
+- Blocker: expanded-path implementation refinement pass before PR prep; fix
+  `SampleCheck` reserved metadata validation so present `None` values are
+  invalid, add report-field mutation coverage, and prove route labels remain
+  opaque metadata.
+- Source: implementation-test refinement request for Stage 7 Phase 3.
+- Scope: `src/rphys/ops/sample.py`, `tests/unit/rphys/ops/test_sample.py`,
+  and this phase artifact.
+- Budget use: implementation refinement completed; blocker resolution 1/3
+  used.
+
+### Resolution
+
+- Changes made: `SampleCheck` now validates reserved metadata by explicit key
+  presence instead of `Mapping.get(...)`, so `sample_decision=None` and
+  `sample_route=None` are invalid operation results. Invalid
+  `SampleOperation(..., copy_mode=...)` errors now report owner
+  `SampleOperation`.
+- Tests or docs updated: added focused unit coverage for declared diagnostic
+  report-field writes, undeclared report-field mutation enforcement, opaque
+  arbitrary route labels, and invalid present reserved metadata values
+  including `None`, lists, dictionaries, strings, booleans, empty tuples, and
+  mixed record tuples.
+- Validation rerun: `uv run pytest tests/unit/rphys/ops/test_sample.py`;
+  `make test-unit`; `make test-contract`; `git diff --check`.
+
+### Result
+
+- Blocker resolved: yes.
+- Remaining blocker: none identified in this refinement.
+- Recommended next gate: PR preparation after the manager-requested
+  pre-submit gate.
+
+### Files Changed
+
+- `src/rphys/ops/sample.py`
+- `tests/unit/rphys/ops/test_sample.py`
+- `docs/roadmap/stage-7/phases/sample-effects-checks.md`

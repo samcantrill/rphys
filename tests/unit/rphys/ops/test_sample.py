@@ -42,6 +42,7 @@ from rphys.ops import (
 VIDEO = FieldLocator.parse("inputs/video.rgb")
 SECONDARY = FieldLocator.parse("inputs/video.mask")
 ANOTHER = FieldLocator.parse("inputs/mask.rgb")
+REPORT = FieldLocator.parse("diagnostics/quality.face_visibility")
 
 
 def _identity(payload: Sample, *, context: SampleOperationContext) -> Sample:
@@ -361,8 +362,9 @@ def test_sample_operation_rejects_invalid_copy_mode_inputs() -> None:
     sample = Sample({VIDEO: FieldValue((1, 2), schema="video.rgb.v1")})
     SampleOperation(_identity, copy_mode="in_place")
 
-    with pytest.raises(InvalidOperationContractError):
+    with pytest.raises(InvalidOperationContractError) as exc_info:
         SampleOperation(_identity, copy_mode="bad")
+    assert exc_info.value.context["owner"] == "SampleOperation"
 
     with pytest.raises(InvalidOperationContractError):
         SampleOperation(
@@ -573,6 +575,103 @@ def test_sample_check_validates_sample_decision_and_route_records() -> None:
     assert isinstance(result.metadata["sample_decision"], SampleDecision)
     assert isinstance(result.metadata["sample_route"], tuple)
     assert len(result.metadata["sample_route"]) == 2
+
+
+def test_sample_check_allows_declared_report_field_writes() -> None:
+    def report_kernel(payload: Sample, *, context: SampleOperationContext) -> Sample:
+        payload.set_field(REPORT, FieldValue(True, schema="quality.face_visibility.v1"))
+        return payload
+
+    result = SampleCheck(
+        report_kernel,
+        name="report-check",
+        contract=SampleOperationContract(
+            field_permissions=SampleFieldPermissions(writes=(REPORT,)),
+        ),
+    )(Sample({VIDEO: FieldValue((1,), schema="video.rgb.v1")}))
+
+    assert result.output.field(REPORT).payload is True
+    assert result.metadata["sample_field_effects"]["added"] == (str(REPORT),)
+
+
+def test_sample_check_undeclared_report_field_write_fails_through_mutation_enforcement() -> None:
+    def report_kernel(payload: Sample, *, context: SampleOperationContext) -> Sample:
+        payload.set_field(REPORT, FieldValue(True, schema="quality.face_visibility.v1"))
+        return payload
+
+    with pytest.raises(UndeclaredSampleFieldMutationError) as exc:
+        SampleCheck(report_kernel, name="undeclared-report")(
+            Sample({VIDEO: FieldValue((1,), schema="video.rgb.v1")})
+        )
+
+    assert exc.value.context["operation_name"] == "undeclared-report"
+    assert exc.value.context["effect_type"] == "added"
+    assert str(REPORT) in exc.value.context["detected_added"]
+
+
+def test_sample_check_route_labels_are_opaque_non_policy_metadata() -> None:
+    arbitrary_label = "route:send_to_review_queue/without_policy_lookup"
+
+    def route_kernel(payload: Sample, *, context: SampleOperationContext) -> OperationResult:
+        return OperationResult(
+            output=payload,
+            operation_name="opaque-route",
+            metadata={
+                "sample_route": SampleRoute(
+                    label=arbitrary_label,
+                    reason="caller-defined",
+                )
+            },
+        )
+
+    result = SampleCheck(route_kernel, name="opaque-route")(
+        Sample({VIDEO: FieldValue((1,), schema="video.rgb.v1")})
+    )
+
+    assert result.metadata["sample_route"].label == arbitrary_label
+
+
+@pytest.mark.parametrize(
+    ("field_name", "value"),
+    [
+        ("sample_decision", None),
+        ("sample_decision", []),
+        ("sample_decision", {}),
+        ("sample_decision", "accept"),
+        ("sample_decision", True),
+        ("sample_decision", ()),
+        (
+            "sample_decision",
+            (SampleDecision(label="accept"), SampleRoute(label="audit")),
+        ),
+        ("sample_route", None),
+        ("sample_route", []),
+        ("sample_route", {}),
+        ("sample_route", "continue"),
+        ("sample_route", False),
+        ("sample_route", ()),
+        (
+            "sample_route",
+            (SampleRoute(label="continue"), SampleDecision(label="accept")),
+        ),
+    ],
+)
+def test_sample_check_rejects_present_invalid_reserved_metadata_values(
+    field_name: str,
+    value: object,
+) -> None:
+    def invalid_metadata(payload: Sample, *, context: SampleOperationContext) -> OperationResult:
+        return OperationResult(
+            output=payload,
+            operation_name="invalid-reserved-metadata",
+            metadata={field_name: value},
+        )
+
+    with pytest.raises(InvalidOperationResultError):
+        SampleCheck(
+            invalid_metadata,
+            name="invalid-reserved-metadata",
+        )(Sample({VIDEO: FieldValue((1,), schema="video.rgb.v1")}))
 
 
 def test_sample_check_rejects_invalid_decision_and_route_metadata_shapes() -> None:

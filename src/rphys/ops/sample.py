@@ -428,7 +428,7 @@ class SampleOperation(OperationStep):
 
         resolved_copy_mode = resolved_contract.copy_mode
         if copy_mode is not None:
-            requested_copy_mode = _coerce_copy_mode(copy_mode)
+            requested_copy_mode = _coerce_copy_mode(copy_mode, owner="SampleOperation")
             if resolved_contract._copy_mode_explicit and resolved_copy_mode != requested_copy_mode:
                 raise InvalidOperationContractError(
                     "sample operation copy_mode conflicts with contract copy_mode.",
@@ -867,19 +867,17 @@ def _validate_sample_check_metadata(
     *,
     operation_name: str,
 ) -> None:
-    decision_value = metadata.get("sample_decision")
-    if decision_value is not None:
+    if "sample_decision" in metadata:
         _validate_sample_check_meta_record(
-            decision_value,
+            metadata["sample_decision"],
             "sample_decision",
             SampleDecision,
             operation_name=operation_name,
         )
 
-    route_value = metadata.get("sample_route")
-    if route_value is not None:
+    if "sample_route" in metadata:
         _validate_sample_check_meta_record(
-            route_value,
+            metadata["sample_route"],
             "sample_route",
             SampleRoute,
             operation_name=operation_name,
