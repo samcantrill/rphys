@@ -1,6 +1,6 @@
 # Roadmap Stage 9 Implementation Plan
 
-Status: approved; Phase 3 merged, ready for Phase 4 execution through implementation workflow
+Status: approved; Phase 4 merged, ready for Phase 5 execution through implementation workflow
 Roadmap version: `v9`
 Planning document: `docs/roadmap/stage-9/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
@@ -41,7 +41,7 @@ Blockers: none
 | 1 | `sample-source-foundation` | merged | `agent/stage-9-data-loading-cache-p1-sample-source-foundation` | [#60](https://github.com/samcantrill/rphys/pull/60) | `src/rphys/datasources/sources.py`; source/context tests; scoped docs/docstrings | Add `SampleRequest`, `SampleRuntimeContext`, `WorkerContextFactory`, `SampleSource`, and `IndexSampleSource`. | Focused source/context unit, contract, integration, package import, and diff checks. | Synthetic `DataSourceIndex` to lazy/eager `Sample`; derived index via ordinary source path. |
 | 2 | `torch-collater-boundary` | merged | `agent/stage-9-data-loading-cache-p2-torch-collater-boundary` | [#61](https://github.com/samcantrill/rphys/pull/61) | `src/rphys/datasources/torch.py`; `src/rphys/data/collation.py`; adapter/collater/package tests | Add optional torch adapters and a FieldLocator-preserving `BatchCollater`. | Package import-boundary, missing/fake torch, collater, adapter, and diff checks. | Optional torch dataset over `SampleSource`; `BatchCollater` over FieldLocator-keyed samples. |
 | 3 | `deterministic-cache-store` | merged | `agent/stage-9-data-loading-cache-p3-deterministic-cache-store` | [#62](https://github.com/samcantrill/rphys/pull/62) | `src/rphys/datasources/cache.py`; cache unit/contract/temp-dir tests; cache docs/docstrings | Add deterministic cache records, local atomic store, fake/minimal explicit value strategy, and `CachedSampleSource`. | Cache key/manifest/policy/result, temp-dir atomic store, cached-source, package import, and diff checks. | Local cache hit/miss/stale/corrupt matrix; request-specific cache adversarial source. |
-| 4 | `prepared-reader-source` | pending | `agent/stage-9-data-loading-cache-p4-prepared-reader-source` | pending | `src/rphys/datasources/prepared.py`; prepared manifest/reader/source tests; provisional docs | Add `PreparedDataManifest`, public provisional `PreparedSampleReader`, `PreparedSampleSource`, and equivalence checks. | Prepared manifest, fake reader, equivalence matrix, package import, and diff checks. | Prepared manifest equivalence success/failure; fake prepared reader/backend boundary. |
+| 4 | `prepared-reader-source` | merged | `agent/stage-9-data-loading-cache-p4-prepared-reader-source` | [#63](https://github.com/samcantrill/rphys/pull/63) | `src/rphys/datasources/prepared.py`; prepared manifest/reader/source tests; provisional docs | Add `PreparedDataManifest`, public provisional `PreparedSampleReader`, `PreparedSampleSource`, and equivalence checks. | Prepared manifest, fake reader, equivalence matrix, package import, and diff checks. | Prepared manifest equivalence success/failure; fake prepared reader/backend boundary. |
 | 5 | `materialization-batch-records` | pending | `agent/stage-9-data-loading-cache-p5-materialization-batch-records` | pending | `src/rphys/datasources/prepared.py` or a code-backed sibling if implementation evidence requires it; materialization/batch record tests | Add storage-neutral materialization, layout, cost, and batch-planning records. | Record validator, package import, contract, docs, and diff checks. | Batch cost metadata and sampler plan; storage-neutral materialization records. |
 | 6 | `datapath-evidence-closeout` | pending | `agent/stage-9-data-loading-cache-p6-datapath-evidence-closeout` | pending | data-path evidence records; synthetic integration; public exports/docs/package closeout | Add data-path evidence/profile records and close Stage 9 docs, examples, exports, and focused integration. | Data-path record tests, integration smoke, package/import checks, relevant unit/contract suites, `git diff --check`, and broadened validation as needed. | Synthetic source-to-collater/cache/prepared smoke; data-path profile/benchmark evidence. |
 
@@ -312,11 +312,11 @@ Workflow path: expanded path
 
 ## Phase 4: Prepared Manifest, Public Provisional Reader, And Prepared Source
 
-Status: pending
+Status: merged
 Slug: `prepared-reader-source`
 Branch: `agent/stage-9-data-loading-cache-p4-prepared-reader-source`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-9-data-loading-cache-p4-prepared-reader-source`
-PR: pending
+PR: [#63](https://github.com/samcantrill/rphys/pull/63)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -360,13 +360,13 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: complete in `docs/roadmap/stage-9/phases/prepared-reader-source.md`
 - Planning/refinement budget: expanded
 - Implementation/refinement budget: expanded
-- PR review budget: expanded
+- PR review budget: consumed by managing-agent pre-submit review; no blocking findings
 - Blocker-resolution budget: expanded
 - Pre-submit blocker gate: no backend-defined domain semantics or hidden preprocessing
-- Merge record: pending
+- Merge record: complete; squash merged via PR #63 as `8469fa5dff5ff21ed5c728d5f8ab0f536c8eac89`
 
 ### Risks And Stop Conditions
 
@@ -376,11 +376,24 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: complete; `rphys.datasources.prepared` adds prepared field/manifest/read records, public provisional `PreparedSampleReader`, and `PreparedSampleSource`
+- Validation: `make validate-pr` and `make test-summary` passed with package 40, unit 604, contract 114, integration 17, total 775
+- PR: https://github.com/samcantrill/rphys/pull/63 merged into `develop`
+- Merge: squash merged as `8469fa5dff5ff21ed5c728d5f8ab0f536c8eac89`
+- Follow-up: Phase 5 `materialization-batch-records` may now start from updated `develop`; preserve the public provisional reader boundary and avoid concrete backend execution
+
+### Phase Merge Record
+
+- Phase: Phase 4 `prepared-reader-source`
+- Branch: `agent/stage-9-data-loading-cache-p4-prepared-reader-source`
+- PR: https://github.com/samcantrill/rphys/pull/63
+- Base branch: `develop`
+- Merge command: `gh pr merge 63 --squash --match-head-commit 31e2d08ac2c33a94438b01d8166be466e17f9148 --subject "Stage 9 Phase 4: Prepared reader source" --body "..."`
+- Merge result: merged 2026-05-15
+- Merge commit: `8469fa5dff5ff21ed5c728d5f8ab0f536c8eac89`
+- Branch cleanup: complete; local and remote Phase 4 branches deleted after merge
+- Worktree cleanup: complete; Phase 4 worktree removed and worktree metadata pruned
+- Remaining blockers: none
 
 ## Phase 5: Storage-Neutral Materialization, Layout, Cost, And Batch-Planning Records
 

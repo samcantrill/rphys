@@ -126,8 +126,8 @@ git diff --check
 - PR body draft: complete in `docs/roadmap/stage-9/phases/prepared-reader-source-pr-body.md`
 - PR preparation: PR opened and verified as non-draft PR #63 against base `develop` from head `agent/stage-9-data-loading-cache-p4-prepared-reader-source`
 - Automated review: complete; managing-agent local pre-submit review found no blocking findings
-- Merge result: pending
-- Cleanup: pending
+- Merge result: merged into `develop` through PR #63 as squash commit `8469fa5dff5ff21ed5c728d5f8ab0f536c8eac89`
+- Cleanup: complete; Phase 4 worktree removed, worktree metadata pruned, and local/remote phase branches deleted
 - Remaining blockers: none identified for implementation
 
 ## Automated Phase PR Review Report
@@ -152,3 +152,33 @@ git diff --check
 - Head: `agent/stage-9-data-loading-cache-p4-prepared-reader-source`
 - Title: `Stage 9 Index Adapters, Torch Data Loading, And Cache - Phase 4: Prepared Manifest, Public Provisional Reader, And Prepared Source`
 - Initial status checks: no GitHub status checks reported at PR-open verification time.
+
+# Phase Merge Record: Stage 9 Phase 4 Prepared Manifest, Public Provisional Reader, And Prepared Source
+
+## Merge Facts
+
+- Phase: Phase 4 `prepared-reader-source`
+- Branch: `agent/stage-9-data-loading-cache-p4-prepared-reader-source`
+- PR: https://github.com/samcantrill/rphys/pull/63
+- Base branch: `develop`
+- Merge command: `gh pr merge 63 --squash --match-head-commit 31e2d08ac2c33a94438b01d8166be466e17f9148 --subject "Stage 9 Phase 4: Prepared reader source" --body "..."`
+- Merge result: merged 2026-05-15
+- Merge commit: `8469fa5dff5ff21ed5c728d5f8ab0f536c8eac89`
+- Branch cleanup: complete; local and remote Phase 4 branches deleted after merge
+- Worktree cleanup: complete; Phase 4 worktree removed and worktree metadata pruned
+
+## Completion Summary
+
+- Behavior implemented: module-scoped `rphys.datasources.prepared` with prepared field/manifest/read records, public provisional `PreparedSampleReader`, and `PreparedSampleSource`.
+- Tests and validation: `make validate-pr` and `make test-summary` passed with package 40, unit 604, contract 114, integration 17, total 775; no GitHub status checks were configured for PR #63.
+- Documentation: phase plan, PR body, automated review, implementation-plan PR state, and merge facts recorded.
+- Scientific contract implications: prepared reads validate manifest/request/context equivalence before reader access; the reader protocol is public provisional and minimal; no concrete backend SDK, materialization worker, full read/write protocol, cache payload writer, trainer/device/model-formatting, or DDP behavior was added.
+- Follow-up notes for later phases: Phase 5 can add storage-neutral materialization/layout/cost and batch-planning records on top of the manifest identity and provisional reader boundary.
+
+## Implementation Plan Update
+
+- Phase status: merged
+- Completion summary recorded: yes
+- Validation evidence recorded: yes
+- Remaining blockers: none
+- Metadata commit: this direct `develop` metadata commit records merge and cleanup facts
