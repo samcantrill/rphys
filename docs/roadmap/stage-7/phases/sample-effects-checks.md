@@ -623,7 +623,8 @@ residual risk if either target is unavailable.
 - PR preparation: PR body draft completed at
   `docs/roadmap/stage-7/phases/sample-effects-checks-pr-body.md`; expanded-path
   PR body refine completed by manager after reading the draft against the final
-  diff and validation evidence. PR opening pending.
+  diff and validation evidence. PR #50 opened against `develop` and verified
+  with the canonical title.
 - Automated review: pending.
 - Merge result: pending.
 - Cleanup: pending.

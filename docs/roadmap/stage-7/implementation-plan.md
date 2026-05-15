@@ -5,7 +5,7 @@ Roadmap version: `v7`
 Planning document: `docs/roadmap/stage-7/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 3 pending after Phase 2 merge
+Current phase: Phase 3 PR open after local validation
 Blockers: none
 
 ## Summary
@@ -88,7 +88,7 @@ Blockers: none
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `operation-foundation` | merged | `agent/stage-7-p1-operation-foundation` | [#48](https://github.com/samcantrill/rphys/pull/48) | `src/rphys/ops/core.py`, `src/rphys/ops/pipelines.py`, `src/rphys/ops/__init__.py`, focused errors/tests/docs | Refactor the operation foundation around `OperationStep`. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | OperationStep, custom step pipeline, generic mapping rejection |
 | 2 | `sample-foundations` | merged | `agent/stage-7-p2-sample-foundations` | [#49](https://github.com/samcantrill/rphys/pull/49) | `src/rphys/ops/sample.py`, `src/rphys/ops/__init__.py`, focused errors/tests | Establish sample operation public foundations. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | contract inspection, locator parsing, context/replay records, exports |
-| 3 | `sample-effects-checks` | pending | `agent/stage-7-p3-sample-effects-checks` | pending | sample enforcement, transforms/checks, focused private helpers | Implement sample field-effect enforcement, transforms, and checks. | `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check` | declared mutation, same-locator replacement, lazy fields, route non-policy |
+| 3 | `sample-effects-checks` | pr_open | `agent/stage-7-p3-sample-effects-checks` | [#50](https://github.com/samcantrill/rphys/pull/50) | sample enforcement, transforms/checks, focused private helpers | Implement sample field-effect enforcement, transforms, and checks. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `make validate-pr`; `make test-summary`; `git diff --check` | declared mutation, same-locator replacement, lazy fields, route non-policy |
 | 4 | `sample-augmentation-views` | pending | `agent/stage-7-p4-sample-augmentation-views` | pending | sample augmentation params/replay/view behavior | Add sample augmentation replay and self-supervised view writing. | `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check` | replay, linked fields, no global RNG, view locators |
 | 5 | `sample-pipeline` | pending | `agent/stage-7-p5-sample-pipeline` | pending | `src/rphys/ops/pipelines.py`, specialized pipeline tests | Add specialized sample pipeline composition. | `make test-unit`; `make test-contract`; `git diff --check` | ordered mapping, step diagnostics, generic pipeline regression |
 | 6 | `batch-surface` | pending | `agent/stage-7-p6-batch-surface` | pending | `src/rphys/ops/batch.py`, batch pipeline/equivalence tests | Add provisional batch operation, augmentation, equivalence, and pipeline surface. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `git diff --check` | LIST-collated equivalence, batch params, dtype/device metadata |
@@ -376,11 +376,11 @@ adapter conflict
 
 ## Phase 3: Sample Field Effects, Transforms, And Checks
 
-Status: pending
+Status: pr_open
 Slug: `sample-effects-checks`
 Branch: `agent/stage-7-p3-sample-effects-checks`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-7-p3-sample-effects-checks`
-PR: pending
+PR: [#50](https://github.com/samcantrill/rphys/pull/50)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path if snapshot behavior touches shared helpers or
@@ -447,17 +447,16 @@ error wrapping broadly
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
-- Planning/refinement budget: one scoped pass for snapshot helper design if
-  implementation pressure appears
-- Implementation/refinement budget: one implementation pass plus adversarial
-  test fixes
+- Phase execution plan: completed on the expanded path in
+  `docs/roadmap/stage-7/phases/sample-effects-checks.md`
+- Planning/refinement budget: completed with one expanded-path refinement pass
+- Implementation/refinement budget: completed with one implementation pass and
+  one focused expanded-path metadata/report-field refinement
 - PR review budget: one deterministic behavior/scientific-boundary review
-- Blocker-resolution budget: reopen planning if enforcement requires container
-  proxies or hidden payload instrumentation
-- Pre-submit blocker gate: lazy-field materialization by contract checks,
-  policy-like route/drop behavior, or public private-helper leakage blocks
-  completion
+- Blocker-resolution budget: 1/3 used for `SampleCheck` reserved metadata and
+  report-field coverage hardening
+- Pre-submit blocker gate: completed; no lazy-field materialization,
+  route/drop policy, or public private-helper leakage blocker found
 - Merge record: pending
 
 ### Risks And Stop Conditions
@@ -473,11 +472,21 @@ error wrapping broadly
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
+- Implementation: completed with deterministic sample copy modes, field-effect
+  snapshots, declared mutation enforcement, `SampleTransform`, `SampleCheck`,
+  `SampleDecision`, `SampleRoute`, and
+  `UndeclaredSampleFieldMutationError`.
+- Validation: `make test-unit`, `make test-contract`, `make
+  test-integration`, `make test-package`, `make validate-pr`, `make
+  test-summary`, and `git diff --check` passed. `make test-summary` reported
+  592 passing package/unit/contract/integration tests; e2e and acceptance
+  suites are not present.
+- PR: [#50](https://github.com/samcantrill/rphys/pull/50) opened against
+  `develop` from `agent/stage-7-p3-sample-effects-checks`; target and title
+  verified by `gh pr view`.
 - Merge: pending
-- Follow-up: pending
+- Follow-up: Phase 4 owns augmentation params, replay, stochastic sampling, and
+  generated view writes; Phase 5 owns specialized sample pipeline composition.
 
 ## Phase 4: Sample Augmentation Replay And Views
 
