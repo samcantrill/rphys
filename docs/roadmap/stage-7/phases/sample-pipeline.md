@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: draft phase execution plan
+- Status: implementation complete; PR preparation pending
 - Roadmap stage: `v7`
 - Feature focus: sample operation pipeline composition
 - Stage descriptor: SampleOps, BatchOps, Transforms, Augmentations, Checks, And Pipelines
@@ -22,7 +22,7 @@
   `develop`; local-only completion is not allowed
 - Plan quality gate: implementation-plan quality gate already passed
 - Draft pass: completed in this artifact
-- Refine pass: not needed unless shared helper changes alter generic pipeline behavior
+- Refine pass: not needed; implementation preserved generic pipeline behavior
 - Setup limitations: none; branch and worktree created from `develop`
 - Blockers: none
 
@@ -343,11 +343,25 @@ git diff --check
 ## Completion Notes
 
 - Draft plan: completed in this artifact
-- Final phase execution plan: pending
-- Implementation summary: pending
-- Implementation validation: pending
-- Refinement summary: pending
-- Pre-submit blocker gate: pending
+- Final phase execution plan: completed in this artifact
+- Implementation summary: implemented on 2026-05-15 in
+  `agent/stage-7-p5-sample-pipeline`; added public
+  `SampleOperationPipeline` with sequence and insertion-ordered mapping
+  construction, private diagnostic step normalization, sample context
+  propagation, output forwarding, step-aware execution diagnostics, and
+  package exports while leaving generic `OperationPipeline` mapping rejection
+  unchanged.
+- Implementation validation: targeted
+  `uv run pytest tests/unit/rphys/ops/test_pipelines.py tests/contracts/test_operation_pipeline_contract.py tests/package/test_import.py`,
+  `make test-unit`, `make test-contract`, `make test-package`, `make
+  validate-pr`, `make test-summary`, and `git diff --check` passed on
+  2026-05-15. `make test-summary` reported 619 passing
+  package/unit/contract/integration tests; e2e and acceptance suites are not
+  present.
+- Refinement summary: not needed
+- Pre-submit blocker gate: completed; no generic mapping support, tuple named
+  entries, public step helper leakage, batch behavior, workflow semantics, or
+  heavy imports remain known.
 - PR preparation: pending
 - Automated review: pending
 - Merge result: pending

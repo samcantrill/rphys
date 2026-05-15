@@ -11,13 +11,26 @@ from rphys.errors import (
     OperationPipelineExecutionError,
     InvalidOperationInputError,
 )
+from rphys.data import Sample
+from rphys.data.fields import FieldValue
+from rphys.data.locators import FieldLocator
 from rphys.ops import (
     Operation,
     OperationContract,
     OperationContext,
     OperationPipeline,
     OperationResult,
+    SampleFieldPermissions,
+    SampleOperationContext,
+    SampleOperationContract,
+    SampleOperationPipeline,
+    SampleTransform,
 )
+
+
+VIDEO = FieldLocator.parse("inputs/video.rgb")
+VIEW_A = FieldLocator.parse("inputs/video.rgb.view_a")
+VIEW_B = FieldLocator.parse("inputs/video.rgb.view_b")
 
 
 def increment(value: int, *, context: OperationContext) -> int:
@@ -30,6 +43,45 @@ def multiply(value: int, *, context: OperationContext) -> int:
 
 def failure(value: object, *, context: OperationContext) -> int:
     raise ValueError("boom")
+
+
+def _sample_with_video() -> Sample:
+    return Sample({VIDEO: FieldValue((1, 2, 3), schema="video.rgb.v1")})
+
+
+def _write_view_a(sample: Sample, *, context: SampleOperationContext) -> Sample:
+    sample.set_field(
+        VIEW_A,
+        FieldValue((context.operation_name, context.run_seed), schema="video.rgb.view_a.v1"),
+    )
+    return sample
+
+
+def _write_view_b(sample: Sample, *, context: SampleOperationContext) -> Sample:
+    sample.set_field(
+        VIEW_B,
+        FieldValue(sample.field(VIEW_A).payload, schema="video.rgb.view_b.v1"),
+    )
+    return sample
+
+
+def _sample_transform(
+    function,
+    *,
+    name: str,
+    reads: tuple[FieldLocator, ...] = (VIDEO,),
+    writes: tuple[FieldLocator, ...],
+) -> SampleTransform:
+    return SampleTransform(
+        function,
+        name=name,
+        contract=SampleOperationContract(
+            field_permissions=SampleFieldPermissions(
+                reads=reads,
+                writes=writes,
+            ),
+        ),
+    )
 
 
 def test_operation_pipeline_signature_is_fixed() -> None:
@@ -375,3 +427,164 @@ def test_pipeline_wraps_runtime_step_input_mismatch() -> None:
     assert exc.value.context["operation_name"] == "typed-downstream"
     assert exc.value.context["cause_type"] == "InvalidOperationInputError"
     assert isinstance(exc.value.__cause__, InvalidOperationInputError)
+
+
+def test_sample_operation_pipeline_runs_sequence_and_forwards_outputs() -> None:
+    first = _sample_transform(_write_view_a, name="write-view-a", writes=(VIEW_A,))
+    second = _sample_transform(_write_view_b, name="write-view-b", reads=(VIEW_A,), writes=(VIEW_B,))
+    context = SampleOperationContext(metadata={"dataset": "synthetic"}, run_seed="seed-1")
+    pipeline = SampleOperationPipeline([first, second])
+    sample = _sample_with_video()
+
+    result = pipeline.run(sample, context=context)
+
+    assert pipeline.operations == (first, second)
+    assert result.output is sample
+    assert result.operation_name == "write-view-b"
+    assert result.output.field(VIEW_A).payload == ("write-view-a", "seed-1")
+    assert result.output.field(VIEW_B).payload == ("write-view-a", "seed-1")
+    assert result.metadata["sample_field_effects"]["added"] == (str(VIEW_B),)
+
+
+def test_sample_operation_pipeline_preserves_ordered_mapping_and_diagnostic_names() -> None:
+    first = _sample_transform(_write_view_a, name="write-view-a", writes=(VIEW_A,))
+
+    def fail_missing(sample: Sample, *, context: SampleOperationContext) -> Sample:
+        return sample
+
+    missing = _sample_transform(
+        fail_missing,
+        name="needs-view-b",
+        reads=(VIEW_B,),
+        writes=(VIEW_A,),
+    )
+    pipeline = SampleOperationPipeline(
+        OrderedDict(
+            [
+                ("alias-write-a", first),
+                ("alias-needs-b", missing),
+            ]
+        )
+    )
+
+    with pytest.raises(OperationPipelineExecutionError) as exc:
+        pipeline.run(_sample_with_video())
+
+    assert pipeline.operations == (first, missing)
+    assert exc.value.context["step_index"] == 1
+    assert exc.value.context["operation_name"] == "needs-view-b"
+    assert exc.value.context["step_name"] == "alias-needs-b"
+    assert exc.value.context["cause_type"] == "MissingFieldError"
+
+
+def test_sample_operation_pipeline_propagates_sample_context_per_operation() -> None:
+    contexts: list[SampleOperationContext] = []
+
+    def capture_a(sample: Sample, *, context: SampleOperationContext) -> Sample:
+        contexts.append(context)
+        sample.set_field(VIEW_A, FieldValue(context.metadata["dataset"], schema="video.rgb.view_a.v1"))
+        return sample
+
+    def capture_b(sample: Sample, *, context: SampleOperationContext) -> Sample:
+        contexts.append(context)
+        sample.set_field(VIEW_B, FieldValue(context.run_seed, schema="video.rgb.view_b.v1"))
+        return sample
+
+    pipeline = SampleOperationPipeline(
+        [
+            _sample_transform(capture_a, name="capture-a", writes=(VIEW_A,)),
+            _sample_transform(capture_b, name="capture-b", writes=(VIEW_B,)),
+        ]
+    )
+    pipeline(
+        _sample_with_video(),
+        context=SampleOperationContext(metadata={"dataset": "unit"}, run_seed="seed"),
+    )
+
+    assert [context.operation_name for context in contexts] == ["capture-a", "capture-b"]
+    assert [context.metadata["dataset"] for context in contexts] == ["unit", "unit"]
+    assert [context.run_seed for context in contexts] == ["seed", "seed"]
+
+
+def test_sample_operation_pipeline_adapts_generic_context() -> None:
+    seen: list[SampleOperationContext] = []
+
+    def capture(sample: Sample, *, context: SampleOperationContext) -> Sample:
+        seen.append(context)
+        sample.set_field(VIEW_A, FieldValue(context.metadata["dataset"], schema="video.rgb.view_a.v1"))
+        return sample
+
+    pipeline = SampleOperationPipeline([
+        _sample_transform(capture, name="capture", writes=(VIEW_A,)),
+    ])
+
+    pipeline(_sample_with_video(), context=OperationContext(metadata={"dataset": "generic"}))
+
+    assert seen[0].metadata["dataset"] == "generic"
+    assert seen[0].operation_name == "capture"
+
+
+def test_sample_operation_pipeline_rejects_invalid_construction_inputs() -> None:
+    sample_step = _sample_transform(_write_view_a, name="write-view-a", writes=(VIEW_A,))
+
+    with pytest.raises(InvalidOperationPipelineError):
+        SampleOperationPipeline([])
+    with pytest.raises(InvalidOperationPipelineError):
+        SampleOperationPipeline("abc")
+    with pytest.raises(InvalidOperationPipelineError):
+        SampleOperationPipeline([("alias", sample_step)])
+    with pytest.raises(InvalidOperationPipelineError) as generic_exc:
+        SampleOperationPipeline([Operation(increment)])
+    with pytest.raises(InvalidOperationPipelineError) as callable_exc:
+        SampleOperationPipeline([increment])
+    with pytest.raises(InvalidOperationPipelineError) as key_exc:
+        SampleOperationPipeline({1: sample_step})  # type: ignore[dict-item]
+
+    assert generic_exc.value.context["expected"] == "SampleOperation"
+    assert generic_exc.value.context["actual"] == "Operation"
+    assert callable_exc.value.context["actual"] == "function"
+    assert key_exc.value.context["field"] == "operations[0].key"
+
+
+def test_sample_operation_pipeline_rejects_context_with_operation_name() -> None:
+    pipeline = SampleOperationPipeline([
+        _sample_transform(_write_view_a, name="write-view-a", writes=(VIEW_A,)),
+    ])
+
+    with pytest.raises(OperationPipelineExecutionError) as exc:
+        pipeline(_sample_with_video(), context=SampleOperationContext(operation_name="prebound"))
+
+    assert exc.value.context["step_index"] is None
+    assert exc.value.context["phase"] == "validate_context"
+    assert exc.value.context["cause_type"] == "InvalidOperationContextError"
+
+
+def test_sample_operation_pipeline_wraps_undeclared_mutation_with_step_diagnostics() -> None:
+    def undeclared(sample: Sample, *, context: SampleOperationContext) -> Sample:
+        sample.set_field(VIEW_A, FieldValue("bad", schema="video.rgb.view_a.v1"))
+        return sample
+
+    pipeline = SampleOperationPipeline(
+        OrderedDict(
+            [
+                (
+                    "mutates-without-declaration",
+                    SampleTransform(
+                        undeclared,
+                        name="bad-transform",
+                        contract=SampleOperationContract(
+                            field_permissions=SampleFieldPermissions(reads=(VIDEO,), writes=(VIEW_B,)),
+                        ),
+                    ),
+                )
+            ]
+        )
+    )
+
+    with pytest.raises(OperationPipelineExecutionError) as exc:
+        pipeline(_sample_with_video())
+
+    assert exc.value.context["step_index"] == 0
+    assert exc.value.context["operation_name"] == "bad-transform"
+    assert exc.value.context["step_name"] == "mutates-without-declaration"
+    assert exc.value.context["cause_type"] == "UndeclaredSampleFieldMutationError"

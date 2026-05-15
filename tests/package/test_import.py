@@ -271,6 +271,7 @@ def test_import_ops_public_all_exports() -> None:
         "OperationContext",
         "OperationResult",
         "OperationPipeline",
+        "SampleOperationPipeline",
         "FunctionalKernel",
         "SampleFieldPermissions",
         "SampleOperationContract",
@@ -291,6 +292,7 @@ def test_import_ops_public_all_exports() -> None:
     assert not hasattr(rphys, "OperationResult")
     assert not hasattr(rphys, "Operation")
     assert not hasattr(rphys, "OperationPipeline")
+    assert not hasattr(rphys, "SampleOperationPipeline")
     assert not hasattr(rphys, "FunctionalKernel")
     assert not hasattr(rphys, "SampleOperation")
     assert not hasattr(rphys, "SampleOperationContract")
@@ -316,7 +318,7 @@ def test_import_ops_module_exports_are_scoped() -> None:
     assert context.__all__ == ["OperationContext", "OperationResult"]
     assert core.__all__ == ["OperationStep", "Operation"]
     assert kernels.__all__ == ["FunctionalKernel"]
-    assert pipelines.__all__ == ["OperationPipeline"]
+    assert pipelines.__all__ == ["OperationPipeline", "SampleOperationPipeline"]
 
 
 def test_import_ops_sample_module_exports() -> None:

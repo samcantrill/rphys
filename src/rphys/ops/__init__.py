@@ -12,7 +12,7 @@ from .contracts import (
 from .core import Operation, OperationStep
 from .context import OperationContext, OperationResult
 from .kernels import FunctionalKernel
-from .pipelines import OperationPipeline
+from .pipelines import OperationPipeline, SampleOperationPipeline
 
 if TYPE_CHECKING:
     from .sample import (
@@ -68,6 +68,7 @@ __all__ = [
     "OperationContext",
     "OperationResult",
     "OperationPipeline",
+    "SampleOperationPipeline",
     "FunctionalKernel",
     "SampleFieldPermissions",
     "SampleOperationContract",
