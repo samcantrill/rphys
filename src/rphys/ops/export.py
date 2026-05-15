@@ -13,8 +13,9 @@ import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import Path
 from types import MappingProxyType
-from urllib.parse import quote
+from urllib.parse import quote, unquote, urlparse
 
 from rphys.data.fields import FieldValue
 from rphys.data.keys import DataKey
@@ -53,6 +54,7 @@ __all__ = [
     "OutputLayout",
     "RecordExportResult",
     "RecordExportRequest",
+    "SaveOperation",
     "SelectedFieldExport",
 ]
 
@@ -739,6 +741,169 @@ class CodecSelectionOperation:
         )
 
 
+class SaveOperation:
+    """Side-effecting ``OperationStep`` that saves selected fields via codecs."""
+
+    def __init__(
+        self,
+        codec_registry: CodecRegistry,
+        *,
+        name: str = "save",
+    ) -> None:
+        if not isinstance(codec_registry, CodecRegistry):
+            raise RemotePhysOperationError(
+                "SaveOperation codec_registry must be a CodecRegistry.",
+                field="codec_registry",
+                actual=type(codec_registry).__name__,
+            )
+        self._codec_registry = codec_registry
+        self._name = _non_empty_string(name, field="name")
+        self._contract = OperationContract(
+            input_type=ExportSelection,
+            output_type=RecordExportResult,
+            mutation_policy=OperationMutationPolicy.SIDE_EFFECTING,
+            side_effects=("field_save",),
+            failure_modes=(
+                "target_conflict",
+                "unsupported_materialization",
+                "codec_failure",
+                "partial_field_failure",
+            ),
+        )
+
+    @property
+    def name(self) -> str:
+        """Operation step name used in pipeline diagnostics."""
+
+        return self._name
+
+    @property
+    def contract(self) -> OperationContract:
+        """Side-effecting operation contract for codec saves."""
+
+        return self._contract
+
+    def run(
+        self,
+        input_value: object,
+        context: OperationContext | None = None,
+    ) -> OperationResult:
+        """Save selected fields and return typed record export evidence."""
+
+        if context is not None and not isinstance(context, OperationContext):
+            raise RemotePhysOperationError(
+                "SaveOperation context must be an OperationContext.",
+                field="context",
+                actual=type(context).__name__,
+            )
+        if not isinstance(input_value, ExportSelection):
+            raise RemotePhysOperationError(
+                "SaveOperation input_value must be an ExportSelection.",
+                field="input_value",
+                actual=type(input_value).__name__,
+            )
+        if input_value.request.policy.materialization != ExportMaterialization.WRITE:
+            raise RemotePhysOperationError(
+                "SaveOperation supports only write materialization in Phase 3.",
+                field="policy.materialization",
+                actual=input_value.request.policy.materialization.value,
+            )
+
+        field_results = tuple(
+            self._save_field(selection, input_value.request.policy)
+            for selection in input_value.selected_fields
+        )
+        record_result = RecordExportResult(
+            input_value.request.source_record,
+            field_results,
+        )
+        return OperationResult(
+            record_result,
+            operation_name=self.name,
+            role=self.contract.role,
+            metadata={
+                "field_count": record_result.total_count,
+                "written_count": record_result.count(FieldExportOutcome.WRITTEN),
+                "skipped_count": record_result.count(FieldExportOutcome.SKIPPED),
+                "replaced_count": record_result.count(FieldExportOutcome.REPLACED),
+                "failed_count": record_result.count(FieldExportOutcome.FAILED),
+            },
+            provenance={
+                "source_datasource_id": input_value.request.source_record.datasource.datasource_id,
+                "source_record_id": input_value.request.source_record.record_id,
+            },
+            side_effect_evidence={
+                "field_save": {
+                    "attempted": record_result.count(FieldExportOutcome.WRITTEN)
+                    + record_result.count(FieldExportOutcome.REPLACED)
+                    + record_result.count(FieldExportOutcome.FAILED),
+                    "skipped": record_result.count(FieldExportOutcome.SKIPPED),
+                }
+            },
+        )
+
+    def __call__(
+        self,
+        input_value: object,
+        context: OperationContext | None = None,
+    ) -> OperationResult:
+        """Run save with callable operation-step semantics."""
+
+        return self.run(input_value, context=context)
+
+    def _save_field(
+        self,
+        selection: SelectedFieldExport,
+        policy: ExportPolicy,
+    ) -> FieldExportResult:
+        target_exists = _target_exists(selection.target)
+        if target_exists:
+            outcome = policy.existing_target_outcome()
+            if outcome == FieldExportOutcome.SKIPPED:
+                return FieldExportResult(
+                    source_record=selection.source_record,
+                    source_field=selection.source_field,
+                    target=selection.target,
+                    outcome=FieldExportOutcome.SKIPPED,
+                    source_resources=selection.source_field.resources,
+                    target_resources=selection.target.resources,
+                    metadata={"codec_name": selection.codec_name},
+                )
+        else:
+            outcome = policy.new_target_outcome()
+
+        save_context = SaveContext(
+            selection.target,
+            metadata_policy=selection.metadata_policy,
+        )
+        try:
+            codec_result = self._codec_registry.save(selection.field_value, save_context)
+        except Exception as exc:
+            if not policy.continue_on_field_error:
+                raise
+            return FieldExportResult(
+                source_record=selection.source_record,
+                source_field=selection.source_field,
+                target=selection.target,
+                outcome=FieldExportOutcome.FAILED,
+                source_resources=selection.source_field.resources,
+                target_resources=selection.target.resources,
+                failure=f"{type(exc).__name__}: {exc}",
+                metadata={"codec_name": selection.codec_name},
+            )
+
+        return FieldExportResult(
+            source_record=selection.source_record,
+            source_field=selection.source_field,
+            target=selection.target,
+            outcome=outcome,
+            codec_result=codec_result,
+            source_resources=selection.source_field.resources,
+            target_resources=codec_result.resources,
+            metadata={"codec_name": selection.codec_name},
+        )
+
+
 @dataclass(frozen=True, init=False, slots=True)
 class FieldExportResult:
     """In-memory evidence for one requested field export.
@@ -1346,6 +1511,23 @@ def _join_uri(root_uri: str, *components: str) -> str:
     root = root_uri.rstrip("/")
     encoded = "/".join(quote(component, safe="._-") for component in components)
     return f"{root}/{encoded}"
+
+
+def _target_exists(target: FieldRef) -> bool:
+    return any(
+        path.exists()
+        for resource in target.resources
+        if (path := _local_path(resource)) is not None
+    )
+
+
+def _local_path(resource: ResourceRef) -> Path | None:
+    if resource.protocol != "file":
+        return None
+    parsed = urlparse(resource.uri)
+    if parsed.scheme == "file":
+        return Path(unquote(parsed.path))
+    return Path(resource.uri)
 
 
 def _codec_name(codec: object) -> str:
