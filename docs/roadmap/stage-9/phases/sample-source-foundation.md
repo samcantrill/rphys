@@ -387,18 +387,28 @@ git diff --check
 - `tests/unit/rphys/datasources/test_sources.py`
 - `docs/roadmap/stage-9/phases/sample-source-foundation.md`
 
+## PR Body Readiness Report
+
+- PR body refine: complete 2026-05-15 after comparing `docs/roadmap/stage-9/phases/sample-source-foundation-pr-body.md` against the committed `develop...HEAD` diff, phase scope, implementation-plan constraints, validation evidence, and known blocker notes.
+- Title/base/head readiness: prepared for title `Stage 9 Index Adapters, Torch Data Loading, And Cache - Phase 1: SampleSource Foundation And Deterministic Context`, base `develop`, and head `agent/stage-9-data-loading-cache-p1-sample-source-foundation`. PR not opened in this pass per manager instruction.
+- PR body accuracy: body accurately describes the new `rphys.datasources.sources` source foundation, module-scoped exports, FieldLocator-keyed `Sample` returns, deterministic primitive request/context evidence, typed fail-loud behavior, validation evidence, and future-phase exclusions.
+- Future-phase exclusions confirmed: no torch adapter, collater, cache store, prepared reader/source, materialization, batch-planning, data-path profile, model formatting, device movement, trainer loop, datasource scanning, split construction, export execution, or distinct `DerivedIndexSampleSource` claim appears in the PR body.
+- Pre-submit blocker gate: no unresolved known source API, parent-export, negative-position, fingerprint, context-shape, validation-evidence, PR-body, metadata, or derived-source promotion blocker remains.
+- Lightweight readiness checks: `git diff --check develop...HEAD`, `git diff --check`, `git diff --name-only develop...HEAD`, `git diff --name-only`, and `git status --short` passed during PR-body refinement. Full suites were rerun afterward by the manager.
+- Manager follow-up: accepted the local `tests/contracts/test_sample_source_contract.py` update as in-scope contract coverage for FieldLocator-keyed `Sample` returns, eager/request ordering, missing-locator failures, and aligned context evidence. `UV_CACHE_DIR=/tmp/uv-cache make validate-pr` and `UV_CACHE_DIR=/tmp/uv-cache make test-summary` passed afterward with 724 total tests.
+
 ## Completion Notes
 
 - Draft plan: complete in `docs/roadmap/stage-9/phases/sample-source-foundation.md`
 - Final phase execution plan: complete after expanded-path refinement
 - Implementation summary: complete; Phase 1 source foundation APIs are implemented, with refinement tightening accepted context evidence coherence.
-- Implementation validation: `uv run pytest tests/unit/rphys/datasources/test_sources.py`; `uv run pytest tests/unit/rphys/datasources/test_sources.py tests/contracts/test_sample_source_contract.py tests/integration/test_stage9_sample_source_flow.py tests/package/test_import.py tests/package/test_import_boundaries.py`; `make test-package`; `make test-contract`; `git diff --check` all passed.
+- Implementation validation: `uv run pytest tests/unit/rphys/datasources/test_sources.py`; `uv run pytest tests/unit/rphys/datasources/test_sources.py tests/contracts/test_sample_source_contract.py tests/integration/test_stage9_sample_source_flow.py tests/package/test_import.py tests/package/test_import_boundaries.py`; `make test-package`; `make test-contract`; `UV_CACHE_DIR=/tmp/uv-cache make validate-pr`; `UV_CACHE_DIR=/tmp/uv-cache make test-summary`; `git diff --check` all passed.
 - Refinement summary: plan refinement tightened public API/import-path/data-shape decisions; implementation refinement now rejects context records whose source-entry or request evidence does not match the requested sample without changing the returned `Sample` shape.
 - Pre-submit blocker gate: no unresolved source API, parent-export, negative-position, fingerprint, context-shape, or derived-source promotion decision remains in this plan
 - PR body draft: complete in `docs/roadmap/stage-9/phases/sample-source-foundation-pr-body.md`
-- PR body refine: pending on expanded path
+- PR body refine: complete on expanded path
 - PR preparation: PR body artifact prepared; PR not opened in this pass
 - Automated review: pending
 - Merge result: pending
 - Cleanup: pending
-- Remaining blockers: none identified; implementation is ready for PR preparation after this refinement commit
+- Remaining blockers: none identified; PR body is ready for manager submission after this refinement update

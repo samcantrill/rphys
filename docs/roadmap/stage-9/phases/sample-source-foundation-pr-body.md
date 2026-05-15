@@ -64,11 +64,11 @@ Suite evidence from `make test-summary`:
 | --- | --- | ---: | ---: |
 | package | passed | 36 | 36 |
 | unit | passed | 571 | 571 |
-| contract | passed | 99 | 99 |
+| contract | passed | 103 | 103 |
 | integration | passed | 14 | 14 |
 | e2e | not present | 0 | 0 |
 | acceptance | not present | 0 | 0 |
-| Overall | passed | 720 | 720 |
+| Overall | passed | 724 | 724 |
 
 `make validate-pr` also passed and built the source distribution and wheel.
 
