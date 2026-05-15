@@ -1,11 +1,11 @@
 # Roadmap Stage 9 Implementation Plan
 
-Status: approved; ready for Phase 1 execution through implementation workflow
+Status: approved; Phase 1 PR open through implementation workflow
 Roadmap version: `v9`
 Planning document: `docs/roadmap/stage-9/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: none
+Current phase: `sample-source-foundation`
 Blockers: none
 
 ## Summary
@@ -38,7 +38,7 @@ Blockers: none
 
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `sample-source-foundation` | pending | `agent/stage-9-data-loading-cache-p1-sample-source-foundation` | pending | `src/rphys/datasources/sources.py`; source/context tests; scoped docs/docstrings | Add `SampleRequest`, `SampleRuntimeContext`, `WorkerContextFactory`, `SampleSource`, and `IndexSampleSource`. | Focused source/context unit, contract, integration, package import, and diff checks. | Synthetic `DataSourceIndex` to lazy/eager `Sample`; derived index via ordinary source path. |
+| 1 | `sample-source-foundation` | pr_open | `agent/stage-9-data-loading-cache-p1-sample-source-foundation` | [#60](https://github.com/samcantrill/rphys/pull/60) | `src/rphys/datasources/sources.py`; source/context tests; scoped docs/docstrings | Add `SampleRequest`, `SampleRuntimeContext`, `WorkerContextFactory`, `SampleSource`, and `IndexSampleSource`. | Focused source/context unit, contract, integration, package import, and diff checks. | Synthetic `DataSourceIndex` to lazy/eager `Sample`; derived index via ordinary source path. |
 | 2 | `torch-collater-boundary` | pending | `agent/stage-9-data-loading-cache-p2-torch-collater-boundary` | pending | `src/rphys/datasources/torch.py`; `src/rphys/data/collation.py`; adapter/collater/package tests | Add optional torch adapters and a FieldLocator-preserving `BatchCollater`. | Package import-boundary, missing/fake torch, collater, adapter, and diff checks. | Optional torch dataset over `SampleSource`; `BatchCollater` over FieldLocator-keyed samples. |
 | 3 | `deterministic-cache-store` | pending | `agent/stage-9-data-loading-cache-p3-deterministic-cache-store` | pending | `src/rphys/datasources/cache.py`; cache unit/contract/temp-dir tests; cache docs/docstrings | Add deterministic cache records, local atomic store, fake/minimal explicit value strategy, and `CachedSampleSource`. | Cache key/manifest/policy/result, temp-dir atomic store, cached-source, package import, and diff checks. | Local cache hit/miss/stale/corrupt matrix; request-specific cache adversarial source. |
 | 4 | `prepared-reader-source` | pending | `agent/stage-9-data-loading-cache-p4-prepared-reader-source` | pending | `src/rphys/datasources/prepared.py`; prepared manifest/reader/source tests; provisional docs | Add `PreparedDataManifest`, public provisional `PreparedSampleReader`, `PreparedSampleSource`, and equivalence checks. | Prepared manifest, fake reader, equivalence matrix, package import, and diff checks. | Prepared manifest equivalence success/failure; fake prepared reader/backend boundary. |
@@ -53,11 +53,11 @@ Blockers: none
 
 ## Phase 1: SampleSource Foundation And Deterministic Context
 
-Status: pending
+Status: pr_open
 Slug: `sample-source-foundation`
 Branch: `agent/stage-9-data-loading-cache-p1-sample-source-foundation`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-9-data-loading-cache-p1-sample-source-foundation`
-PR: pending
+PR: [#60](https://github.com/samcantrill/rphys/pull/60)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -102,13 +102,13 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: complete in `docs/roadmap/stage-9/phases/sample-source-foundation.md`
 - Planning/refinement budget: standard
 - Implementation/refinement budget: standard
 - PR review budget: standard
 - Blocker-resolution budget: standard
 - Pre-submit blocker gate: no unresolved source API or derived-source promotion decision
-- Merge record: pending
+- Merge record: pending PR merge
 
 ### Risks And Stop Conditions
 
@@ -118,9 +118,9 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
+- Implementation: complete; `rphys.datasources.sources` adds `SampleRequest`, `SampleRuntimeContext`, `WorkerContextFactory`, `SampleSource`, and `IndexSampleSource`
+- Validation: `UV_CACHE_DIR=/tmp/uv-cache make validate-pr` and `UV_CACHE_DIR=/tmp/uv-cache make test-summary` passed with package 36, unit 571, contract 103, integration 14, total 724
+- PR: open as https://github.com/samcantrill/rphys/pull/60 against `develop`
 - Merge: pending
 - Follow-up: pending
 
