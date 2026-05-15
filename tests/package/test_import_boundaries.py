@@ -59,6 +59,7 @@ LIGHTWEIGHT_IMPORTS = [
     "rphys.nn",
     "rphys.objectives",
     "rphys.ops",
+    "rphys.ops.export",
     "rphys.prediction",
     "rphys.training",
 ]
