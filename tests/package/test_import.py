@@ -282,6 +282,17 @@ STAGE_9_DATASOURCE_PREPARED_EXPORTS = [
     "PreparedReadResult",
     "PreparedSampleReader",
     "PreparedSampleSource",
+    "OptimizedStorageFormat",
+    "OptimizedDataPlan",
+    "MaterializationPlan",
+    "MaterializationManifest",
+    "ShardManifest",
+    "ChunkMetadata",
+    "AccessPatternPlan",
+    "RecordLayoutMetadata",
+    "BatchCostMetadata",
+    "BatchSamplerPlan",
+    "BatchShapePolicy",
 ]
 
 STAGE_3_DATASOURCE_ERROR_NAMES = [
@@ -710,6 +721,17 @@ def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
         "PreparedReadResult",
         "PreparedSampleReader",
         "PreparedSampleSource",
+        "OptimizedStorageFormat",
+        "OptimizedDataPlan",
+        "MaterializationPlan",
+        "MaterializationManifest",
+        "ShardManifest",
+        "ChunkMetadata",
+        "AccessPatternPlan",
+        "RecordLayoutMetadata",
+        "BatchCostMetadata",
+        "BatchSamplerPlan",
+        "BatchShapePolicy",
     ]
 
     for public_name in forbidden_names:

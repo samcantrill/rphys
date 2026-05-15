@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -34,6 +35,17 @@ __all__ = [
     "PreparedReadResult",
     "PreparedSampleReader",
     "PreparedSampleSource",
+    "OptimizedStorageFormat",
+    "OptimizedDataPlan",
+    "MaterializationPlan",
+    "MaterializationManifest",
+    "ShardManifest",
+    "ChunkMetadata",
+    "AccessPatternPlan",
+    "RecordLayoutMetadata",
+    "BatchCostMetadata",
+    "BatchSamplerPlan",
+    "BatchShapePolicy",
 ]
 
 _PREPARED_MANIFEST_SCHEMA_VERSION = 1
@@ -854,6 +866,1420 @@ class PreparedSampleSource(SampleSource):
             )
 
 
+@dataclass(frozen=True, init=False, slots=True)
+class OptimizedStorageFormat:
+    """Backend-neutral description of a prepared storage format."""
+
+    name: str
+    version: str | None
+    media_type: str | None
+    capabilities: Mapping[str, FrozenPrimitive]
+    metadata: Mapping[str, FrozenPrimitive]
+    fingerprint: str
+
+    def __init__(
+        self,
+        name: str,
+        *,
+        version: str | None = None,
+        media_type: str | None = None,
+        capabilities: Mapping[str, object] | None = None,
+        metadata: Mapping[str, object] | None = None,
+        fingerprint: str | None = None,
+    ) -> None:
+        _set_string(self, "name", name, owner="OptimizedStorageFormat")
+        _set_optional_string(self, "version", version, owner="OptimizedStorageFormat")
+        _set_optional_string(self, "media_type", media_type, owner="OptimizedStorageFormat")
+        _set_primitive_mapping(self, "capabilities", capabilities, owner="OptimizedStorageFormat")
+        _set_primitive_mapping(self, "metadata", metadata, owner="OptimizedStorageFormat")
+        _set_fingerprint(self, fingerprint, owner="OptimizedStorageFormat")
+
+    def to_dict(self, *, include_fingerprint: bool = True) -> dict[str, object]:
+        return _record_dict(
+            {
+                "name": self.name,
+                "version": self.version,
+                "media_type": self.media_type,
+                "capabilities": dict(self.capabilities),
+                "metadata": dict(self.metadata),
+            },
+            self,
+            include_fingerprint=include_fingerprint,
+        )
+
+    @classmethod
+    def from_dict(cls, value: object) -> "OptimizedStorageFormat":
+        data = _require_record(
+            value,
+            {
+                "name",
+                "version",
+                "media_type",
+                "capabilities",
+                "metadata",
+                "fingerprint",
+            },
+            descriptor="OptimizedStorageFormat",
+        )
+        return cls(
+            data["name"],  # type: ignore[arg-type]
+            version=data["version"],  # type: ignore[arg-type]
+            media_type=data["media_type"],  # type: ignore[arg-type]
+            capabilities=data["capabilities"],  # type: ignore[arg-type]
+            metadata=data["metadata"],  # type: ignore[arg-type]
+            fingerprint=data["fingerprint"],  # type: ignore[arg-type]
+        )
+
+
+OptimizedStorageFormat.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class ChunkMetadata:
+    """Descriptive metadata for one contiguous prepared chunk."""
+
+    chunk_id: str
+    field_locators: tuple[FieldLocator, ...]
+    sample_start: int
+    sample_count: int
+    byte_offset: int | None
+    byte_length: int | None
+    checksum: str | None
+    compression: Mapping[str, FrozenPrimitive]
+    metadata: Mapping[str, FrozenPrimitive]
+    fingerprint: str
+
+    def __init__(
+        self,
+        chunk_id: str,
+        *,
+        field_locators: Sequence[FieldLocator | str],
+        sample_start: int,
+        sample_count: int,
+        byte_offset: int | None = None,
+        byte_length: int | None = None,
+        checksum: str | None = None,
+        compression: Mapping[str, object] | None = None,
+        metadata: Mapping[str, object] | None = None,
+        fingerprint: str | None = None,
+    ) -> None:
+        _set_string(self, "chunk_id", chunk_id, owner="ChunkMetadata")
+        object.__setattr__(
+            self,
+            "field_locators",
+            _coerce_required_locators(field_locators, owner="ChunkMetadata"),
+        )
+        _set_non_negative_int(self, "sample_start", sample_start, owner="ChunkMetadata")
+        _set_non_negative_int(self, "sample_count", sample_count, owner="ChunkMetadata")
+        _set_optional_non_negative_int(self, "byte_offset", byte_offset, owner="ChunkMetadata")
+        _set_optional_non_negative_int(self, "byte_length", byte_length, owner="ChunkMetadata")
+        _set_optional_string(self, "checksum", checksum, owner="ChunkMetadata")
+        _set_primitive_mapping(self, "compression", compression, owner="ChunkMetadata")
+        _set_primitive_mapping(self, "metadata", metadata, owner="ChunkMetadata")
+        _set_fingerprint(self, fingerprint, owner="ChunkMetadata")
+
+    def to_dict(self, *, include_fingerprint: bool = True) -> dict[str, object]:
+        return _record_dict(
+            {
+                "chunk_id": self.chunk_id,
+                "field_locators": [str(locator) for locator in self.field_locators],
+                "sample_start": self.sample_start,
+                "sample_count": self.sample_count,
+                "byte_offset": self.byte_offset,
+                "byte_length": self.byte_length,
+                "checksum": self.checksum,
+                "compression": dict(self.compression),
+                "metadata": dict(self.metadata),
+            },
+            self,
+            include_fingerprint=include_fingerprint,
+        )
+
+    @classmethod
+    def from_dict(cls, value: object) -> "ChunkMetadata":
+        data = _require_record(
+            value,
+            {
+                "chunk_id",
+                "field_locators",
+                "sample_start",
+                "sample_count",
+                "byte_offset",
+                "byte_length",
+                "checksum",
+                "compression",
+                "metadata",
+                "fingerprint",
+            },
+            descriptor="ChunkMetadata",
+        )
+        return cls(
+            data["chunk_id"],  # type: ignore[arg-type]
+            field_locators=data["field_locators"],  # type: ignore[arg-type]
+            sample_start=data["sample_start"],  # type: ignore[arg-type]
+            sample_count=data["sample_count"],  # type: ignore[arg-type]
+            byte_offset=data["byte_offset"],  # type: ignore[arg-type]
+            byte_length=data["byte_length"],  # type: ignore[arg-type]
+            checksum=data["checksum"],  # type: ignore[arg-type]
+            compression=data["compression"],  # type: ignore[arg-type]
+            metadata=data["metadata"],  # type: ignore[arg-type]
+            fingerprint=data["fingerprint"],  # type: ignore[arg-type]
+        )
+
+
+ChunkMetadata.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class ShardManifest:
+    """Descriptor for one shard in a materialized prepared product."""
+
+    shard_id: str
+    storage_format: OptimizedStorageFormat
+    uri: str
+    sample_count: int
+    chunks: tuple[ChunkMetadata, ...]
+    checksums: Mapping[str, FrozenPrimitive]
+    metadata: Mapping[str, FrozenPrimitive]
+    fingerprint: str
+
+    def __init__(
+        self,
+        shard_id: str,
+        *,
+        storage_format: OptimizedStorageFormat,
+        uri: str,
+        sample_count: int,
+        chunks: Sequence[ChunkMetadata],
+        checksums: Mapping[str, object] | None = None,
+        metadata: Mapping[str, object] | None = None,
+        fingerprint: str | None = None,
+    ) -> None:
+        _set_string(self, "shard_id", shard_id, owner="ShardManifest")
+        object.__setattr__(self, "storage_format", _coerce_storage_format(storage_format))
+        _set_string(self, "uri", uri, owner="ShardManifest")
+        _set_non_negative_int(self, "sample_count", sample_count, owner="ShardManifest")
+        object.__setattr__(self, "chunks", _coerce_chunks(chunks))
+        _set_primitive_mapping(self, "checksums", checksums, owner="ShardManifest")
+        _set_primitive_mapping(self, "metadata", metadata, owner="ShardManifest")
+        _validate_shard_chunks(self)
+        _set_fingerprint(self, fingerprint, owner="ShardManifest")
+
+    def to_dict(self, *, include_fingerprint: bool = True) -> dict[str, object]:
+        return _record_dict(
+            {
+                "shard_id": self.shard_id,
+                "storage_format": self.storage_format.to_dict(),
+                "uri": self.uri,
+                "sample_count": self.sample_count,
+                "chunks": [chunk.to_dict() for chunk in self.chunks],
+                "checksums": dict(self.checksums),
+                "metadata": dict(self.metadata),
+            },
+            self,
+            include_fingerprint=include_fingerprint,
+        )
+
+    @classmethod
+    def from_dict(cls, value: object) -> "ShardManifest":
+        data = _require_record(
+            value,
+            {
+                "shard_id",
+                "storage_format",
+                "uri",
+                "sample_count",
+                "chunks",
+                "checksums",
+                "metadata",
+                "fingerprint",
+            },
+            descriptor="ShardManifest",
+        )
+        return cls(
+            data["shard_id"],  # type: ignore[arg-type]
+            storage_format=OptimizedStorageFormat.from_dict(data["storage_format"]),
+            uri=data["uri"],  # type: ignore[arg-type]
+            sample_count=data["sample_count"],  # type: ignore[arg-type]
+            chunks=[
+                ChunkMetadata.from_dict(item)
+                for item in _require_sequence(data["chunks"], field="chunks")
+            ],
+            checksums=data["checksums"],  # type: ignore[arg-type]
+            metadata=data["metadata"],  # type: ignore[arg-type]
+            fingerprint=data["fingerprint"],  # type: ignore[arg-type]
+        )
+
+
+ShardManifest.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class AccessPatternPlan:
+    """Descriptive access pattern evidence, not an execution plan."""
+
+    pattern_id: str
+    mode: str
+    prefetch: int | None
+    ordering: str | None
+    metadata: Mapping[str, FrozenPrimitive]
+    fingerprint: str
+
+    def __init__(
+        self,
+        pattern_id: str,
+        *,
+        mode: str,
+        prefetch: int | None = None,
+        ordering: str | None = None,
+        metadata: Mapping[str, object] | None = None,
+        fingerprint: str | None = None,
+    ) -> None:
+        _set_string(self, "pattern_id", pattern_id, owner="AccessPatternPlan")
+        object.__setattr__(
+            self,
+            "mode",
+            _coerce_choice(
+                mode,
+                owner="AccessPatternPlan",
+                field="mode",
+                choices={"sequential", "random", "sharded", "batched"},
+            ),
+        )
+        _set_optional_non_negative_int(self, "prefetch", prefetch, owner="AccessPatternPlan")
+        _set_optional_string(self, "ordering", ordering, owner="AccessPatternPlan")
+        _set_primitive_mapping(self, "metadata", metadata, owner="AccessPatternPlan")
+        _set_fingerprint(self, fingerprint, owner="AccessPatternPlan")
+
+    def to_dict(self, *, include_fingerprint: bool = True) -> dict[str, object]:
+        return _record_dict(
+            {
+                "pattern_id": self.pattern_id,
+                "mode": self.mode,
+                "prefetch": self.prefetch,
+                "ordering": self.ordering,
+                "metadata": dict(self.metadata),
+            },
+            self,
+            include_fingerprint=include_fingerprint,
+        )
+
+    @classmethod
+    def from_dict(cls, value: object) -> "AccessPatternPlan":
+        data = _require_record(
+            value,
+            {"pattern_id", "mode", "prefetch", "ordering", "metadata", "fingerprint"},
+            descriptor="AccessPatternPlan",
+        )
+        return cls(
+            data["pattern_id"],  # type: ignore[arg-type]
+            mode=data["mode"],  # type: ignore[arg-type]
+            prefetch=data["prefetch"],  # type: ignore[arg-type]
+            ordering=data["ordering"],  # type: ignore[arg-type]
+            metadata=data["metadata"],  # type: ignore[arg-type]
+            fingerprint=data["fingerprint"],  # type: ignore[arg-type]
+        )
+
+
+AccessPatternPlan.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class RecordLayoutMetadata:
+    """Location evidence for one record or sample inside a shard."""
+
+    record_id: str
+    shard_id: str
+    position: int
+    field_locators: tuple[FieldLocator, ...]
+    byte_offset: int | None
+    byte_length: int | None
+    checksum: str | None
+    metadata: Mapping[str, FrozenPrimitive]
+    fingerprint: str
+
+    def __init__(
+        self,
+        record_id: str,
+        *,
+        shard_id: str,
+        position: int,
+        field_locators: Sequence[FieldLocator | str],
+        byte_offset: int | None = None,
+        byte_length: int | None = None,
+        checksum: str | None = None,
+        metadata: Mapping[str, object] | None = None,
+        fingerprint: str | None = None,
+    ) -> None:
+        _set_string(self, "record_id", record_id, owner="RecordLayoutMetadata")
+        _set_string(self, "shard_id", shard_id, owner="RecordLayoutMetadata")
+        _set_non_negative_int(self, "position", position, owner="RecordLayoutMetadata")
+        object.__setattr__(
+            self,
+            "field_locators",
+            _coerce_required_locators(field_locators, owner="RecordLayoutMetadata"),
+        )
+        _set_optional_non_negative_int(
+            self,
+            "byte_offset",
+            byte_offset,
+            owner="RecordLayoutMetadata",
+        )
+        _set_optional_non_negative_int(
+            self,
+            "byte_length",
+            byte_length,
+            owner="RecordLayoutMetadata",
+        )
+        _set_optional_string(self, "checksum", checksum, owner="RecordLayoutMetadata")
+        _set_primitive_mapping(self, "metadata", metadata, owner="RecordLayoutMetadata")
+        _set_fingerprint(self, fingerprint, owner="RecordLayoutMetadata")
+
+    def to_dict(self, *, include_fingerprint: bool = True) -> dict[str, object]:
+        return _record_dict(
+            {
+                "record_id": self.record_id,
+                "shard_id": self.shard_id,
+                "position": self.position,
+                "field_locators": [str(locator) for locator in self.field_locators],
+                "byte_offset": self.byte_offset,
+                "byte_length": self.byte_length,
+                "checksum": self.checksum,
+                "metadata": dict(self.metadata),
+            },
+            self,
+            include_fingerprint=include_fingerprint,
+        )
+
+    @classmethod
+    def from_dict(cls, value: object) -> "RecordLayoutMetadata":
+        data = _require_record(
+            value,
+            {
+                "record_id",
+                "shard_id",
+                "position",
+                "field_locators",
+                "byte_offset",
+                "byte_length",
+                "checksum",
+                "metadata",
+                "fingerprint",
+            },
+            descriptor="RecordLayoutMetadata",
+        )
+        return cls(
+            data["record_id"],  # type: ignore[arg-type]
+            shard_id=data["shard_id"],  # type: ignore[arg-type]
+            position=data["position"],  # type: ignore[arg-type]
+            field_locators=data["field_locators"],  # type: ignore[arg-type]
+            byte_offset=data["byte_offset"],  # type: ignore[arg-type]
+            byte_length=data["byte_length"],  # type: ignore[arg-type]
+            checksum=data["checksum"],  # type: ignore[arg-type]
+            metadata=data["metadata"],  # type: ignore[arg-type]
+            fingerprint=data["fingerprint"],  # type: ignore[arg-type]
+        )
+
+
+RecordLayoutMetadata.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class OptimizedDataPlan:
+    """Storage-neutral plan for prepared data layout."""
+
+    plan_id: str
+    storage_format: OptimizedStorageFormat
+    prepared_manifest_fingerprint: str
+    field_locators: tuple[FieldLocator, ...]
+    sample_count: int
+    access_pattern: AccessPatternPlan | None
+    layout: Mapping[str, FrozenPrimitive]
+    runtime: Mapping[str, FrozenPrimitive]
+    invalidation: Mapping[str, FrozenPrimitive]
+    metadata: Mapping[str, FrozenPrimitive]
+    fingerprint: str
+
+    def __init__(
+        self,
+        plan_id: str,
+        *,
+        storage_format: OptimizedStorageFormat,
+        prepared_manifest_fingerprint: str,
+        field_locators: Sequence[FieldLocator | str],
+        sample_count: int,
+        access_pattern: AccessPatternPlan | None = None,
+        layout: Mapping[str, object] | None = None,
+        runtime: Mapping[str, object] | None = None,
+        invalidation: Mapping[str, object] | None = None,
+        metadata: Mapping[str, object] | None = None,
+        fingerprint: str | None = None,
+    ) -> None:
+        _set_string(self, "plan_id", plan_id, owner="OptimizedDataPlan")
+        object.__setattr__(self, "storage_format", _coerce_storage_format(storage_format))
+        object.__setattr__(
+            self,
+            "prepared_manifest_fingerprint",
+            _coerce_fingerprint(
+                prepared_manifest_fingerprint,
+                owner="OptimizedDataPlan",
+                field="prepared_manifest_fingerprint",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "field_locators",
+            _coerce_required_locators(field_locators, owner="OptimizedDataPlan"),
+        )
+        _set_non_negative_int(self, "sample_count", sample_count, owner="OptimizedDataPlan")
+        if access_pattern is not None and not isinstance(access_pattern, AccessPatternPlan):
+            raise FieldTypeError(
+                "OptimizedDataPlan access_pattern must be an AccessPatternPlan.",
+                field="access_pattern",
+                actual=type(access_pattern).__name__,
+            )
+        object.__setattr__(self, "access_pattern", access_pattern)
+        _set_primitive_mapping(self, "layout", layout, owner="OptimizedDataPlan")
+        _set_primitive_mapping(self, "runtime", runtime, owner="OptimizedDataPlan")
+        _set_primitive_mapping(self, "invalidation", invalidation, owner="OptimizedDataPlan")
+        _set_primitive_mapping(self, "metadata", metadata, owner="OptimizedDataPlan")
+        _set_fingerprint(self, fingerprint, owner="OptimizedDataPlan")
+
+    def to_dict(self, *, include_fingerprint: bool = True) -> dict[str, object]:
+        return _record_dict(
+            {
+                "plan_id": self.plan_id,
+                "storage_format": self.storage_format.to_dict(),
+                "prepared_manifest_fingerprint": self.prepared_manifest_fingerprint,
+                "field_locators": [str(locator) for locator in self.field_locators],
+                "sample_count": self.sample_count,
+                "access_pattern": (
+                    None if self.access_pattern is None else self.access_pattern.to_dict()
+                ),
+                "layout": dict(self.layout),
+                "runtime": dict(self.runtime),
+                "invalidation": dict(self.invalidation),
+                "metadata": dict(self.metadata),
+            },
+            self,
+            include_fingerprint=include_fingerprint,
+        )
+
+    @classmethod
+    def from_dict(cls, value: object) -> "OptimizedDataPlan":
+        data = _require_record(
+            value,
+            {
+                "plan_id",
+                "storage_format",
+                "prepared_manifest_fingerprint",
+                "field_locators",
+                "sample_count",
+                "access_pattern",
+                "layout",
+                "runtime",
+                "invalidation",
+                "metadata",
+                "fingerprint",
+            },
+            descriptor="OptimizedDataPlan",
+        )
+        access_pattern = (
+            None
+            if data["access_pattern"] is None
+            else AccessPatternPlan.from_dict(data["access_pattern"])
+        )
+        return cls(
+            data["plan_id"],  # type: ignore[arg-type]
+            storage_format=OptimizedStorageFormat.from_dict(data["storage_format"]),
+            prepared_manifest_fingerprint=data["prepared_manifest_fingerprint"],  # type: ignore[arg-type]
+            field_locators=data["field_locators"],  # type: ignore[arg-type]
+            sample_count=data["sample_count"],  # type: ignore[arg-type]
+            access_pattern=access_pattern,
+            layout=data["layout"],  # type: ignore[arg-type]
+            runtime=data["runtime"],  # type: ignore[arg-type]
+            invalidation=data["invalidation"],  # type: ignore[arg-type]
+            metadata=data["metadata"],  # type: ignore[arg-type]
+            fingerprint=data["fingerprint"],  # type: ignore[arg-type]
+        )
+
+
+OptimizedDataPlan.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class MaterializationPlan:
+    """Descriptive plan for creating an immutable materialized product."""
+
+    plan_id: str
+    optimized_plan: OptimizedDataPlan
+    prepared_manifest_fingerprint: str
+    request_fingerprint: str
+    field_locators: tuple[FieldLocator, ...]
+    sample_count: int
+    split_counts: Mapping[str, int]
+    group_counts: Mapping[str, int]
+    invalidation: Mapping[str, FrozenPrimitive]
+    metadata: Mapping[str, FrozenPrimitive]
+    fingerprint: str
+
+    def __init__(
+        self,
+        plan_id: str,
+        *,
+        optimized_plan: OptimizedDataPlan,
+        prepared_manifest_fingerprint: str,
+        request_fingerprint: str,
+        field_locators: Sequence[FieldLocator | str],
+        sample_count: int,
+        split_counts: Mapping[str, int] | None = None,
+        group_counts: Mapping[str, int] | None = None,
+        invalidation: Mapping[str, object] | None = None,
+        metadata: Mapping[str, object] | None = None,
+        fingerprint: str | None = None,
+    ) -> None:
+        _set_string(self, "plan_id", plan_id, owner="MaterializationPlan")
+        if not isinstance(optimized_plan, OptimizedDataPlan):
+            raise FieldTypeError(
+                "MaterializationPlan optimized_plan must be an OptimizedDataPlan.",
+                field="optimized_plan",
+                actual=type(optimized_plan).__name__,
+            )
+        object.__setattr__(self, "optimized_plan", optimized_plan)
+        object.__setattr__(
+            self,
+            "prepared_manifest_fingerprint",
+            _coerce_fingerprint(
+                prepared_manifest_fingerprint,
+                owner="MaterializationPlan",
+                field="prepared_manifest_fingerprint",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "request_fingerprint",
+            _coerce_fingerprint(
+                request_fingerprint,
+                owner="MaterializationPlan",
+                field="request_fingerprint",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "field_locators",
+            _coerce_required_locators(field_locators, owner="MaterializationPlan"),
+        )
+        _set_non_negative_int(self, "sample_count", sample_count, owner="MaterializationPlan")
+        object.__setattr__(
+            self,
+            "split_counts",
+            MappingProxyType(
+                _coerce_count_mapping(
+                    split_counts,
+                    owner="MaterializationPlan",
+                    field="split_counts",
+                )
+            ),
+        )
+        object.__setattr__(
+            self,
+            "group_counts",
+            MappingProxyType(
+                _coerce_count_mapping(
+                    group_counts,
+                    owner="MaterializationPlan",
+                    field="group_counts",
+                )
+            ),
+        )
+        _set_primitive_mapping(self, "invalidation", invalidation, owner="MaterializationPlan")
+        _set_primitive_mapping(self, "metadata", metadata, owner="MaterializationPlan")
+        _validate_materialization_plan(self)
+        _set_fingerprint(self, fingerprint, owner="MaterializationPlan")
+
+    def to_dict(self, *, include_fingerprint: bool = True) -> dict[str, object]:
+        return _record_dict(
+            {
+                "plan_id": self.plan_id,
+                "optimized_plan": self.optimized_plan.to_dict(),
+                "prepared_manifest_fingerprint": self.prepared_manifest_fingerprint,
+                "request_fingerprint": self.request_fingerprint,
+                "field_locators": [str(locator) for locator in self.field_locators],
+                "sample_count": self.sample_count,
+                "split_counts": dict(self.split_counts),
+                "group_counts": dict(self.group_counts),
+                "invalidation": dict(self.invalidation),
+                "metadata": dict(self.metadata),
+            },
+            self,
+            include_fingerprint=include_fingerprint,
+        )
+
+    @classmethod
+    def from_dict(cls, value: object) -> "MaterializationPlan":
+        data = _require_record(
+            value,
+            {
+                "plan_id",
+                "optimized_plan",
+                "prepared_manifest_fingerprint",
+                "request_fingerprint",
+                "field_locators",
+                "sample_count",
+                "split_counts",
+                "group_counts",
+                "invalidation",
+                "metadata",
+                "fingerprint",
+            },
+            descriptor="MaterializationPlan",
+        )
+        return cls(
+            data["plan_id"],  # type: ignore[arg-type]
+            optimized_plan=OptimizedDataPlan.from_dict(data["optimized_plan"]),
+            prepared_manifest_fingerprint=data["prepared_manifest_fingerprint"],  # type: ignore[arg-type]
+            request_fingerprint=data["request_fingerprint"],  # type: ignore[arg-type]
+            field_locators=data["field_locators"],  # type: ignore[arg-type]
+            sample_count=data["sample_count"],  # type: ignore[arg-type]
+            split_counts=data["split_counts"],  # type: ignore[arg-type]
+            group_counts=data["group_counts"],  # type: ignore[arg-type]
+            invalidation=data["invalidation"],  # type: ignore[arg-type]
+            metadata=data["metadata"],  # type: ignore[arg-type]
+            fingerprint=data["fingerprint"],  # type: ignore[arg-type]
+        )
+
+
+MaterializationPlan.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class MaterializationManifest:
+    """Manifest for a materialized prepared product, without writer behavior."""
+
+    materialization_id: str
+    plan_fingerprint: str
+    storage_format: OptimizedStorageFormat
+    prepared_manifest_fingerprint: str
+    shards: tuple[ShardManifest, ...]
+    records: tuple[RecordLayoutMetadata, ...]
+    sample_count: int
+    field_locators: tuple[FieldLocator, ...]
+    checksums: Mapping[str, FrozenPrimitive]
+    invalidation: Mapping[str, FrozenPrimitive]
+    metadata: Mapping[str, FrozenPrimitive]
+    fingerprint: str
+
+    def __init__(
+        self,
+        materialization_id: str,
+        *,
+        plan_fingerprint: str,
+        storage_format: OptimizedStorageFormat,
+        prepared_manifest_fingerprint: str,
+        shards: Sequence[ShardManifest],
+        records: Sequence[RecordLayoutMetadata] | None = None,
+        sample_count: int,
+        field_locators: Sequence[FieldLocator | str],
+        checksums: Mapping[str, object] | None = None,
+        invalidation: Mapping[str, object] | None = None,
+        metadata: Mapping[str, object] | None = None,
+        fingerprint: str | None = None,
+    ) -> None:
+        _set_string(self, "materialization_id", materialization_id, owner="MaterializationManifest")
+        object.__setattr__(
+            self,
+            "plan_fingerprint",
+            _coerce_fingerprint(
+                plan_fingerprint,
+                owner="MaterializationManifest",
+                field="plan_fingerprint",
+            ),
+        )
+        object.__setattr__(self, "storage_format", _coerce_storage_format(storage_format))
+        object.__setattr__(
+            self,
+            "prepared_manifest_fingerprint",
+            _coerce_fingerprint(
+                prepared_manifest_fingerprint,
+                owner="MaterializationManifest",
+                field="prepared_manifest_fingerprint",
+            ),
+        )
+        object.__setattr__(self, "shards", _coerce_shards(shards))
+        object.__setattr__(self, "records", _coerce_records(records or ()))
+        _set_non_negative_int(self, "sample_count", sample_count, owner="MaterializationManifest")
+        object.__setattr__(
+            self,
+            "field_locators",
+            _coerce_required_locators(field_locators, owner="MaterializationManifest"),
+        )
+        _set_primitive_mapping(self, "checksums", checksums, owner="MaterializationManifest")
+        _set_primitive_mapping(self, "invalidation", invalidation, owner="MaterializationManifest")
+        _set_primitive_mapping(self, "metadata", metadata, owner="MaterializationManifest")
+        _validate_materialization_manifest(self)
+        _set_fingerprint(self, fingerprint, owner="MaterializationManifest")
+
+    def to_dict(self, *, include_fingerprint: bool = True) -> dict[str, object]:
+        return _record_dict(
+            {
+                "materialization_id": self.materialization_id,
+                "plan_fingerprint": self.plan_fingerprint,
+                "storage_format": self.storage_format.to_dict(),
+                "prepared_manifest_fingerprint": self.prepared_manifest_fingerprint,
+                "shards": [shard.to_dict() for shard in self.shards],
+                "records": [record.to_dict() for record in self.records],
+                "sample_count": self.sample_count,
+                "field_locators": [str(locator) for locator in self.field_locators],
+                "checksums": dict(self.checksums),
+                "invalidation": dict(self.invalidation),
+                "metadata": dict(self.metadata),
+            },
+            self,
+            include_fingerprint=include_fingerprint,
+        )
+
+    @classmethod
+    def from_dict(cls, value: object) -> "MaterializationManifest":
+        data = _require_record(
+            value,
+            {
+                "materialization_id",
+                "plan_fingerprint",
+                "storage_format",
+                "prepared_manifest_fingerprint",
+                "shards",
+                "records",
+                "sample_count",
+                "field_locators",
+                "checksums",
+                "invalidation",
+                "metadata",
+                "fingerprint",
+            },
+            descriptor="MaterializationManifest",
+        )
+        return cls(
+            data["materialization_id"],  # type: ignore[arg-type]
+            plan_fingerprint=data["plan_fingerprint"],  # type: ignore[arg-type]
+            storage_format=OptimizedStorageFormat.from_dict(data["storage_format"]),
+            prepared_manifest_fingerprint=data["prepared_manifest_fingerprint"],  # type: ignore[arg-type]
+            shards=[
+                ShardManifest.from_dict(item)
+                for item in _require_sequence(data["shards"], field="shards")
+            ],
+            records=[
+                RecordLayoutMetadata.from_dict(item)
+                for item in _require_sequence(data["records"], field="records")
+            ],
+            sample_count=data["sample_count"],  # type: ignore[arg-type]
+            field_locators=data["field_locators"],  # type: ignore[arg-type]
+            checksums=data["checksums"],  # type: ignore[arg-type]
+            invalidation=data["invalidation"],  # type: ignore[arg-type]
+            metadata=data["metadata"],  # type: ignore[arg-type]
+            fingerprint=data["fingerprint"],  # type: ignore[arg-type]
+        )
+
+
+MaterializationManifest.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class BatchCostMetadata:
+    """Descriptive per-sample cost evidence for later batching policy."""
+
+    position: int
+    cost: float
+    weight: float
+    length: int | None
+    group: str | None
+    metadata: Mapping[str, FrozenPrimitive]
+    fingerprint: str
+
+    def __init__(
+        self,
+        *,
+        position: int,
+        cost: float | int,
+        weight: float | int = 1.0,
+        length: int | None = None,
+        group: str | None = None,
+        metadata: Mapping[str, object] | None = None,
+        fingerprint: str | None = None,
+    ) -> None:
+        _set_non_negative_int(self, "position", position, owner="BatchCostMetadata")
+        object.__setattr__(self, "cost", _coerce_non_negative_float(cost, owner="BatchCostMetadata", field="cost"))
+        object.__setattr__(
+            self,
+            "weight",
+            _coerce_non_negative_float(weight, owner="BatchCostMetadata", field="weight"),
+        )
+        _set_optional_non_negative_int(self, "length", length, owner="BatchCostMetadata")
+        _set_optional_string(self, "group", group, owner="BatchCostMetadata")
+        _set_primitive_mapping(self, "metadata", metadata, owner="BatchCostMetadata")
+        _set_fingerprint(self, fingerprint, owner="BatchCostMetadata")
+
+    def to_dict(self, *, include_fingerprint: bool = True) -> dict[str, object]:
+        return _record_dict(
+            {
+                "position": self.position,
+                "cost": self.cost,
+                "weight": self.weight,
+                "length": self.length,
+                "group": self.group,
+                "metadata": dict(self.metadata),
+            },
+            self,
+            include_fingerprint=include_fingerprint,
+        )
+
+    @classmethod
+    def from_dict(cls, value: object) -> "BatchCostMetadata":
+        data = _require_record(
+            value,
+            {"position", "cost", "weight", "length", "group", "metadata", "fingerprint"},
+            descriptor="BatchCostMetadata",
+        )
+        return cls(
+            position=data["position"],  # type: ignore[arg-type]
+            cost=data["cost"],  # type: ignore[arg-type]
+            weight=data["weight"],  # type: ignore[arg-type]
+            length=data["length"],  # type: ignore[arg-type]
+            group=data["group"],  # type: ignore[arg-type]
+            metadata=data["metadata"],  # type: ignore[arg-type]
+            fingerprint=data["fingerprint"],  # type: ignore[arg-type]
+        )
+
+
+BatchCostMetadata.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class BatchShapePolicy:
+    """Data-only batch shape policy record."""
+
+    policy_id: str
+    mode: str
+    batch_size: int
+    drop_last: bool
+    pad: bool
+    max_tokens: int | None
+    field_locators: tuple[FieldLocator, ...] | None
+    metadata: Mapping[str, FrozenPrimitive]
+    fingerprint: str
+
+    def __init__(
+        self,
+        policy_id: str,
+        *,
+        mode: str = "fixed",
+        batch_size: int,
+        drop_last: bool = False,
+        pad: bool = False,
+        max_tokens: int | None = None,
+        field_locators: Sequence[FieldLocator | str] | None = None,
+        metadata: Mapping[str, object] | None = None,
+        fingerprint: str | None = None,
+    ) -> None:
+        _set_string(self, "policy_id", policy_id, owner="BatchShapePolicy")
+        object.__setattr__(
+            self,
+            "mode",
+            _coerce_choice(
+                mode,
+                owner="BatchShapePolicy",
+                field="mode",
+                choices={"fixed", "dynamic", "packing"},
+            ),
+        )
+        _set_positive_int(self, "batch_size", batch_size, owner="BatchShapePolicy")
+        object.__setattr__(self, "drop_last", _coerce_bool(drop_last, owner="BatchShapePolicy", field="drop_last"))
+        object.__setattr__(self, "pad", _coerce_bool(pad, owner="BatchShapePolicy", field="pad"))
+        _set_optional_non_negative_int(self, "max_tokens", max_tokens, owner="BatchShapePolicy")
+        object.__setattr__(
+            self,
+            "field_locators",
+            None
+            if field_locators is None
+            else _coerce_required_locators(field_locators, owner="BatchShapePolicy"),
+        )
+        _set_primitive_mapping(self, "metadata", metadata, owner="BatchShapePolicy")
+        _set_fingerprint(self, fingerprint, owner="BatchShapePolicy")
+
+    def to_dict(self, *, include_fingerprint: bool = True) -> dict[str, object]:
+        return _record_dict(
+            {
+                "policy_id": self.policy_id,
+                "mode": self.mode,
+                "batch_size": self.batch_size,
+                "drop_last": self.drop_last,
+                "pad": self.pad,
+                "max_tokens": self.max_tokens,
+                "field_locators": None
+                if self.field_locators is None
+                else [str(locator) for locator in self.field_locators],
+                "metadata": dict(self.metadata),
+            },
+            self,
+            include_fingerprint=include_fingerprint,
+        )
+
+    @classmethod
+    def from_dict(cls, value: object) -> "BatchShapePolicy":
+        data = _require_record(
+            value,
+            {
+                "policy_id",
+                "mode",
+                "batch_size",
+                "drop_last",
+                "pad",
+                "max_tokens",
+                "field_locators",
+                "metadata",
+                "fingerprint",
+            },
+            descriptor="BatchShapePolicy",
+        )
+        return cls(
+            data["policy_id"],  # type: ignore[arg-type]
+            mode=data["mode"],  # type: ignore[arg-type]
+            batch_size=data["batch_size"],  # type: ignore[arg-type]
+            drop_last=data["drop_last"],  # type: ignore[arg-type]
+            pad=data["pad"],  # type: ignore[arg-type]
+            max_tokens=data["max_tokens"],  # type: ignore[arg-type]
+            field_locators=data["field_locators"],  # type: ignore[arg-type]
+            metadata=data["metadata"],  # type: ignore[arg-type]
+            fingerprint=data["fingerprint"],  # type: ignore[arg-type]
+        )
+
+
+BatchShapePolicy.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class BatchSamplerPlan:
+    """Descriptive sampler plan record; it does not sample batches."""
+
+    plan_id: str
+    shape_policy: BatchShapePolicy
+    ordering: str
+    cost_metadata: tuple[BatchCostMetadata, ...]
+    seed: FrozenPrimitive | None
+    metadata: Mapping[str, FrozenPrimitive]
+    fingerprint: str
+
+    def __init__(
+        self,
+        plan_id: str,
+        *,
+        shape_policy: BatchShapePolicy,
+        ordering: str = "sequential",
+        cost_metadata: Sequence[BatchCostMetadata] = (),
+        seed: object | None = None,
+        metadata: Mapping[str, object] | None = None,
+        fingerprint: str | None = None,
+    ) -> None:
+        _set_string(self, "plan_id", plan_id, owner="BatchSamplerPlan")
+        if not isinstance(shape_policy, BatchShapePolicy):
+            raise FieldTypeError(
+                "BatchSamplerPlan shape_policy must be a BatchShapePolicy.",
+                field="shape_policy",
+                actual=type(shape_policy).__name__,
+            )
+        object.__setattr__(self, "shape_policy", shape_policy)
+        object.__setattr__(
+            self,
+            "ordering",
+            _coerce_choice(
+                ordering,
+                owner="BatchSamplerPlan",
+                field="ordering",
+                choices={"sequential", "shuffle", "cost_aware", "grouped"},
+            ),
+        )
+        object.__setattr__(self, "cost_metadata", _coerce_cost_metadata(cost_metadata))
+        object.__setattr__(
+            self,
+            "seed",
+            _coerce_optional_primitive(seed, owner="BatchSamplerPlan", field="seed"),
+        )
+        _set_primitive_mapping(self, "metadata", metadata, owner="BatchSamplerPlan")
+        _set_fingerprint(self, fingerprint, owner="BatchSamplerPlan")
+
+    def to_dict(self, *, include_fingerprint: bool = True) -> dict[str, object]:
+        return _record_dict(
+            {
+                "plan_id": self.plan_id,
+                "shape_policy": self.shape_policy.to_dict(),
+                "ordering": self.ordering,
+                "cost_metadata": [cost.to_dict() for cost in self.cost_metadata],
+                "seed": self.seed,
+                "metadata": dict(self.metadata),
+            },
+            self,
+            include_fingerprint=include_fingerprint,
+        )
+
+    @classmethod
+    def from_dict(cls, value: object) -> "BatchSamplerPlan":
+        data = _require_record(
+            value,
+            {
+                "plan_id",
+                "shape_policy",
+                "ordering",
+                "cost_metadata",
+                "seed",
+                "metadata",
+                "fingerprint",
+            },
+            descriptor="BatchSamplerPlan",
+        )
+        return cls(
+            data["plan_id"],  # type: ignore[arg-type]
+            shape_policy=BatchShapePolicy.from_dict(data["shape_policy"]),
+            ordering=data["ordering"],  # type: ignore[arg-type]
+            cost_metadata=[
+                BatchCostMetadata.from_dict(item)
+                for item in _require_sequence(data["cost_metadata"], field="cost_metadata")
+            ],
+            seed=data["seed"],
+            metadata=data["metadata"],  # type: ignore[arg-type]
+            fingerprint=data["fingerprint"],  # type: ignore[arg-type]
+        )
+
+
+BatchSamplerPlan.__hash__ = None  # type: ignore[assignment]
+
+
+def _record_dict(
+    payload: dict[str, object],
+    record: object,
+    *,
+    include_fingerprint: bool,
+) -> dict[str, object]:
+    serialized = {key: _to_jsonable(value) for key, value in payload.items()}
+    if include_fingerprint:
+        return {**serialized, "fingerprint": getattr(record, "fingerprint")}
+    return serialized
+
+
+def _require_record(
+    value: object,
+    keys: set[str],
+    *,
+    descriptor: str,
+) -> Mapping[str, object]:
+    data = _require_mapping(value, field=descriptor)
+    _require_keys(data, keys, descriptor=descriptor)
+    return data
+
+
+def _set_string(record: object, field: str, value: object, *, owner: str) -> None:
+    object.__setattr__(
+        record,
+        field,
+        _coerce_non_empty_string(value, owner=owner, field=field),
+    )
+
+
+def _set_optional_string(
+    record: object,
+    field: str,
+    value: object | None,
+    *,
+    owner: str,
+) -> None:
+    object.__setattr__(
+        record,
+        field,
+        _coerce_optional_non_empty_string(value, owner=owner, field=field),
+    )
+
+
+def _set_non_negative_int(record: object, field: str, value: object, *, owner: str) -> None:
+    object.__setattr__(
+        record,
+        field,
+        _coerce_non_negative_int(value, owner=owner, field=field),
+    )
+
+
+def _set_positive_int(record: object, field: str, value: object, *, owner: str) -> None:
+    resolved = _coerce_non_negative_int(value, owner=owner, field=field)
+    if resolved == 0:
+        raise FieldTypeError(
+            f"{owner} {field} must be positive.",
+            owner=owner,
+            field=field,
+            actual=resolved,
+        )
+    object.__setattr__(record, field, resolved)
+
+
+def _set_optional_non_negative_int(
+    record: object,
+    field: str,
+    value: object | None,
+    *,
+    owner: str,
+) -> None:
+    if value is None:
+        object.__setattr__(record, field, None)
+        return
+    _set_non_negative_int(record, field, value, owner=owner)
+
+
+def _set_primitive_mapping(
+    record: object,
+    field: str,
+    value: Mapping[str, object] | None,
+    *,
+    owner: str,
+) -> None:
+    object.__setattr__(
+        record,
+        field,
+        MappingProxyType(_coerce_primitive_mapping(value, owner=owner, field=field)),
+    )
+
+
+def _set_fingerprint(record: object, value: str | None, *, owner: str) -> None:
+    to_dict = getattr(record, "to_dict")
+    expected = _sha256(to_dict(include_fingerprint=False))
+    resolved = value or expected
+    _validate_fingerprint(resolved, expected=expected, descriptor=owner)
+    object.__setattr__(record, "fingerprint", resolved)
+
+
+def _coerce_storage_format(value: object) -> OptimizedStorageFormat:
+    if not isinstance(value, OptimizedStorageFormat):
+        raise FieldTypeError(
+            "Storage format must be an OptimizedStorageFormat.",
+            field="storage_format",
+            actual=type(value).__name__,
+        )
+    return value
+
+
+def _coerce_chunks(values: Sequence[ChunkMetadata]) -> tuple[ChunkMetadata, ...]:
+    chunks = _coerce_record_sequence(values, ChunkMetadata, field="chunks")
+    if not chunks:
+        raise FieldTypeError("ShardManifest chunks must not be empty.", field="chunks")
+    _require_unique_ids((chunk.chunk_id for chunk in chunks), field="chunks")
+    return chunks
+
+
+def _coerce_shards(values: Sequence[ShardManifest]) -> tuple[ShardManifest, ...]:
+    shards = _coerce_record_sequence(values, ShardManifest, field="shards")
+    if not shards:
+        raise FieldTypeError("MaterializationManifest shards must not be empty.", field="shards")
+    _require_unique_ids((shard.shard_id for shard in shards), field="shards")
+    return shards
+
+
+def _coerce_records(values: Sequence[RecordLayoutMetadata]) -> tuple[RecordLayoutMetadata, ...]:
+    records = _coerce_record_sequence(values, RecordLayoutMetadata, field="records")
+    _require_unique_ids((record.record_id for record in records), field="records")
+    return records
+
+
+def _coerce_cost_metadata(values: Sequence[BatchCostMetadata]) -> tuple[BatchCostMetadata, ...]:
+    costs = _coerce_record_sequence(values, BatchCostMetadata, field="cost_metadata")
+    positions = [str(cost.position) for cost in costs]
+    _require_unique_ids(positions, field="cost_metadata")
+    return costs
+
+
+def _coerce_record_sequence(
+    values: Sequence[object],
+    expected_type: type,
+    *,
+    field: str,
+) -> tuple:
+    if isinstance(values, (str, bytes)):
+        raise FieldTypeError(
+            f"{field} must be a sequence.",
+            field=field,
+            actual=type(values).__name__,
+        )
+    try:
+        records = tuple(values)
+    except TypeError as exc:
+        raise FieldTypeError(
+            f"{field} must be a sequence.",
+            field=field,
+            actual=type(values).__name__,
+        ) from exc
+    for record in records:
+        if not isinstance(record, expected_type):
+            raise FieldTypeError(
+                f"{field} entries must be {expected_type.__name__} records.",
+                field=field,
+                actual=type(record).__name__,
+            )
+    return records
+
+
+def _require_unique_ids(values: Iterable[str], *, field: str) -> None:
+    seen: set[str] = set()
+    duplicates: list[str] = []
+    for value in values:
+        if value in seen:
+            duplicates.append(value)
+        seen.add(value)
+    if duplicates:
+        raise FieldTypeError(
+            "Descriptor identifiers must be unique.",
+            field=field,
+            duplicates=sorted(duplicates),
+        )
+
+
+def _coerce_choice(
+    value: object,
+    *,
+    owner: str,
+    field: str,
+    choices: set[str],
+) -> str:
+    text = _coerce_non_empty_string(value, owner=owner, field=field)
+    if text not in choices:
+        raise FieldTypeError(
+            f"{owner} {field} is unsupported.",
+            field=field,
+            expected=sorted(choices),
+            actual=text,
+        )
+    return text
+
+
+def _coerce_bool(value: object, *, owner: str, field: str) -> bool:
+    if type(value) is not bool:
+        raise FieldTypeError(
+            f"{owner} {field} must be a bool.",
+            owner=owner,
+            field=field,
+            expected="bool",
+            actual=type(value).__name__,
+        )
+    return value
+
+
+def _coerce_non_negative_float(value: object, *, owner: str, field: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise FieldTypeError(
+            f"{owner} {field} must be a non-negative finite number.",
+            owner=owner,
+            field=field,
+            expected="non-negative finite number",
+            actual=type(value).__name__,
+        )
+    resolved = float(value)
+    if not math.isfinite(resolved) or resolved < 0:
+        raise FieldTypeError(
+            f"{owner} {field} must be non-negative and finite.",
+            owner=owner,
+            field=field,
+            actual=value,
+        )
+    return resolved
+
+
+def _validate_shard_chunks(shard: ShardManifest) -> None:
+    out_of_range = [
+        chunk.chunk_id
+        for chunk in shard.chunks
+        if chunk.sample_start + chunk.sample_count > shard.sample_count
+    ]
+    if out_of_range:
+        raise RemotePhysDataSourceError(
+            "Shard chunk ranges must fit within the shard sample count.",
+            field="chunks",
+            shard_id=shard.shard_id,
+            sample_count=shard.sample_count,
+            chunk_ids=out_of_range,
+        )
+
+
+def _validate_materialization_plan(plan: MaterializationPlan) -> None:
+    if plan.prepared_manifest_fingerprint != plan.optimized_plan.prepared_manifest_fingerprint:
+        raise RemotePhysDataSourceError(
+            "MaterializationPlan prepared manifest fingerprint must match its optimized plan.",
+            field="prepared_manifest_fingerprint",
+            expected=plan.optimized_plan.prepared_manifest_fingerprint,
+            actual=plan.prepared_manifest_fingerprint,
+        )
+    optimized_locators = set(plan.optimized_plan.field_locators)
+    missing = [
+        str(locator)
+        for locator in plan.field_locators
+        if locator not in optimized_locators
+    ]
+    if missing:
+        raise RemotePhysDataSourceError(
+            "MaterializationPlan field locators must be present in the optimized plan.",
+            field="field_locators",
+            missing=missing,
+        )
+
+
+def _validate_materialization_manifest(manifest: MaterializationManifest) -> None:
+    mismatched_shards = [
+        shard.shard_id
+        for shard in manifest.shards
+        if shard.storage_format.fingerprint != manifest.storage_format.fingerprint
+    ]
+    if mismatched_shards:
+        raise RemotePhysDataSourceError(
+            "MaterializationManifest shard storage formats must match the manifest format.",
+            field="shards",
+            shard_ids=mismatched_shards,
+        )
+
+    manifest_locators = set(manifest.field_locators)
+    shard_ids = {shard.shard_id for shard in manifest.shards}
+    bad_chunks: dict[str, list[str]] = {}
+    for shard in manifest.shards:
+        for chunk in shard.chunks:
+            missing = [
+                str(locator)
+                for locator in chunk.field_locators
+                if locator not in manifest_locators
+            ]
+            if missing:
+                bad_chunks[f"{shard.shard_id}:{chunk.chunk_id}"] = missing
+    if bad_chunks:
+        raise RemotePhysDataSourceError(
+            "MaterializationManifest chunk locators must be present in the manifest.",
+            field="chunks",
+            missing=bad_chunks,
+        )
+
+    bad_records: dict[str, object] = {}
+    for record in manifest.records:
+        record_issues: dict[str, object] = {}
+        if record.shard_id not in shard_ids:
+            record_issues["shard_id"] = record.shard_id
+        if record.position >= manifest.sample_count:
+            record_issues["position"] = record.position
+        missing = [
+            str(locator)
+            for locator in record.field_locators
+            if locator not in manifest_locators
+        ]
+        if missing:
+            record_issues["field_locators"] = missing
+        if record_issues:
+            bad_records[record.record_id] = record_issues
+    if bad_records:
+        raise RemotePhysDataSourceError(
+            "MaterializationManifest records must reference declared shards, samples, and fields.",
+            field="records",
+            records=bad_records,
+        )
+
+
 def _validate_reader(reader: object) -> None:
     if not isinstance(reader, PreparedSampleReader):
         raise RemotePhysDataSourceError(
@@ -893,6 +2319,21 @@ def _coerce_locators(values: Sequence[FieldLocator | str]) -> tuple[FieldLocator
             "Prepared field locators must be unique.",
             field="field_locators",
             duplicates=duplicates,
+        )
+    return locators
+
+
+def _coerce_required_locators(
+    values: Sequence[FieldLocator | str],
+    *,
+    owner: str,
+) -> tuple[FieldLocator, ...]:
+    locators = _coerce_locators(values)
+    if not locators:
+        raise FieldTypeError(
+            f"{owner} field_locators must not be empty.",
+            owner=owner,
+            field="field_locators",
         )
     return locators
 
