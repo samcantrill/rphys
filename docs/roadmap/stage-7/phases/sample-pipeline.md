@@ -337,7 +337,7 @@ git diff --check
 
 - Phase execution plan refinement: unused / not needed
 - Phase implementation refinement: unused
-- PR review: unused
+- PR review: used once / completed
 - Blocker resolution: 0/3 used
 
 ## Completion Notes
@@ -367,7 +367,7 @@ git diff --check
 - PR: [#52](https://github.com/samcantrill/rphys/pull/52) opened against
   `develop` from `agent/stage-7-p5-sample-pipeline`; target and title verified
   by `gh pr view`
-- Automated review: pending
+- Automated review: completed; no blocking findings
 - Merge result: pending
 - Cleanup: pending
 - Remaining blockers: none
