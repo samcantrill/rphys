@@ -108,7 +108,7 @@ git diff --check
 - Implementation validation: `uv run pytest tests/unit/rphys/datasources/test_cache.py tests/contracts/test_cache_contract.py tests/integration/test_stage9_cache_flow.py tests/package/test_import.py tests/package/test_import_boundaries.py`; `make test-package`; `make test-contract`; `make test-integration`; `make validate-pr`; and `make test-summary` passed. Final summary: package 39, unit 595, contract 111, integration 16, total 761; e2e and acceptance not present.
 - Pre-submit blocker gate: no unresolved plan-level blocker identified
 - PR body draft: complete in `docs/roadmap/stage-9/phases/deterministic-cache-store-pr-body.md`
-- PR preparation: pending PR open
+- PR preparation: PR opened and verified as non-draft PR #62 against base `develop` from head `agent/stage-9-data-loading-cache-p3-deterministic-cache-store`
 - Automated review: complete; managing-agent local pre-submit review found no blocking findings
 - Merge result: pending
 - Cleanup: pending
@@ -125,3 +125,14 @@ git diff --check
 - Cache correctness boundary: cache keys validate request/context fingerprint coherence; context-free cached-source access skips cache writes; hits require an explicit `hit_loader`; local writes use temp-write then `Path.replace`.
 - Review decision: blocking findings remain no; merge eligible yes, assuming PR opens against `develop` and CI matches local validation.
 - Residual risks: real payload persistence and optimized storage remain deferred until explicit writer/reader and prepared-data contracts exist; distributed cache behavior remains future work.
+
+## PR Submission Metadata
+
+- PR: https://github.com/samcantrill/rphys/pull/62
+- Number: 62
+- State: open
+- Draft: no
+- Base: `develop`
+- Head: `agent/stage-9-data-loading-cache-p3-deterministic-cache-store`
+- Title: `Stage 9 Index Adapters, Torch Data Loading, And Cache - Phase 3: Deterministic Cache Contracts And Local Atomic Store`
+- Initial status checks: no GitHub status checks reported at PR-open verification time.
