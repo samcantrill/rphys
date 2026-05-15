@@ -616,8 +616,13 @@ residual risk if either target is unavailable.
   `SampleCheck` metadata handling, added focused report-field and route-label
   opacity coverage, and kept optional `copy_mode` owner hygiene scoped to
   `SampleOperation`.
-- Pre-submit blocker gate: pending.
-- PR preparation: pending.
+- Pre-submit blocker gate: completed by manager after implementation
+  refinement; `make test-unit`, `make test-contract`, `make
+  test-integration`, `make test-package`, `make validate-pr`, `make
+  test-summary`, and `git diff --check` passed.
+- PR preparation: PR body draft completed at
+  `docs/roadmap/stage-7/phases/sample-effects-checks-pr-body.md`; PR body
+  refine pending; PR opening deferred by manager instruction.
 - Automated review: pending.
 - Merge result: pending.
 - Cleanup: pending.
