@@ -671,8 +671,8 @@ git diff --check
 - Phase execution plan refinement: used once / completed for expanded path
 - Phase implementation refinement: used once / completed for duplicate view
   locator validation and focused public-boundary coverage
-- PR review: unused
-- Blocker resolution: 1/3 used
+- PR review: used once / completed
+- Blocker resolution: 2/3 used
 
 ## Completion Notes
 
@@ -701,7 +701,8 @@ git diff --check
 - PR: [#51](https://github.com/samcantrill/rphys/pull/51) opened against
   `develop` from `agent/stage-7-p4-sample-augmentation-views`; target and
   title verified by `gh pr view`
-- Automated review: not started
+- Automated review: completed; found one blocking sampler-field-mutation issue
+  that was resolved before merge
 - Merge result: pending
 - Cleanup: pending
 - Remaining blockers: none
@@ -745,3 +746,38 @@ git diff --check
 - `tests/unit/rphys/ops/test_sample_augmentation.py`
 - `tests/package/test_import_boundaries.py`
 - `docs/roadmap/stage-7/phases/sample-augmentation-views.md`
+
+## Phase PR Review Report
+
+## Assigned Review
+
+- Review target: PR #51, Stage 7 Phase 4 sample augmentation replay and views.
+- Review focus: scope, replay contract, hidden RNG/import boundary behavior,
+  field-permission enforcement, validation evidence, and PR metadata.
+- Budget use: PR review completed; blocker resolution 2/3 used.
+
+## Findings
+
+- Blocking finding: sampler-side field mutation was accepted as deterministic
+  application output because `run()` originally snapshotted before
+  `sample_params()` and validated effects only after `apply_params()`.
+
+## Resolution
+
+- Changes made: `SampleAugmentation.sample_params()` now snapshots before and
+  after the sampler and rejects any added, removed, or replaced sample fields.
+  `SampleAugmentation.run()` snapshots again after the pure sampling phase so
+  only `apply_params()` mutations are reported as augmentation field effects.
+- Tests added: unit regression where `sample_params()` writes a declared view
+  field and `apply_params()` is a no-op; the operation now raises
+  `InvalidOperationResultError` before the applier runs.
+- Validation rerun: targeted augmentation unit test, `make test-unit`, `make
+  test-contract`, `make test-integration`, and `make test-package` passed after
+  the blocker fix.
+
+## Result
+
+- Blocker resolved: yes.
+- Remaining blocker: none known.
+- Recommended next gate: `make validate-pr`, `make test-summary`, and
+  `git diff --check` before pushing the blocker-resolution commit.

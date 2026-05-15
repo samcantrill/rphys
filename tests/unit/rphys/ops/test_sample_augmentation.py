@@ -225,6 +225,47 @@ def test_sample_augmentation_run_rejects_sampler_non_params_output() -> None:
         operation(sample)
 
 
+def test_sample_augmentation_run_rejects_sampler_field_mutation_before_apply() -> None:
+    apply_calls: list[str] = []
+
+    def sampler(sample: Sample, *, context: SampleOperationContext) -> SampleAugmentationParams:
+        sample.set_field(VIEW_A, FieldValue("sampled-view", schema="video.rgb.view_a.v1"))
+        return SampleAugmentationParams(
+            values={"seed": 1},
+            view_locators={"view_a": VIEW_A},
+        )
+
+    def applier(
+        sample: Sample,
+        params: SampleAugmentationParams,
+        *,
+        context: SampleOperationContext,
+    ) -> Sample:
+        apply_calls.append("apply")
+        return sample
+
+    operation = SampleAugmentation(
+        sampler,
+        applier,
+        name="sampler-mutates",
+        contract=SampleOperationContract(
+            field_permissions=SampleFieldPermissions(
+                reads=(VIDEO,),
+                writes=(VIEW_A,),
+            ),
+        ),
+    )
+    sample = Sample({VIDEO: FieldValue((1,), schema="video.rgb.v1")})
+
+    with pytest.raises(InvalidOperationResultError) as exc:
+        operation(sample)
+
+    assert exc.value.context["field"] == "sample_params"
+    assert exc.value.context["expected"] == "no sample field mutations"
+    assert exc.value.context["actual"]["added"] == (str(VIEW_A),)
+    assert apply_calls == []
+
+
 def test_sample_augmentation_run_rejects_reserved_sample_augmentation_replay_metadata_collision() -> None:
     def sampler(sample: Sample, *, context: SampleOperationContext) -> SampleAugmentationParams:
         return SampleAugmentationParams(values={"seed": 1})

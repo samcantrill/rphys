@@ -605,7 +605,7 @@ Workflow path: fast path unless parameter records require new public fields
 - Validation: `make test-unit`, `make test-contract`, `make
   test-integration`, `make test-package`, `make validate-pr`, `make
   test-summary`, and `git diff --check` passed. `make test-summary` reported
-  609 passing package/unit/contract/integration tests; e2e and acceptance
+  610 passing package/unit/contract/integration tests; e2e and acceptance
   suites are not present.
 - PR: [#51](https://github.com/samcantrill/rphys/pull/51) opened against
   `develop` from `agent/stage-7-p4-sample-augmentation-views`; target and

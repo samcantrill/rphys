@@ -24,6 +24,7 @@ The PR adds `SampleAugmentationParams` and `SampleAugmentation`, with separate p
 - Inputs/outputs: `SampleAugmentation` accepts one `Sample` and returns the same execution `Sample` through `OperationResult`, preserving Phase 3 copy-mode and field-effect behavior.
 - Units/shapes/dtypes: the base augmentation wrapper remains dependency-light and does not interpret payload units, shapes, dtypes, devices, or backend arrays. `SampleAugmentationParams.values` accepts only immutable primitive or nested lightweight values.
 - Sampling/alignment/provenance: sampling and application are split into public `sample_params()` and `apply_params()` methods. `run()` samples exactly once, applies the sampled params, and records runtime replay evidence including context seed material, linked fields, and view locators.
+- Sampling purity: `sample_params()` is field-pure; sampler-side additions, removals, or replacements are rejected before deterministic application runs.
 - Pipeline-order implications: the wrapper remains an `OperationStep` through `SampleOperation`; specialized pipeline composition remains Phase 5 scope.
 - Leakage or subject/split implications: no split, subject, loader, cache, trainer, or model policy is introduced. Replay evidence is runtime metadata only.
 - Legacy parity or intentional behavior changes: this is additive Stage 7 behavior. It preserves Phase 3 exact locator mutation enforcement and rejects reserved replay metadata collisions.
@@ -55,7 +56,7 @@ Suite evidence from `make test-summary`:
 | Suite | Result | Evidence |
 | --- | --- | --- |
 | package | passed | 32 passed |
-| unit | passed | 483 passed |
+| unit | passed | 484 passed |
 | contract | passed | 85 passed |
 | integration | passed | 9 passed |
 | e2e | not present | 0 tests |

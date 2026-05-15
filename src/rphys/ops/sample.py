@@ -851,6 +851,7 @@ class SampleAugmentation(SampleOperation):
             sample,
             operation_name=self._name,
         )
+        before_snapshot = _snapshot_field_items(sample)
         try:
             params = self._sample_params_kernel(sample, context=execution_context)
         except Exception as exc:
@@ -860,6 +861,14 @@ class SampleAugmentation(SampleOperation):
                 role=self._contract.role.value,
                 phase="sample_params",
             ) from exc
+        _validate_no_sample_field_effects(
+            self._name,
+            "sample_params",
+            _compute_sample_field_effects(
+                before_snapshot,
+                _snapshot_field_items(sample),
+            ),
+        )
         if not isinstance(params, SampleAugmentationParams):
             raise InvalidOperationResultError(
                 "sample augmentation sampler must return SampleAugmentationParams.",
@@ -947,9 +956,8 @@ class SampleAugmentation(SampleOperation):
         )
 
         execution_sample = _prepare_execution_sample(input_value, self._copy_mode)
-        before_snapshot = _snapshot_field_items(execution_sample)
-
         params = self.sample_params(execution_sample, execution_context)
+        before_apply_snapshot = _snapshot_field_items(execution_sample)
         result = self.apply_params(
             execution_sample,
             params,
@@ -980,7 +988,7 @@ class SampleAugmentation(SampleOperation):
             )
 
         after_snapshot = _snapshot_field_items(execution_sample)
-        effects = _compute_sample_field_effects(before_snapshot, after_snapshot)
+        effects = _compute_sample_field_effects(before_apply_snapshot, after_snapshot)
         _validate_sample_field_permissions(
             self._name,
             self._sample_contract.field_permissions,
@@ -1258,6 +1266,26 @@ def _attach_sample_augmentation_replay(
         metadata=metadata,
         provenance=result.provenance,
         side_effect_evidence=result.side_effect_evidence,
+    )
+
+
+def _validate_no_sample_field_effects(
+    operation_name: str,
+    phase: str,
+    effects: dict[str, tuple[FieldLocator, ...]],
+) -> None:
+    if not effects["added"] and not effects["removed"] and not effects["replaced"]:
+        return
+
+    raise InvalidOperationResultError(
+        "sample augmentation sampling phase must not mutate sample fields.",
+        operation_name=operation_name,
+        field=phase,
+        expected="no sample field mutations",
+        actual={
+            effect_name: tuple(str(locator) for locator in locators)
+            for effect_name, locators in effects.items()
+        },
     )
 
 
