@@ -115,7 +115,7 @@ git diff --check
 - Implementation validation: `uv run pytest tests/unit/rphys/datasources/test_materialization.py tests/unit/rphys/datasources/test_batch_planning.py tests/contracts/test_materialization_contract.py tests/package/test_import.py tests/package/test_import_boundaries.py`; `make test-package`; `make test-unit`; `make test-contract`; `git diff --check`; `make validate-pr`; and `make test-summary` passed. Final summary: package 40, unit 615, contract 116, integration 17, total 788; e2e and acceptance not present.
 - Pre-submit blocker gate: no unresolved plan-level blocker identified
 - PR body draft: complete in `docs/roadmap/stage-9/phases/materialization-batch-records-pr-body.md`
-- PR preparation: pending
+- PR preparation: PR opened and verified as non-draft PR #64 against base `develop` from head `agent/stage-9-data-loading-cache-p5-materialization-batch-records`
 - Automated review: complete; managing-agent local pre-submit review found no blocking findings
 - Merge result: pending
 - Cleanup: pending
@@ -132,3 +132,15 @@ git diff --check
 - Materialization correctness boundary: records capture backend-neutral layout/cost evidence, validate cross-record references where deterministic evidence exists, and do not execute IO or sampling behavior.
 - Review decision: blocking findings remain no; merge eligible yes, assuming PR opens against `develop` and CI matches local validation.
 - Residual risks: concrete optimized-storage adapters, actual materialization execution, trainer sampler consumption, active streaming/resume, and distributed cache/materialization coordination remain future work.
+
+## PR Submission Metadata
+
+- PR: https://github.com/samcantrill/rphys/pull/64
+- Number: 64
+- State: open
+- Draft: no
+- Base: `develop`
+- Head: `agent/stage-9-data-loading-cache-p5-materialization-batch-records`
+- Title: `Stage 9 Index Adapters, Torch Data Loading, And Cache - Phase 5: Storage-Neutral Materialization, Layout, Cost, And Batch-Planning Records`
+- Head commit: `a276a007ad22e1fac733a47c7c6ca206752c199c`
+- Initial status checks: no GitHub status checks reported at PR-open verification time.
