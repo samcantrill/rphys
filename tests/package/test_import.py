@@ -295,6 +295,13 @@ STAGE_9_DATASOURCE_PREPARED_EXPORTS = [
     "BatchShapePolicy",
 ]
 
+STAGE_9_DATASOURCE_DATAPATH_EXPORTS = [
+    "StreamingReadPlan",
+    "DataLoaderState",
+    "DataPathProfile",
+    "DataPathBenchmark",
+]
+
 STAGE_3_DATASOURCE_ERROR_NAMES = [
     "InvalidDataSourceRefError",
     "InvalidDataSourceSchemaError",
@@ -654,6 +661,14 @@ def test_stage_9_prepared_module_exports_only_code_backed_names() -> None:
         assert hasattr(module, public_name)
 
 
+def test_stage_9_datapath_module_exports_only_code_backed_names() -> None:
+    module = importlib.import_module("rphys.datasources.datapath")
+
+    assert module.__all__ == STAGE_9_DATASOURCE_DATAPATH_EXPORTS
+    for public_name in STAGE_9_DATASOURCE_DATAPATH_EXPORTS:
+        assert hasattr(module, public_name)
+
+
 def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
     import rphys
     import rphys.datasources
@@ -732,6 +747,10 @@ def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
         "BatchCostMetadata",
         "BatchSamplerPlan",
         "BatchShapePolicy",
+        "StreamingReadPlan",
+        "DataLoaderState",
+        "DataPathProfile",
+        "DataPathBenchmark",
     ]
 
     for public_name in forbidden_names:
