@@ -409,9 +409,9 @@ git diff --check
 - PR body refine: complete on expanded path
 - PR preparation: PR opened and verified as non-draft PR #60 against base `develop` from head `agent/stage-9-data-loading-cache-p1-sample-source-foundation`
 - Automated review: complete; no blocking findings, PR-review budget consumed, and merge eligible assuming PR opens against `develop` and CI matches local validation
-- Merge result: pending
-- Cleanup: pending
-- Remaining blockers: none identified; PR body is ready for manager submission after automated review
+- Merge result: merged into `develop` through PR #60 as squash commit `249c128339b268ede6bff2624a46d2aa3c526a14`
+- Cleanup: pending after develop metadata commit
+- Remaining blockers: none identified
 
 ## Automated Phase PR Review Report
 
@@ -435,3 +435,33 @@ git diff --check
 - Head: `agent/stage-9-data-loading-cache-p1-sample-source-foundation`
 - Title: `Stage 9 Index Adapters, Torch Data Loading, And Cache - Phase 1: SampleSource Foundation And Deterministic Context`
 - Initial status checks: no GitHub status checks reported at PR-open verification time.
+
+# Phase Merge Record: Stage 9 Phase 1 SampleSource Foundation
+
+## Merge Facts
+
+- Phase: Phase 1 `sample-source-foundation`
+- Branch: `agent/stage-9-data-loading-cache-p1-sample-source-foundation`
+- PR: https://github.com/samcantrill/rphys/pull/60
+- Base branch: `develop`
+- Merge command: `gh pr merge 60 --squash --match-head-commit 2e311597648645eaf1c652a2409ad111f2ec78e6 --subject "Stage 9 Phase 1: SampleSource foundation" --body "..."`
+- Merge result: merged 2026-05-15
+- Merge commit: `249c128339b268ede6bff2624a46d2aa3c526a14`
+- Branch cleanup: pending after metadata commit
+- Worktree cleanup: pending after metadata commit
+
+## Completion Summary
+
+- Behavior implemented: module-scoped `rphys.datasources.sources` with `SampleRequest`, `SampleRuntimeContext`, `WorkerContextFactory`, `SampleSource`, and `IndexSampleSource`.
+- Tests and validation: `UV_CACHE_DIR=/tmp/uv-cache make validate-pr` and `UV_CACHE_DIR=/tmp/uv-cache make test-summary` passed with package 36, unit 571, contract 103, integration 14, total 724; no GitHub status checks were configured for PR #60.
+- Documentation: phase plan, PR body, implementation-plan PR state, automated review, and merge facts recorded.
+- Scientific contract implications: FieldLocator-keyed `Sample` shape is preserved; source context remains deterministic primitive evidence; no torch/cache/prepared/export/model/trainer/device/workflow behavior was added.
+- Follow-up notes for later phases: Phase 2 should consume the Phase 1 `SampleSource` contract without changing sample shape; rank/world/worker fields remain evidence-only until later distributed/cache work.
+
+## Implementation Plan Update
+
+- Phase status: merged
+- Completion summary recorded: yes
+- Validation evidence recorded: yes
+- Remaining blockers: none
+- Metadata commit: pending
