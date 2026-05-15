@@ -627,8 +627,12 @@ residual risk if either target is unavailable.
   with the canonical title.
 - Automated review: completed; one blocking `SampleTransform` contract-type
   finding was resolved locally with focused validation.
-- Merge result: pending.
-- Cleanup: pending.
+- Merge result: squash-merged to `develop` on 2026-05-15 at
+  `c2d9829aabc615609b87cdeef58413f8df5eac89` with
+  `gh pr merge 50 --squash`.
+- Cleanup: completed; removed the Phase 3 worktree, pruned worktree metadata,
+  and deleted the local and remote `agent/stage-7-p3-sample-effects-checks`
+  branches.
 - Remaining blockers: none identified in scoped implementation or PR-prep
   evidence. `make validate-pr` and `make test-summary` passed before PR
   opening.
@@ -720,3 +724,44 @@ residual risk if either target is unavailable.
 - Residual risks: payload-internal mutation is not detected, transparent read
   tracking remains explicit/out of scope, and exact-locator `dynamic_writes`
   may need broader Phase 4 view-family semantics.
+
+## Phase Merge Record: Sample Field Effects, Transforms, And Checks
+
+### Merge Facts
+
+- Phase: Stage 7 Phase 3, `sample-effects-checks`
+- Branch: `agent/stage-7-p3-sample-effects-checks`
+- PR: [#50](https://github.com/samcantrill/rphys/pull/50)
+- Base branch: `develop`
+- Merge command: `gh pr merge 50 --squash`
+- Merge result: squash-merged to `develop`
+- Merge commit: `c2d9829aabc615609b87cdeef58413f8df5eac89`
+- Branch cleanup: local and remote phase branches deleted
+- Worktree cleanup:
+  `/home/samcantrill/work/rphys-worktrees/stage-7-p3-sample-effects-checks`
+  removed; `git worktree prune` completed
+
+### Completion Summary
+
+- Behavior implemented: deterministic sample copy modes, declared field-effect
+  snapshots and enforcement, transform/check wrappers, decision/route metadata,
+  and focused undeclared mutation errors.
+- Tests and validation: package, unit, contract, and integration suites passed
+  through `make validate-pr`/`make test-summary`; focused blocker validation
+  passed after PR review.
+- Documentation: phase plan, PR body, review report, and implementation-plan
+  merge metadata are recorded.
+- Scientific contract implications: mutation evidence is locator and
+  `FieldValue` identity based; route labels remain informational; lazy
+  preflight/snapshot checks do not materialize payloads; payload-internal
+  mutation and transparent read tracking remain out of scope.
+- Follow-up notes for later phases: Phase 4 owns augmentation replay and
+  generated view writes; Phase 5 owns specialized sample pipeline composition.
+
+### Implementation Plan Update
+
+- Phase status: merged
+- Completion summary recorded: yes
+- Validation evidence recorded: yes
+- Remaining blockers: none
+- Metadata commit: direct `develop` metadata commit following PR #50 merge

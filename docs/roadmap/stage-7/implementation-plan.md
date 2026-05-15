@@ -5,7 +5,7 @@ Roadmap version: `v7`
 Planning document: `docs/roadmap/stage-7/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 3 PR open after local validation
+Current phase: Phase 4 pending after Phase 3 merge
 Blockers: none
 
 ## Summary
@@ -88,7 +88,7 @@ Blockers: none
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `operation-foundation` | merged | `agent/stage-7-p1-operation-foundation` | [#48](https://github.com/samcantrill/rphys/pull/48) | `src/rphys/ops/core.py`, `src/rphys/ops/pipelines.py`, `src/rphys/ops/__init__.py`, focused errors/tests/docs | Refactor the operation foundation around `OperationStep`. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | OperationStep, custom step pipeline, generic mapping rejection |
 | 2 | `sample-foundations` | merged | `agent/stage-7-p2-sample-foundations` | [#49](https://github.com/samcantrill/rphys/pull/49) | `src/rphys/ops/sample.py`, `src/rphys/ops/__init__.py`, focused errors/tests | Establish sample operation public foundations. | `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | contract inspection, locator parsing, context/replay records, exports |
-| 3 | `sample-effects-checks` | pr_open | `agent/stage-7-p3-sample-effects-checks` | [#50](https://github.com/samcantrill/rphys/pull/50) | sample enforcement, transforms/checks, focused private helpers | Implement sample field-effect enforcement, transforms, and checks. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `make validate-pr`; `make test-summary`; `git diff --check` | declared mutation, same-locator replacement, lazy fields, route non-policy |
+| 3 | `sample-effects-checks` | merged | `agent/stage-7-p3-sample-effects-checks` | [#50](https://github.com/samcantrill/rphys/pull/50) | sample enforcement, transforms/checks, focused private helpers | Implement sample field-effect enforcement, transforms, and checks. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `make validate-pr`; `make test-summary`; `git diff --check` | declared mutation, same-locator replacement, lazy fields, route non-policy |
 | 4 | `sample-augmentation-views` | pending | `agent/stage-7-p4-sample-augmentation-views` | pending | sample augmentation params/replay/view behavior | Add sample augmentation replay and self-supervised view writing. | `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check` | replay, linked fields, no global RNG, view locators |
 | 5 | `sample-pipeline` | pending | `agent/stage-7-p5-sample-pipeline` | pending | `src/rphys/ops/pipelines.py`, specialized pipeline tests | Add specialized sample pipeline composition. | `make test-unit`; `make test-contract`; `git diff --check` | ordered mapping, step diagnostics, generic pipeline regression |
 | 6 | `batch-surface` | pending | `agent/stage-7-p6-batch-surface` | pending | `src/rphys/ops/batch.py`, batch pipeline/equivalence tests | Add provisional batch operation, augmentation, equivalence, and pipeline surface. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package`; `git diff --check` | LIST-collated equivalence, batch params, dtype/device metadata |
@@ -376,7 +376,7 @@ adapter conflict
 
 ## Phase 3: Sample Field Effects, Transforms, And Checks
 
-Status: pr_open
+Status: merged
 Slug: `sample-effects-checks`
 Branch: `agent/stage-7-p3-sample-effects-checks`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-7-p3-sample-effects-checks`
@@ -459,7 +459,7 @@ error wrapping broadly
   typed failure hardening
 - Pre-submit blocker gate: completed; no lazy-field materialization,
   route/drop policy, or public private-helper leakage blocker found
-- Merge record: pending
+- Merge record: completed; cleanup completed
 
 ### Risks And Stop Conditions
 
@@ -488,7 +488,13 @@ error wrapping broadly
   verified by `gh pr view`. Automated PR review found one blocking
   `SampleTransform` invalid-contract typed-failure issue; it was resolved with
   focused unit coverage and rerun validation.
-- Merge: pending
+- Merge: squash-merged to `develop` on 2026-05-15 at
+  `c2d9829aabc615609b87cdeef58413f8df5eac89`; merge command
+  `gh pr merge 50 --squash`.
+- Cleanup: removed
+  `/home/samcantrill/work/rphys-worktrees/stage-7-p3-sample-effects-checks`,
+  ran `git worktree prune`, and deleted the local and remote
+  `agent/stage-7-p3-sample-effects-checks` branches.
 - Follow-up: Phase 4 owns augmentation params, replay, stochastic sampling, and
   generated view writes; Phase 5 owns specialized sample pipeline composition.
 
