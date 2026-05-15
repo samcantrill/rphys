@@ -355,21 +355,48 @@ git diff --check
 
 - Expanded-path reason: Phase 1 establishes public `SampleSource` API, import path, request/context records, deterministic fingerprint semantics, and returned sample shape used by later torch/cache/prepared phases.
 - Phase execution plan refinement: complete; expanded-path refinement used for plan-only tightening, not implementation
-- Phase implementation refinement: unused
+- Phase implementation refinement: complete; 1 refinement used to reject caller-supplied `SampleRuntimeContext` records whose entry or request evidence does not match the sample being built
 - PR review: unused
-- Blocker resolution: 0/3 used
+- Blocker resolution: 1/3 used
 - Refinement focus resolved: public API stays minimal; request/context fingerprints are primitive and deterministic; error taxonomy remains existing-first with at most one narrow new source error; parent exports are out of scope; negative/non-integer positions fail loudly; `SampleRuntimeContext` remains evidence-only and does not imply stable DDP/workflow semantics.
+
+## Phase Refinement Report: Context Evidence Coherence
+
+## Assigned Blocker
+
+- Blocker: `IndexSampleSource.sample_at` accepted a valid `SampleRuntimeContext` for a different source position or request fingerprint without failing.
+- Source: expanded-path Phase 1 implementation refinement against context evidence and typed failure semantics.
+- Scope: `src/rphys/datasources/sources.py`, focused source unit tests, and this phase artifact.
+- Budget use: Phase implementation refinement 1 used; blocker resolution 1/3 used.
+
+## Resolution
+
+- Changes made: caller-supplied context records are now validated against the aligned `DataSourceIndexEntry` and coerced `SampleRequest` before sample construction; mismatches raise `RemotePhysDataSourceError` with inspectable mismatch evidence.
+- Tests or docs updated: added unit coverage for mismatched context position and request fingerprint; updated refinement notes.
+- Validation rerun: focused Phase 1 pytest set, `make test-package`, `make test-contract`, and `git diff --check` passed. Focused `uv run ruff check ...` could not run because `ruff` is not installed in the project environment.
+
+## Result
+
+- Blocker resolved: yes.
+- Remaining blocker: none identified in Phase 1 scope.
+- Recommended next gate: PR preparation after final commit and normal review.
+
+## Files Changed
+
+- `src/rphys/datasources/sources.py`
+- `tests/unit/rphys/datasources/test_sources.py`
+- `docs/roadmap/stage-9/phases/sample-source-foundation.md`
 
 ## Completion Notes
 
 - Draft plan: complete in `docs/roadmap/stage-9/phases/sample-source-foundation.md`
 - Final phase execution plan: complete after expanded-path refinement
-- Implementation summary: pending
-- Implementation validation: pending
-- Refinement summary: tightened public API/import-path/data-shape decisions, validation expectations, stop conditions, and executor handoff without changing phase scope
-- Pre-submit blocker gate: pending for implementation; no unresolved source API, parent-export, negative-position, fingerprint, context-shape, or derived-source promotion decision remains in this plan
+- Implementation summary: complete; Phase 1 source foundation APIs are implemented, with refinement tightening accepted context evidence coherence.
+- Implementation validation: `uv run pytest tests/unit/rphys/datasources/test_sources.py`; `uv run pytest tests/unit/rphys/datasources/test_sources.py tests/contracts/test_sample_source_contract.py tests/integration/test_stage9_sample_source_flow.py tests/package/test_import.py tests/package/test_import_boundaries.py`; `make test-package`; `make test-contract`; `git diff --check` all passed.
+- Refinement summary: plan refinement tightened public API/import-path/data-shape decisions; implementation refinement now rejects context records whose source-entry or request evidence does not match the requested sample without changing the returned `Sample` shape.
+- Pre-submit blocker gate: no unresolved source API, parent-export, negative-position, fingerprint, context-shape, or derived-source promotion decision remains in this plan
 - PR preparation: pending
 - Automated review: pending
 - Merge result: pending
 - Cleanup: pending
-- Remaining blockers: none; plan is scope-complete for executor implementation
+- Remaining blockers: none identified; implementation is ready for PR preparation after this refinement commit

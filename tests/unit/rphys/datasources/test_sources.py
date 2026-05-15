@@ -166,6 +166,36 @@ def test_index_sample_source_rejects_invalid_request_and_context() -> None:
         source.sample_at(0, context=object())  # type: ignore[arg-type]
 
 
+def test_index_sample_source_rejects_mismatched_context_evidence() -> None:
+    fixture = make_builder_fixture()
+    index = DataSourceIndex(
+        "sample-source-context",
+        [fixture.item, fixture.item],
+        [
+            _entry_for_item("sample-source-context", 0, fixture.item),
+            _entry_for_item("sample-source-context", 1, fixture.item),
+        ],
+    )
+    source = IndexSampleSource(index, fixture.builder)
+    request = SampleRequest(VIDEO)
+    wrong_position_context = WorkerContextFactory().make_context(
+        index_entry=index.entry_at(1),
+        request=request,
+    )
+    wrong_request_context = WorkerContextFactory().make_context(
+        index_entry=index.entry_at(0),
+        request=SampleRequest(BVP),
+    )
+
+    with pytest.raises(RemotePhysDataSourceError, match="does not match") as position_error:
+        source.sample_at(0, request=request, context=wrong_position_context)
+    assert "position" in position_error.value.context["mismatches"]
+
+    with pytest.raises(RemotePhysDataSourceError, match="does not match") as request_error:
+        source.sample_at(0, request=request, context=wrong_request_context)
+    assert "request_fingerprint" in request_error.value.context["mismatches"]
+
+
 def test_index_sample_source_rejects_missing_request_fields() -> None:
     source = _index_source("sample-source-missing", make_builder_fixture())
 

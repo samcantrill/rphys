@@ -604,14 +604,17 @@ class IndexSampleSource(SampleSource):
         request_object = SampleRequest.coerce(request)
         index_item = self._index[source_position]
         index_entry = self._index.entry_at(source_position)
-        _ = (
-            context
-            if context is not None
-            else self._context_factory.make_context(
+        if context is None:
+            context = self._context_factory.make_context(
                 index_entry=index_entry,
                 request=request_object,
             )
-        )
+        else:
+            _validate_context_matches_entry(
+                context,
+                index_entry=index_entry,
+                request=request_object,
+            )
 
         return self._builder.build(
             index_item,
@@ -835,6 +838,76 @@ def _coerce_primitive_mapping(
             )
         output[key] = freeze_primitive(item, error_type=FieldTypeError, field=f"{field}[{key}]")
     return output
+
+
+def _validate_context_matches_entry(
+    context: SampleRuntimeContext,
+    *,
+    index_entry: DataSourceIndexEntry,
+    request: SampleRequest,
+) -> None:
+    expected: dict[str, object] = {
+        "index_id": index_entry.index_id,
+        "entry_id": index_entry.entry_id,
+        "position": index_entry.position,
+        "candidate_id": index_entry.candidate_id,
+        "record_id": index_entry.record_id,
+        "datasource_id": index_entry.datasource_id,
+        "source_id": index_entry.source_id,
+        "groups": dict(index_entry.groups),
+        "split": index_entry.split,
+        "split_group": index_entry.split_group,
+        "split_group_value": index_entry.split_group_value,
+        "source_key": index_entry.source_key,
+        "child_index_id": index_entry.child_index_id,
+        "child_entry_id": index_entry.child_entry_id,
+        "child_position": index_entry.child_position,
+        "child_index_fingerprint": index_entry.child_index_fingerprint,
+        "child_metadata": {
+            str(key): value for key, value in index_entry.child_metadata.items()
+        },
+        "field_windows": _coerce_primitive_mapping(
+            index_entry.field_windows,
+            owner="SampleRuntimeContext",
+            field="field_windows",
+        ),
+        "request_fingerprint": request.fingerprint,
+    }
+    actual: dict[str, object] = {
+        "index_id": context.index_id,
+        "entry_id": context.entry_id,
+        "position": context.position,
+        "candidate_id": context.candidate_id,
+        "record_id": context.record_id,
+        "datasource_id": context.datasource_id,
+        "source_id": context.source_id,
+        "groups": dict(context.groups),
+        "split": context.split,
+        "split_group": context.split_group,
+        "split_group_value": context.split_group_value,
+        "source_key": context.source_key,
+        "child_index_id": context.child_index_id,
+        "child_entry_id": context.child_entry_id,
+        "child_position": context.child_position,
+        "child_index_fingerprint": context.child_index_fingerprint,
+        "child_metadata": dict(context.child_metadata),
+        "field_windows": dict(context.field_windows),
+        "request_fingerprint": context.request_fingerprint,
+    }
+    mismatches = {
+        field: {
+            "expected": _to_jsonable(expected_value),
+            "actual": _to_jsonable(actual[field]),
+        }
+        for field, expected_value in expected.items()
+        if actual[field] != expected_value
+    }
+    if mismatches:
+        raise RemotePhysDataSourceError(
+            "SampleRuntimeContext does not match the requested source sample.",
+            field="context",
+            mismatches=mismatches,
+        )
 
 
 def _canonical_json(value: Mapping[str, object]) -> str:
