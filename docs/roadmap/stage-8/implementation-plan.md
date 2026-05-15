@@ -1,11 +1,11 @@
 # Roadmap Stage 8 Implementation Plan
 
-Status: approved; ready for phase implementation
+Status: implemented; all phases merged
 Roadmap version: `v8`
 Planning document: `docs/roadmap/stage-8/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: pending Phase 5 implementation
+Current phase: all phases merged
 Blockers: none for implementation-plan drafting
 
 ## Summary
@@ -42,7 +42,7 @@ Blockers: none for implementation-plan drafting
 | 2 | `selection-preflight` | merged | `agent/stage-8-p2-selection-preflight` | [#56](https://github.com/samcantrill/rphys/pull/56) | `rphys.ops.export`; operation contract tests; selection unit tests | Add no-write `CodecSelectionOperation` and prove landed `OperationStep` compatibility. | Contract/unit tests for `OperationStep`, `OperationPipeline`, no side effects, missing/ambiguous/unsupported inputs. | OperationStep export composition; selection preflight produces no writes. |
 | 3 | `save-operation` | merged | `agent/stage-8-p3-save-operation` | [#57](https://github.com/samcantrill/rphys/pull/57) | `rphys.ops.export`; synthetic codec fixtures; save/codec contract tests | Implement `SaveOperation` through existing codec save contracts and explicit idempotency outcomes. | Unit/contract tests for pipeline output forwarding, `SaveContext(target=FieldRef)`, `CodecSaveResult`, conflict/skip/replace/write, typed failures. | Codec save contract preservation; idempotency matrix. |
 | 4 | `link-copy-lineage` | merged | `agent/stage-8-p4-link-copy-lineage` | [#58](https://github.com/samcantrill/rphys/pull/58) | Private local helpers under export implementation; lineage/local-link tests; package boundary tests | Add explicit link/copy policy behavior and public ordered source/target `ResourceRef` lineage while keeping helpers private. | Unit tests for linked/copied counts, missing lineage, unsupported/cross-protocol failures, explicit fallback, private helper imports; `make test-package`. | Link/copy lineage preservation. |
-| 5 | `derived-datasource-roundtrip` | pending | `agent/stage-8-p5-derived-datasource-roundtrip` | pending | `src/rphys/datasources/derived.py`; derived datasource unit tests; Stage 8 integration test; docs/package tests | Assemble successful export results into descriptor-only derived datasources and prove the synthetic export-to-reload vertical slice. | Unit/integration tests for no-rescan assembly, no source mutation, no index-manifest reuse, derived index/load; package/docs checks; final broad suite as scope warrants. | Synthetic datasource/index/sample to exported derived datasource reload; optional prediction-like field dry run. |
+| 5 | `derived-datasource-roundtrip` | merged | `agent/stage-8-p5-derived-datasource-roundtrip` | [#59](https://github.com/samcantrill/rphys/pull/59) | `src/rphys/datasources/derived.py`; derived datasource unit tests; Stage 8 integration test; docs/package tests | Assemble successful export results into descriptor-only derived datasources and prove the synthetic export-to-reload vertical slice. | Unit/integration tests for no-rescan assembly, no source mutation, no index-manifest reuse, derived index/load; package/docs checks; final broad suite as scope warrants. | Synthetic datasource/index/sample to exported derived datasource reload; optional prediction-like field dry run. |
 
 ## Implementation Readiness Blockers
 
@@ -367,11 +367,11 @@ Workflow path: fast path
 
 ## Phase 5: Descriptor-Only Derived Datasource Assembly And Final Synthetic Round Trip
 
-Status: pending
+Status: merged
 Slug: `derived-datasource-roundtrip`
 Branch: `agent/stage-8-p5-derived-datasource-roundtrip`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-8-p5-derived-datasource-roundtrip`
-PR: pending
+PR: [#59](https://github.com/samcantrill/rphys/pull/59)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -437,11 +437,21 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added descriptor-only `rphys.datasources.derived` with
+  `DerivedDataSourceAssembly` and `DerivedDataSourceBuilder`; successful
+  export evidence now assembles derived `DataSourceRef` and ordered
+  `RecordRef`s without output rescans or durable derived manifests.
+- Validation: targeted derived tests, Stage 5 baseline, `make test-integration`,
+  `make test-package`, `make test`, `make validate-pr`, `make test-summary`,
+  `uv lock --check` through validation, grep gate, and `git diff --check`
+  passed locally.
+- PR: [#59](https://github.com/samcantrill/rphys/pull/59).
+- Merge: squash merged to `develop` at
+  `abbeb405d456b7321b8a6c8bb3511dc5fb3f9f68`.
+- Follow-up: durable derived datasource manifest schemas, cross-process
+  derived manifest interchange, storage adapter protocols, cache/materialization
+  manifests, prediction/evaluation/report behavior, and public report
+  serialization remain deferred.
 
 ## Cross-Phase Validation
 
