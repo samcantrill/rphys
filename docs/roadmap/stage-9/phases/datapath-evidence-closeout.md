@@ -119,8 +119,8 @@ git diff --check
 - PR body draft: complete in `docs/roadmap/stage-9/phases/datapath-evidence-closeout-pr-body.md`
 - PR preparation: PR opened and verified as non-draft PR #65 against base `develop` from head `agent/stage-9-data-loading-cache-p6-datapath-evidence-closeout`
 - Automated review: complete; managing-agent local pre-submit review found no blocking findings
-- Merge result: pending
-- Cleanup: pending
+- Merge result: merged into `develop` through PR #65 as squash commit `adc8dad96f7fcb055663da0f79711707c33e9a48`
+- Cleanup: complete; Phase 6 worktree removed, worktree metadata pruned, and local/remote phase branches deleted
 - Remaining blockers: none identified for implementation
 
 ## Automated Phase PR Review Report
@@ -139,9 +139,40 @@ git diff --check
 
 - PR: https://github.com/samcantrill/rphys/pull/65
 - Number: 65
-- State: open
+- State: merged
 - Draft: no
 - Base: `develop`
 - Head: `agent/stage-9-data-loading-cache-p6-datapath-evidence-closeout`
 - Title: `Stage 9 Index Adapters, Torch Data Loading, And Cache - Phase 6: Data-Path Evidence, Integration, Docs, And Package Closeout`
 - Initial status checks: no GitHub status checks reported at PR-open verification time.
+
+# Phase Merge Record: Stage 9 Phase 6 Data-Path Evidence, Integration, Docs, And Package Closeout
+
+## Merge Facts
+
+- Phase: Phase 6 `datapath-evidence-closeout`
+- Branch: `agent/stage-9-data-loading-cache-p6-datapath-evidence-closeout`
+- PR: https://github.com/samcantrill/rphys/pull/65
+- Base branch: `develop`
+- Merge command: `gh pr merge 65 --squash --match-head-commit a6aef1a0124c436bafb9c585bc797d2097a96dd9 --subject "Stage 9 Phase 6: data path evidence closeout" --body "..."`
+- Merge result: merged 2026-05-15
+- Merge commit: `adc8dad96f7fcb055663da0f79711707c33e9a48`
+- Branch cleanup: complete; local and remote Phase 6 branches deleted after merge
+- Worktree cleanup: complete; Phase 6 worktree removed and worktree metadata pruned
+
+## Completion Summary
+
+- Behavior implemented: module-scoped `rphys.datasources.datapath` with public provisional streaming read plan, loader state, data-path profile, and data-path benchmark descriptor records plus synthetic source/cache/prepared/materialization/batch integration coverage.
+- Tests and validation: `make validate-pr` and `make test-summary` passed with package 41, unit 622, contract 118, integration 18, total 799; no GitHub status checks were configured for PR #65.
+- Documentation: phase plan, PR body, automated review, implementation-plan PR state, Stage 9 closeout, and merge facts recorded.
+- Scientific contract implications: data-path records remain primitive/fingerprinted and descriptive-only; synthetic flow exercises FieldLocator-preserving source-to-batch behavior, cache hit/miss, prepared manifest equivalence, materialization descriptors, and data-path profile/benchmark evidence without raw datasets or heavy optional dependencies.
+- Follow-up notes for later stages: Stage 15 can consume the data-path evidence records when real profiling/performance work begins; real cache payload writers, concrete optimized backends, active resume, stable DDP coordination, trainer profiler/event schemas, and performance thresholds remain deferred.
+
+## Implementation Plan Update
+
+- Phase status: merged
+- Stage status: implemented through Phase 6
+- Completion summary recorded: yes
+- Validation evidence recorded: yes
+- Remaining blockers: none
+- Metadata commit: this direct `develop` metadata commit records merge, cleanup, and Stage 9 closeout facts

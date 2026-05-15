@@ -43,7 +43,7 @@ Blockers: none
 | 3 | `deterministic-cache-store` | merged | `agent/stage-9-data-loading-cache-p3-deterministic-cache-store` | [#62](https://github.com/samcantrill/rphys/pull/62) | `src/rphys/datasources/cache.py`; cache unit/contract/temp-dir tests; cache docs/docstrings | Add deterministic cache records, local atomic store, fake/minimal explicit value strategy, and `CachedSampleSource`. | Cache key/manifest/policy/result, temp-dir atomic store, cached-source, package import, and diff checks. | Local cache hit/miss/stale/corrupt matrix; request-specific cache adversarial source. |
 | 4 | `prepared-reader-source` | merged | `agent/stage-9-data-loading-cache-p4-prepared-reader-source` | [#63](https://github.com/samcantrill/rphys/pull/63) | `src/rphys/datasources/prepared.py`; prepared manifest/reader/source tests; provisional docs | Add `PreparedDataManifest`, public provisional `PreparedSampleReader`, `PreparedSampleSource`, and equivalence checks. | Prepared manifest, fake reader, equivalence matrix, package import, and diff checks. | Prepared manifest equivalence success/failure; fake prepared reader/backend boundary. |
 | 5 | `materialization-batch-records` | merged | `agent/stage-9-data-loading-cache-p5-materialization-batch-records` | [#64](https://github.com/samcantrill/rphys/pull/64) | `src/rphys/datasources/prepared.py`; materialization/batch record tests; phase docs | Add storage-neutral materialization, layout, cost, and batch-planning records. | Record validator, package import, contract, docs, and diff checks. | Batch cost metadata and sampler plan; storage-neutral materialization records. |
-| 6 | `datapath-evidence-closeout` | PR open | `agent/stage-9-data-loading-cache-p6-datapath-evidence-closeout` | [#65](https://github.com/samcantrill/rphys/pull/65) | `src/rphys/datasources/datapath.py`; synthetic integration; public exports/docs/package closeout | Add data-path evidence/profile records and close Stage 9 docs, examples, exports, and focused integration. | Data-path record tests, integration smoke, package/import checks, relevant unit/contract suites, `git diff --check`, and broadened validation as needed. | Synthetic source-to-collater/cache/prepared smoke; data-path profile/benchmark evidence. |
+| 6 | `datapath-evidence-closeout` | merged | `agent/stage-9-data-loading-cache-p6-datapath-evidence-closeout` | [#65](https://github.com/samcantrill/rphys/pull/65) | `src/rphys/datasources/datapath.py`; synthetic integration; public exports/docs/package closeout | Add data-path evidence/profile records and close Stage 9 docs, examples, exports, and focused integration. | Data-path record tests, integration smoke, package/import checks, relevant unit/contract suites, `git diff --check`, and broadened validation as needed. | Synthetic source-to-collater/cache/prepared smoke; data-path profile/benchmark evidence. |
 
 ## Implementation Readiness Blockers
 
@@ -482,7 +482,7 @@ Workflow path: expanded path
 
 ## Phase 6: Data-Path Evidence, Integration, Docs, And Package Closeout
 
-Status: PR open
+Status: merged
 Slug: `datapath-evidence-closeout`
 Branch: `agent/stage-9-data-loading-cache-p6-datapath-evidence-closeout`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-9-data-loading-cache-p6-datapath-evidence-closeout`
@@ -539,7 +539,7 @@ Workflow path: expanded path
 - PR review budget: complete; managing-agent local pre-submit review found no blocking findings
 - Blocker-resolution budget: expanded
 - Pre-submit blocker gate: no active runtime/profiler/trainer behavior slipped in; public exports are code-backed
-- Merge record: pending
+- Merge record: complete; squash merged via PR #65 as `adc8dad96f7fcb055663da0f79711707c33e9a48`
 
 ### Risks And Stop Conditions
 
@@ -549,11 +549,23 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: complete; `rphys.datasources.datapath` adds public provisional streaming read plan, loader state, data-path profile, and data-path benchmark descriptor records plus synthetic Stage 9 flow coverage.
+- Validation: `make validate-pr` and `make test-summary` passed with package 41, unit 622, contract 118, integration 18, total 799.
+- PR: https://github.com/samcantrill/rphys/pull/65 merged into `develop`.
+- Merge: squash merged as `adc8dad96f7fcb055663da0f79711707c33e9a48`.
+- Follow-up: Stage 9 is implemented; future work remains in recorded revisit triggers for real payload writers, concrete optimized backends, active streaming/resume, stable DDP coordination, profiler/trainer integrations, and model/device behavior.
+
+### Phase Merge Record
+
+- Phase: Phase 6 `datapath-evidence-closeout`
+- Branch: `agent/stage-9-data-loading-cache-p6-datapath-evidence-closeout`
+- PR: https://github.com/samcantrill/rphys/pull/65
+- Base branch: `develop`
+- Merge command: `gh pr merge 65 --squash --match-head-commit a6aef1a0124c436bafb9c585bc797d2097a96dd9 --subject "Stage 9 Phase 6: data path evidence closeout" --body "..."`
+- Merge result: merged 2026-05-15
+- Merge commit: `adc8dad96f7fcb055663da0f79711707c33e9a48`
+- Branch cleanup: complete; local and remote Phase 6 branches deleted after merge
+- Worktree cleanup: complete; Phase 6 worktree removed and worktree metadata pruned
 
 ## Cross-Phase Validation
 
@@ -584,3 +596,11 @@ Gate result:
 - Approved scope: six-phase Stage 9 implementation plan covering source foundation, torch/collater boundary, deterministic cache store, prepared reader/source, materialization/batch records, and data-path evidence closeout.
 - Accepted risks: Stage 9 intentionally defers real cache payload writers, concrete optimized-storage adapters, active streaming/resume runtime, stable DDP cache coordination, full read/write backend protocols, and distinct `DerivedIndexSampleSource` until code-backed provenance validation exists.
 - Deferred items: real cache payload writers; concrete optimized-storage adapters; active streaming/resume runtime; stable DDP cache coordination; full read/write backend protocols; distinct `DerivedIndexSampleSource` until code-backed provenance validation exists; model formatting; trainer/device behavior.
+
+## Stage Completion
+
+- Stage status: implemented and merged through Phase 6.
+- Final phase PR: https://github.com/samcantrill/rphys/pull/65
+- Final phase merge commit: `adc8dad96f7fcb055663da0f79711707c33e9a48`
+- Final metadata commit: this direct `develop` metadata commit records Stage 9 closeout.
+- Final validation evidence: Phase 6 `make validate-pr` and `make test-summary` passed with package 41, unit 622, contract 118, integration 18, total 799; e2e and acceptance not present.
