@@ -272,6 +272,11 @@ def test_import_ops_public_all_exports() -> None:
         "OperationResult",
         "OperationPipeline",
         "FunctionalKernel",
+        "SampleFieldPermissions",
+        "SampleOperationContract",
+        "SampleOperationContext",
+        "SampleReplayRecord",
+        "SampleOperation",
     ]
     assert not hasattr(rphys, "OperationRole")
     assert not hasattr(rphys, "OperationMutationPolicy")
@@ -281,6 +286,11 @@ def test_import_ops_public_all_exports() -> None:
     assert not hasattr(rphys, "Operation")
     assert not hasattr(rphys, "OperationPipeline")
     assert not hasattr(rphys, "FunctionalKernel")
+    assert not hasattr(rphys, "SampleOperation")
+    assert not hasattr(rphys, "SampleOperationContract")
+    assert not hasattr(rphys, "SampleFieldPermissions")
+    assert not hasattr(rphys, "SampleOperationContext")
+    assert not hasattr(rphys, "SampleReplayRecord")
 
 
 def test_import_ops_module_exports_are_scoped() -> None:
@@ -295,6 +305,18 @@ def test_import_ops_module_exports_are_scoped() -> None:
     assert core.__all__ == ["OperationStep", "Operation"]
     assert kernels.__all__ == ["FunctionalKernel"]
     assert pipelines.__all__ == ["OperationPipeline"]
+
+
+def test_import_ops_sample_module_exports() -> None:
+    sample_module = __import__("rphys.ops.sample", fromlist=["__all__"])
+
+    assert sample_module.__all__ == [
+        "SampleFieldPermissions",
+        "SampleOperationContract",
+        "SampleOperationContext",
+        "SampleReplayRecord",
+        "SampleOperation",
+    ]
 
 
 def test_import_errors_phase_6_exports_are_scoped() -> None:
