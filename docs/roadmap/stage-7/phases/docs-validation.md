@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: draft phase execution plan; ready for implementation
+- Status: implemented; PR pending
 - Roadmap stage: `v7`
 - Feature focus: Stage-wide documentation alignment and validation evidence for sample and batch operations
 - Stage descriptor: SampleOps, BatchOps, Transforms, Augmentations, Checks, And Pipelines
@@ -57,7 +57,7 @@ Future work that must remain out of scope includes export/save/materialization, 
 - Dedicated branch/worktree status: `agent/stage-7-p7-docs-validation` is checked out at `/home/samcantrill/work/rphys-worktrees/stage-7-p7-docs-validation`.
 - Current `develop` base: `1f84e37` (`docs: record stage 7 phase 6 merge`).
 - Earlier phase dependency status: Phases 1 through 6 are merged and recorded in `develop`.
-- Push/PR infrastructure status: not exercised yet for Phase 7.
+- Push/PR infrastructure status: pending branch push and PR creation.
 - Stop condition if isolation cannot be maintained: stop before implementation if the branch leaves the dedicated worktree, if `develop` advances with conflicting Stage 7 changes, or if validation exposes a behavior gap requiring an owning-phase fix.
 
 ## In-Scope Work
@@ -184,9 +184,24 @@ Sample operations enforce declared field additions, replacements, and deletions 
 
 ## Completion Notes
 
-- Implementation summary: pending
-- Validation: pending
+- Implementation summary: updated README current-status wording, glossary
+  operation vocabulary, Milestone 7 roadmap public-name and boundary prose, and
+  public operation module docstrings for import laziness, mutation/replay
+  limits, specialized pipeline diagnostics, and provisional batch scope. Renamed
+  `tests/integration/test_sample_augmentations.py` to
+  `tests/integration/test_sample_augmentations_integration.py` so the aggregate
+  pytest suite does not collide with
+  `tests/contracts/test_sample_augmentations.py`.
+- Validation: `make test-package` passed 33 tests; `make test-unit` passed
+  503 tests; `make test-contract` passed 91 tests; `make test-integration`
+  passed 11 tests; initial `make test` exposed the duplicate basename and then
+  passed 638 tests after the integration test rename; `make test-summary`
+  reported package 33, unit 503, contract 91, integration 11, with e2e and
+  acceptance not present; standalone `uv lock --check` initially failed because
+  the sandbox could not write a uv cache temp file and then passed with
+  escalation; `git diff --check` passed; `make validate-pr` passed lock,
+  summary, build, and diff checks.
 - PR: pending
 - Merge result: pending
 - Cleanup: pending
-- Remaining blockers: none before implementation
+- Remaining blockers: none known

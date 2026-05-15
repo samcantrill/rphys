@@ -54,10 +54,11 @@ Dataset
   Do not introduce rphys.datasets or DatasetRef as canonical public APIs.
 
 Operation
-  Generic context-aware callable contract.
+  Generic context-aware callable wrapper.
 
 SampleOp
-  Sample -> Sample operation over runtime fields.
+  Roadmap shorthand for sample-side operation behavior. Code-facing public
+  APIs use full names such as SampleOperation and SampleOperationPipeline.
 
 Transform
   Operation whose main purpose is transformed output.
@@ -186,8 +187,9 @@ metrics, transforms, or exports. Otherwise they may remain metadata.
 ### Lazy IO Is Not Runtime Processing
 
 `FieldRef`, `FieldIndex`, `TemporalIndexSlice`, `FieldView`, and `IndexItem`
-describe what to load. `SampleOp`, `SampleTransform`, and `SampleAugmentation`
-describe what to do after loading or lazy sample construction.
+describe what to load. `SampleOperation`, `SampleTransform`, and
+`SampleAugmentation` describe what to do after loading or lazy sample
+construction.
 
 An `IndexItem` must not contain transforms, augmentations, formatting logic,
 learning-method logic, or stochastic view construction.
@@ -297,8 +299,9 @@ datasources
   and sources.
 
 ops
-  Operation contracts, functional kernels, SampleOps, BatchOps, transforms,
-  augmentations, checks, routing, pipelines, export/save ops, and provenance.
+  Operation contracts, functional kernels, SampleOperation and BatchOperation
+  families, transforms, augmentations, checks, routing, pipelines, export/save
+  ops, and provenance.
 
 methods/models/nn
   Prediction-method boundaries, lower-level computational model contracts, and
@@ -1049,9 +1052,11 @@ randomness, mutation policy, or pipeline composition are needed.
 
 Batch-level composition starts as Operation[Batch, Batch] until Sample, Batch,
 and Operation contracts are stable. After those contracts are finalized,
-Milestone 7 may introduce provisional BatchOp contracts for vectorized,
-batch-level, or fused processing. Do not add a broad BatchProgram or universal
-batch execution language until repeated concrete needs justify it.
+Milestone 7 may introduce provisional BatchOperation contracts for vectorized,
+batch-level, or fused processing. Code-facing public APIs use full names such
+as `BatchOperation` and `BatchOperationPipeline`. Do not add a broad
+BatchProgram or universal batch execution language until repeated concrete
+needs justify it.
 ```
 
 Definition of done:
@@ -1084,60 +1089,75 @@ rphys.ops.pipelines
 Key interfaces:
 
 ```text
-SampleOp
+OperationStep
+SampleFieldPermissions
+SampleOperationContract
+SampleOperationContext
+SampleReplayRecord
+SampleAugmentationParams
+SampleOperation
 SampleTransform
 SampleAugmentation
 SampleCheck
-BatchOp
-BatchTransform
-BatchAugmentation
-SampleOpPipeline
-SampleContext
-BatchContext
-PipelineContext
-AugmentationParams
 SampleDecision
 SampleRoute
+SampleOperationPipeline
+BatchParameterScope
+BatchEquivalenceClaim
+BatchFieldEffects
+BatchOperationContext
+BatchOperationContract
+BatchAugmentationParams
+BatchEquivalenceReport
+BatchOperation
+BatchTransform
+BatchAugmentation
+BatchOperationPipeline
 ```
+
+Roadmap prose may use `SampleOp` and `BatchOp` as shorthand. Code-facing
+public APIs use the full `SampleOperation*` and `BatchOperation*` names.
 
 Rules:
 
 ```text
-SampleOps declare read, write, delete, and optional dynamic-field permissions
-using parsed FieldLocators.
-SampleOps may only mutate declared fields unless explicitly permitted.
+SampleOperation-family classes declare read, write, delete, and optional
+dynamic-field permissions using parsed FieldLocators.
+SampleOperation-family classes may only mutate declared fields unless
+explicitly permitted.
 Default runtime behavior may mutate in place and return the same Sample.
 Non-mutating behavior copies explicitly.
 Side-effecting ops declare side effects and return typed result metadata.
 SampleCheck is deterministic and raises typed errors or writes declared report
 fields.
 Datasource/index filters remain separate when decisions can be made before
-loading. Sample-level filtering/routing is an explicit SampleOp when decisions
-depend on loaded data or earlier operations.
+loading. Sample-level filtering/routing is an explicit SampleOperation when
+decisions depend on loaded data or earlier operations.
 
-SampleOps remain the correctness and provenance reference path for operations
-whose behavior is naturally per sample.
+SampleOperation-family classes remain the correctness and provenance reference
+path for operations whose behavior is naturally per sample.
 
-BatchOps are provisional optimization contracts for processing collated fields
-in batches. They may replace Python-heavy per-sample transforms when they can
-preserve the same scientific meaning, field addressing, masking, alignment,
-and provenance.
+BatchOperation-family classes are provisional optimization contracts for
+processing collated fields in batches. They may replace Python-heavy per-sample
+transforms when they can preserve the same scientific meaning, field
+addressing, masking, alignment, and provenance.
 
-BatchOps declare read, write, delete, mutation, randomness, device, dtype, and
-side-effect behavior over Batch fields. They must not assume model-specific
-input layouts, parse selectors in hot loops, build DataLoaders, scan
-datasources, export fields, or hide device movement.
+BatchOperation-family classes declare read, write, delete, mutation,
+randomness, device, dtype, and side-effect behavior over Batch fields. They
+must not assume model-specific input layouts, parse selectors in hot loops,
+build DataLoaders, scan datasources, export fields, or hide device movement.
 
-When a BatchOp is intended to replace one or more SampleOps, its equivalence
-contract must define what remains identical, what is allowed to differ
-numerically, and how per-sample diagnostics or provenance can be recovered.
+When a BatchOperation is intended to replace one or more SampleOperations, its
+equivalence contract must define what remains identical, what is allowed to
+differ numerically, and how per-sample diagnostics or provenance can be
+recovered.
 
 Transform placement follows the training performance objective. Deterministic
 transforms that can be materialized should be represented so they can run
 before training and be saved through export/materialization flows. Runtime
-SampleOps and BatchOps should do only work that depends on loaded context,
-epoch/state, stochastic augmentation, or a non-materialized experimental
-choice.
+SampleOperations and BatchOperations should do only work that depends on loaded
+context, epoch/state, stochastic augmentation, or a non-materialized
+experimental choice.
 
 The batch should become the primary runtime unit where possible. Prefer bulk
 reads, batched collation, batched transforms, vectorized kernels, and
@@ -1173,15 +1193,17 @@ Do not add multi-member IndexItems or nested view Samples initially.
 Definition of done:
 
 ```text
-SampleOpPipeline preserves operation order for sequences and ordered mappings.
+SampleOperationPipeline preserves operation order for sequences and ordered
+mappings.
 Contract checks catch missing or malformed fields.
 Undeclared mutation fails.
 Augmentation replay and deterministic-policy behavior are tested.
 SampleFields load only when an operation accesses payload data.
-SampleOpPipeline and BatchOps do not scan datasources, choose splits, export
-fields, or hide raw numerical kernels.
-BatchOp equivalence, RNG replay, synchronized-field behavior, and provenance
-are tested where batch-level execution replaces sample-level behavior.
+SampleOperationPipeline and BatchOperations do not scan datasources, choose
+splits, export fields, or hide raw numerical kernels.
+BatchOperation equivalence, RNG replay, synchronized-field behavior, and
+provenance are tested where batch-level execution replaces sample-level
+behavior.
 ```
 
 ## 16. Milestone 8: Save/Export Ops And Derived DataSources
@@ -1190,8 +1212,8 @@ Goal:
 
 ```text
 Represent formatting, symlinking, derived fields, and prediction export as
-normal SampleOp/OperationPipeline flows that write fields through codecs and
-emit derived DataSourceRefs.
+normal SampleOperation/OperationPipeline flows that write fields through codecs
+and emit derived DataSourceRefs.
 ```
 
 Primary packages:
@@ -1248,8 +1270,8 @@ SaveOp and DataSourceManifestWriter.
 Definition of done:
 
 ```text
-A datasource/index can be processed by SampleOpPipeline and exported into a
-derived DataSourceRef.
+A datasource/index can be processed by SampleOperationPipeline and exported
+into a derived DataSourceRef.
 Export reports count written, skipped, linked, copied, replaced, and failed
 fields.
 Export layout is deterministic and idempotency policy is tested.
@@ -1313,7 +1335,7 @@ Adapter rules:
 
 ```text
 TorchIndexSampleDataset owns a DataSourceIndex, SampleBuilder, optional
-SampleOpPipelines, usage/split metadata, and WorkerContextFactory.
+SampleOperationPipelines, usage/split metadata, and WorkerContextFactory.
 __getitem__ resolves an integer position to an IndexItem, derives context,
 builds a Sample, applies optional pipelines, and returns a Sample.
 It does not scan directories, choose splits, build indexes, export fields, or
@@ -1383,7 +1405,7 @@ Batch planning rules:
 ```text
 Batch construction is a first-class optimization surface. Dataset/index objects
 describe where prepared data lives; sampler plans decide which records form a
-batch; collators turn records into Batch fields; BatchOps apply runtime
+batch; collators turn records into Batch fields; BatchOperations apply runtime
 transforms; device movers transfer whole batches; learners consume whole
 batches.
 
@@ -1791,7 +1813,8 @@ failure behavior
 
 `EvaluationPlan` binds a protocol to concrete datasource/index/run inputs.
 `EvaluationRunner`, if present, is only a thin executor over existing indexes,
-SampleBuilder, SampleOpPipeline, MetricOps, aggregators, and report builders.
+SampleBuilder, SampleOperationPipeline, MetricOps, aggregators, and report
+builders.
 It must not own datasource scanning, split construction, training losses, codec
 logic, or custom report file conventions.
 
@@ -1872,7 +1895,7 @@ synthetic scan
 -> filter/group/split
 -> index manifest
 -> lazy SampleBuilder
--> SampleOpPipeline
+-> SampleOperationPipeline
 -> BatchCollater
 -> trivial Method prediction
 -> SaveOp derived DataSourceRef
@@ -1927,7 +1950,7 @@ StreamingReadPlan
 DataLoaderState
 ExperimentTierSpec
 RestartState
-BatchOp
+BatchOperation
 BatchTransform
 BatchAugmentation
 ```
@@ -1991,9 +2014,9 @@ concrete rphys storage format or optional adapter.
 Execution optimization rules:
 
 ```text
-BatchOps are the preferred path for avoiding Python-heavy per-sample transforms
-inside __getitem__ when batch-level, vectorized, or fused execution preserves
-the operation contract.
+BatchOperations are the preferred path for avoiding Python-heavy per-sample
+transforms inside __getitem__ when batch-level, vectorized, or fused execution
+preserves the operation contract.
 
 Mixed precision, torch.compile, fused kernels, and backend-specific fast paths
 must be represented as explicit policies with fallback behavior, unsupported
@@ -2055,7 +2078,7 @@ Native Trainer and Lightning-backed execution share a provisional event schema.
 Data-path benchmarks report dataloader wait, cache hit/miss, materialization,
 streaming, queue wait, worker utilization, batch construction time, transform
 time, and throughput summaries without machine-specific CI thresholds.
-BatchOp tests cover equivalence, replay, provenance, masking, and failure
+BatchOperation tests cover equivalence, replay, provenance, masking, and failure
 behavior for optimized transforms.
 Batch planning tests cover cost metadata, bucketing, dynamic sizing, controlled
 shape variation, packing/padding policy, physical/effective batch size, and
@@ -2084,7 +2107,7 @@ M0 skeleton and governance
                     -> M15 training performance profiling and data-path optimization
 
 M6 operation foundations
-  -> M7 SampleOps, BatchOps, and pipelines
+  -> M7 SampleOperation and BatchOperation pipelines
     -> M8 export and derived DataSources
       -> M13 prediction/evaluation/analysis/reports
 ```
@@ -2105,7 +2128,7 @@ SyntheticDataSourceAdapter
   -> IndexBuilder creates DataSourceIndex with IndexItems and FieldViews
   -> DataSourceIndexCodec round trip
   -> SampleBuilder creates lazy Samples
-  -> SampleOpPipeline applies one deterministic SampleOp
+  -> SampleOperationPipeline applies one deterministic SampleOperation
   -> BatchCollater creates Batch using explicit LIST collation
   -> trivial Method returns prediction Batch
   -> SaveOp exports predictions into derived DataSourceRef
@@ -2201,7 +2224,7 @@ materialize optimized training data without shard/chunk manifests, source
 fingerprints, operation fingerprints, split/group metadata, and invalidation
 inputs
 keep Python-heavy per-sample transforms in __getitem__ when an equivalent
-BatchOp can preserve semantics, replay, provenance, and diagnostics
+BatchOperation can preserve semantics, replay, provenance, and diagnostics
 use a separate simplified data path for debug or smoke tiers that hides
 throughput, batching, shape, or restartability failures from the real path
 introduce project-level configuration or workflow orchestration inside rphys
@@ -2218,7 +2241,7 @@ Core naming and runtime contracts implemented.
 Field-versus-metadata rule is documented.
 Synthetic DataSourceRef can be indexed and serialized as an index manifest.
 SampleBuilder can create Samples with lazy SampleFields.
-SampleOpPipeline can apply deterministic SampleOps.
+SampleOperationPipeline can apply deterministic SampleOperations.
 Batch collation works with explicit LIST policy.
 Basic unit and contract tests pass.
 ```
@@ -2262,8 +2285,9 @@ Public API/import-boundary checks pass.
 Optional dependency extras and import boundaries are documented and tested.
 Stable public API excludes undocumented deep helpers by default.
 Scientific edge-case coverage is documented.
-Performance profiling, optimized materialization, BatchOp, precision, compile,
-and fast-kernel contracts have documented failure and fallback behavior.
+Performance profiling, optimized materialization, BatchOperation, precision,
+compile, and fast-kernel contracts have documented failure and fallback
+behavior.
 Cost-to-decision metrics, restart/resume behavior, and strict cache
 invalidation are documented for training-facing contracts.
 ```
@@ -2285,9 +2309,10 @@ Recommended next actions:
    SampleBuilder.
 7. Implement synthetic DataSourceAdapter, view/filter/group/split builders,
    DataSourceIndex, and index manifest round trip.
-8. Implement Operation, SampleOp, SampleOpPipeline, deterministic context, and
-   augmentation replay; introduce provisional BatchOp contracts only after
-   Sample, Batch, and Operation behavior is stable.
+8. Implement Operation, SampleOperation, SampleOperationPipeline,
+   deterministic context, and augmentation replay; introduce provisional
+   BatchOperation contracts only after Sample, Batch, and Operation behavior is
+   stable.
 9. Implement SaveOp and derived DataSourceRef round trip.
 10. Implement index-backed Torch adapter, explicit local cache primitives, and
     format-agnostic prepared-data manifests, access-pattern plans, and
@@ -2297,8 +2322,9 @@ Recommended next actions:
     training-event and profiling contracts.
 12. Build the synthetic lazy-load-to-batch-to-export-to-reload smoke test.
 13. Harden training performance through M15 profiling, data-path benchmarks,
-    BatchOp optimization, AMP/compile/fused-kernel policies, and CPU-GPU sync
-    audits across debug, smoke, signal, comparison, and full tiers.
+    BatchOperation optimization, AMP/compile/fused-kernel policies, and
+    CPU-GPU sync audits across debug, smoke, signal, comparison, and full
+    tiers.
 ```
 
 This order proves the public object model before concrete research components

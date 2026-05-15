@@ -1,7 +1,8 @@
 """Sample operation foundations for Stage 7.
 
-This module adds deterministic sample operation execution primitives and declared
-field-effect enforcement on top of mutable sample containers.
+This module adds deterministic sample operation execution primitives,
+augmentation replay evidence, and declared field-effect enforcement on top of
+mutable sample containers.
 
 Implemented primitives:
 
@@ -12,7 +13,10 @@ Implemented primitives:
 - :class:`SampleRoute`
 
 Payload materialization is intentionally not intercepted for mutation detection.
-Declared read validation and field snapshots only use non-payload APIs.
+Declared read validation and field snapshots only use non-payload APIs. Field
+additions, removals, and same-locator ``FieldValue`` replacements are checked
+against declared permissions; payload-internal mutation is outside this
+automatic enforcement boundary.
 """
 
 from __future__ import annotations

@@ -4,6 +4,10 @@ Batch operations are dependency-light optimization contracts over loaded
 ``Batch`` containers. They record descriptive equivalence and dtype/device
 metadata but do not allocate backend arrays, move devices, or define loader,
 model, cache, export, or workflow policy.
+
+Batch augmentations make parameter scope explicit as either one batch-level
+parameter set or per-sample parameter maps. Scope declarations are runtime
+contracts for replay and diagnostics, not backend layout or collation policy.
 """
 
 from __future__ import annotations

@@ -1,10 +1,15 @@
-"""Ordered generic operation composition for Stage 6.
+"""Ordered operation composition for generic, sample, and batch operations.
 
-Stages in :class:`OperationPipeline` are composed from a sequence only; mapping- and
-name-based pipeline construction is intentionally unsupported.
+Generic :class:`OperationPipeline` stages are composed from a sequence only;
+mapping- and name-based construction remains intentionally unsupported there.
 
 Execution forwards each upstream step's :attr:`OperationResult.output` as the next
 step input and returns the final :class:`OperationResult`.
+
+Stage 7 specialized :class:`SampleOperationPipeline` and
+:class:`BatchOperationPipeline` also accept insertion-ordered mappings. Mapping
+keys are diagnostic step names only; they are not durable artifact identities,
+routing labels, or workflow policy.
 """
 
 from __future__ import annotations
