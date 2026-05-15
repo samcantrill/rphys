@@ -381,7 +381,7 @@ git diff --check
 - Refinement summary: plan refinement complete; no implementation refinement used
 - Pre-submit blocker gate: no unresolved implementation, import-boundary, optional-dependency, collater-shape, trainer/device/model-formatting, cache/prepared, or parent/root export blocker identified after implementation
 - PR body draft: complete in `docs/roadmap/stage-9/phases/torch-collater-boundary-pr-body.md`
-- PR preparation: pending
+- PR preparation: PR opened and verified as non-draft PR #61 against base `develop` from head `agent/stage-9-data-loading-cache-p2-torch-collater-boundary`
 - Automated review: complete; no blocking findings, PR-review budget consumed, and merge eligible assuming PR opens against `develop` and CI matches local validation
 - Merge result: pending
 - Cleanup: pending
@@ -398,3 +398,14 @@ git diff --check
 - Import/dependency boundary: `rphys.datasources.torch` uses lazy `importlib.import_module("torch.utils.data")` only in `TorchDataLoaderBuilder.build`; package import-boundary tests prove lightweight imports do not load `torch`.
 - Review decision: blocking findings remain no; PR-review budget consumed yes; merge eligible yes, assuming PR opens against `develop` and CI matches local validation.
 - Residual risks: real torch execution is covered with fake/missing torch tests until an optional torch extra or CI job exists; `TorchDataLoaderPlan` remains intentionally narrow and data-only.
+
+## PR Submission Metadata
+
+- PR: https://github.com/samcantrill/rphys/pull/61
+- Number: 61
+- State: open
+- Draft: no
+- Base: `develop`
+- Head: `agent/stage-9-data-loading-cache-p2-torch-collater-boundary`
+- Title: `Stage 9 Index Adapters, Torch Data Loading, And Cache - Phase 2: Torch Adapter And FieldLocator Collater Boundary`
+- Initial status checks: no GitHub status checks reported at PR-open verification time.
