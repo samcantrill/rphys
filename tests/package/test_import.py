@@ -265,6 +265,7 @@ STAGE_8_EXPORT_EXPORTS = [
     "OutputLayout",
     "RecordExportResult",
     "RecordExportRequest",
+    "SaveOperation",
     "SelectedFieldExport",
 ]
 
