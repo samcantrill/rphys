@@ -275,6 +275,15 @@ STAGE_9_DATASOURCE_CACHE_EXPORTS = [
     "CachedSampleSource",
 ]
 
+STAGE_9_DATASOURCE_PREPARED_EXPORTS = [
+    "PreparedField",
+    "PreparedDataManifest",
+    "PreparedReadRequest",
+    "PreparedReadResult",
+    "PreparedSampleReader",
+    "PreparedSampleSource",
+]
+
 STAGE_3_DATASOURCE_ERROR_NAMES = [
     "InvalidDataSourceRefError",
     "InvalidDataSourceSchemaError",
@@ -626,6 +635,14 @@ def test_stage_9_cache_module_exports_only_code_backed_names() -> None:
         assert hasattr(module, public_name)
 
 
+def test_stage_9_prepared_module_exports_only_code_backed_names() -> None:
+    module = importlib.import_module("rphys.datasources.prepared")
+
+    assert module.__all__ == STAGE_9_DATASOURCE_PREPARED_EXPORTS
+    for public_name in STAGE_9_DATASOURCE_PREPARED_EXPORTS:
+        assert hasattr(module, public_name)
+
+
 def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
     import rphys
     import rphys.datasources
@@ -687,6 +704,12 @@ def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
         "CacheStore",
         "LocalCacheStore",
         "CachedSampleSource",
+        "PreparedField",
+        "PreparedDataManifest",
+        "PreparedReadRequest",
+        "PreparedReadResult",
+        "PreparedSampleReader",
+        "PreparedSampleSource",
     ]
 
     for public_name in forbidden_names:
