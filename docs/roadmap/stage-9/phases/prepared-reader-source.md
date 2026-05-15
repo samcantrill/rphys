@@ -124,7 +124,7 @@ git diff --check
 - Implementation validation: `uv run pytest tests/unit/rphys/datasources/test_prepared.py tests/contracts/test_prepared_sample_reader_contract.py tests/integration/test_stage9_prepared_flow.py tests/package/test_import.py tests/package/test_import_boundaries.py`; `make test-package`; `make test-contract`; `make test-integration`; `make validate-pr`; and `make test-summary` passed. Final summary: package 40, unit 604, contract 114, integration 17, total 775; e2e and acceptance not present.
 - Pre-submit blocker gate: no unresolved plan-level blocker identified
 - PR body draft: complete in `docs/roadmap/stage-9/phases/prepared-reader-source-pr-body.md`
-- PR preparation: pending PR open
+- PR preparation: PR opened and verified as non-draft PR #63 against base `develop` from head `agent/stage-9-data-loading-cache-p4-prepared-reader-source`
 - Automated review: complete; managing-agent local pre-submit review found no blocking findings
 - Merge result: pending
 - Cleanup: pending
@@ -141,3 +141,14 @@ git diff --check
 - Prepared correctness boundary: manifest/request/context equivalence is validated before reads; public `PreparedSampleReader` remains provisional and minimal; `PreparedSampleSource` returns normal FieldLocator-keyed `Sample` objects and does not mutate prepared products.
 - Review decision: blocking findings remain no; merge eligible yes, assuming PR opens against `develop` and CI matches local validation.
 - Residual risks: real backends, materialization workers, full read/write protocols, and optimized storage layout records remain future phases.
+
+## PR Submission Metadata
+
+- PR: https://github.com/samcantrill/rphys/pull/63
+- Number: 63
+- State: open
+- Draft: no
+- Base: `develop`
+- Head: `agent/stage-9-data-loading-cache-p4-prepared-reader-source`
+- Title: `Stage 9 Index Adapters, Torch Data Loading, And Cache - Phase 4: Prepared Manifest, Public Provisional Reader, And Prepared Source`
+- Initial status checks: no GitHub status checks reported at PR-open verification time.
