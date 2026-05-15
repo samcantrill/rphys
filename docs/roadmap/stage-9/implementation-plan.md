@@ -1,6 +1,6 @@
 # Roadmap Stage 9 Implementation Plan
 
-Status: approved; Phase 2 merged, ready for Phase 3 execution through implementation workflow
+Status: approved; Phase 3 merged, ready for Phase 4 execution through implementation workflow
 Roadmap version: `v9`
 Planning document: `docs/roadmap/stage-9/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
@@ -40,7 +40,7 @@ Blockers: none
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `sample-source-foundation` | merged | `agent/stage-9-data-loading-cache-p1-sample-source-foundation` | [#60](https://github.com/samcantrill/rphys/pull/60) | `src/rphys/datasources/sources.py`; source/context tests; scoped docs/docstrings | Add `SampleRequest`, `SampleRuntimeContext`, `WorkerContextFactory`, `SampleSource`, and `IndexSampleSource`. | Focused source/context unit, contract, integration, package import, and diff checks. | Synthetic `DataSourceIndex` to lazy/eager `Sample`; derived index via ordinary source path. |
 | 2 | `torch-collater-boundary` | merged | `agent/stage-9-data-loading-cache-p2-torch-collater-boundary` | [#61](https://github.com/samcantrill/rphys/pull/61) | `src/rphys/datasources/torch.py`; `src/rphys/data/collation.py`; adapter/collater/package tests | Add optional torch adapters and a FieldLocator-preserving `BatchCollater`. | Package import-boundary, missing/fake torch, collater, adapter, and diff checks. | Optional torch dataset over `SampleSource`; `BatchCollater` over FieldLocator-keyed samples. |
-| 3 | `deterministic-cache-store` | pending | `agent/stage-9-data-loading-cache-p3-deterministic-cache-store` | pending | `src/rphys/datasources/cache.py`; cache unit/contract/temp-dir tests; cache docs/docstrings | Add deterministic cache records, local atomic store, fake/minimal explicit value strategy, and `CachedSampleSource`. | Cache key/manifest/policy/result, temp-dir atomic store, cached-source, package import, and diff checks. | Local cache hit/miss/stale/corrupt matrix; request-specific cache adversarial source. |
+| 3 | `deterministic-cache-store` | merged | `agent/stage-9-data-loading-cache-p3-deterministic-cache-store` | [#62](https://github.com/samcantrill/rphys/pull/62) | `src/rphys/datasources/cache.py`; cache unit/contract/temp-dir tests; cache docs/docstrings | Add deterministic cache records, local atomic store, fake/minimal explicit value strategy, and `CachedSampleSource`. | Cache key/manifest/policy/result, temp-dir atomic store, cached-source, package import, and diff checks. | Local cache hit/miss/stale/corrupt matrix; request-specific cache adversarial source. |
 | 4 | `prepared-reader-source` | pending | `agent/stage-9-data-loading-cache-p4-prepared-reader-source` | pending | `src/rphys/datasources/prepared.py`; prepared manifest/reader/source tests; provisional docs | Add `PreparedDataManifest`, public provisional `PreparedSampleReader`, `PreparedSampleSource`, and equivalence checks. | Prepared manifest, fake reader, equivalence matrix, package import, and diff checks. | Prepared manifest equivalence success/failure; fake prepared reader/backend boundary. |
 | 5 | `materialization-batch-records` | pending | `agent/stage-9-data-loading-cache-p5-materialization-batch-records` | pending | `src/rphys/datasources/prepared.py` or a code-backed sibling if implementation evidence requires it; materialization/batch record tests | Add storage-neutral materialization, layout, cost, and batch-planning records. | Record validator, package import, contract, docs, and diff checks. | Batch cost metadata and sampler plan; storage-neutral materialization records. |
 | 6 | `datapath-evidence-closeout` | pending | `agent/stage-9-data-loading-cache-p6-datapath-evidence-closeout` | pending | data-path evidence records; synthetic integration; public exports/docs/package closeout | Add data-path evidence/profile records and close Stage 9 docs, examples, exports, and focused integration. | Data-path record tests, integration smoke, package/import checks, relevant unit/contract suites, `git diff --check`, and broadened validation as needed. | Synthetic source-to-collater/cache/prepared smoke; data-path profile/benchmark evidence. |
@@ -225,11 +225,11 @@ Workflow path: fast path
 
 ## Phase 3: Deterministic Cache Contracts And Local Atomic Store
 
-Status: pending
+Status: merged
 Slug: `deterministic-cache-store`
 Branch: `agent/stage-9-data-loading-cache-p3-deterministic-cache-store`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-9-data-loading-cache-p3-deterministic-cache-store`
-PR: pending
+PR: [#62](https://github.com/samcantrill/rphys/pull/62)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -275,13 +275,13 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: complete in `docs/roadmap/stage-9/phases/deterministic-cache-store.md`
 - Planning/refinement budget: expanded
 - Implementation/refinement budget: expanded
-- PR review budget: expanded
+- PR review budget: consumed by managing-agent pre-submit review; no blocking findings
 - Blocker-resolution budget: expanded
 - Pre-submit blocker gate: no unsafe payload serialization or stable distributed claims
-- Merge record: pending
+- Merge record: complete; squash merged via PR #62 as `424fc8a915105b6717ada70769d751d1675bea84`
 
 ### Risks And Stop Conditions
 
@@ -291,11 +291,24 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: complete; `rphys.datasources.cache` adds deterministic cache records, local atomic JSON manifest store behavior, and `CachedSampleSource` with explicit hit loader/entry factory strategies
+- Validation: `make validate-pr` and `make test-summary` passed with package 39, unit 595, contract 111, integration 16, total 761
+- PR: https://github.com/samcantrill/rphys/pull/62 merged into `develop`
+- Merge: squash merged as `424fc8a915105b6717ada70769d751d1675bea84`
+- Follow-up: Phase 4 `prepared-reader-source` may now start from updated `develop`; preserve Phase 1 source, Phase 2 torch/collater, and Phase 3 no-pickle cache boundaries
+
+### Phase Merge Record
+
+- Phase: Phase 3 `deterministic-cache-store`
+- Branch: `agent/stage-9-data-loading-cache-p3-deterministic-cache-store`
+- PR: https://github.com/samcantrill/rphys/pull/62
+- Base branch: `develop`
+- Merge command: `gh pr merge 62 --squash --match-head-commit cdc7218b1881903a2c68ffa1017ae375fdf92a66 --subject "Stage 9 Phase 3: Deterministic cache store" --body "..."`
+- Merge result: merged 2026-05-15
+- Merge commit: `424fc8a915105b6717ada70769d751d1675bea84`
+- Branch cleanup: complete; local and remote Phase 3 branches deleted after merge
+- Worktree cleanup: complete; Phase 3 worktree removed and worktree metadata pruned
+- Remaining blockers: none
 
 ## Phase 4: Prepared Manifest, Public Provisional Reader, And Prepared Source
 

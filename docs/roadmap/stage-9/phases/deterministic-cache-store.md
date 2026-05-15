@@ -110,8 +110,8 @@ git diff --check
 - PR body draft: complete in `docs/roadmap/stage-9/phases/deterministic-cache-store-pr-body.md`
 - PR preparation: PR opened and verified as non-draft PR #62 against base `develop` from head `agent/stage-9-data-loading-cache-p3-deterministic-cache-store`
 - Automated review: complete; managing-agent local pre-submit review found no blocking findings
-- Merge result: pending
-- Cleanup: pending
+- Merge result: merged into `develop` through PR #62 as squash commit `424fc8a915105b6717ada70769d751d1675bea84`
+- Cleanup: complete; Phase 3 worktree removed, worktree metadata pruned, and local/remote phase branches deleted
 - Remaining blockers: none identified for implementation
 
 ## Automated Phase PR Review Report
@@ -136,3 +136,33 @@ git diff --check
 - Head: `agent/stage-9-data-loading-cache-p3-deterministic-cache-store`
 - Title: `Stage 9 Index Adapters, Torch Data Loading, And Cache - Phase 3: Deterministic Cache Contracts And Local Atomic Store`
 - Initial status checks: no GitHub status checks reported at PR-open verification time.
+
+# Phase Merge Record: Stage 9 Phase 3 Deterministic Cache Contracts And Local Atomic Store
+
+## Merge Facts
+
+- Phase: Phase 3 `deterministic-cache-store`
+- Branch: `agent/stage-9-data-loading-cache-p3-deterministic-cache-store`
+- PR: https://github.com/samcantrill/rphys/pull/62
+- Base branch: `develop`
+- Merge command: `gh pr merge 62 --squash --match-head-commit cdc7218b1881903a2c68ffa1017ae375fdf92a66 --subject "Stage 9 Phase 3: Deterministic cache store" --body "..."`
+- Merge result: merged 2026-05-15
+- Merge commit: `424fc8a915105b6717ada70769d751d1675bea84`
+- Branch cleanup: complete; local and remote Phase 3 branches deleted after merge
+- Worktree cleanup: complete; Phase 3 worktree removed and worktree metadata pruned
+
+## Completion Summary
+
+- Behavior implemented: module-scoped `rphys.datasources.cache` with deterministic cache contexts, keys, entries, manifests, lookup/write result records, local atomic JSON manifest store behavior, and `CachedSampleSource`.
+- Tests and validation: `make validate-pr` and `make test-summary` passed with package 39, unit 595, contract 111, integration 16, total 761; no GitHub status checks were configured for PR #62.
+- Documentation: phase plan, PR body, automated review, implementation-plan PR state, and merge facts recorded.
+- Scientific contract implications: cache equivalence is request/context/invalidation fingerprint based; context-free cached-source access skips cache writes; hits require explicit caller value loading; no pickle, opaque `Sample` serialization, remote store, prepared-data, trainer/device/model-formatting, or DDP coordination behavior was added.
+- Follow-up notes for later phases: Phase 4 prepared data can reuse the invalidation/cache evidence vocabulary while preserving the no-generic-payload-writer boundary.
+
+## Implementation Plan Update
+
+- Phase status: merged
+- Completion summary recorded: yes
+- Validation evidence recorded: yes
+- Remaining blockers: none
+- Metadata commit: this direct `develop` metadata commit records merge and cleanup facts
