@@ -16,6 +16,7 @@ from enum import StrEnum
 from types import MappingProxyType
 from urllib.parse import quote
 
+from rphys.data.fields import FieldValue
 from rphys.data.keys import DataKey
 from rphys.data.schemas import SchemaName
 from rphys.datasources.refs import RecordRef
@@ -25,14 +26,24 @@ from rphys.io._primitives import (
     copy_string_mapping,
     thaw_primitive,
 )
-from rphys.io.codecs import CodecSaveResult, MetadataSavePolicy
+from rphys.io.codecs import (
+    CodecRegistry,
+    CodecSaveResult,
+    MetadataSavePolicy,
+    SaveContext,
+)
 from rphys.io.fields import FieldRef
 from rphys.io.resources import ResourceRef
 
+from .context import OperationContext, OperationResult
+from .contracts import OperationContract, OperationMutationPolicy
+
 __all__ = [
+    "CodecSelectionOperation",
     "ExportMaterialization",
     "ExportPolicy",
     "ExportReport",
+    "ExportSelection",
     "ExportResult",
     "ExportSpec",
     "ExportTarget",
@@ -41,6 +52,8 @@ __all__ = [
     "IdempotencyPolicy",
     "OutputLayout",
     "RecordExportResult",
+    "RecordExportRequest",
+    "SelectedFieldExport",
 ]
 
 
@@ -364,6 +377,366 @@ class ExportPolicy:
 
 
 ExportPolicy.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class RecordExportRequest:
+    """Runtime request for selecting or saving one datasource record.
+
+    This record joins descriptor-only export intent with loaded field values.
+    It is an operation input, not a durable manifest or report schema.
+    """
+
+    source_record: RecordRef
+    field_values: Mapping[DataKey, FieldValue]
+    spec: ExportSpec
+    target: ExportTarget
+    layout: OutputLayout
+    policy: ExportPolicy
+
+    def __init__(
+        self,
+        *,
+        source_record: RecordRef,
+        field_values: Mapping[DataKey | str, FieldValue],
+        spec: ExportSpec,
+        target: ExportTarget,
+        layout: OutputLayout | None = None,
+        policy: ExportPolicy | None = None,
+    ) -> None:
+        if not isinstance(source_record, RecordRef):
+            raise RemotePhysOperationError(
+                "RecordExportRequest source_record must be a RecordRef.",
+                field="source_record",
+                actual=type(source_record).__name__,
+            )
+        if not isinstance(spec, ExportSpec):
+            raise RemotePhysOperationError(
+                "RecordExportRequest spec must be an ExportSpec.",
+                field="spec",
+                actual=type(spec).__name__,
+            )
+        if not isinstance(target, ExportTarget):
+            raise RemotePhysOperationError(
+                "RecordExportRequest target must be an ExportTarget.",
+                field="target",
+                actual=type(target).__name__,
+            )
+        resolved_layout = OutputLayout() if layout is None else layout
+        if not isinstance(resolved_layout, OutputLayout):
+            raise RemotePhysOperationError(
+                "RecordExportRequest layout must be an OutputLayout.",
+                field="layout",
+                actual=type(layout).__name__,
+            )
+        resolved_policy = ExportPolicy() if policy is None else policy
+        if not isinstance(resolved_policy, ExportPolicy):
+            raise RemotePhysOperationError(
+                "RecordExportRequest policy must be an ExportPolicy.",
+                field="policy",
+                actual=type(policy).__name__,
+            )
+
+        object.__setattr__(self, "source_record", source_record)
+        object.__setattr__(
+            self,
+            "field_values",
+            MappingProxyType(_coerce_field_values(field_values, source_record)),
+        )
+        object.__setattr__(self, "spec", spec)
+        object.__setattr__(self, "target", target)
+        object.__setattr__(self, "layout", resolved_layout)
+        object.__setattr__(self, "policy", resolved_policy)
+
+
+RecordExportRequest.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class SelectedFieldExport:
+    """No-write selection evidence for one requested field.
+
+    The selected codec name is diagnostic evidence for the in-memory operation
+    result. It is not a durable codec registry schema.
+    """
+
+    source_record: RecordRef
+    source_field: FieldRef
+    field_value: FieldValue
+    target: FieldRef
+    metadata_policy: MetadataSavePolicy
+    codec_name: str
+    codec_request: str | None
+
+    def __init__(
+        self,
+        *,
+        source_record: RecordRef,
+        source_field: FieldRef,
+        field_value: FieldValue,
+        target: FieldRef,
+        metadata_policy: MetadataSavePolicy | str,
+        codec_name: str,
+        codec_request: str | None = None,
+    ) -> None:
+        if not isinstance(source_record, RecordRef):
+            raise RemotePhysOperationError(
+                "SelectedFieldExport source_record must be a RecordRef.",
+                field="source_record",
+                actual=type(source_record).__name__,
+            )
+        if not isinstance(source_field, FieldRef):
+            raise RemotePhysOperationError(
+                "SelectedFieldExport source_field must be a FieldRef.",
+                field="source_field",
+                actual=type(source_field).__name__,
+            )
+        if not isinstance(field_value, FieldValue):
+            raise RemotePhysOperationError(
+                "SelectedFieldExport field_value must be a FieldValue.",
+                field="field_value",
+                actual=type(field_value).__name__,
+            )
+        if not isinstance(target, FieldRef):
+            raise RemotePhysOperationError(
+                "SelectedFieldExport target must be a FieldRef.",
+                field="target",
+                actual=type(target).__name__,
+            )
+        if source_field.key not in source_record.fields:
+            raise RemotePhysOperationError(
+                "SelectedFieldExport source_field is not declared by source_record.",
+                field="source_field",
+                field_key=str(source_field.key),
+                record_id=source_record.record_id,
+            )
+        if source_record.fields[source_field.key] != source_field:
+            raise RemotePhysOperationError(
+                "SelectedFieldExport source_field must match source_record.fields.",
+                field="source_field",
+                field_key=str(source_field.key),
+                record_id=source_record.record_id,
+            )
+        object.__setattr__(self, "source_record", source_record)
+        object.__setattr__(self, "source_field", source_field)
+        object.__setattr__(self, "field_value", field_value)
+        object.__setattr__(self, "target", target)
+        object.__setattr__(
+            self,
+            "metadata_policy",
+            _coerce_metadata_policy(metadata_policy),
+        )
+        object.__setattr__(
+            self,
+            "codec_name",
+            _non_empty_string(codec_name, field="codec_name"),
+        )
+        object.__setattr__(
+            self,
+            "codec_request",
+            None
+            if codec_request is None
+            else _non_empty_string(codec_request, field="codec_request"),
+        )
+
+
+SelectedFieldExport.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class ExportSelection:
+    """Typed no-write selection output for later save operations.
+
+    Selection evidence is returned in ``OperationResult.output``. It is not a
+    durable wire schema and does not imply that targets have been written.
+    """
+
+    request: RecordExportRequest
+    selected_fields: tuple[SelectedFieldExport, ...]
+
+    def __init__(
+        self,
+        request: RecordExportRequest,
+        selected_fields: Sequence[SelectedFieldExport],
+    ) -> None:
+        if not isinstance(request, RecordExportRequest):
+            raise RemotePhysOperationError(
+                "ExportSelection request must be a RecordExportRequest.",
+                field="request",
+                actual=type(request).__name__,
+            )
+        fields = _coerce_selected_fields(selected_fields)
+        for field in fields:
+            if field.source_record != request.source_record:
+                raise RemotePhysOperationError(
+                    "ExportSelection selected fields must match the request record.",
+                    field="selected_fields",
+                    record_id=request.source_record.record_id,
+                )
+        object.__setattr__(self, "request", request)
+        object.__setattr__(self, "selected_fields", fields)
+
+
+ExportSelection.__hash__ = None  # type: ignore[assignment]
+
+
+class CodecSelectionOperation:
+    """Pure ``OperationStep`` that validates export save intent without writes."""
+
+    def __init__(
+        self,
+        codec_registry: CodecRegistry,
+        *,
+        name: str = "codec_selection",
+    ) -> None:
+        if not isinstance(codec_registry, CodecRegistry):
+            raise RemotePhysOperationError(
+                "CodecSelectionOperation codec_registry must be a CodecRegistry.",
+                field="codec_registry",
+                actual=type(codec_registry).__name__,
+            )
+        self._codec_registry = codec_registry
+        self._name = _non_empty_string(name, field="name")
+        self._contract = OperationContract(
+            input_type=RecordExportRequest,
+            output_type=ExportSelection,
+            mutation_policy=OperationMutationPolicy.PURE,
+            failure_modes=(
+                "missing_field",
+                "invalid_target",
+                "unsupported_codec",
+                "ambiguous_codec",
+                "unsupported_metadata_policy",
+                "schema_mismatch",
+            ),
+        )
+
+    @property
+    def name(self) -> str:
+        """Operation step name used in pipeline diagnostics."""
+
+        return self._name
+
+    @property
+    def contract(self) -> OperationContract:
+        """Pure operation contract for no-write codec selection."""
+
+        return self._contract
+
+    def run(
+        self,
+        input_value: object,
+        context: OperationContext | None = None,
+    ) -> OperationResult:
+        """Validate targets and codec support, returning selection evidence."""
+
+        if context is not None and not isinstance(context, OperationContext):
+            raise RemotePhysOperationError(
+                "CodecSelectionOperation context must be an OperationContext.",
+                field="context",
+                actual=type(context).__name__,
+            )
+        if not isinstance(input_value, RecordExportRequest):
+            raise RemotePhysOperationError(
+                "CodecSelectionOperation input_value must be a RecordExportRequest.",
+                field="input_value",
+                actual=type(input_value).__name__,
+            )
+
+        selected = tuple(
+            self._select_field(input_value, field_key)
+            for field_key in input_value.spec.requested_fields
+        )
+        selection = ExportSelection(input_value, selected)
+        return OperationResult(
+            selection,
+            operation_name=self.name,
+            role=self.contract.role,
+            metadata={
+                "selected_field_count": len(selection.selected_fields),
+                "write_count": 0,
+                "link_count": 0,
+                "copy_count": 0,
+            },
+            provenance={
+                "source_datasource_id": input_value.source_record.datasource.datasource_id,
+                "source_record_id": input_value.source_record.record_id,
+            },
+        )
+
+    def __call__(
+        self,
+        input_value: object,
+        context: OperationContext | None = None,
+    ) -> OperationResult:
+        """Run selection with callable operation-step semantics."""
+
+        return self.run(input_value, context=context)
+
+    def _select_field(
+        self,
+        request: RecordExportRequest,
+        field_key: DataKey,
+    ) -> SelectedFieldExport:
+        if field_key not in request.source_record.fields:
+            raise RemotePhysOperationError(
+                "CodecSelectionOperation requested field is absent from the source record.",
+                field="source_record.fields",
+                field_key=str(field_key),
+                record_id=request.source_record.record_id,
+            )
+        if field_key not in request.field_values:
+            raise RemotePhysOperationError(
+                "CodecSelectionOperation requested field value is missing.",
+                field="field_values",
+                field_key=str(field_key),
+                record_id=request.source_record.record_id,
+            )
+
+        source_field = request.source_record.fields[field_key]
+        field_value = request.field_values[field_key]
+        target = request.layout.derive_target(
+            request.source_record,
+            field_key,
+            spec=request.spec,
+            target=request.target,
+        )
+        schema_request = request.spec.schema_requests.get(field_key)
+        if (
+            schema_request is not None
+            and field_value.schema is not None
+            and field_value.schema != schema_request
+        ):
+            raise RemotePhysOperationError(
+                "CodecSelectionOperation field value schema does not match schema request.",
+                field="schema_requests",
+                field_key=str(field_key),
+                expected=str(schema_request),
+                actual=str(field_value.schema),
+            )
+
+        context = SaveContext(target, metadata_policy=request.spec.metadata_policy)
+        codec = self._codec_registry.resolve_save(field_value, context)
+        codec_name = _codec_name(codec)
+        codec_request = request.spec.codec_requests.get(field_key)
+        if codec_request is not None and codec_request != codec_name:
+            raise RemotePhysOperationError(
+                "CodecSelectionOperation selected codec does not match codec request.",
+                field="codec_requests",
+                field_key=str(field_key),
+                expected=codec_request,
+                actual=codec_name,
+            )
+
+        return SelectedFieldExport(
+            source_record=request.source_record,
+            source_field=source_field,
+            field_value=field_value,
+            target=target,
+            metadata_policy=request.spec.metadata_policy,
+            codec_name=codec_name,
+            codec_request=codec_request,
+        )
 
 
 @dataclass(frozen=True, init=False, slots=True)
@@ -815,6 +1188,57 @@ def _coerce_bool(value: bool, *, field: str) -> bool:
     return value
 
 
+def _coerce_field_values(
+    values: Mapping[DataKey | str, FieldValue],
+    source_record: RecordRef,
+) -> dict[DataKey, FieldValue]:
+    if not isinstance(values, Mapping) or not values:
+        raise RemotePhysOperationError(
+            "RecordExportRequest field_values must be a non-empty mapping.",
+            field="field_values",
+            actual=type(values).__name__,
+        )
+    coerced: dict[DataKey, FieldValue] = {}
+    for raw_key, value in values.items():
+        key = DataKey(raw_key)
+        if key not in source_record.fields:
+            raise RemotePhysOperationError(
+                "RecordExportRequest field_values must reference source_record fields.",
+                field="field_values",
+                field_key=str(key),
+                record_id=source_record.record_id,
+            )
+        if not isinstance(value, FieldValue):
+            raise RemotePhysOperationError(
+                "RecordExportRequest field_values must contain FieldValue values.",
+                field="field_values",
+                field_key=str(key),
+                actual=type(value).__name__,
+            )
+        coerced[key] = value
+    return coerced
+
+
+def _coerce_selected_fields(
+    fields: Sequence[SelectedFieldExport],
+) -> tuple[SelectedFieldExport, ...]:
+    if isinstance(fields, (str, bytes)) or not isinstance(fields, Sequence) or not fields:
+        raise RemotePhysOperationError(
+            "ExportSelection selected_fields must be a non-empty sequence.",
+            field="selected_fields",
+            actual=type(fields).__name__,
+        )
+    coerced = tuple(fields)
+    for field in coerced:
+        if not isinstance(field, SelectedFieldExport):
+            raise RemotePhysOperationError(
+                "ExportSelection selected_fields must contain SelectedFieldExport values.",
+                field="selected_fields",
+                actual=type(field).__name__,
+            )
+    return coerced
+
+
 def _coerce_resources(
     resources: Sequence[ResourceRef],
     *,
@@ -897,6 +1321,17 @@ def _non_empty_token(value: object, *, field: str) -> str:
     return value
 
 
+def _non_empty_string(value: object, *, field: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise RemotePhysOperationError(
+            "Export operation strings must be non-empty.",
+            field=field,
+            actual=type(value).__name__,
+            value=value,
+        )
+    return value
+
+
 def _non_empty_failure(value: object) -> str:
     if not isinstance(value, str) or not value:
         raise RemotePhysOperationError(
@@ -911,6 +1346,13 @@ def _join_uri(root_uri: str, *components: str) -> str:
     root = root_uri.rstrip("/")
     encoded = "/".join(quote(component, safe="._-") for component in components)
     return f"{root}/{encoded}"
+
+
+def _codec_name(codec: object) -> str:
+    explicit_name = getattr(codec, "name", None)
+    if isinstance(explicit_name, str) and explicit_name:
+        return explicit_name
+    return codec.__class__.__name__
 
 
 def _thaw_for_json(value: FrozenPrimitive) -> object:

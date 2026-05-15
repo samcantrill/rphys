@@ -251,9 +251,11 @@ STAGE_5_DATASOURCE_ERROR_NAMES = [
 ]
 
 STAGE_8_EXPORT_EXPORTS = [
+    "CodecSelectionOperation",
     "ExportMaterialization",
     "ExportPolicy",
     "ExportReport",
+    "ExportSelection",
     "ExportResult",
     "ExportSpec",
     "ExportTarget",
@@ -262,6 +264,8 @@ STAGE_8_EXPORT_EXPORTS = [
     "IdempotencyPolicy",
     "OutputLayout",
     "RecordExportResult",
+    "RecordExportRequest",
+    "SelectedFieldExport",
 ]
 
 
