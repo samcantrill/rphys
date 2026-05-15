@@ -669,19 +669,24 @@ git diff --check
 ## Refinement And Review Budget Status
 
 - Phase execution plan refinement: used once / completed for expanded path
-- Phase implementation refinement: unused
+- Phase implementation refinement: used once / completed for duplicate view
+  locator validation and focused public-boundary coverage
 - PR review: unused
-- Blocker resolution: 0/3 used
+- Blocker resolution: 1/3 used
 
 ## Completion Notes
 
 - Draft plan: completed in this artifact
 - Final phase execution plan: refined expanded-path execution plan completed in
   this artifact
-- Implementation summary: pending
 - Implementation summary: implemented on 2026-05-15 in
   `agent/stage-7-p4-sample-augmentation-views`
 - Implementation validation: passing targeted suite for unit/contract/integration/package suite
+- Implementation refinement: completed on 2026-05-15 for assigned blocker
+  cluster covering duplicate view locator rejection, constructor callable
+  validation coverage, undeclared view-write enforcement coverage,
+  `apply_params` error wrapping coverage, and package-level `random` source
+  boundary coverage
 - Refinement summary: completed; manager review findings addressed for
   expanded-path status, public constructor and params shape, direct
   `apply_params()` limits, reserved metadata behavior, RNG restrictions, exact
@@ -692,3 +697,43 @@ git diff --check
 - Merge result: pending
 - Cleanup: pending
 - Remaining blockers: none
+
+## Phase Refinement Report: Sample Augmentation View Coverage
+
+## Assigned Blocker
+
+- Blocker: close the assigned Phase 4 coverage cluster for duplicate view
+  locators, constructor callable checks, undeclared view writes,
+  `apply_params` failure context, package-level `random` boundary coverage, and
+  phase artifact cleanup.
+- Source: manager-assigned implementation test refinement.
+- Scope: `src/rphys/ops/sample.py`,
+  `tests/unit/rphys/ops/test_sample_augmentation.py`,
+  `tests/package/test_import_boundaries.py`, and this phase artifact.
+- Budget use: implementation refinement completed; blocker resolution 1/3 used.
+
+## Resolution
+
+- Changes made: `SampleAugmentationParams.view_locators` now rejects duplicate
+  normalized locator values while preserving exact named locator mappings.
+- Tests or docs updated: added focused unit coverage for duplicate view
+  locators, non-callable constructor inputs, undeclared view writes through
+  Phase 3 mutation enforcement, and `apply_params` execution wrapping; added a
+  package source-text random boundary test; cleaned completion notes.
+- Validation rerun: `uv run pytest tests/unit/rphys/ops/test_sample_augmentation.py tests/package/test_import_boundaries.py`,
+  `make test-unit`, `make test-package`, `make test-contract`, and
+  `git diff --check` passed.
+
+## Result
+
+- Blocker resolved: yes.
+- Remaining blocker: none known.
+- Recommended next gate: focused unit/package validation followed by
+  `make test-unit`, `make test-package`, and `git diff --check`.
+
+## Files Changed
+
+- `src/rphys/ops/sample.py`
+- `tests/unit/rphys/ops/test_sample_augmentation.py`
+- `tests/package/test_import_boundaries.py`
+- `docs/roadmap/stage-7/phases/sample-augmentation-views.md`

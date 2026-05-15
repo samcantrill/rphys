@@ -1191,6 +1191,7 @@ def _coerce_augmentation_view_locators(
         )
 
     normalized: dict[str, FieldLocator] = {}
+    seen_locators: set[FieldLocator] = set()
     for name, locator in view_locators.items():
         normalized_name = coerce_non_empty_string(
             name,
@@ -1199,11 +1200,29 @@ def _coerce_augmentation_view_locators(
             expected="non-empty string keys",
             error_type=InvalidOperationInputError,
         )
-        normalized[normalized_name] = _coerce_locator(
+        if normalized_name in normalized:
+            raise InvalidOperationInputError(
+                f"{owner} {field} names must be unique.",
+                owner=owner,
+                field=field,
+                expected="unique view names",
+                actual=normalized_name,
+            )
+        normalized_locator = _coerce_locator(
             locator,
             owner=owner,
             field_name=f"{field}[{normalized_name}]",
         )
+        if normalized_locator in seen_locators:
+            raise InvalidOperationInputError(
+                f"{owner} {field} locators must be unique.",
+                owner=owner,
+                field=field,
+                expected="unique view locators",
+                actual=str(normalized_locator),
+            )
+        seen_locators.add(normalized_locator)
+        normalized[normalized_name] = normalized_locator
     return MappingProxyType(normalized)
 
 

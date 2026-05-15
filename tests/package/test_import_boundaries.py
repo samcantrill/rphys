@@ -104,6 +104,19 @@ def test_core_imports_do_not_load_heavy_optional_modules() -> None:
     assert completed.returncode == 0, completed.stdout
 
 
+def test_package_source_does_not_import_or_call_package_level_random() -> None:
+    forbidden_tokens = ("import random", "from random", "random.")
+    violations: list[str] = []
+
+    for source_path in sorted((REPO_ROOT / "src" / "rphys").rglob("*.py")):
+        source_text = source_path.read_text(encoding="utf-8")
+        for token in forbidden_tokens:
+            if token in source_text:
+                violations.append(f"{source_path.relative_to(REPO_ROOT)} contains {token!r}")
+
+    assert violations == []
+
+
 def test_rphys_does_not_define_generic_workflow_or_artifact_runtime_packages() -> None:
     forbidden_packages = [
         "rphys.artifacts",

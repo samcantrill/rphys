@@ -10,10 +10,12 @@ from rphys.data.containers import Sample
 from rphys.data.fields import FieldValue
 from rphys.data.locators import FieldLocator
 from rphys.errors import (
+    InvalidOperationContractError,
     InvalidOperationInputError,
     InvalidOperationResultError,
     MissingFieldError,
     OperationExecutionError,
+    UndeclaredSampleFieldMutationError,
 )
 from rphys.ops import (
     OperationContext,
@@ -78,6 +80,41 @@ def test_sample_augmentation_params_rejects_invalid_values_and_linked_fields() -
                 (VIEW_B, "inputs/video.rgb.view_b"),
             ),
         )
+
+
+def test_sample_augmentation_params_rejects_duplicate_view_locators() -> None:
+    with pytest.raises(InvalidOperationInputError) as exc:
+        SampleAugmentationParams(
+            view_locators={
+                "view_a": VIEW_A,
+                "view_b": "inputs/video.rgb.view_a",
+            },
+        )
+
+    assert exc.value.context["field"] == "view_locators"
+    assert exc.value.context["expected"] == "unique view locators"
+    assert exc.value.context["actual"] == str(VIEW_A)
+
+
+def test_sample_augmentation_constructor_requires_callable_params_functions() -> None:
+    def sampler(sample: Sample, *, context: SampleOperationContext) -> SampleAugmentationParams:
+        return SampleAugmentationParams()
+
+    def applier(
+        sample: Sample,
+        params: SampleAugmentationParams,
+        *,
+        context: SampleOperationContext,
+    ) -> Sample:
+        return sample
+
+    with pytest.raises(InvalidOperationContractError) as sample_exc:
+        SampleAugmentation(object(), applier)  # type: ignore[arg-type]
+    assert sample_exc.value.context["field"] == "sample_params"
+
+    with pytest.raises(InvalidOperationContractError) as apply_exc:
+        SampleAugmentation(sampler, object())  # type: ignore[arg-type]
+    assert apply_exc.value.context["field"] == "apply_params"
 
 
 def test_sample_augmentation_read_preflight_halts_before_sampling() -> None:
@@ -218,6 +255,32 @@ def test_sample_augmentation_run_rejects_reserved_sample_augmentation_replay_met
         operation(sample)
 
 
+def test_sample_augmentation_run_rejects_undeclared_view_field_write() -> None:
+    def sampler(sample: Sample, *, context: SampleOperationContext) -> SampleAugmentationParams:
+        return SampleAugmentationParams(
+            view_locators={"view_a": VIEW_A},
+        )
+
+    def applier(
+        sample: Sample,
+        params: SampleAugmentationParams,
+        *,
+        context: SampleOperationContext,
+    ) -> Sample:
+        sample.set_field(VIEW_A, FieldValue("view", schema="video.rgb.view_a.v1"))
+        return sample
+
+    operation = SampleAugmentation(sampler, applier, name="undeclared-view")
+    sample = Sample({VIDEO: FieldValue((1,), schema="video.rgb.v1")})
+
+    with pytest.raises(UndeclaredSampleFieldMutationError) as exc:
+        operation(sample)
+
+    assert exc.value.context["effect_type"] == "added"
+    assert exc.value.context["locator"] == str(VIEW_A)
+    assert str(VIEW_A) in exc.value.context["detected_added"]
+
+
 def test_sample_augmentation_direct_apply_is_deterministic_and_skips_sampler() -> None:
     apply_calls: list[str] = []
 
@@ -257,3 +320,26 @@ def test_sample_augmentation_run_wraps_sampler_errors() -> None:
 
     with pytest.raises(OperationExecutionError):
         operation(sample)
+
+
+def test_sample_augmentation_apply_params_wraps_callable_errors_with_phase_context() -> None:
+    def sampler(sample: Sample, *, context: SampleOperationContext) -> SampleAugmentationParams:
+        return SampleAugmentationParams(values={"seed": 1})
+
+    def applier(
+        sample: Sample,
+        params: SampleAugmentationParams,
+        *,
+        context: SampleOperationContext,
+    ) -> Sample:
+        raise ValueError("apply failed")
+
+    operation = SampleAugmentation(sampler, applier, name="failing-apply")
+    sample = Sample({VIDEO: FieldValue((1,), schema="video.rgb.v1")})
+    params = SampleAugmentationParams(values={"seed": 1})
+
+    with pytest.raises(OperationExecutionError) as exc:
+        operation.apply_params(sample, params, context=SampleOperationContext())
+
+    assert exc.value.context["phase"] == "apply_params"
+    assert isinstance(exc.value.__cause__, ValueError)
