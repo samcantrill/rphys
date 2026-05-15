@@ -117,7 +117,7 @@ git diff --check
 - Implementation validation: `uv run pytest tests/unit/rphys/datasources/test_data_path_records.py tests/integration/test_stage9_data_path_flow.py tests/contracts/test_data_path_records_contract.py tests/package/test_import.py tests/package/test_import_boundaries.py`; `make test-package`; `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check`; `make validate-pr`; and `make test-summary` passed. Final summary: package 41, unit 622, contract 118, integration 18, total 799; e2e and acceptance not present.
 - Pre-submit blocker gate: no unresolved plan-level blocker identified
 - PR body draft: complete in `docs/roadmap/stage-9/phases/datapath-evidence-closeout-pr-body.md`
-- PR preparation: pending
+- PR preparation: PR opened and verified as non-draft PR #65 against base `develop` from head `agent/stage-9-data-loading-cache-p6-datapath-evidence-closeout`
 - Automated review: complete; managing-agent local pre-submit review found no blocking findings
 - Merge result: pending
 - Cleanup: pending
@@ -134,3 +134,14 @@ git diff --check
 - Data-path correctness boundary: records capture backend-neutral evidence and synthetic flow coverage, while runtime behavior remains with existing source/cache/prepared/collation components.
 - Review decision: blocking findings remain no; merge eligible yes, assuming PR opens against `develop` and CI matches local validation.
 - Residual risks: real profiler integrations, active resume, distributed worker coordination, trainer event schemas, concrete backend benchmarks, and performance thresholds remain future work.
+
+## PR Submission Metadata
+
+- PR: https://github.com/samcantrill/rphys/pull/65
+- Number: 65
+- State: open
+- Draft: no
+- Base: `develop`
+- Head: `agent/stage-9-data-loading-cache-p6-datapath-evidence-closeout`
+- Title: `Stage 9 Index Adapters, Torch Data Loading, And Cache - Phase 6: Data-Path Evidence, Integration, Docs, And Package Closeout`
+- Initial status checks: no GitHub status checks reported at PR-open verification time.
