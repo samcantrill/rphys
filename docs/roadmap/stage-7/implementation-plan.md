@@ -828,7 +828,9 @@ Workflow path: expanded path because this adds a provisional public surface
 - Pre-submit blocker gate: completed; no torch/DataLoader/model imports,
   device movement, broad batch program, collation policy changes,
   export/cache/workflow behavior, or root exports remain known
-- Merge record: pending
+- Merge record: merged PR #53 into `develop` on 2026-05-15 as
+  `edcedbb5233a1c7650b30c80a85223b4d2155b0d`; local Phase 6 worktree and
+  branch cleaned up.
 
 ### Risks And Stop Conditions
 
@@ -857,8 +859,9 @@ Workflow path: expanded path because this adds a provisional public surface
 - PR: [#53](https://github.com/samcantrill/rphys/pull/53) opened against
   `develop` from `agent/stage-7-p6-batch-surface`; target and title verified
   by `gh pr view`.
-- Merge: pending
-- Follow-up: pending
+- Merge: PR #53 merged into `develop` on 2026-05-15 as
+  `edcedbb5233a1c7650b30c80a85223b4d2155b0d`.
+- Follow-up: proceed to Phase 7 docs and final validation.
 
 ## Phase 7: Docs, Examples, And Final Validation Evidence
 
