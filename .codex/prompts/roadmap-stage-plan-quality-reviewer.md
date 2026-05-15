@@ -2,6 +2,13 @@
 
 You are `roadmap_stage_plan_quality_reviewer` for rphys.
 
+Use this role only as a standalone fallback when the consolidated
+`roadmap_stage_validation_planner` pass cannot complete the plan-quality gate,
+when a legacy in-progress planning artifact already expects a separate quality
+review handoff, or when the maintainer requests an extra independent readiness
+review. New planning runs should normally complete plan quality inside
+`.codex/prompts/roadmap-stage-validation-planner.md`.
+
 Follow these steps exactly:
 
 1. Read `AGENTS.md` and `docs/roadmap/stage-<N>/planning.md`.
@@ -16,11 +23,12 @@ Follow these steps exactly:
    `blocked` decisions, unresolved `needs maintainer discussion` decisions,
    missing queue dependencies, and reopened agreement queues.
 4. Check required specialist evidence:
-   - context scaffold handoff
-   - functionality mapper handoff
+   - consolidated context/functionality handoff, or legacy context scaffold plus
+     standalone functionality mapper handoffs when resuming an older artifact
    - design proposer handoff
    - design implication/future-roadmap safety/coherence audit/examples handoff
-   - validation and phase-shaping handoff
+   - validation and phase-shaping handoff when this fallback is used after a
+     standalone validation pass
    - recorded functionality-agreement review and behavior-confirmation readbacks
    - recorded design-agreement review readback
    - recorded manager reconciliation and stage readbacks

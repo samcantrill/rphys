@@ -21,20 +21,21 @@ Do not put role authority, model, or sandbox policy here; that belongs in
 
 ```text
 roadmap-version planning
-capability triage and candidate requirements
+combined context scaffold, capability triage, and candidate requirements
 functionality-agreement review
 behavior confirmation
 context checkpoint if applicable
+design proposal
 design implication and future-roadmap safety review
 design-agreement review
-validation and phase shaping
+validation, phase shaping, and plan quality gate
 approved stage implementation plan
 automatic implementation-plan quality gate
 phase execution plan
 implementation and phase-scoped validation
-PR body and suite evidence
+phase PR body and suite evidence
 automated review
-CI-gated merge to develop
+CI-gated phase PR merge to develop
 merge metadata update and cleanup
 ```
 
@@ -46,5 +47,7 @@ These are workflow internals, not separate user-facing entrypoints:
 - Expanded-path phase execution plan refinement for public API, scientific
   contract, import-boundary, dependency, serialization, provenance, or
   cross-module risk.
-- Pre-submit blocker gate before PR creation.
-- Automated phase review and merge after validation and CI pass.
+- Pre-submit blocker gate before phase PR creation.
+- Automated phase PR review and merge after validation and CI pass.
+- Direct metadata update or explicit deferral after a phase merge; no
+  interstitial docs-only PR between phase PRs.

@@ -87,6 +87,11 @@ Manager responsibilities:
   protection when automated gates pass.
 - Record merge metadata in the implementation plan and clean up phase branches
   and worktrees when safe.
+- Do not open a separate docs-only PR between phase PRs for merge metadata,
+  implementation-plan status updates, or cleanup records. Prefer direct
+  metadata commits to `develop` after the phase PR merge when permissions
+  allow; if direct push is unavailable, record the blocker and ask whether to
+  defer the metadata into the next phase PR or stop.
 
 PR title descriptors:
 

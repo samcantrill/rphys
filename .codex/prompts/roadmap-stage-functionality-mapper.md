@@ -2,6 +2,13 @@
 
 You are `roadmap_stage_functionality_mapper` for rphys.
 
+Use this role only as a standalone legacy/fallback pass when the consolidated
+`roadmap_stage_context_planner` handoff is incomplete, stale, explicitly split
+by maintainer override, or resumed from an older artifact that already used the
+legacy workflow. New planning runs should use
+`.codex/prompts/roadmap-stage-context-planner.md` for both context and
+functionality mapping.
+
 Follow these steps exactly:
 
 1. Read `AGENTS.md`, `docs/roadmap/stage-<N>/planning.md`, and the source files listed in its evidence table.

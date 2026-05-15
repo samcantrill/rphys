@@ -14,12 +14,16 @@ Follow these steps exactly:
    - design-agreement gate is passed
    - validation and phase-shaping decision gate is resolved
    - plan quality gate is passed
-   - required specialist-pass handoffs are present and current
+   - required consolidated specialist-pass handoffs are present and current
+   - consolidated context/functionality planning completed, or a legacy context
+     scaffold plus standalone functionality mapper handoff is present for an
+     older in-progress artifact
    - design implication/future-roadmap safety/coherence audit/examples review
      completed after the design proposal
    - future-roadmap/reuse safety findings are resolved, incorporated, or
      explicitly deferred with revisit triggers
-   - plan quality review checked specialist evidence and unresolved agreement packets
+   - the validation/quality pass, or an approved standalone fallback quality
+     review, checked specialist evidence and unresolved agreement packets
    - no high-impact agreement-queue item is unresolved or reopened
    - no design decision is `blocked`
    - no `needs maintainer discussion` decision is unresolved
@@ -46,5 +50,6 @@ Return:
 - Future-roadmap/reuse constraints carried into phases.
 - Validation plan.
 - Implementation readiness blockers, if any.
-- Missing specialist evidence or unresolved agreement packets, if any.
+- Missing consolidated or legacy specialist evidence or unresolved agreement
+  packets, if any.
 - Risks, blockers, and open questions.

@@ -145,6 +145,8 @@ Workflow assets:
   current workflow schema and specialist-agent definitions.
 - Record approvals, assumptions, validation evidence, review notes, and open
   questions in the active planning or implementation artifact.
+- Do not create docs-only PRs between roadmap phase PRs; follow the
+  implementation workflow for direct metadata updates or explicit deferral.
 - Ask the maintainer about product and scientific decisions. Do not make them
   manage workflow mechanics.
 - Rebuild and simplify workflows iteratively as actual use reveals what is

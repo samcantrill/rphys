@@ -10,13 +10,16 @@ Use this entrypoint as:
 
 ## Goal
 
-Convert one roadmap version into an approved implementation plan only after
-shared consensus on functionality and design is recorded in the stage planning
-artifact. The managing agent should raise only ambiguous choices, blockers, or
-material trade-offs to the maintainer, and should do so only after specialist
-subagents have explored the repository, drafted candidate requirements,
-proposed implementation shape, and pressure-tested design and coherence
-implications.
+Convert one roadmap version into an approved implementation plan after shared
+consensus on functionality and design is recorded in the stage planning
+artifact. The workflow uses a smaller set of required specialist passes:
+combined context/functionality mapping, independent design proposal,
+independent adversarial design review, combined validation/phase-shaping/plan
+quality review, and implementation-plan drafting.
+
+The managing agent owns synthesis, maintainer discussion, approvals, conflict
+resolution, and final judgment. Specialists provide bounded evidence and update
+the durable artifacts; they do not make final approval decisions.
 
 ## Inputs
 
@@ -37,19 +40,21 @@ implications.
 - `docs/roadmap/stage-<N>/implementation-plan.md`
 
 Keep functionality agreement, design agreement, discussion records, approvals,
-defaults, concerns, validation findings, examples, and implementation-plan
-review notes inside those two files unless the maintainer asks for another
-artifact.
+defaults, concerns, validation findings, examples, plan-quality findings, and
+implementation-plan review notes inside those two files unless the maintainer
+asks for another artifact.
+
+Future planning runs use the consolidated pass structure below. Existing
+in-progress artifacts that already contain legacy standalone mapper or quality
+reviewer handoffs may continue from their recorded state without retrofitting.
 
 ## Operating Rules
 
-- The managing agent owns synthesis, maintainer discussion, approvals, conflict
-  resolution, and final judgment.
 - Subagents are bounded helpers with sequential write ownership. Do not let two
   subagents edit `planning.md` at the same time.
-- Each subagent must follow its prompt exactly and return concise evidence:
-  files read, files changed, decisions, risks, open questions, and recommended
-  next gate.
+- Each required specialist pass must follow its prompt exactly and return
+  concise evidence: files read, files changed, decisions, risks, open
+  questions, and recommended next gate.
 - Required specialist passes are hard gates. The managing agent may synthesize,
   reconcile, and challenge specialist output, but must not replace a required
   specialist pass with manager-only analysis.
@@ -60,8 +65,9 @@ artifact.
   `Stage Gates`, `Stage Readbacks`, and any affected queue rows.
 - Record every material candidate requirement, functionality-agreement queue
   item, behavior lock, design decision, design-agreement queue item,
-  validation concern, phase-shaping concern, default, assumption, and deferral
-  in `planning.md`; discussion is narrower than recording.
+  validation concern, phase-shaping concern, plan-quality finding, default,
+  assumption, and deferral in `planning.md`; discussion is narrower than
+  recording.
 - Maintain `Functionality Agreement Queue` and `Design Agreement Queue` as
   dependency-ordered queues in `planning.md`. Resolve repo-answerable branches
   directly and record them. Downstream planning must not begin while either
@@ -96,16 +102,16 @@ artifact.
   resolved from repository evidence, reopen only the relevant
   functionality-agreement queue item and return to the functionality-agreement
   substage before continuing.
-- If validation, plan review, or implementation-plan review finds that accepted
-  planning would force downstream agents to invent behavior or structure,
-  reopen only the relevant agreement queue and return to that gate.
+- If validation, plan quality, or implementation-plan review finds that
+  accepted planning would force downstream agents to invent behavior or
+  structure, reopen only the relevant agreement queue and return to that gate.
 - Do not implement code in this workflow.
 - Do not pause for routine approval after every specialist pass. Continue
   through evidence-backed defaults when no maintainer decision, blocker,
   material design trade-off, or explicit approval point remains.
 - Do not move past unresolved maintainer decisions, unresolved blockers,
-  unresolved agreement queues, design approval, or final implementation-plan
-  approval.
+  unresolved agreement queues, design approval, plan quality approval, or final
+  implementation-plan approval.
 - If manual context compaction is unavailable, write a resume checkpoint and ask
   the maintainer to continue in a fresh chat with the same invocation plus the
   current artifact path.
@@ -116,15 +122,29 @@ Use these role prompts and agent definitions:
 
 | Pass | Agent | Prompt | Writes |
 | --- | --- | --- | --- |
-| Context scaffold | `roadmap_stage_context_planner` | `.codex/prompts/roadmap-stage-context-planner.md` | `planning.md` |
-| Capability triage and candidate requirements | `roadmap_stage_functionality_mapper` | `.codex/prompts/roadmap-stage-functionality-mapper.md` | `planning.md` |
+| Context scaffold, capability triage, and candidate requirements | `roadmap_stage_context_planner` | `.codex/prompts/roadmap-stage-context-planner.md` | `planning.md` |
 | Functionality-agreement review | managing agent | `.codex/prompts/roadmap-stage-functionality-agreement.md` | `planning.md` |
 | Design proposal | `roadmap_stage_design_proposer` | `.codex/prompts/roadmap-stage-design-proposer.md` | `planning.md` |
 | Design implication, future-roadmap safety, coherence audit, and examples | `roadmap_stage_design_implication_reviewer` | `.codex/prompts/roadmap-stage-design-implication-reviewer.md` | `planning.md` |
 | Design-agreement review | managing agent | `.codex/prompts/roadmap-stage-design-agreement.md` | `planning.md` |
-| Validation and phase shaping | `roadmap_stage_validation_planner` | `.codex/prompts/roadmap-stage-validation-planner.md` | `planning.md` |
-| Plan quality review | `roadmap_stage_plan_quality_reviewer` | `.codex/prompts/roadmap-stage-plan-quality-reviewer.md` | `planning.md` |
+| Validation, phase shaping, and plan quality gate | `roadmap_stage_validation_planner` | `.codex/prompts/roadmap-stage-validation-planner.md` | `planning.md` |
 | Implementation planning | `roadmap_stage_implementation_planner` | `.codex/prompts/roadmap-stage-implementation-planner.md` | `implementation-plan.md` |
+
+Fallback roles remain available when a stage is unusually broad, risky, or
+blocked:
+
+- Use `roadmap_stage_functionality_mapper` as a standalone legacy/fallback pass
+  only when the consolidated context/functionality pass is incomplete, stale,
+  or explicitly split by maintainer override.
+- Use `roadmap_stage_functionality_decision_auditor` as a standalone audit only
+  when the design review finds unresolved traceability, example, or coherence
+  risk that needs another pass.
+- Use `roadmap_stage_phase_shaper` as a standalone phase-shaping pass only when
+  combined validation and phase shaping cannot produce reviewable implementation
+  phases without deeper decomposition.
+- Use `roadmap_stage_plan_quality_reviewer` as a standalone fallback only when
+  the combined validation/quality pass cannot complete the plan-quality gate or
+  when the maintainer requests an extra independent readiness review.
 
 ## Required Specialist Evidence And Hard Gates
 
@@ -136,9 +156,9 @@ recorded in `planning.md`:
 - `Stage Gates` and `Stage Readbacks` rows updated for completed gates,
   including locked decisions, defaults, open questions, blockers, and next
   focus.
-- `Functionality Agreement Queue` populated in dependency order with recommended
-  answers, state, trade-offs, repo-resolved branches, and exact feedback needed
-  where maintainer input is required.
+- `Functionality Agreement Queue` populated in dependency order with
+  recommended answers, state, trade-offs, repo-resolved branches, and exact
+  feedback needed where maintainer input is required.
 - `Behavior Confirmation` populated from the resolved functionality-agreement
   queue.
 - `Design Agreement Queue` populated in dependency order with recommended
@@ -150,17 +170,19 @@ recorded in `planning.md`:
   decisions were checked against later roadmap items and that
   interface/adapter/protocol generality, reuse, and explicit revisit triggers
   were considered.
-- `Functionality And Decision Audit` evidence that all included capabilities map
-  to requirements, design decisions, examples, and validation needs.
-- `Plan Quality Gate` evidence that unresolved ambiguity, blockers,
-  `needs maintainer discussion` rows, reopened queues, and missing specialist
-  evidence were checked.
+- `Functionality And Decision Audit` evidence that all included capabilities
+  map to requirements, design decisions, examples, and validation needs.
+- `Validation Strategy`, `Phase Shaping`, and `Plan Quality Gate` evidence
+  from the combined validation/quality pass, including unresolved ambiguity,
+  blockers, `needs maintainer discussion` rows, reopened queues, and missing or
+  stale specialist evidence checks.
 
 Hard gate rules:
 
-- Functionality-agreement review must not begin until capability triage,
-  candidate requirements, and the initial functionality-agreement queue are
-  recorded.
+- Functionality-agreement review must not begin until source evidence,
+  capability triage, module behavior, candidate requirements, and the initial
+  functionality-agreement queue are recorded by the consolidated
+  context/functionality pass.
 - Behavior confirmation must not pass while any high-impact functionality queue
   item is `needs maintainer discussion` or `blocked`.
 - Design proposal must not begin until the functionality-agreement queue has no
@@ -170,28 +192,20 @@ Hard gate rules:
   completed, and their findings are recorded in `planning.md`.
 - Design-agreement review must not pass while any high-impact design queue item
   is `needs maintainer discussion` or `blocked`.
-- Validation and phase shaping must not be treated as approved while either
-  agreement queue is reopened or the design-agreement gate is unresolved.
-- Plan quality review must block when required specialist evidence is missing,
-  stale, manager-authored only, or inconsistent with the current
-  `planning.md`.
-- Implementation planning must not create phases while plan quality has not
-  passed, specialist evidence is missing, either agreement queue has unresolved
-  items, decision packets are unresolved, or any approval gate is only recorded
-  as pending or ready for approval.
-
-Fallback roles remain available when a stage is unusually broad or risky:
-
-- Use `roadmap_stage_functionality_decision_auditor` as a standalone audit only
-  when the combined design review finds unresolved traceability, example, or
-  coherence risk that needs another pass.
-- Use `roadmap_stage_phase_shaper` as a standalone phase-shaping pass only when
-  combined validation and phase shaping cannot produce reviewable implementation
-  phases without deeper decomposition.
+- Validation, phase shaping, and plan quality must not be treated as approved
+  while either agreement queue is reopened or the design-agreement gate is
+  unresolved.
+- The combined validation/quality pass must block when required specialist
+  evidence is missing, stale, manager-authored only, or inconsistent with the
+  current `planning.md`.
+- Implementation planning must not create phases while the plan quality gate
+  has not passed, specialist evidence is missing, either agreement queue has
+  unresolved items, decision packets are unresolved, or any approval gate is
+  only recorded as pending or ready for approval.
 
 ## Stages
 
-### 1. Context Scaffold
+### 1. Context, Capability Triage, And Candidate Requirements
 
 Spawn `roadmap_stage_context_planner`.
 
@@ -203,50 +217,32 @@ The subagent must:
 2. Create `docs/roadmap/stage-<N>/` if needed.
 3. Create or refresh `planning.md` from the planning template.
 4. Record source evidence, exploration coverage, roadmap extraction, version
-   overview, likely impacted modules, known constraints, assumptions, and open
-   questions.
-5. Stop without asking the maintainer questions.
-
-The managing agent then gives a concise briefing and explicitly invites
-clarifying questions only when the scaffold leaves product, scientific,
-audience, or optimization-target ambiguity. Record resolved clarifications in
-`planning.md` before continuing.
-
-Decision gate: resolve user-visible outcome, target audience, and planning
-priority or optimization target only when they are ambiguous or contradicted by
-evidence. Otherwise record the evidence-backed default and continue.
-
-### 2. Capability Triage And Candidate Requirements
-
-Spawn `roadmap_stage_functionality_mapper`.
-
-The subagent must:
-
-1. Read `planning.md` and the same source set needed to understand the roadmap
-   section.
-2. Propose candidate capabilities and sort them into `include`, `maybe`,
+   overview, likely impacted modules, known constraints, assumptions, risks,
+   and open questions.
+5. Propose candidate capabilities and sort them into `include`, `maybe`,
    `defer`, and `out of scope`.
-3. Define what functionality and behavior means for each relevant module.
-4. Explain what the roadmap section should do and what it enables in the
-   codebase.
-5. Break included capabilities into a small set of concrete functional
+6. Define what functionality and behavior means for each relevant module or
+   repo area.
+7. Break included capabilities into a small set of concrete functional
    requirements.
-6. Draft the initial `Functionality Agreement Queue` in dependency order,
+8. Draft the initial `Functionality Agreement Queue` in dependency order,
    including recommended answers, trade-offs, repo-resolved branches, and exact
    feedback needed only when maintainer input appears necessary.
-7. Record capability triage, module behavior, functional requirements, and the
+9. Record capability triage, module behavior, functional requirements, and the
    initial queue in `planning.md`.
+10. Stop without asking the maintainer questions.
 
-The managing agent then reconciles the capability triage, stage behavior,
-affected modules, enabled capabilities, non-goals, recorded defaults, and only
-the uncertainty that may require discussion.
+The managing agent gives a concise briefing, reconciles the combined pass, and
+raises only product, scientific, audience, behavior, or scope ambiguity that
+requires maintainer judgment. Record resolved clarifications in `planning.md`
+before continuing.
 
-Decision gate: candidate requirements and the initial functionality-agreement
-queue are recorded. Raise only ambiguous functionality and behavior choices,
-blockers, or material scope trade-offs. If no such items remain, continue to
-the agreement substage.
+Decision gate: candidate requirements and the initial
+functionality-agreement queue are recorded. Raise only ambiguous functionality
+and behavior choices, blockers, or material scope trade-offs. If no such items
+remain, continue to the agreement substage.
 
-### 3. Functionality-Agreement Review
+### 2. Functionality-Agreement Review
 
 Use `.codex/prompts/roadmap-stage-functionality-agreement.md`.
 
@@ -265,7 +261,7 @@ Decision gate: the functionality-agreement queue is dependency ordered,
 repo-answerable branches are resolved directly, and no unresolved high-impact
 requirement blocker or maintainer packet remains.
 
-### 4. Behavior Confirmation
+### 3. Behavior Confirmation
 
 The managing agent confirms the resolved functionality baseline in
 `Behavior Confirmation`.
@@ -284,7 +280,7 @@ locked before design work begins.
 Checkpoint: update `planning.md` with a resume note, then compact context or
 ask for a fresh-chat continuation if compaction is unavailable.
 
-### 5. Context Checkpoint If Applicable
+### 4. Context Checkpoint If Applicable
 
 If the conversation history, source discovery, or new maintainer input makes the
 planning state hard to carry forward, refresh the checkpoint before design work.
@@ -294,7 +290,7 @@ If no checkpoint is needed, record `not needed` in `Stage Gates` and
 Decision gate: the context checkpoint is cleared or explicitly marked
 `not needed`.
 
-### 6. Design Proposal
+### 5. Design Proposal
 
 Spawn `roadmap_stage_design_proposer`.
 
@@ -319,7 +315,7 @@ Do not ask for design approval and do not downgrade `needs maintainer
 discussion` decisions until the design implication, future-roadmap safety,
 coherence audit, and examples pass has reviewed them.
 
-### 7. Design Implication, Future-Roadmap Safety, Coherence Audit, And Examples
+### 6. Design Implication, Future-Roadmap Safety, Coherence Audit, And Examples
 
 Spawn `roadmap_stage_design_implication_reviewer`.
 
@@ -335,9 +331,10 @@ The subagent must:
    depend on, constrain, or be constrained by the current shape. Record whether
    the design should be revised now, deferred with a revisit trigger, or raised
    for maintainer judgment.
-5. Review interfaces, adapters, and protocols for generic reuse across datasets,
-   modalities, methods, codecs, framework integrations, and downstream projects
-   while preserving domain semantics and explicit failure behavior.
+5. Review interfaces, adapters, and protocols for generic reuse across
+   datasets, modalities, methods, codecs, framework integrations, and
+   downstream projects while preserving domain semantics and explicit failure
+   behavior.
 6. Reclassify decisions and update the design-agreement queue.
 7. Verify every auto-approved decision is traceable to approved behavior and
    has adversarial review evidence.
@@ -346,21 +343,21 @@ The subagent must:
 9. Find conflicts, missing requirements, unsupported decisions, excessive
    scope, unclear failure modes, validation gaps, and downstream impacts.
 10. Propose project-context examples that demonstrate the functionality across
-   the intended workflow.
+    the intended workflow.
 11. Reopen only the relevant functionality-agreement queue item when a missing
-   behavior decision blocks design and cannot be resolved from repository
-   evidence.
-12. Update `planning.md` with findings, recommended revisions, future-roadmap
-    safety evidence, reuse evidence, audit/example evidence, and only the
-    packets that need maintainer discussion because they remain ambiguous,
-    blocked, or materially risky.
+    behavior decision blocks design and cannot be resolved from repository
+    evidence.
+12. Update `planning.md` with findings, recommended revisions,
+    future-roadmap safety evidence, reuse evidence, audit/example evidence, and
+    only the packets that need maintainer discussion because they remain
+    ambiguous, blocked, or materially risky.
 
 Hard gate: this pass is mandatory before design-agreement review. If it is
 missing, manager-authored only, stale relative to the current proposed design,
 or fails to reclassify design decisions and record future-roadmap/reuse safety
 findings, design approval is blocked.
 
-### 8. Design-Agreement Review
+### 7. Design-Agreement Review
 
 Use `.codex/prompts/roadmap-stage-design-agreement.md`.
 
@@ -376,8 +373,8 @@ The managing agent must:
 6. Ensure accepted revisions from the future-roadmap/reuse safety review are
    reflected in the proposed implementation shape, design decisions, validation
    obligations, deferrals, or revisit triggers before design approval passes.
-7. Reopen the functionality-agreement queue only when a design blocker reveals a
-   missing upstream behavior decision that cannot be resolved from repository
+7. Reopen the functionality-agreement queue only when a design blocker reveals
+   a missing upstream behavior decision that cannot be resolved from repository
    evidence.
 
 Decision gate: design decisions are explicitly approved, with no unresolved
@@ -388,18 +385,18 @@ required explicit design approval point.
 Checkpoint: update `planning.md` with a resume note, then compact context or
 ask for a fresh-chat continuation if compaction is unavailable.
 
-### 9. Validation And Phase Shaping
+### 8. Validation, Phase Shaping, And Plan Quality Gate
 
 Spawn `roadmap_stage_validation_planner`.
 
 The subagent must:
 
 1. Review the confirmed functionality, resolved agreement queues, design
-   decisions, future-roadmap/reuse safety findings, audit findings, and
-   examples.
-2. Define tests and checks for behavior, edge cases, failure modes, integration
-   boundaries, examples, docs/templates/workflows, and scientific/workflow
-   contracts.
+   decisions, future-roadmap/reuse safety findings, audit findings, examples,
+   risks, and failure modes.
+2. Define tests and checks for behavior, edge cases, failure modes,
+   integration boundaries, examples, docs/templates/workflows, and
+   scientific/workflow contracts.
 3. Define optional tests/checks only when they would materially reduce risk.
 4. Propose implementation phase order, phase boundaries, dependencies, review
    boundaries, acceptance criteria, test expectations, design impact, future
@@ -407,43 +404,27 @@ The subagent must:
    risks.
 5. Keep phases reviewable and coherent; split broad phases before they can
    become implementation-plan work.
-6. Reopen only the relevant agreement queue when validation scope or reviewable
-   phase design cannot be defined from the accepted planning state.
-7. Update `planning.md` with required and optional validation coverage plus the
-   phase sketch.
+6. Reopen only the relevant agreement queue when validation scope, plan
+   quality, or reviewable phase design cannot be defined from the accepted
+   planning state.
+7. Run the plan quality gate inside the same pass: traceability from roadmap to
+   requirements, design, examples, validation, and phase shaping; specialist
+   evidence freshness; unresolved ambiguity; reopened queues; future-roadmap
+   compatibility; interface/adapter/protocol reuse; scientific/workflow
+   contract clarity; and phase reviewability.
+8. Update `planning.md` with required and optional validation coverage, phase
+   sketch, and plan-quality pass/block evidence.
 
-The managing agent reconciles validation coverage and phase shaping. Raise
-individual choices only when coverage scope, scientific/workflow contract, cost,
-ordering, boundaries, acceptance criteria, or reviewability remain ambiguous or
-blocked.
+The managing agent reconciles validation coverage, phase shaping, and plan
+quality. Raise individual choices only when coverage scope,
+scientific/workflow contract, cost, ordering, boundaries, acceptance criteria,
+reviewability, specialist evidence, or readiness remain ambiguous or blocked.
 
-Decision gate: validation strategy and phase shaping have no unresolved
-maintainer decisions or blockers, and no agreement queue had to be reopened.
+Decision gate: validation strategy, phase shaping, and plan quality have no
+unresolved maintainer decisions or blockers, and no agreement queue had to be
+reopened.
 
-### 10. Plan Quality Gate
-
-Spawn `roadmap_stage_plan_quality_reviewer`.
-
-The subagent must:
-
-1. Review `planning.md` for traceability from roadmap extraction through
-   capabilities, requirements, functionality agreement, behavior confirmation,
-   design agreement, examples, validation, and phase shaping.
-2. Check extensibility, maintainability, scientific/workflow contract clarity,
-   plan reviewability, unresolved ambiguity, unresolved `blocked` decisions,
-   unresolved `needs maintainer discussion` decisions, and stale or reopened
-   queue items.
-3. Check that required specialist pass handoffs are present, current, and not
-   replaced by manager-only analysis.
-4. Check that every maintainer decision packet in either agreement queue was
-   actually raised and resolved, not merely recorded as pending approval.
-5. Record pass/block findings in `planning.md`.
-
-Decision gate: plan quality gate passed or blockers explicitly returned to the
-relevant agreement or planning stage. Raise only quality-gate blockers or
-ambiguous return-to-planning choices.
-
-### 11. Implementation Plan
+### 9. Implementation Plan
 
 Spawn `roadmap_stage_implementation_planner`.
 

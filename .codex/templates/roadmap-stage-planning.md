@@ -47,28 +47,24 @@ Implementation plan: `docs/roadmap/stage-<N>/implementation-plan.md`
 
 | Gate | Required inputs | Current blockers or queue items | Status | Date/round | Notes |
 | --- | --- | --- | --- | --- | --- |
-| Roadmap briefing and intent | roadmap extraction, overview |  | pending / in_progress / passed / blocked |  |  |
-| Capability triage and candidate requirements | capability triage, module behavior map, functional requirements |  | pending / in_progress / passed / blocked |  |  |
+| Roadmap briefing, capability triage, and candidate requirements | roadmap extraction, overview, capability triage, module behavior map, functional requirements, initial functionality queue |  | pending / in_progress / passed / blocked |  |  |
 | Functionality-agreement review | functionality-agreement queue |  | pending / in_progress / passed / blocked |  |  |
 | Behavior confirmation | resolved functionality-agreement queue |  | pending / in_progress / passed / blocked |  |  |
 | Context checkpoint if applicable | resume checkpoint, refreshed context if needed |  | pending / in_progress / passed / blocked / not needed |  |  |
 | Design-agreement review | proposed implementation shape, design decisions, design-agreement queue, design implication review, future-roadmap/reuse safety review |  | pending / in_progress / passed / blocked |  |  |
-| Validation and phase shaping | validation strategy, phase shaping |  | pending / in_progress / passed / blocked |  |  |
-| Plan quality gate | traceability review, specialist evidence check |  | pending / in_progress / passed / blocked |  |  |
+| Validation, phase shaping, and plan quality gate | validation strategy, phase shaping, traceability review, specialist evidence check |  | pending / in_progress / passed / blocked |  |  |
 | Implementation plan approved | implementation-plan review and approval |  | pending / in_progress / passed / blocked |  |  |
 
 ## Stage Readbacks
 
 | Stage | Gate result | Locked decisions | Defaults and recommendations | Open questions or blockers | Next focus |
 | --- | --- | --- | --- | --- | --- |
-| Roadmap briefing and intent |  |  |  |  |  |
-| Capability triage and candidate requirements |  |  |  |  |  |
+| Roadmap briefing, capability triage, and candidate requirements |  |  |  |  |  |
 | Functionality-agreement review |  |  |  |  |  |
 | Behavior confirmation |  |  |  |  |  |
 | Context checkpoint if applicable |  |  |  |  |  |
 | Design-agreement review |  |  |  |  |  |
-| Validation and phase shaping |  |  |  |  |  |
-| Plan quality gate |  |  |  |  |  |
+| Validation, phase shaping, and plan quality gate |  |  |  |  |  |
 | Implementation-plan handoff |  |  |  |  |  |
 
 ## Capability Triage
@@ -231,15 +227,10 @@ Gate result:
 - Open questions:
 - Next step:
 
-### After Validation And Phase Shaping
+### After Validation, Phase Shaping, And Plan Quality Gate
 
 - Validation baseline locked:
 - Phase sketch locked:
-- Open questions:
-- Next step:
-
-### After Plan Quality Gate
-
 - Gate result:
 - Open questions:
 - Next step:

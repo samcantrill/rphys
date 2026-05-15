@@ -55,6 +55,10 @@ Hard requirements:
   into a phase branch unless the maintainer explicitly directs that recovery.
 - Keep workflow prompt/template edits in the control checkout or a dedicated
   workflow branch outside the implementation phase loop.
+- Do not open a docs-only PR between phase PRs. Phase merge metadata,
+  implementation-plan status updates, and cleanup records are either committed
+  directly to `develop` after the phase PR merge when permissions allow, or
+  explicitly deferred into the next phase PR with maintainer approval.
 
 ## GitHub Preflight
 
@@ -244,8 +248,10 @@ For each phase:
    status, PR link, implementation summary, validation summary, follow-up notes,
    and cleanup status.
 20. Commit merge metadata on `develop` with a `docs:` commit message and push
-   directly to `develop` when permissions allow. If direct push is disallowed,
-   record the exact blocker and ask the user how to proceed.
+   directly to `develop` when permissions allow. Do not open a separate
+   docs-only PR for this metadata. If direct push is disallowed, record the
+   exact blocker and ask whether to defer the metadata into the next phase PR or
+   stop before continuing.
 21. Remove the phase worktree, run `git worktree prune`, and delete the phase
    branch only after confirming no later branch depends on it.
 22. Stop when all phases are `merged` or `blocked`.
@@ -257,6 +263,7 @@ For each phase:
 - Only the managing agent may merge phase PRs.
 - Merge phase PRs into `develop`, not `main`.
 - Each phase must be submitted as its own PR from its own branch and worktree.
+- Do not create interstitial docs-only PRs between phase PRs.
 - Do not record a phase as `approved`, `merged`, or complete from local-only
   implementation evidence.
 - Do not request GitHub reviewers or wait for human GitHub approval unless the
