@@ -5,7 +5,7 @@ Roadmap version: `v10`
 Planning document: `docs/roadmap/stage-10/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: pending
+Current phase: Phase 1 pending
 Blockers: none
 
 ## Summary
@@ -41,7 +41,7 @@ Blockers: none
 
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0 | `list-uncollation-roundtrip` | pending | `agent/stage-10-method-model-contracts-p0-list-uncollation-roundtrip` | pending | `src/rphys/data/collation.py`, `src/rphys/data/__init__.py`, focused data/package/contract/integration tests, docs/docstrings | Make default LIST batches unlist back to `tuple[Sample, ...]` before method/model contracts rely on sample reconstruction. | data collation round-trip unit tests; batch collater contract tests; landed Stage 9 torch-collater integration; `make test-package`; `git diff --check` | LIST collate/uncollate round trip with explicit `None` vs missing metadata and generic metadata preservation |
+| 0 | `list-uncollation-roundtrip` | merged | `agent/stage-10-method-model-contracts-p0-list-uncollation-roundtrip` | [#66](https://github.com/samcantrill/rphys/pull/66) | `src/rphys/data/collation.py`, `src/rphys/data/__init__.py`, focused data/package/contract/integration tests, docs/docstrings | Make default LIST batches unlist back to `tuple[Sample, ...]` before method/model contracts rely on sample reconstruction. | data collation round-trip unit tests; batch collater contract tests; landed Stage 9 torch-collater integration; `make test-package`; `git diff --check` | LIST collate/uncollate round trip with explicit `None` vs missing metadata and generic metadata preservation |
 | 1 | `core-contracts-imports` | pending | `agent/stage-10-method-model-contracts-p1-core-contracts-imports` | pending | `src/rphys/methods/core.py`, `src/rphys/methods/context.py`, `src/rphys/methods/output.py`, `src/rphys/models/core.py`, scoped package exports, package/unit/contract tests for these names | Establish code-backed public `Method`, `Model`, `PredictionContext`, and patch-like `MethodOutput` with lightweight imports. | `make test-package`; focused context/output unit tests; method/model contract probes; `git diff --check` | context-aware prediction; synthetic model-independent contract probes |
 | 2 | `adapters-output-apply` | pending | `agent/stage-10-method-model-contracts-p2-adapters-output-apply` | pending | `src/rphys/methods/adapters.py`, private methods validation helpers, explicit `MethodOutput` merge/apply conversion, adapter/output tests | Implement the `Batch`/`FieldLocator` bridge and explicit patch-to-`Batch` application. | adapter unit matrix; output/apply tests; method contract tests using adapters; focused synthetic integration if apply is present | synthetic echo method; explicit prediction merge |
 | 3 | `state-trainable-records` | pending | `agent/stage-10-method-model-contracts-p3-state-trainable-records` | pending | `src/rphys/methods/state.py`, optional protocol-only `src/rphys/nn/protocols.py` only if code-backed by capability records, package exports, state/trainable tests | Add richer backend-neutral state and parameter capability records without torch, optimizer, checkpoint, or device semantics. | `tests/contracts/test_trainable_method_contract.py`; `tests/unit/rphys/methods/test_state.py`; `make test-package`; `git diff --check` | non-torch trainable fake |
@@ -55,11 +55,11 @@ Blockers: none
 
 ## Phase 0: LIST Collation Round-Trip Repair
 
-Status: pending
+Status: merged
 Slug: `list-uncollation-roundtrip`
 Branch: `agent/stage-10-method-model-contracts-p0-list-uncollation-roundtrip`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-10-method-model-contracts-p0-list-uncollation-roundtrip`
-PR: pending
+PR: [#66](https://github.com/samcantrill/rphys/pull/66)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -105,13 +105,13 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed in `docs/roadmap/stage-10/phases/list-uncollation-roundtrip.md`
 - Planning/refinement budget: one planning pass focused on exact round-trip semantics and metadata evidence placement.
 - Implementation/refinement budget: one implementation pass plus targeted round-trip/failure refinement.
 - PR review budget: one review pass focused on no metadata leakage, no model formatting, and no future collation-policy overreach.
 - Blocker-resolution budget: stop and reopen design if exact LIST round trip requires public metadata pollution, broad schema changes, or non-LIST policy expansion.
 - Pre-submit blocker gate: all Phase 0 validation rows must pass or record explicit risk.
-- Merge record: pending
+- Merge record: completed below
 
 ### Risks And Stop Conditions
 
@@ -121,11 +121,28 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added public `uncollate_batch`, private LIST collation evidence, scoped `rphys.data` export, and fail-loud validation for ambiguous or edited batches.
+- Validation: `uv run pytest tests/unit/rphys/data/test_collation.py`; `uv run pytest tests/contracts/test_batch_collater_contract.py`; `uv run pytest tests/integration/test_stage9_torch_collater_flow.py`; `make test-package`; `make validate-pr`; `make test-summary`; `git diff --check`.
+- PR: [#66](https://github.com/samcantrill/rphys/pull/66)
+- Merge: merged to `develop` on 2026-05-16 as `739960887b0aab181fb8347ed443f03fcc2887e9`.
+- Follow-up: future non-LIST collation policies must define separate inverse semantics before participating in uncollation.
+
+### Merge Record
+
+- Phase: Phase 0 `list-uncollation-roundtrip`
+- Branch: `agent/stage-10-method-model-contracts-p0-list-uncollation-roundtrip`
+- PR: [#66](https://github.com/samcantrill/rphys/pull/66)
+- Base branch: `develop`
+- Merge command: `gh pr merge 66 --squash --delete-branch`
+- Merge result: merged; GitHub reported no status checks for the branch, so merge relied on the completed local validation gate.
+- Merge commit: `739960887b0aab181fb8347ed443f03fcc2887e9`
+- Branch cleanup: remote branch deleted by GitHub; local branch cleanup pending worktree removal.
+- Worktree cleanup: pending after metadata commit.
+- Behavior implemented: default LIST-collated `Batch` containers can uncollate to `tuple[Sample, ...]` while preserving field locators, payload order, schemas, collate policies, and sparse metadata presence.
+- Tests and validation: focused unit/contract/integration checks passed; `make validate-pr` passed; `make test-summary` reported package 41 passed, unit 628 passed, contract 118 passed, integration 18 passed, and no e2e/acceptance suites present.
+- Documentation: phase plan and PR body artifacts added under `docs/roadmap/stage-10/phases/`; public docstrings describe tuple return and fail-loud LIST-only behavior.
+- Scientific contract implications: sample-field semantics and caller-owned generic metadata round-trip without first-class domain identifiers or method/trainer-owned reconstruction.
+- Follow-up notes for later phases: Stage 10 methods may rely on data-layer LIST reconstruction, but copied/manual/non-LIST batches still need explicit future inverse semantics.
 
 ## Phase 1: Core Public Contracts And Import Boundaries
 
