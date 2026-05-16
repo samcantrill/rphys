@@ -5,7 +5,7 @@ Roadmap version: `v12`
 Planning document: `docs/roadmap/stage-12/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: pending Phase 5 implementation
+Current phase: pending Phase 6 implementation
 Blockers: none
 
 ## Summary
@@ -42,7 +42,7 @@ Blockers: none
 | 2 | `supervised-learner` | merged | `agent/stage-12-learning-training-p2-supervised-learner` | [#80](https://github.com/samcantrill/rphys/pull/80) | `src/rphys/learning/supervised.py`, learning contract/integration tests, test support fakes | Compose Stage 10 methods with Stage 11 objective/metric contracts. | `make test-unit`, `make test-contract`, `make test-integration`, `git diff --check` | Native supervised smoke learner slice; prediction-only mode |
 | 3 | `plan-result-facade` | merged | `agent/stage-12-learning-training-p3-plan-result-facade` | [#81](https://github.com/samcantrill/rphys/pull/81) | `src/rphys/training/plan.py`, `results.py`, `core.py`, `experimental.py`, training unit/contract tests | Add neutral plan/result records and facade-to-engine delegation. | `make test-unit`, `make test-contract`, `make test-package`, `git diff --check` | Fake engine delegation; plan neutrality; result summaries |
 | 4 | `native-engine` | merged | `agent/stage-12-learning-training-p4-native-engine` | [#82](https://github.com/samcantrill/rphys/pull/82) | `src/rphys/training/backend.py`, native engine internals, native unit/integration tests | Implement dependency-light reference loop and backend mechanics. | `make test-unit`, `make test-integration`, `make test-contract`, `git diff --check` | Native supervised fit/validate/test/predict smoke run |
-| 5 | `observability-external-pressure` | pending | `agent/stage-12-learning-training-p5-observability-external-pressure` | pending | `src/rphys/training/events.py`, `profiling.py`, fake external test support, observability contracts | Add events/profiles and fake external-engine pressure tests. | `make test-unit`, `make test-contract`, `make test-package`, `git diff --check` | Fake external engine; duplicate trainable-owner guardrail; JAX pressure note |
+| 5 | `observability-external-pressure` | merged | `agent/stage-12-learning-training-p5-observability-external-pressure` | [#83](https://github.com/samcantrill/rphys/pull/83) | `src/rphys/training/events.py`, `profiling.py`, fake external test support, observability contracts | Add events/profiles and fake external-engine pressure tests. | `make test-unit`, `make test-contract`, `make test-package`, `git diff --check` | Fake external engine; duplicate trainable-owner guardrail; JAX pressure note |
 | 6 | `docs-examples-final-validation` | pending | `agent/stage-12-learning-training-p6-docs-examples-final-validation` | pending | Stage 12 docs/docstrings/examples, final validation evidence, package exports | Finish docs/examples, optional `run_train` polish, future-compatibility notes, and full validation. | `make test-package`, `make test-unit`, `make test-contract`, `make test-integration`, `make test-summary`, `uv lock --check`, `git diff --check`, `make validate-pr` | End-to-end native example; fake external example; future batch-pipeline documentation only |
 
 ## Implementation Readiness Blockers
@@ -342,11 +342,11 @@ Workflow path: `.codex/workflows/roadmap-version-implementation.md`
 
 ## Phase 5: Observability And Fake External Pressure
 
-Status: pending
+Status: merged
 Slug: `observability-external-pressure`
 Branch: `agent/stage-12-learning-training-p5-observability-external-pressure`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-12-learning-training-p5-observability-external-pressure`
-PR: pending
+PR: [#83](https://github.com/samcantrill/rphys/pull/83)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: `.codex/workflows/roadmap-version-implementation.md`
@@ -390,13 +390,13 @@ Workflow path: `.codex/workflows/roadmap-version-implementation.md`
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed inline by manager on 2026-05-16
 - Planning/refinement budget: one pass for event/profile vocabulary and fake external boundaries.
 - Implementation/refinement budget: one implementation pass plus contract fixes.
 - PR review budget: one reviewer pass focused on framework deferral and observer scope.
 - Blocker-resolution budget: stop if fake pressure exposes missing public engine/plan/result fields that require DQ reopening.
 - Pre-submit blocker gate: no real Lightning/JAX/torch/logger dependency; callbacks remain observe-only.
-- Merge record: pending
+- Merge record: PR [#83](https://github.com/samcantrill/rphys/pull/83) merged to `develop` on 2026-05-16 as `e22516f` (`feat: add stage 12 training observability`).
 
 ### Risks And Stop Conditions
 
@@ -406,11 +406,11 @@ Workflow path: `.codex/workflows/roadmap-version-implementation.md`
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: completed `TrainingEvent`, observe-only sinks/callbacks, profile span/unavailable probe records, native event/profile emission, fake external result normalization tests, and adapter-local fake trainable-owner guardrails.
+- Validation: passed `make test-unit`, `make test-contract`, `make test-package`, `git diff --check`, and extra `make test-integration` in `/home/samcantrill/work/rphys-worktrees/stage-12-learning-training-p5-observability-external-pressure`.
+- PR: [#83](https://github.com/samcantrill/rphys/pull/83)
+- Merge: merged to `develop` on 2026-05-16 as `e22516f`.
+- Follow-up: Phase 6 should finish docs/examples, final export checks, `run_train` polish if appropriate, future-compatibility notes, and full validation.
 
 ## Phase 6: Docs, Examples, Experimental Entrypoint, And Final Validation
 
