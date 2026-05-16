@@ -71,8 +71,10 @@ git diff --check
   distributed sync, torchmetrics adapter, or durable export behavior was
   introduced.
 - PR preparation: PR body drafted in
-  `docs/roadmap/stage-11/phases/metric-observation-views-composition-pr-body.md`.
-- Automated review: pending.
+  `docs/roadmap/stage-11/phases/metric-observation-views-composition-pr-body.md`
+  and PR [#77](https://github.com/samcantrill/rphys/pull/77) opened against
+  `develop`.
+- Automated review: pending PR status/check verification.
 - Merge result: pending.
 - Cleanup: pending.
 - Remaining blockers: none.
