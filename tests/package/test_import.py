@@ -21,6 +21,24 @@ PLANNED_PACKAGE_NAMES = [
     "rphys.training",
 ]
 
+STAGE_10_METHOD_EXPORTS = [
+    "Method",
+    "MethodOutput",
+    "PredictionContext",
+]
+
+STAGE_10_METHOD_MODULES = {
+    "rphys.methods.context": ["PredictionContext"],
+    "rphys.methods.core": ["Method"],
+    "rphys.methods.output": ["MethodOutput"],
+}
+
+STAGE_10_MODEL_EXPORTS = ["Model"]
+
+STAGE_10_MODEL_MODULES = {
+    "rphys.models.core": STAGE_10_MODEL_EXPORTS,
+}
+
 BROAD_ERROR_NAMES = [
     "RemotePhysAnalysisError",
     "RemotePhysCodecError",
@@ -499,12 +517,59 @@ def test_import_errors_phase_6_exports_are_scoped() -> None:
 
 def test_deferred_package_homes_import_with_empty_public_surfaces() -> None:
     for package_name in PLANNED_PACKAGE_NAMES:
-        if package_name in {"rphys.data", "rphys.io", "rphys.datasources", "rphys.ops"}:
+        if package_name in {
+            "rphys.data",
+            "rphys.io",
+            "rphys.datasources",
+            "rphys.methods",
+            "rphys.models",
+            "rphys.ops",
+        }:
             continue
         package = importlib.import_module(package_name)
 
         assert package.__doc__
         assert package.__all__ == []
+
+
+def test_stage_10_method_package_exports_only_code_backed_contract_names() -> None:
+    import rphys
+    import rphys.methods
+
+    assert rphys.methods.__all__ == STAGE_10_METHOD_EXPORTS
+    for public_name in STAGE_10_METHOD_EXPORTS:
+        assert hasattr(rphys.methods, public_name)
+        assert not hasattr(rphys, public_name)
+
+
+def test_stage_10_method_modules_export_only_code_backed_names() -> None:
+    for module_name, expected_all in STAGE_10_METHOD_MODULES.items():
+        module = importlib.import_module(module_name)
+
+        assert module.__doc__
+        assert module.__all__ == expected_all
+        for public_name in expected_all:
+            assert hasattr(module, public_name)
+
+
+def test_stage_10_model_package_exports_only_code_backed_contract_names() -> None:
+    import rphys
+    import rphys.models
+
+    assert rphys.models.__all__ == STAGE_10_MODEL_EXPORTS
+    for public_name in STAGE_10_MODEL_EXPORTS:
+        assert hasattr(rphys.models, public_name)
+        assert not hasattr(rphys, public_name)
+
+
+def test_stage_10_model_modules_export_only_code_backed_names() -> None:
+    for module_name, expected_all in STAGE_10_MODEL_MODULES.items():
+        module = importlib.import_module(module_name)
+
+        assert module.__doc__
+        assert module.__all__ == expected_all
+        for public_name in expected_all:
+            assert hasattr(module, public_name)
 
 
 def test_errors_import_and_expose_approved_error_categories() -> None:
