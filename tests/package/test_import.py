@@ -21,6 +21,16 @@ PLANNED_PACKAGE_NAMES = [
     "rphys.training",
 ]
 
+STAGE_11_COLLECTION_EXPORTS = [
+    "Collection",
+    "CollectionContext",
+    "CollectionItem",
+    "CollectionView",
+    "CollectionViewPlan",
+    "Collector",
+    "CollectorResult",
+]
+
 STAGE_10_METHOD_EXPORTS = [
     "Method",
     "MethodInputAdapter",
@@ -66,6 +76,7 @@ BROAD_ERROR_NAMES = [
     "RemotePhysAnalysisError",
     "RemotePhysCodecError",
     "RemotePhysCollateError",
+    "RemotePhysCollectionError",
     "RemotePhysDataError",
     "RemotePhysDataSourceError",
     "RemotePhysDependencyError",
@@ -385,6 +396,24 @@ STAGE_8_EXPORT_EXPORTS = [
     "SelectedFieldExport",
 ]
 
+STAGE_6_OPERATION_ERROR_NAMES = [
+    "InvalidOperationContractError",
+    "InvalidOperationContextError",
+    "InvalidOperationResultError",
+    "InvalidOperationInputError",
+    "OperationExecutionError",
+    "InvalidOperationPipelineError",
+    "OperationPipelineExecutionError",
+    "UndeclaredSampleFieldMutationError",
+]
+
+STAGE_11_COLLECTION_ERROR_NAMES = [
+    "InvalidCollectionContextError",
+    "InvalidCollectionItemError",
+    "InvalidCollectionViewPlanError",
+    "InvalidCollectorResultError",
+]
+
 
 def test_import_rphys() -> None:
     import rphys
@@ -517,17 +546,6 @@ def test_import_ops_batch_module_exports() -> None:
 def test_import_errors_phase_6_exports_are_scoped() -> None:
     from rphys import errors
 
-    STAGE_6_OPERATION_ERROR_NAMES = [
-        "InvalidOperationContractError",
-        "InvalidOperationContextError",
-        "InvalidOperationResultError",
-        "InvalidOperationInputError",
-        "OperationExecutionError",
-        "InvalidOperationPipelineError",
-        "OperationPipelineExecutionError",
-        "UndeclaredSampleFieldMutationError",
-    ]
-
     assert errors.__all__ == [
         "RemotePhysError",
         *STAGE_1_ERROR_NAMES,
@@ -537,8 +555,21 @@ def test_import_errors_phase_6_exports_are_scoped() -> None:
         *STAGE_3_IO_ERROR_NAMES,
         *STAGE_4_CODEC_ERROR_NAMES,
         *STAGE_6_OPERATION_ERROR_NAMES,
+        *STAGE_11_COLLECTION_ERROR_NAMES,
         *BROAD_ERROR_NAMES,
     ]
+
+
+def test_stage_11_collection_module_exports_only_code_backed_names() -> None:
+    import rphys
+
+    module = importlib.import_module("rphys.collections")
+
+    assert module.__doc__
+    assert module.__all__ == STAGE_11_COLLECTION_EXPORTS
+    for public_name in STAGE_11_COLLECTION_EXPORTS:
+        assert hasattr(module, public_name)
+        assert not hasattr(rphys, public_name)
 
 
 def test_deferred_package_homes_import_with_empty_public_surfaces() -> None:
@@ -621,6 +652,7 @@ def test_errors_import_and_expose_approved_error_categories() -> None:
         *STAGE_3_IO_ERROR_NAMES,
         *STAGE_4_CODEC_ERROR_NAMES,
         *STAGE_6_OPERATION_ERROR_NAMES,
+        *STAGE_11_COLLECTION_ERROR_NAMES,
         *BROAD_ERROR_NAMES,
     ]
 
@@ -650,6 +682,7 @@ def test_root_package_does_not_reexport_error_classes() -> None:
         "InvalidOperationPipelineError",
         "OperationPipelineExecutionError",
         "UndeclaredSampleFieldMutationError",
+        *STAGE_11_COLLECTION_ERROR_NAMES,
     ]:
         assert not hasattr(rphys, error_name)
 

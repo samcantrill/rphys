@@ -22,6 +22,7 @@ HEAVY_OPTIONAL_MODULES = [
 LIGHTWEIGHT_IMPORTS = [
     "rphys",
     "rphys.analysis",
+    "rphys.collections",
     "rphys.data",
     "rphys.data.collation",
     "rphys.data.containers",
@@ -78,6 +79,7 @@ LIGHTWEIGHT_IMPORTS = [
 ]
 
 STAGE_11_IMPORTS = [
+    "rphys.collections",
     "rphys.losses",
     "rphys.objectives",
     "rphys.metrics",
