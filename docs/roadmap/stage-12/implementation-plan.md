@@ -5,7 +5,7 @@ Roadmap version: `v12`
 Planning document: `docs/roadmap/stage-12/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: pending Phase 3 implementation
+Current phase: pending Phase 4 implementation
 Blockers: none
 
 ## Summary
@@ -40,7 +40,7 @@ Blockers: none
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `learning-contract` | merged | `agent/stage-12-learning-training-p1-learning-contract` | [#79](https://github.com/samcantrill/rphys/pull/79) | `src/rphys/learning`, package import tests, learning unit/contract tests | Establish learning modes, context, step output, scalar boundary, and structural learner contract. | `make test-package`, `make test-unit`, `make test-contract`, `git diff --check` | Prediction pass-through contract foundation |
 | 2 | `supervised-learner` | merged | `agent/stage-12-learning-training-p2-supervised-learner` | [#80](https://github.com/samcantrill/rphys/pull/80) | `src/rphys/learning/supervised.py`, learning contract/integration tests, test support fakes | Compose Stage 10 methods with Stage 11 objective/metric contracts. | `make test-unit`, `make test-contract`, `make test-integration`, `git diff --check` | Native supervised smoke learner slice; prediction-only mode |
-| 3 | `plan-result-facade` | pending | `agent/stage-12-learning-training-p3-plan-result-facade` | pending | `src/rphys/training/plan.py`, `results.py`, `core.py`, `experimental.py`, training unit/contract tests | Add neutral plan/result records and facade-to-engine delegation. | `make test-unit`, `make test-contract`, `make test-package`, `git diff --check` | Fake engine delegation; plan neutrality; result summaries |
+| 3 | `plan-result-facade` | merged | `agent/stage-12-learning-training-p3-plan-result-facade` | [#81](https://github.com/samcantrill/rphys/pull/81) | `src/rphys/training/plan.py`, `results.py`, `core.py`, `experimental.py`, training unit/contract tests | Add neutral plan/result records and facade-to-engine delegation. | `make test-unit`, `make test-contract`, `make test-package`, `git diff --check` | Fake engine delegation; plan neutrality; result summaries |
 | 4 | `native-engine` | pending | `agent/stage-12-learning-training-p4-native-engine` | pending | `src/rphys/training/backend.py`, native engine internals, native unit/integration tests | Implement dependency-light reference loop and backend mechanics. | `make test-unit`, `make test-integration`, `make test-contract`, `git diff --check` | Native supervised fit/validate/test/predict smoke run |
 | 5 | `observability-external-pressure` | pending | `agent/stage-12-learning-training-p5-observability-external-pressure` | pending | `src/rphys/training/events.py`, `profiling.py`, fake external test support, observability contracts | Add events/profiles and fake external-engine pressure tests. | `make test-unit`, `make test-contract`, `make test-package`, `git diff --check` | Fake external engine; duplicate trainable-owner guardrail; JAX pressure note |
 | 6 | `docs-examples-final-validation` | pending | `agent/stage-12-learning-training-p6-docs-examples-final-validation` | pending | Stage 12 docs/docstrings/examples, final validation evidence, package exports | Finish docs/examples, optional `run_train` polish, future-compatibility notes, and full validation. | `make test-package`, `make test-unit`, `make test-contract`, `make test-integration`, `make test-summary`, `uv lock --check`, `git diff --check`, `make validate-pr` | End-to-end native example; fake external example; future batch-pipeline documentation only |
@@ -197,11 +197,11 @@ Workflow path: `.codex/workflows/roadmap-version-implementation.md`
 
 ## Phase 3: Plan, Result, Facade, And Delegated Engine Boundary
 
-Status: pending
+Status: merged
 Slug: `plan-result-facade`
 Branch: `agent/stage-12-learning-training-p3-plan-result-facade`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-12-learning-training-p3-plan-result-facade`
-PR: pending
+PR: [#81](https://github.com/samcantrill/rphys/pull/81)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: `.codex/workflows/roadmap-version-implementation.md`
@@ -245,13 +245,13 @@ Workflow path: `.codex/workflows/roadmap-version-implementation.md`
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed inline by manager on 2026-05-16
 - Planning/refinement budget: one pass to settle exact record fields within locked DQ boundaries.
 - Implementation/refinement budget: one implementation pass plus contract refinements.
 - PR review budget: one reviewer pass focused on schema creep and facade wording.
 - Blocker-resolution budget: stop if result/plan shape needs a generic config escape hatch or raw framework object.
 - Pre-submit blocker gate: no `engine_config`, no registry, no workflow runtime, no framework imports.
-- Merge record: pending
+- Merge record: PR [#81](https://github.com/samcantrill/rphys/pull/81) merged to `develop` on 2026-05-16 as `b73a56d` (`feat: add stage 12 training facade contracts`).
 
 ### Risks And Stop Conditions
 
@@ -261,11 +261,11 @@ Workflow path: `.codex/workflows/roadmap-version-implementation.md`
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: completed neutral `TrainingPlan`, primitive `TrainingResult` and summary records, provisional `TrainingEngine`, explicit-engine `Trainer` facade, and empty experimental module reservation.
+- Validation: passed `make test-unit`, `make test-contract`, `make test-package`, and `git diff --check` in `/home/samcantrill/work/rphys-worktrees/stage-12-learning-training-p3-plan-result-facade`.
+- PR: [#81](https://github.com/samcantrill/rphys/pull/81)
+- Merge: merged to `develop` on 2026-05-16 as `b73a56d`.
+- Follow-up: Phase 4 should add `NativeTrainingEngine`, make it the `Trainer` default, and preserve explicit-engine delegation behavior.
 
 ## Phase 4: Native Engine Mechanics
 
