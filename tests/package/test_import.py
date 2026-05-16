@@ -104,6 +104,28 @@ STAGE_11_METRIC_MODULES = {
     ],
 }
 
+STAGE_12_LEARNING_EXPORTS = [
+    "BackwardableScalar",
+    "Learner",
+    "LoopContext",
+    "LoopMode",
+    "StepOutput",
+    "StepPrediction",
+    "require_backwardable_scalar",
+]
+
+STAGE_12_LEARNING_MODULES = {
+    "rphys.learning.context": ["LoopContext"],
+    "rphys.learning.core": ["Learner"],
+    "rphys.learning.modes": ["LoopMode"],
+    "rphys.learning.output": [
+        "BackwardableScalar",
+        "StepOutput",
+        "StepPrediction",
+        "require_backwardable_scalar",
+    ],
+}
+
 STAGE_10_METHOD_EXPORTS = [
     "Method",
     "MethodInputAdapter",
@@ -747,6 +769,7 @@ def test_deferred_package_homes_import_with_empty_public_surfaces() -> None:
             "rphys.data",
             "rphys.io",
             "rphys.datasources",
+            "rphys.learning",
             "rphys.methods",
             "rphys.models",
             "rphys.losses",
@@ -759,6 +782,26 @@ def test_deferred_package_homes_import_with_empty_public_surfaces() -> None:
 
         assert package.__doc__
         assert package.__all__ == []
+
+
+def test_stage_12_learning_package_exports_only_code_backed_contract_names() -> None:
+    import rphys
+    import rphys.learning
+
+    assert rphys.learning.__all__ == STAGE_12_LEARNING_EXPORTS
+    for public_name in STAGE_12_LEARNING_EXPORTS:
+        assert hasattr(rphys.learning, public_name)
+        assert not hasattr(rphys, public_name)
+
+
+def test_stage_12_learning_modules_export_only_code_backed_names() -> None:
+    for module_name, expected_all in STAGE_12_LEARNING_MODULES.items():
+        module = importlib.import_module(module_name)
+
+        assert module.__doc__
+        assert module.__all__ == expected_all
+        for public_name in expected_all:
+            assert hasattr(module, public_name)
 
 
 def test_stage_10_method_package_exports_only_code_backed_contract_names() -> None:
