@@ -4,6 +4,7 @@ from rphys.data import Batch
 from rphys.learning import LoopContext, LoopMode, StepOutput
 from rphys.metrics import MetricValue
 from rphys.training import NativeTrainingEngine, TrainingPlan, TrainingStatus
+from rphys.training.events import TrainingEvent
 
 
 class FakeScalar:
@@ -50,6 +51,14 @@ class RecordingLearner:
         )
 
 
+class RecordingSink:
+    def __init__(self) -> None:
+        self.events: list[TrainingEvent] = []
+
+    def record(self, event: TrainingEvent) -> None:
+        self.events.append(event)
+
+
 def test_native_fit_runs_train_loop_with_device_backward_optimizer_and_scheduler_order() -> None:
     calls: list[str] = []
 
@@ -90,6 +99,23 @@ def test_native_fit_runs_train_loop_with_device_backward_optimizer_and_scheduler
         "optimizer_step",
         "scheduler_step",
     ]
+
+
+def test_native_engine_emits_observer_events_and_unavailable_profiles() -> None:
+    sink = RecordingSink()
+    plan = TrainingPlan(train_batches=(Batch(),), event_sinks=(sink,))
+    learner = RecordingLearner([])
+
+    result = NativeTrainingEngine().fit(plan, learner)
+
+    assert [event.phase.value for event in sink.events] == [
+        "loop_started",
+        "step_started",
+        "step_completed",
+        "loop_completed",
+    ]
+    assert result.profiles[0].name == "native.step"
+    assert result.profiles[0].status == "unavailable"
 
 
 def test_native_engine_respects_step_limits_and_builds_contexts() -> None:

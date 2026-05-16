@@ -84,8 +84,10 @@ LIGHTWEIGHT_IMPORTS = [
     "rphys.training",
     "rphys.training.backend",
     "rphys.training.core",
+    "rphys.training.events",
     "rphys.training.experimental",
     "rphys.training.plan",
+    "rphys.training.profiling",
     "rphys.training.results",
 ]
 
@@ -102,8 +104,10 @@ STAGE_12_TRAINING_IMPORTS = [
     "rphys.training",
     "rphys.training.backend",
     "rphys.training.core",
+    "rphys.training.events",
     "rphys.training.experimental",
     "rphys.training.plan",
+    "rphys.training.profiling",
     "rphys.training.results",
 ]
 

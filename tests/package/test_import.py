@@ -130,22 +130,42 @@ STAGE_12_LEARNING_MODULES = {
 
 STAGE_12_TRAINING_EXPORTS = [
     "ProfileSummary",
+    "ProfileSpanSummary",
     "NativeTrainingEngine",
     "Trainer",
+    "TrainingCallback",
     "TrainingEngine",
+    "TrainingEvent",
+    "TrainingEventPhase",
     "TrainingEventSummary",
+    "TrainingEventSink",
     "TrainingMetricSummary",
     "TrainingPlan",
+    "TrainingProfiler",
     "TrainingResult",
     "TrainingStatus",
     "TrainingStepSummary",
+    "UnavailableProfileProbe",
+    "emit_training_event",
 ]
 
 STAGE_12_TRAINING_MODULES = {
     "rphys.training.backend": ["NativeTrainingEngine"],
     "rphys.training.core": ["Trainer", "TrainingEngine"],
+    "rphys.training.events": [
+        "TrainingCallback",
+        "TrainingEvent",
+        "TrainingEventPhase",
+        "TrainingEventSink",
+        "emit_training_event",
+    ],
     "rphys.training.experimental": [],
     "rphys.training.plan": ["TrainingPlan"],
+    "rphys.training.profiling": [
+        "ProfileSpanSummary",
+        "TrainingProfiler",
+        "UnavailableProfileProbe",
+    ],
     "rphys.training.results": [
         "ProfileSummary",
         "TrainingEventSummary",
