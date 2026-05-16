@@ -52,6 +52,9 @@ __all__ = [
     "InvalidLossContextError",
     "InvalidLossResultError",
     "InvalidLossSpecError",
+    "InvalidMetricContextError",
+    "InvalidMetricResultError",
+    "InvalidMetricSpecError",
     "InvalidObjectiveContextError",
     "InvalidObjectiveResultError",
     "InvalidObjectiveSpecError",
@@ -282,6 +285,18 @@ class InvalidObjectiveContextError(RemotePhysObjectiveError):
 
 class InvalidObjectiveResultError(RemotePhysObjectiveError):
     """Raised when an objective term or result record is invalid."""
+
+
+class InvalidMetricSpecError(RemotePhysMetricError):
+    """Raised when a metric contract or grouping descriptor is invalid."""
+
+
+class InvalidMetricContextError(RemotePhysMetricError):
+    """Raised when a metric execution context is invalid."""
+
+
+class InvalidMetricResultError(RemotePhysMetricError):
+    """Raised when a metric value, observation, collection, or result is invalid."""
 
 
 class InvalidResourceRefError(RemotePhysIOError):
