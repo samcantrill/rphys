@@ -21,14 +21,14 @@ PREDICTION = FieldLocator.parse("predictions/signal.bvp.estimated")
 
 
 @dataclass
-class PlainParameter:
+class SyntheticBackendParameter:
     value: float
 
 
-class PlainTrainableMethod:
+class SyntheticBackendMethod:
     def __init__(self) -> None:
         self.offset = 0.5
-        self.scale = PlainParameter(2.0)
+        self.scale = SyntheticBackendParameter(2.0)
 
     def predict(
         self,
@@ -50,9 +50,9 @@ class PlainTrainableMethod:
         return StateView(
             [
                 StateEntry("offset", self.offset, metadata={"kind": "scalar"}),
-                StateEntry("scale", self.scale.value, metadata={"kind": "parameter"}),
+                StateEntry("scale", self.scale, metadata={"kind": "backend-parameter"}),
             ],
-            provenance={"backend": "plain-python"},
+            provenance={"backend": "synthetic-array-runtime"},
         )
 
     def load_state(
@@ -75,7 +75,12 @@ class PlainTrainableMethod:
         if "offset" in incoming:
             self.offset = float(state.entry("offset").value)
         if "scale" in incoming:
-            self.scale.value = float(state.entry("scale").value)
+            value = state.entry("scale").value
+            self.scale = (
+                value
+                if isinstance(value, SyntheticBackendParameter)
+                else SyntheticBackendParameter(float(value))
+            )
         return StateLoadResult(
             loaded=sorted(current & incoming),
             missing=missing,
@@ -90,14 +95,14 @@ class PlainTrainableMethod:
                 self.scale,
                 trainable=True,
                 requires_update=True,
-                metadata={"kind": "plain"},
-                provenance={"backend": "plain-python"},
+                metadata={"kind": "backend-native"},
+                provenance={"backend": "synthetic-array-runtime"},
             ),
         )
 
 
 def test_trainable_method_contract_uses_backend_neutral_records() -> None:
-    method = PlainTrainableMethod()
+    method = SyntheticBackendMethod()
     batch = Batch({INPUT: FieldValue([0.1, 0.2], schema="signal.bvp.v1")})
 
     output = method.predict(batch)
@@ -108,15 +113,16 @@ def test_trainable_method_contract_uses_backend_neutral_records() -> None:
     assert isinstance(method, TrainableMethod)
     assert output.fields[PREDICTION].payload == [0.7, 0.9]
     assert state.entry("offset").value == 0.5
-    assert state.provenance == {"backend": "plain-python"}
+    assert state.entry("scale").value is method.scale
+    assert state.provenance == {"backend": "synthetic-array-runtime"}
     assert parameters[0].name == "scale"
-    assert isinstance(parameters[0].handle, PlainParameter)
+    assert isinstance(parameters[0].handle, SyntheticBackendParameter)
     assert parameters[0].trainable is True
     assert parameters[0].requires_update is True
 
 
 def test_strict_load_reports_missing_and_unexpected_state_without_checkpoint_policy() -> None:
-    method = PlainTrainableMethod()
+    method = SyntheticBackendMethod()
     result = method.load_state(
         StateView(
             [
@@ -136,7 +142,7 @@ def test_strict_load_reports_missing_and_unexpected_state_without_checkpoint_pol
 
 
 def test_permissive_load_updates_known_state_and_ignores_unexpected_names() -> None:
-    method = PlainTrainableMethod()
+    method = SyntheticBackendMethod()
     result = method.load_state(
         StateView(
             [
@@ -154,7 +160,7 @@ def test_permissive_load_updates_known_state_and_ignores_unexpected_names() -> N
 
 
 def test_trainable_method_contract_has_no_framework_lifecycle_or_device_hooks() -> None:
-    method = PlainTrainableMethod()
+    method = SyntheticBackendMethod()
 
     for forbidden in [
         "state_dict",

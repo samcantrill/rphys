@@ -15,9 +15,10 @@ class Model(Protocol[InputT, OutputT]):
     """Callable lower-level computation below runtime ``Batch`` containers.
 
     The model protocol intentionally avoids datasource, loader, method,
-    trainer, loss, metric, export, torch, and Lightning lifecycle semantics.
-    Adapters and methods own any conversion between ``Batch`` fields and the
-    backend-native values accepted by a model.
+    trainer, loss, metric, export, torch, JAX, NumPy, Lightning, and other
+    backend lifecycle semantics. Backends may satisfy this structural protocol
+    directly or through a thin callable adapter; methods own any conversion
+    between ``Batch`` fields and the backend-native values accepted by a model.
     """
 
     def __call__(self, inputs: InputT) -> OutputT:

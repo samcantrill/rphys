@@ -8,6 +8,10 @@ from rphys.errors import RemotePhysMethodError
 from rphys.methods import ParameterView, StateEntry, StateLoadResult, StateView
 
 
+class OpaqueBackendValue:
+    pass
+
+
 def test_state_entry_copies_and_freezes_primitive_metadata() -> None:
     metadata = {"shape": "scalar"}
     provenance = {"source": "unit"}
@@ -24,6 +28,21 @@ def test_state_entry_copies_and_freezes_primitive_metadata() -> None:
         entry.metadata["new"] = "value"  # type: ignore[index]
     with pytest.raises(FrozenInstanceError):
         entry.value = 2.0  # type: ignore[misc]
+
+
+def test_state_entry_preserves_backend_native_value_identity() -> None:
+    value = OpaqueBackendValue()
+
+    entry = StateEntry(
+        "opaque",
+        value,
+        metadata={"kind": "backend-native"},
+        provenance={"backend": "synthetic-array-runtime"},
+    )
+
+    assert entry.value is value
+    assert entry.metadata == {"kind": "backend-native"}
+    assert entry.provenance == {"backend": "synthetic-array-runtime"}
 
 
 def test_state_view_stores_unique_entries_and_lookup_by_name() -> None:
@@ -68,8 +87,8 @@ def test_state_load_result_reports_success_and_diagnostics() -> None:
         StateLoadResult(loaded="offset")  # type: ignore[arg-type]
 
 
-def test_parameter_view_records_backend_neutral_handles_and_flags() -> None:
-    handle = object()
+def test_parameter_view_records_arbitrary_backend_handles_and_flags() -> None:
+    handle = OpaqueBackendValue()
     parameter = ParameterView(
         "scale",
         handle,

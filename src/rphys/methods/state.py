@@ -22,10 +22,12 @@ __all__ = [
 class StateEntry:
     """Named backend-neutral state value.
 
-    ``value`` may be any backend object. Metadata and provenance are copied
-    into primitive read-only mappings so load compatibility and origin evidence
-    stay inspectable without encoding checkpoint, device, or distributed
-    policy.
+    ``value`` may be any backend-native object. ``rphys`` stores the reference
+    for inspection and handoff only; it does not require tensor semantics,
+    array semantics, or a framework-specific state API. Metadata and
+    provenance are copied into primitive read-only mappings so load
+    compatibility and origin evidence stay inspectable without encoding
+    checkpoint, device, optimizer, or distributed policy.
     """
 
     name: str
@@ -140,10 +142,10 @@ class StateLoadResult:
 class ParameterView:
     """Named backend-neutral parameter handle.
 
-    ``handle`` may be a tensor, scalar, object reference, or sentinel owned by
-    the backend. The flags are descriptive only; optimizer grouping, scheduler
-    policy, device movement, checkpoint writing, and distributed behavior are
-    intentionally out of scope.
+    ``handle`` may be any tensor, array, scalar, object reference, or sentinel
+    owned by an arbitrary backend. The flags are descriptive only; optimizer
+    grouping, scheduler policy, device movement, checkpoint writing, and
+    distributed behavior are intentionally out of scope.
     """
 
     name: str
