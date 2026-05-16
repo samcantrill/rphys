@@ -1,11 +1,11 @@
 # Roadmap Stage 10 Implementation Plan
 
-Status: approved; manager reviewed; design/quality refreshed; maintainer approved for implementation
+Status: implemented; all phases merged and recorded
 Roadmap version: `v10`
 Planning document: `docs/roadmap/stage-10/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 4 pending
+Current phase: all phases merged
 Blockers: none
 
 ## Summary
@@ -20,7 +20,7 @@ Blockers: none
 - Source design-agreement queue: DQ-0 is locked by maintainer direction; DQ-1, DQ-3, DQ-4, DQ-5, and DQ-7 are recorded recommendations or auto-approved private detail; DQ-2 and DQ-6 are locked by maintainer approval; no decision is blocked, pending approval, or ready for approval.
 - Source future-roadmap/reuse safety review: Stage 11-13 compatibility is carried through patch-like outputs, explicit conversion, model-below-`Batch`, descriptive state/parameter records, private helper revisit triggers, and deferred backend helpers.
 - Lightning fit review: no additional Stage 10 phase or public Lightning API is needed. Lightning remains a Stage 12/15 optional adapter target that should wrap rphys `Learner`/`Trainer` semantics, use Stage 12 optimizer/device/checkpoint policies, and map Lightning loop hooks/callbacks into rphys `TrainingEvent`/profiling records.
-- Examples covered: LIST collate/uncollate round trip, synthetic echo method over a `Batch`, synthetic model independent of `Batch`, non-torch trainable fake, context-aware prediction, and explicit prediction merge.
+- Examples covered: LIST collate/uncollate round trip, synthetic echo method over a `Batch`, synthetic model independent of `Batch`, backend-neutral trainable fake, context-aware prediction, and explicit prediction merge.
 - Current data-layer audit note: exact `Batch` to `Sample` uncollation is expected by maintainer direction but is not currently implemented as a validated public guarantee; Stage 10 must not assume lossless sample reconstruction until the Stage 2/9 collation path is repaired and tested.
 - Design review refresh: Stage 10 may refactor landed shared collation/collater code in `rphys.data` to satisfy DD-0, but it must not change Stage 9 planning artifacts or move loader/cache/prepared responsibilities into Stage 10. Stage 10 should preserve generic metadata/provenance only; domain-specific identifiers such as sample IDs remain caller-owned metadata outside the Stage 10 public context shape.
 - Source phase shaping: Phase 0 plus four accepted Stage 10 phases: LIST collation round-trip repair; core public contracts/import boundaries; adapter specs and explicit output application; stateful/trainable capability records; synthetic contract integration, docs, and full validation.
@@ -45,7 +45,7 @@ Blockers: none
 | 1 | `core-contracts-imports` | merged | `agent/stage-10-method-model-contracts-p1-core-contracts-imports` | [#67](https://github.com/samcantrill/rphys/pull/67) | `src/rphys/methods/core.py`, `src/rphys/methods/context.py`, `src/rphys/methods/output.py`, `src/rphys/models/core.py`, scoped package exports, package/unit/contract tests for these names | Establish code-backed public `Method`, `Model`, `PredictionContext`, and patch-like `MethodOutput` with lightweight imports. | `make test-package`; focused context/output unit tests; method/model contract probes; `git diff --check` | context-aware prediction; synthetic model-independent contract probes |
 | 2 | `adapters-output-apply` | merged | `agent/stage-10-method-model-contracts-p2-adapters-output-apply` | [#68](https://github.com/samcantrill/rphys/pull/68) | `src/rphys/methods/adapters.py`, private methods validation helpers, explicit `MethodOutput` merge/apply conversion, adapter/output tests | Implement the `Batch`/`FieldLocator` bridge and explicit patch-to-`Batch` application. | adapter unit matrix; output/apply tests; method contract tests using adapters; focused synthetic integration if apply is present | synthetic echo method; explicit prediction merge |
 | 3 | `state-trainable-records` | merged | `agent/stage-10-method-model-contracts-p3-state-trainable-records` | [#69](https://github.com/samcantrill/rphys/pull/69) | `src/rphys/methods/state.py`, optional protocol-only `src/rphys/nn/protocols.py` only if code-backed by capability records, package exports, state/trainable tests | Add richer backend-neutral state and parameter capability records without torch, optimizer, checkpoint, or device semantics. | `tests/contracts/test_trainable_method_contract.py`; `tests/unit/rphys/methods/test_state.py`; `make test-package`; `git diff --check` | non-torch trainable fake |
-| 4 | `synthetic-integration-docs-validation` | pending | `agent/stage-10-method-model-contracts-p4-synthetic-integration-docs-validation` | pending | test-only fake methods/models/stateful objects, synthetic `Batch` fixtures, docs/docstrings or glossary updates if public vocabulary changes, full validation evidence | Prove Stage 10 contracts compose without concrete algorithms, Stage 9 loaders, or heavy optional dependencies. | focused integration; `make test-package`; `make test-unit`; `make test-contract`; `make test-integration`; final `make test`; `make test-summary`; `uv lock --check`; `git diff --check` | all recorded examples |
+| 4 | `synthetic-integration-docs-validation` | merged | `agent/stage-10-method-model-contracts-p4-synthetic-integration-docs-validation` | [#70](https://github.com/samcantrill/rphys/pull/70) | test-only fake methods/models/stateful objects, synthetic `Batch` fixtures, docs/docstrings or glossary updates if public vocabulary changes, full validation evidence | Prove Stage 10 contracts compose without concrete algorithms, Stage 9 loaders, or heavy optional dependencies. | focused integration; `make test-package`; `make test-unit`; `make test-contract`; `make test-integration`; final `make test`; `make test-summary`; `uv lock --check`; `git diff --check` | all recorded examples, including arbitrary backend-native state/parameter handles |
 
 ## Implementation Readiness Blockers
 
@@ -416,11 +416,11 @@ Workflow path: expanded path
 
 ## Phase 4: Synthetic Contract Integration, Docs, And Full Validation
 
-Status: pending
+Status: merged
 Slug: `synthetic-integration-docs-validation`
 Branch: `agent/stage-10-method-model-contracts-p4-synthetic-integration-docs-validation`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-10-method-model-contracts-p4-synthetic-integration-docs-validation`
-PR: pending
+PR: [#70](https://github.com/samcantrill/rphys/pull/70)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -432,7 +432,7 @@ Workflow path: expanded path
 - Behavior implemented: synthetic batch -> input adapter -> model or direct method -> output adapter -> patch-like `MethodOutput` -> explicit apply flow -> optional LIST uncollate of sample-aligned predictions; model isolation; context propagation; state/trainable fake integration; final documentation and validation evidence.
 - Decisions applied: DD-0 through DD-10 as a coherence check, with special enforcement of DD-0 LIST round trip, DQ-2 patch output, DQ-6 richer records, no Stage 10 torch helper, model-below-`Batch`, and no trainer/export/loss/device/checkpoint behavior.
 - Future-roadmap/reuse constraints: Stage 11-13 and Stage 12 bridge assumptions are validated without implementing losses, metrics, learners, trainers, prediction runners, export writers, or real backend adapters; remaining Stage 9 loader/cache/prepared work is not required.
-- Examples or demos covered: synthetic echo method, synthetic model independent of `Batch`, non-torch trainable fake, context-aware prediction, and explicit prediction merge.
+- Examples or demos covered: synthetic echo method, synthetic model independent of `Batch`, backend-neutral trainable fake, context-aware prediction, and explicit prediction merge.
 - Out of scope: real datasets, raw fixtures, CHROM/POS/neural baselines, model zoo, torch/GPU checks, prediction export runners, learner/trainer loops, workflow runtime, and edits to `docs/roadmap.md`.
 - Dependencies: Phases 0, 1, 2, and 3 merged.
 
@@ -469,13 +469,13 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed in `docs/roadmap/stage-10/phases/synthetic-integration-docs-validation.md`
 - Planning/refinement budget: one planning pass with checklist against all accepted decisions and examples.
 - Implementation/refinement budget: one implementation pass plus one validation-refinement pass for any failing broad suite.
 - PR review budget: one review pass focused on cross-phase coherence, validation evidence, docs, and residual risk.
 - Blocker-resolution budget: stop and reopen relevant design queue if required tests cannot express accepted behavior.
-- Pre-submit blocker gate: all required validation rows must pass or missing runs must be justified with residual risk.
-- Merge record: pending
+- Pre-submit blocker gate: passed; all required validation rows passed.
+- Merge record: completed below
 
 ### Risks And Stop Conditions
 
@@ -485,11 +485,28 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: extended the synthetic method integration so adapter extraction, backend-native callable model execution, `MethodOutput`, explicit apply, `PredictionContext`, `StateView`, `StateLoadResult`, and `ParameterView` compose in one test-local flow; clarified public docs/glossary for arbitrary backend compatibility; repaired model import-boundary test isolation so module-cache edits do not leak across the full suite.
+- Validation: `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/unit/rphys/methods/test_state.py`; `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/contracts/test_trainable_method_contract.py tests/contracts/test_model_contract.py`; `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/integration/test_synthetic_method_prediction_flow.py`; `make test-package`; `make test-unit`; `make test-contract`; `make test-integration`; `make test`; `UV_CACHE_DIR=/tmp/uv-cache uv lock --check`; `make test-summary`; `git diff --check`; `make validate-pr`.
+- PR: [#70](https://github.com/samcantrill/rphys/pull/70)
+- Merge: merged to `develop` on 2026-05-16 as `c591808fef3cdc9d6ceb46c65f2b6ca3f97673a9`.
+- Follow-up: concrete backend/framework helpers remain deferred as additive adapters; Stage 12+ owns optimizer/checkpoint/device/distributed behavior.
+
+### Merge Record
+
+- Phase: Phase 4 `synthetic-integration-docs-validation`
+- Branch: `agent/stage-10-method-model-contracts-p4-synthetic-integration-docs-validation`
+- PR: [#70](https://github.com/samcantrill/rphys/pull/70)
+- Base branch: `develop`
+- Merge command: `gh pr merge 70 --squash --delete-branch`
+- Merge result: merged; GitHub reported no status checks for the branch, so merge relied on the completed local validation gate.
+- Merge commit: `c591808fef3cdc9d6ceb46c65f2b6ca3f97673a9`
+- Branch cleanup: remote branch deletion requested by merge command; local branch cleanup pending worktree removal.
+- Worktree cleanup: pending after metadata commit.
+- Behavior implemented: Stage 10 contracts compose through synthetic `Batch` input, adapters, backend-native callable model, patch output, explicit application, prediction context, state load result, and parameter view.
+- Tests and validation: targeted unit/contract/integration checks passed; package/unit/contract/integration suites passed; `make test` reported 850 passed; `make validate-pr` passed; `make test-summary` reported package 47 passed, unit 655 passed, contract 128 passed, integration 20 passed, and no e2e/acceptance suites present.
+- Documentation: phase plan and PR body artifacts added under `docs/roadmap/stage-10/phases/`; glossary and public docstrings now describe arbitrary backend-native state and parameter handles.
+- Scientific contract implications: prediction, state, and parameter contracts remain inspectable without hidden mutation, export, training, optimizer, checkpoint, device, distributed, loss, or metric behavior.
+- Follow-up notes for later phases: Stage 11-13 can consume explicit prediction fields; Stage 12 can compose backend-specific adapters around these structural records without adding framework behavior to Stage 10.
 
 ## Cross-Phase Validation
 
