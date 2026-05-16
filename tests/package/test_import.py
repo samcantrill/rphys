@@ -147,6 +147,7 @@ STAGE_12_TRAINING_EXPORTS = [
     "TrainingStepSummary",
     "UnavailableProfileProbe",
     "emit_training_event",
+    "run_train",
 ]
 
 STAGE_12_TRAINING_MODULES = {
@@ -159,7 +160,7 @@ STAGE_12_TRAINING_MODULES = {
         "TrainingEventSink",
         "emit_training_event",
     ],
-    "rphys.training.experimental": [],
+    "rphys.training.experimental": ["run_train"],
     "rphys.training.plan": ["TrainingPlan"],
     "rphys.training.profiling": [
         "ProfileSpanSummary",
