@@ -9,6 +9,8 @@ from rphys.data import Batch
 from rphys.errors import RemotePhysTrainingError
 from rphys.learning import LoopMode
 
+from .events import TrainingCallback, TrainingEventSink
+from .profiling import TrainingProfiler
 from ._validation import (
     PrimitiveMapping,
     coerce_optional_positive_int,
@@ -46,6 +48,9 @@ class TrainingPlan:
     optimizer: object | None
     scheduler: object | None
     backward: Callable[[object], object] | None
+    event_sinks: tuple[TrainingEventSink, ...]
+    callbacks: tuple[TrainingCallback, ...]
+    profilers: tuple[TrainingProfiler, ...]
     metadata: PrimitiveMapping
     provenance: PrimitiveMapping
 
@@ -65,6 +70,9 @@ class TrainingPlan:
         optimizer: object | None = None,
         scheduler: object | None = None,
         backward: Callable[[object], object] | None = None,
+        event_sinks: Iterable[TrainingEventSink] = (),
+        callbacks: Iterable[TrainingCallback] = (),
+        profilers: Iterable[TrainingProfiler] = (),
         metadata: Mapping[object, object] | None = None,
         provenance: Mapping[object, object] | None = None,
     ) -> None:
@@ -140,6 +148,21 @@ class TrainingPlan:
             self,
             "backward",
             _coerce_optional_callable(backward, field="backward"),
+        )
+        object.__setattr__(
+            self,
+            "event_sinks",
+            _coerce_observers(event_sinks, field="event_sinks", method_name="record"),
+        )
+        object.__setattr__(
+            self,
+            "callbacks",
+            _coerce_observers(callbacks, field="callbacks", method_name="on_event"),
+        )
+        object.__setattr__(
+            self,
+            "profilers",
+            _coerce_observers(profilers, field="profilers", method_name="span"),
         )
         object.__setattr__(
             self,
@@ -227,6 +250,36 @@ def _coerce_optional_callable(
             actual=type(value).__name__,
         )
     return value
+
+
+def _coerce_observers(
+    values: Iterable[object],
+    *,
+    field: str,
+    method_name: str,
+) -> tuple[object, ...]:
+    try:
+        observers = tuple(values)
+    except TypeError as exc:
+        raise RemotePhysTrainingError(
+            f"TrainingPlan {field} must be iterable.",
+            owner="TrainingPlan",
+            field=field,
+            expected="iterable",
+            actual=type(values).__name__,
+        ) from exc
+    for index, observer in enumerate(observers):
+        method = getattr(observer, method_name, None)
+        if not callable(method):
+            raise RemotePhysTrainingError(
+                f"TrainingPlan {field} entries must expose {method_name}().",
+                owner="TrainingPlan",
+                field=field,
+                index=index,
+                expected=f"{method_name}()",
+                actual=type(observer).__name__,
+            )
+    return observers
 
 
 TrainingPlan.__hash__ = None  # type: ignore[assignment]

@@ -60,7 +60,30 @@ def test_training_plan_has_no_learner_engine_config_or_workflow_ownership() -> N
         "dataset_path",
         "artifact_dir",
         "logger",
-        "callbacks",
         "workflow",
     ]:
         assert not hasattr(plan, forbidden)
+
+
+def test_training_plan_accepts_observe_only_event_and_profiler_hooks() -> None:
+    class Sink:
+        def record(self, event: object) -> None:
+            return None
+
+    class Callback:
+        def on_event(self, event: object) -> None:
+            return None
+
+    class Profiler:
+        def span(self, name: str, **kwargs: object) -> object:
+            return object()
+
+    plan = TrainingPlan(event_sinks=(Sink(),), callbacks=(Callback(),), profilers=(Profiler(),))
+
+    assert len(plan.event_sinks) == 1
+    assert len(plan.callbacks) == 1
+    assert len(plan.profilers) == 1
+
+    with pytest.raises(RemotePhysTrainingError) as observer_error:
+        TrainingPlan(event_sinks=(object(),))
+    assert observer_error.value.context["field"] == "event_sinks"

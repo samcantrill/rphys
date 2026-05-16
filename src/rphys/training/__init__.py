@@ -2,7 +2,19 @@
 
 from .backend import NativeTrainingEngine
 from .core import Trainer, TrainingEngine
+from .events import (
+    TrainingCallback,
+    TrainingEvent,
+    TrainingEventPhase,
+    TrainingEventSink,
+    emit_training_event,
+)
 from .plan import TrainingPlan
+from .profiling import (
+    ProfileSpanSummary,
+    TrainingProfiler,
+    UnavailableProfileProbe,
+)
 from .results import (
     ProfileSummary,
     TrainingEventSummary,
@@ -14,13 +26,21 @@ from .results import (
 
 __all__ = [
     "ProfileSummary",
+    "ProfileSpanSummary",
     "NativeTrainingEngine",
     "Trainer",
+    "TrainingCallback",
     "TrainingEngine",
+    "TrainingEvent",
+    "TrainingEventPhase",
     "TrainingEventSummary",
+    "TrainingEventSink",
     "TrainingMetricSummary",
     "TrainingPlan",
+    "TrainingProfiler",
     "TrainingResult",
     "TrainingStatus",
     "TrainingStepSummary",
+    "UnavailableProfileProbe",
+    "emit_training_event",
 ]

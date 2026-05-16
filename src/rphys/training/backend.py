@@ -9,10 +9,12 @@ from rphys.errors import RemotePhysTrainingError
 from rphys.learning import Learner, LoopContext, LoopMode, StepOutput
 from rphys.metrics import MetricValue
 
+from .events import TrainingEvent, TrainingEventPhase, emit_training_event
 from ._validation import PrimitiveValue
 from .plan import TrainingPlan
 from .results import (
     TrainingMetricSummary,
+    ProfileSummary,
     TrainingResult,
     TrainingStatus,
     TrainingStepSummary,
@@ -62,6 +64,7 @@ class NativeTrainingEngine:
 
         state = _LoopState(LoopMode.TRAIN)
         try:
+            _emit_loop_event(plan, LoopMode.TRAIN, TrainingEventPhase.LOOP_STARTED)
             for epoch_index in range(plan.max_epochs):
                 stopped = self._run_epoch(
                     plan,
@@ -88,11 +91,19 @@ class NativeTrainingEngine:
                     )
                     state.validation_step_count += validation_state.step_count
         except Exception as exc:  # noqa: BLE001 - result normalization boundary
+            _emit_loop_event(
+                plan,
+                LoopMode.TRAIN,
+                TrainingEventPhase.LOOP_FAILED,
+                status="failed",
+                metadata={"failure_type": type(exc).__name__},
+            )
             return state.result(
                 status=TrainingStatus.FAILED,
                 failure=f"{type(exc).__name__}: {exc}",
                 metadata={"validation_step_count": state.validation_step_count},
             )
+        _emit_loop_event(plan, LoopMode.TRAIN, TrainingEventPhase.LOOP_COMPLETED, status="completed")
         return state.result(
             status=TrainingStatus.COMPLETED,
             metadata={"validation_step_count": state.validation_step_count},
@@ -112,6 +123,7 @@ class NativeTrainingEngine:
 
         state = _LoopState(mode)
         try:
+            _emit_loop_event(plan, mode, TrainingEventPhase.LOOP_STARTED)
             self._run_epoch(
                 plan,
                 learner,
@@ -122,10 +134,18 @@ class NativeTrainingEngine:
                 split=mode.value,
             )
         except Exception as exc:  # noqa: BLE001 - result normalization boundary
+            _emit_loop_event(
+                plan,
+                mode,
+                TrainingEventPhase.LOOP_FAILED,
+                status="failed",
+                metadata={"failure_type": type(exc).__name__},
+            )
             return state.result(
                 status=TrainingStatus.FAILED,
                 failure=f"{type(exc).__name__}: {exc}",
             )
+        _emit_loop_event(plan, mode, TrainingEventPhase.LOOP_COMPLETED, status="completed")
         return state.result(status=TrainingStatus.COMPLETED)
 
     def _run_epoch(
@@ -154,6 +174,7 @@ class NativeTrainingEngine:
                 metadata=plan.metadata,
                 provenance=plan.provenance,
             )
+            _emit_step_event(plan, context, TrainingEventPhase.STEP_STARTED)
             output = learner.step(working_batch, context)
             if not isinstance(output, StepOutput):
                 raise RemotePhysTrainingError(
@@ -165,6 +186,7 @@ class NativeTrainingEngine:
                 )
             _train_step(plan, mode, output)
             state.record(output, context)
+            _emit_step_event(plan, context, TrainingEventPhase.STEP_COMPLETED, status="completed")
         return False
 
 
@@ -177,6 +199,7 @@ class _LoopState:
         self.validation_step_count = 0
         self.last_step: TrainingStepSummary | None = None
         self.metrics: dict[str, TrainingMetricSummary] = {}
+        self.profiles: list[ProfileSummary] = []
 
     def record(self, output: StepOutput, context: LoopContext) -> None:
         self.step_count += 1
@@ -196,6 +219,13 @@ class _LoopState:
             provenance=output.provenance,
         )
         self.metrics.update(_metric_summaries(output.metric_values))
+        self.profiles.append(
+            ProfileSummary(
+                "native.step",
+                status="unavailable",
+                metadata={"reason": "native timing profiler not configured"},
+            )
+        )
 
     def result(
         self,
@@ -213,6 +243,7 @@ class _LoopState:
             failure=failure,
             metrics=tuple(self.metrics.values()),
             last_step=self.last_step,
+            profiles=tuple(self.profiles),
             metadata=metadata,
             provenance={"engine": "NativeTrainingEngine"},
         )
@@ -367,3 +398,48 @@ def _primitive_scalar(value: object) -> PrimitiveValue:
     if nested is not value and (nested is None or isinstance(nested, (str, int, float, bool))):
         return nested
     return str(value)
+
+
+def _emit_loop_event(
+    plan: TrainingPlan,
+    mode: LoopMode,
+    phase: TrainingEventPhase,
+    *,
+    status: str = "observed",
+    metadata: Mapping[str, PrimitiveValue] | None = None,
+) -> None:
+    emit_training_event(
+        TrainingEvent(
+            phase,
+            mode,
+            status=status,
+            split=mode.value,
+            metadata=metadata,
+            provenance={"engine": "NativeTrainingEngine"},
+        ),
+        sinks=plan.event_sinks,
+        callbacks=plan.callbacks,
+    )
+
+
+def _emit_step_event(
+    plan: TrainingPlan,
+    context: LoopContext,
+    phase: TrainingEventPhase,
+    *,
+    status: str = "observed",
+) -> None:
+    emit_training_event(
+        TrainingEvent(
+            phase,
+            context.mode,
+            status=status,
+            epoch_index=context.epoch_index,
+            step_index=context.step_index,
+            batch_index=context.batch_index,
+            split=context.split,
+            provenance={"engine": "NativeTrainingEngine"},
+        ),
+        sinks=plan.event_sinks,
+        callbacks=plan.callbacks,
+    )
