@@ -67,7 +67,9 @@ git diff --check
   introduced.
 - PR preparation: PR body drafted in
   `docs/roadmap/stage-11/phases/sample-collection-views-pr-body.md`.
-- Automated review: pending.
-- Merge result: pending.
-- Cleanup: pending.
+- Automated review: passed manager-local; PR target/title verified and no
+  remote checks were reported.
+- Merge result: PR [#75](https://github.com/samcantrill/rphys/pull/75)
+  squash merged to `develop` as `2ff5412` on 2026-05-16.
+- Cleanup: phase worktree pruned and local/remote phase branches deleted.
 - Remaining blockers: none.
