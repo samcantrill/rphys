@@ -9,6 +9,7 @@ from .events import (
     TrainingEventSink,
     emit_training_event,
 )
+from .experimental import run_train
 from .plan import TrainingPlan
 from .profiling import (
     ProfileSpanSummary,
@@ -43,4 +44,5 @@ __all__ = [
     "TrainingStepSummary",
     "UnavailableProfileProbe",
     "emit_training_event",
+    "run_train",
 ]

@@ -19,10 +19,12 @@ The rebuild has implemented public contracts for naming vocabulary, runtime
 field containers, lazy IO descriptors, datasource/index descriptors and
 validation records, codec contracts, explicit codec registries, lazy
 `SampleField` handles, one-item `SampleBuilder` construction from `IndexItem`
-descriptors, generic operations, and Stage 7 sample/batch operation families.
-Later roadmap stages still own export/save orchestration, cache and
-materialization policy, DataLoader adapters, trainer/device policy, real codec
-catalogs, concrete algorithm catalogs, and project-specific workflows.
+descriptors, generic operations, Stage 7 sample/batch operation families,
+export primitives, prepared/cache/data-path records, method/model contracts,
+loss/objective/metric records, and Stage 12 learner/trainer contracts. Later
+roadmap stages still own prediction materialization, evaluation/report
+generation, real external training-framework adapters, deep profiling, real
+codec catalogs, concrete algorithm catalogs, and project-specific workflows.
 
 Public API stability requires code, tests, and roadmap or docstring coverage to
 agree on the contract. Focused modules such as `rphys.io.codecs`,
