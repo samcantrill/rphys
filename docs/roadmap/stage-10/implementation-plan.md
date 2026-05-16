@@ -5,7 +5,7 @@ Roadmap version: `v10`
 Planning document: `docs/roadmap/stage-10/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 1 pending
+Current phase: Phase 2 pending
 Blockers: none
 
 ## Summary
@@ -42,7 +42,7 @@ Blockers: none
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 0 | `list-uncollation-roundtrip` | merged | `agent/stage-10-method-model-contracts-p0-list-uncollation-roundtrip` | [#66](https://github.com/samcantrill/rphys/pull/66) | `src/rphys/data/collation.py`, `src/rphys/data/__init__.py`, focused data/package/contract/integration tests, docs/docstrings | Make default LIST batches unlist back to `tuple[Sample, ...]` before method/model contracts rely on sample reconstruction. | data collation round-trip unit tests; batch collater contract tests; landed Stage 9 torch-collater integration; `make test-package`; `git diff --check` | LIST collate/uncollate round trip with explicit `None` vs missing metadata and generic metadata preservation |
-| 1 | `core-contracts-imports` | pending | `agent/stage-10-method-model-contracts-p1-core-contracts-imports` | pending | `src/rphys/methods/core.py`, `src/rphys/methods/context.py`, `src/rphys/methods/output.py`, `src/rphys/models/core.py`, scoped package exports, package/unit/contract tests for these names | Establish code-backed public `Method`, `Model`, `PredictionContext`, and patch-like `MethodOutput` with lightweight imports. | `make test-package`; focused context/output unit tests; method/model contract probes; `git diff --check` | context-aware prediction; synthetic model-independent contract probes |
+| 1 | `core-contracts-imports` | merged | `agent/stage-10-method-model-contracts-p1-core-contracts-imports` | [#67](https://github.com/samcantrill/rphys/pull/67) | `src/rphys/methods/core.py`, `src/rphys/methods/context.py`, `src/rphys/methods/output.py`, `src/rphys/models/core.py`, scoped package exports, package/unit/contract tests for these names | Establish code-backed public `Method`, `Model`, `PredictionContext`, and patch-like `MethodOutput` with lightweight imports. | `make test-package`; focused context/output unit tests; method/model contract probes; `git diff --check` | context-aware prediction; synthetic model-independent contract probes |
 | 2 | `adapters-output-apply` | pending | `agent/stage-10-method-model-contracts-p2-adapters-output-apply` | pending | `src/rphys/methods/adapters.py`, private methods validation helpers, explicit `MethodOutput` merge/apply conversion, adapter/output tests | Implement the `Batch`/`FieldLocator` bridge and explicit patch-to-`Batch` application. | adapter unit matrix; output/apply tests; method contract tests using adapters; focused synthetic integration if apply is present | synthetic echo method; explicit prediction merge |
 | 3 | `state-trainable-records` | pending | `agent/stage-10-method-model-contracts-p3-state-trainable-records` | pending | `src/rphys/methods/state.py`, optional protocol-only `src/rphys/nn/protocols.py` only if code-backed by capability records, package exports, state/trainable tests | Add richer backend-neutral state and parameter capability records without torch, optimizer, checkpoint, or device semantics. | `tests/contracts/test_trainable_method_contract.py`; `tests/unit/rphys/methods/test_state.py`; `make test-package`; `git diff --check` | non-torch trainable fake |
 | 4 | `synthetic-integration-docs-validation` | pending | `agent/stage-10-method-model-contracts-p4-synthetic-integration-docs-validation` | pending | test-only fake methods/models/stateful objects, synthetic `Batch` fixtures, docs/docstrings or glossary updates if public vocabulary changes, full validation evidence | Prove Stage 10 contracts compose without concrete algorithms, Stage 9 loaders, or heavy optional dependencies. | focused integration; `make test-package`; `make test-unit`; `make test-contract`; `make test-integration`; final `make test`; `make test-summary`; `uv lock --check`; `git diff --check` | all recorded examples |
@@ -146,11 +146,11 @@ Workflow path: expanded path
 
 ## Phase 1: Core Public Contracts And Import Boundaries
 
-Status: pending
+Status: merged
 Slug: `core-contracts-imports`
 Branch: `agent/stage-10-method-model-contracts-p1-core-contracts-imports`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-10-method-model-contracts-p1-core-contracts-imports`
-PR: pending
+PR: [#67](https://github.com/samcantrill/rphys/pull/67)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -194,13 +194,13 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed in `docs/roadmap/stage-10/phases/core-contracts-imports.md`
 - Planning/refinement budget: one planning pass plus one refinement pass if public import names or record fields drift.
 - Implementation/refinement budget: one implementation pass plus targeted test-refinement pass.
 - PR review budget: one review pass focused on public API/import boundaries and patch-output semantics.
 - Blocker-resolution budget: stop and reopen design if the implementation needs a `Batch` return, core torch helper, or model access to runtime containers.
 - Pre-submit blocker gate: all required validation rows above must pass or record explicit risk.
-- Merge record: pending
+- Merge record: completed below
 
 ### Risks And Stop Conditions
 
@@ -210,11 +210,28 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added `PredictionContext`, `MethodOutput`, structural `Method`, structural generic `Model`, scoped methods/models package exports, private primitive mapping validation, and package/unit/contract coverage.
+- Validation: `uv run pytest tests/unit/rphys/methods/test_context.py tests/unit/rphys/methods/test_output.py`; `uv run pytest tests/contracts/test_method_contract.py tests/contracts/test_model_contract.py`; `make test-package`; `make validate-pr`; `make test-summary`; `git diff --check`.
+- PR: [#67](https://github.com/samcantrill/rphys/pull/67)
+- Merge: merged to `develop` on 2026-05-16 as `512e0c6a5dd66954d2f58f38ed8d9a4929e2b219`.
+- Follow-up: Phase 2 owns adapters and explicit output application; Phase 3 owns state/trainable records.
+
+### Merge Record
+
+- Phase: Phase 1 `core-contracts-imports`
+- Branch: `agent/stage-10-method-model-contracts-p1-core-contracts-imports`
+- PR: [#67](https://github.com/samcantrill/rphys/pull/67)
+- Base branch: `develop`
+- Merge command: `gh pr merge 67 --squash`
+- Merge result: merged; GitHub reported no status checks for the branch, so merge relied on the completed local validation gate.
+- Merge commit: `512e0c6a5dd66954d2f58f38ed8d9a4929e2b219`
+- Branch cleanup: pending after metadata commit.
+- Worktree cleanup: pending after metadata commit.
+- Behavior implemented: methods expose primitive `PredictionContext`, patch-like `MethodOutput`, and structural `Method`; models expose a structural generic callable `Model` without importing `Batch`.
+- Tests and validation: focused unit and contract checks passed; `make validate-pr` passed; `make test-summary` reported package 47 passed, unit 637 passed, contract 123 passed, integration 18 passed, and no e2e/acceptance suites present.
+- Documentation: phase plan and PR body artifacts added under `docs/roadmap/stage-10/phases/`; public docstrings describe patch output, primitive context, structural protocols, and out-of-scope trainer/export/loss/device behavior.
+- Scientific contract implications: prediction outputs remain explicit field patches with caller-owned primitive provenance and no domain identifier, split, device, checkpoint, training, export, loss, or metric policy.
+- Follow-up notes for later phases: Phase 2 should use these records for adapters and explicit patch application without changing `Method.predict` return semantics.
 
 ## Phase 2: Adapter Specs And Explicit Output Application
 
