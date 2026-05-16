@@ -28,7 +28,13 @@ STAGE_10_METHOD_EXPORTS = [
     "MethodOutput",
     "MethodOutputAdapter",
     "MethodOutputSpec",
+    "ParameterView",
     "PredictionContext",
+    "StateEntry",
+    "StateLoadResult",
+    "StateView",
+    "StatefulMethod",
+    "TrainableMethod",
     "apply_method_output",
 ]
 
@@ -40,8 +46,14 @@ STAGE_10_METHOD_MODULES = {
         "MethodOutputSpec",
     ],
     "rphys.methods.context": ["PredictionContext"],
-    "rphys.methods.core": ["Method"],
+    "rphys.methods.core": ["Method", "StatefulMethod", "TrainableMethod"],
     "rphys.methods.output": ["MethodOutput", "apply_method_output"],
+    "rphys.methods.state": [
+        "ParameterView",
+        "StateEntry",
+        "StateLoadResult",
+        "StateView",
+    ],
 }
 
 STAGE_10_MODEL_EXPORTS = ["Model"]

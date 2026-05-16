@@ -8,8 +8,9 @@ from rphys.data import Batch
 
 from .context import PredictionContext
 from .output import MethodOutput
+from .state import ParameterView, StateLoadResult, StateView
 
-__all__ = ["Method"]
+__all__ = ["Method", "StatefulMethod", "TrainableMethod"]
 
 
 @runtime_checkable
@@ -28,4 +29,28 @@ class Method(Protocol):
         *,
         context: PredictionContext | None = None,
     ) -> MethodOutput:
+        ...
+
+
+@runtime_checkable
+class StatefulMethod(Method, Protocol):
+    """Method capability for inspectable backend-neutral state."""
+
+    def state(self) -> StateView:
+        ...
+
+    def load_state(
+        self,
+        state: StateView,
+        *,
+        strict: bool = True,
+    ) -> StateLoadResult:
+        ...
+
+
+@runtime_checkable
+class TrainableMethod(StatefulMethod, Protocol):
+    """Method capability for descriptive trainable parameter handles."""
+
+    def parameters(self) -> tuple[ParameterView, ...]:
         ...
