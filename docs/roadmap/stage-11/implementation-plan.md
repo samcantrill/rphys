@@ -5,7 +5,7 @@ Roadmap version: `v11`
 Planning document: `docs/roadmap/stage-11/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 7 pr_open
+Current phase: Phase 8 pending
 Blockers: none
 
 ## Summary
@@ -45,7 +45,7 @@ Blockers: none
 | 4 | `objective-contracts` | merged | `agent/stage-11-loss-objective-metric-contracts-p4-objective-contracts` | [#74](https://github.com/samcantrill/rphys/pull/74) | `src/rphys/objectives/**`, objective tests/docs only | Implemented objective specs, protocols, contexts, terms, and `ObjectiveResult.total`. | focused objective unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Example 2 and patch handoff |
 | 5 | `sample-collection-views` | merged | `agent/stage-11-loss-objective-metric-contracts-p5-sample-collection-views` | [#75](https://github.com/samcantrill/rphys/pull/75) | `src/rphys/data/collections.py`, data exports, sample collection/view tests/docs | Implemented `SampleCollection`, `SampleCollectionViewPlan`, `SampleCollectionView`, and sample collector behavior for pre-metric reconstruction. | focused data collection unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Example 7 |
 | 6 | `metric-observation-collections` | merged | `agent/stage-11-loss-objective-metric-contracts-p6-metric-observation-collections` | [#76](https://github.com/samcantrill/rphys/pull/76) | `src/rphys/metrics/**` value/observation/collection/grouping records, metric tests/docs | Implemented metric values, observations, observation collections, grouping specs, and metric protocol records. | focused metric unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Examples 3, 5, and 6 |
-| 7 | `metric-observation-views-composition` | pr_open | `agent/stage-11-loss-objective-metric-contracts-p7-metric-observation-views-composition` | [#77](https://github.com/samcantrill/rphys/pull/77) | observation view descriptors/behavior over metric records plus cross-contract synthetic tests/docs | Implement metric observation view behavior and synthetic composition across sample/loss/objective/metric records. | metric observation view unit/contract tests; synthetic integration if feasible; `make test-unit`; `make test-contract`; relevant `make test-integration` | Examples 1-8 |
+| 7 | `metric-observation-views-composition` | merged | `agent/stage-11-loss-objective-metric-contracts-p7-metric-observation-views-composition` | [#77](https://github.com/samcantrill/rphys/pull/77) | observation view descriptors/behavior over metric records plus cross-contract synthetic tests/docs | Implemented metric observation view behavior and synthetic composition across sample/loss/objective/metric records. | metric observation view unit/contract tests; direct synthetic integration; `make test-unit`; `make test-contract`; `make test-integration`; `make validate-pr` | Examples 1-8 |
 | 8 | `api-validation-closeout` | pending | `agent/stage-11-loss-objective-metric-contracts-p8-api-validation-closeout` | pending | package exports, docs/docstrings, import-boundary and final validation evidence | Close public API, docs, import boundaries, and full-stage validation. | `make test-package`; `make test-unit`; `make test-contract`; relevant `make test-integration`; `make test-summary`; `uv lock --check`; `git diff --check`; `make validate-pr` when practical | Examples 1-8 |
 
 ## Implementation Readiness Blockers
@@ -518,7 +518,7 @@ Workflow path: expanded path
 
 ## Phase 7: Metric Observation Views And Synthetic Composition
 
-Status: pr_open
+Status: merged
 Slug: `metric-observation-views-composition`
 Branch: `agent/stage-11-loss-objective-metric-contracts-p7-metric-observation-views-composition`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-11-loss-objective-metric-contracts-p7-metric-observation-views-composition`
@@ -579,7 +579,7 @@ Workflow path: expanded path
 - PR review budget: medium
 - Blocker-resolution budget: stop on lifecycle overfit, sample reconstruction scope creep, or evaluator/report coupling.
 - Pre-submit blocker gate: no concrete algorithms, no torchmetrics/distributed sync, no durable export/report behavior.
-- Merge record: pending
+- Merge record: completed in `docs/roadmap/stage-11/phases/metric-observation-views-composition-merge-record.md`
 
 ### Risks And Stop Conditions
 
@@ -592,8 +592,8 @@ Workflow path: expanded path
 - Implementation: added observation view descriptors and injected-projector behavior over metric observation collections.
 - Validation: focused metric observation view tests, cross-contract tests, direct synthetic integration, `make test-unit`, `make test-contract`, `make test-integration`, `make test-package`, `make test-summary`, `make validate-pr`, and `git diff --check` passed.
 - PR: [#77](https://github.com/samcantrill/rphys/pull/77)
-- Merge: pending
-- Follow-up: pending
+- Merge: squash merged to `develop` as `b6df22c` on 2026-05-16.
+- Follow-up: Phase 8 should close API/docs/import validation and final Stage 11 evidence without adding new product behavior.
 
 ## Phase 8: API, Docs, Import Review, And Validation Closeout
 
