@@ -79,20 +79,29 @@ STAGE_11_METRIC_EXPORTS = [
     "MetricInputSpec",
     "MetricObservation",
     "MetricObservationCollection",
+    "MetricObservationView",
+    "MetricObservationViewPlan",
     "MetricResult",
     "MetricValue",
+    "PlannedMetricObservationView",
 ]
 
 STAGE_11_METRIC_MODULES = {
     "rphys.metrics.context": ["MetricContext"],
-    "rphys.metrics.core": ["Metric"],
+    "rphys.metrics.core": ["Metric", "MetricObservationView"],
     "rphys.metrics.results": [
         "MetricObservation",
         "MetricObservationCollection",
         "MetricResult",
         "MetricValue",
+        "PlannedMetricObservationView",
     ],
-    "rphys.metrics.specs": ["GroupBySpec", "MetricContract", "MetricInputSpec"],
+    "rphys.metrics.specs": [
+        "GroupBySpec",
+        "MetricContract",
+        "MetricInputSpec",
+        "MetricObservationViewPlan",
+    ],
 }
 
 STAGE_10_METHOD_EXPORTS = [
@@ -722,7 +731,13 @@ def test_stage_11_metric_modules_export_only_code_backed_names() -> None:
 def test_stage_11_does_not_expose_rejected_metric_table_names() -> None:
     import rphys.metrics
 
-    for public_name in ["MetricResultRow", "MetricResultTable", "MetricAggregationResult"]:
+    for public_name in [
+        "MetricResultRow",
+        "MetricResultTable",
+        "MetricAggregationResult",
+        "MetricObservationViewResult",
+        "MetricObservationViewState",
+    ]:
         assert not hasattr(rphys.metrics, public_name)
 
 

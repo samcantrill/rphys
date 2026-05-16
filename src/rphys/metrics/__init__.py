@@ -1,14 +1,15 @@
-"""Contracts for detached metric values and observations."""
+"""Contracts for detached metric values, observations, and observation views."""
 
 from .context import MetricContext
-from .core import Metric
+from .core import Metric, MetricObservationView
 from .results import (
     MetricObservation,
     MetricObservationCollection,
     MetricResult,
     MetricValue,
+    PlannedMetricObservationView,
 )
-from .specs import GroupBySpec, MetricContract, MetricInputSpec
+from .specs import GroupBySpec, MetricContract, MetricInputSpec, MetricObservationViewPlan
 
 __all__ = [
     "GroupBySpec",
@@ -18,6 +19,9 @@ __all__ = [
     "MetricInputSpec",
     "MetricObservation",
     "MetricObservationCollection",
+    "MetricObservationView",
+    "MetricObservationViewPlan",
     "MetricResult",
     "MetricValue",
+    "PlannedMetricObservationView",
 ]
