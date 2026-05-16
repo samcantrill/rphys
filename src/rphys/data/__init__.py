@@ -1,6 +1,12 @@
 """Runtime data vocabulary, field containers, contracts, and collation."""
 
-from .collation import BatchCollater, CollateContext, CollatePolicy, collate_samples
+from .collation import (
+    BatchCollater,
+    CollateContext,
+    CollatePolicy,
+    collate_samples,
+    uncollate_batch,
+)
 from .containers import Batch, FieldContainer, Sample
 from .contracts import FieldRequirement, SampleContract
 from .fields import FieldSpec, FieldValue
@@ -20,4 +26,5 @@ __all__ = [
     "Sample",
     "SampleContract",
     "collate_samples",
+    "uncollate_batch",
 ]

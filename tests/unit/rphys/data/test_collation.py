@@ -7,6 +7,7 @@ from rphys.data.collation import (
     CollateContext,
     CollatePolicy,
     collate_samples,
+    uncollate_batch,
 )
 from rphys.data.containers import Batch, Sample
 from rphys.data.fields import FieldValue
@@ -189,6 +190,136 @@ def test_collate_samples_list_policy_builds_batch_payloads_and_metadata() -> Non
     assert field_value.metadata[MetadataKey("sample_id")] == ["a", "b"]
     assert field_value.metadata[MetadataKey("source_id")] == [None, "record-1"]
     assert field_value.metadata[MetadataKey("subject_id")] == ["s1", None]
+
+
+def test_uncollate_batch_reconstructs_tuple_of_samples_and_sparse_metadata() -> None:
+    samples = (
+        Sample(
+            {
+                VIDEO: FieldValue(
+                    "frame-0",
+                    schema="video.rgb.v1",
+                    metadata={"sample_id": "a", "optional": None},
+                    collate_policy=CollatePolicy.LIST,
+                ),
+                BVP: FieldValue(
+                    [0.1],
+                    schema="signal.bvp.v1",
+                    metadata={"quality": None},
+                    collate_policy=CollatePolicy.LIST,
+                ),
+            }
+        ),
+        Sample(
+            {
+                VIDEO: FieldValue(
+                    "frame-1",
+                    schema="video.rgb.v1",
+                    metadata={"sample_id": "b"},
+                    collate_policy=CollatePolicy.LIST,
+                ),
+                BVP: FieldValue(
+                    [0.2],
+                    schema="signal.bvp.v1",
+                    metadata={},
+                    collate_policy=CollatePolicy.LIST,
+                ),
+            }
+        ),
+    )
+
+    batch = collate_samples(samples)
+    round_tripped = uncollate_batch(batch)
+
+    assert isinstance(round_tripped, tuple)
+    assert len(round_tripped) == 2
+    assert round_tripped[0] is not samples[0]
+    assert round_tripped[0].require(VIDEO) == "frame-0"
+    assert round_tripped[1].require(VIDEO) == "frame-1"
+    assert round_tripped[0].field(VIDEO).schema == "video.rgb.v1"
+    assert round_tripped[0].field(VIDEO).collate_policy is CollatePolicy.LIST
+    assert round_tripped[0].field(VIDEO).metadata[MetadataKey("sample_id")] == "a"
+    assert round_tripped[1].field(VIDEO).metadata[MetadataKey("sample_id")] == "b"
+    assert MetadataKey("optional") in round_tripped[0].field(VIDEO).metadata
+    assert round_tripped[0].field(VIDEO).metadata[MetadataKey("optional")] is None
+    assert MetadataKey("optional") not in round_tripped[1].field(VIDEO).metadata
+    assert MetadataKey("quality") in round_tripped[0].field(BVP).metadata
+    assert round_tripped[0].field(BVP).metadata[MetadataKey("quality")] is None
+    assert MetadataKey("quality") not in round_tripped[1].field(BVP).metadata
+
+
+def test_uncollate_batch_rejects_batches_without_list_evidence() -> None:
+    batch = Batch(
+        {
+            VIDEO: FieldValue(
+                ["frame-0", "frame-1"],
+                schema="video.rgb.v1",
+                metadata={"sample_id": ["a", "b"]},
+                collate_policy=CollatePolicy.LIST,
+            )
+        }
+    )
+
+    with pytest.raises(CollatePolicyError, match="LIST collation evidence"):
+        uncollate_batch(batch)
+
+
+def test_uncollate_batch_rejects_non_list_fields() -> None:
+    batch = collate_samples([_sample("frame-0"), _sample("frame-1")])
+    batch.field(VIDEO).collate_policy = "stack"
+
+    with pytest.raises(CollatePolicyError) as exc_info:
+        uncollate_batch(batch)
+
+    assert exc_info.value.context["locator"] == str(VIDEO)
+    assert exc_info.value.context["supported"] == [CollatePolicy.LIST.value]
+
+
+def test_uncollate_batch_rejects_payload_length_mismatch() -> None:
+    batch = collate_samples([_sample("frame-0"), _sample("frame-1")])
+    batch.field(VIDEO).payload = ["frame-0"]
+
+    with pytest.raises(CollatePolicyError) as exc_info:
+        uncollate_batch(batch)
+
+    assert exc_info.value.context["locator"] == str(VIDEO)
+    assert exc_info.value.context["expected"] == 2
+    assert exc_info.value.context["actual"] == 1
+
+
+def test_uncollate_batch_rejects_metadata_alignment_mismatch() -> None:
+    batch = collate_samples(
+        [
+            _sample("frame-0", metadata={"sample_id": "a"}),
+            _sample("frame-1", metadata={"sample_id": "b"}),
+        ]
+    )
+    batch.field(VIDEO).metadata[MetadataKey("sample_id")] = ["a"]
+
+    with pytest.raises(CollatePolicyError) as exc_info:
+        uncollate_batch(batch)
+
+    assert exc_info.value.context["locator"] == str(VIDEO)
+    assert exc_info.value.context["metadata_key"] == "sample_id"
+    assert exc_info.value.context["expected"] == 2
+    assert exc_info.value.context["actual"] == 1
+
+
+def test_uncollate_batch_rejects_batch_level_scalar_metadata() -> None:
+    batch = collate_samples(
+        [
+            _sample("frame-0", metadata={"sample_id": "a"}),
+            _sample("frame-1", metadata={"sample_id": "b"}),
+        ]
+    )
+    batch.field(VIDEO).metadata[MetadataKey("sample_id")] = "batch-scalar"
+
+    with pytest.raises(CollatePolicyError) as exc_info:
+        uncollate_batch(batch)
+
+    assert exc_info.value.context["locator"] == str(VIDEO)
+    assert exc_info.value.context["metadata_key"] == "sample_id"
+    assert exc_info.value.context["actual"] == "str"
 
 
 def test_collate_samples_rejects_empty_and_empty_field_inputs() -> None:
