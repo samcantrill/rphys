@@ -82,6 +82,10 @@ LIGHTWEIGHT_IMPORTS = [
     "rphys.ops.export",
     "rphys.prediction",
     "rphys.training",
+    "rphys.training.core",
+    "rphys.training.experimental",
+    "rphys.training.plan",
+    "rphys.training.results",
 ]
 
 STAGE_12_LEARNING_IMPORTS = [
@@ -91,6 +95,14 @@ STAGE_12_LEARNING_IMPORTS = [
     "rphys.learning.modes",
     "rphys.learning.output",
     "rphys.learning.supervised",
+]
+
+STAGE_12_TRAINING_IMPORTS = [
+    "rphys.training",
+    "rphys.training.core",
+    "rphys.training.experimental",
+    "rphys.training.plan",
+    "rphys.training.results",
 ]
 
 STAGE_11_IMPORTS = [
@@ -271,6 +283,62 @@ def test_stage_12_learning_source_does_not_import_training() -> None:
             violations.append(f"{source_path.relative_to(REPO_ROOT)} imports rphys.training")
 
     assert violations == []
+
+
+def test_stage_12_training_imports_do_not_load_frameworks_or_datasources() -> None:
+    imports = ", ".join(repr(module_name) for module_name in STAGE_12_TRAINING_IMPORTS)
+    forbidden_modules = [
+        "rphys.datasources",
+        "lightning",
+        "pytorch_lightning",
+        "jax",
+        "torch",
+        "torchmetrics",
+        "wandb",
+        "tensorboard",
+        "av",
+        "cv2",
+        "matplotlib",
+        "numpy",
+        "pandas",
+        "scipy",
+        "tests.support",
+    ]
+    forbidden = ", ".join(repr(module_name) for module_name in forbidden_modules)
+    script = textwrap.dedent(
+        f"""
+        import importlib
+        import sys
+
+        for module_name in [{imports}]:
+            importlib.import_module(module_name)
+
+        forbidden = sorted(
+            name for name in [{forbidden}]
+            if name in sys.modules
+        )
+        if forbidden:
+            raise SystemExit("forbidden modules loaded: " + ", ".join(forbidden))
+        """
+    )
+    env = os.environ.copy()
+    existing_pythonpath = env.get("PYTHONPATH")
+    pythonpath_parts = [str(REPO_ROOT / "src"), str(REPO_ROOT)]
+    if existing_pythonpath:
+        pythonpath_parts.append(existing_pythonpath)
+    env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
+
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        check=False,
+        cwd=REPO_ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+
+    assert completed.returncode == 0, completed.stdout
 
 
 def test_stage_11_modules_do_not_import_cross_package_private_helpers() -> None:
