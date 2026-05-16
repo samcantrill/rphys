@@ -47,6 +47,22 @@ STAGE_11_LOSS_MODULES = {
     "rphys.losses.specs": ["LossContract", "LossInputSpec"],
 }
 
+STAGE_11_OBJECTIVE_EXPORTS = [
+    "Objective",
+    "ObjectiveContext",
+    "ObjectiveContract",
+    "ObjectiveResult",
+    "ObjectiveTerm",
+    "ObjectiveTermSpec",
+]
+
+STAGE_11_OBJECTIVE_MODULES = {
+    "rphys.objectives.context": ["ObjectiveContext"],
+    "rphys.objectives.core": ["Objective"],
+    "rphys.objectives.results": ["ObjectiveResult", "ObjectiveTerm"],
+    "rphys.objectives.specs": ["ObjectiveContract", "ObjectiveTermSpec"],
+}
+
 STAGE_10_METHOD_EXPORTS = [
     "Method",
     "MethodInputAdapter",
@@ -436,6 +452,12 @@ STAGE_11_LOSS_ERROR_NAMES = [
     "InvalidLossSpecError",
 ]
 
+STAGE_11_OBJECTIVE_ERROR_NAMES = [
+    "InvalidObjectiveContextError",
+    "InvalidObjectiveResultError",
+    "InvalidObjectiveSpecError",
+]
+
 
 def test_import_rphys() -> None:
     import rphys
@@ -579,6 +601,7 @@ def test_import_errors_phase_6_exports_are_scoped() -> None:
         *STAGE_6_OPERATION_ERROR_NAMES,
         *STAGE_11_COLLECTION_ERROR_NAMES,
         *STAGE_11_LOSS_ERROR_NAMES,
+        *STAGE_11_OBJECTIVE_ERROR_NAMES,
         *BROAD_ERROR_NAMES,
     ]
 
@@ -615,6 +638,26 @@ def test_stage_11_loss_modules_export_only_code_backed_names() -> None:
             assert hasattr(module, public_name)
 
 
+def test_stage_11_objective_package_exports_only_code_backed_names() -> None:
+    import rphys
+    import rphys.objectives
+
+    assert rphys.objectives.__all__ == STAGE_11_OBJECTIVE_EXPORTS
+    for public_name in STAGE_11_OBJECTIVE_EXPORTS:
+        assert hasattr(rphys.objectives, public_name)
+        assert not hasattr(rphys, public_name)
+
+
+def test_stage_11_objective_modules_export_only_code_backed_names() -> None:
+    for module_name, expected_all in STAGE_11_OBJECTIVE_MODULES.items():
+        module = importlib.import_module(module_name)
+
+        assert module.__doc__
+        assert module.__all__ == expected_all
+        for public_name in expected_all:
+            assert hasattr(module, public_name)
+
+
 def test_deferred_package_homes_import_with_empty_public_surfaces() -> None:
     for package_name in PLANNED_PACKAGE_NAMES:
         if package_name in {
@@ -624,6 +667,7 @@ def test_deferred_package_homes_import_with_empty_public_surfaces() -> None:
             "rphys.methods",
             "rphys.models",
             "rphys.losses",
+            "rphys.objectives",
             "rphys.ops",
         }:
             continue
@@ -698,6 +742,7 @@ def test_errors_import_and_expose_approved_error_categories() -> None:
         *STAGE_6_OPERATION_ERROR_NAMES,
         *STAGE_11_COLLECTION_ERROR_NAMES,
         *STAGE_11_LOSS_ERROR_NAMES,
+        *STAGE_11_OBJECTIVE_ERROR_NAMES,
         *BROAD_ERROR_NAMES,
     ]
 
@@ -729,6 +774,7 @@ def test_root_package_does_not_reexport_error_classes() -> None:
         "UndeclaredSampleFieldMutationError",
         *STAGE_11_COLLECTION_ERROR_NAMES,
         *STAGE_11_LOSS_ERROR_NAMES,
+        *STAGE_11_OBJECTIVE_ERROR_NAMES,
     ]:
         assert not hasattr(rphys, error_name)
 
