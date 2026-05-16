@@ -55,9 +55,12 @@ __all__ = [
     "RemotePhysFieldError",
     "RemotePhysIOError",
     "RemotePhysLearningError",
+    "RemotePhysLossError",
     "RemotePhysMetadataError",
     "RemotePhysMethodError",
+    "RemotePhysMetricError",
     "RemotePhysNameError",
+    "RemotePhysObjectiveError",
     "RemotePhysOperationError",
     "RemotePhysPipelineError",
     "RemotePhysSliceError",
@@ -148,6 +151,18 @@ class RemotePhysMethodError(RemotePhysError):
 
 class RemotePhysLearningError(RemotePhysError):
     """Base error for learner and optimization-loop failures."""
+
+
+class RemotePhysLossError(RemotePhysError):
+    """Base catch point for differentiable loss contract failures."""
+
+
+class RemotePhysObjectiveError(RemotePhysError):
+    """Base catch point for optimizer-facing objective contract failures."""
+
+
+class RemotePhysMetricError(RemotePhysError):
+    """Base catch point for detached metric contract failures."""
 
 
 class RemotePhysTrainingError(RemotePhysError):

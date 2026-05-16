@@ -5,7 +5,7 @@ Roadmap version: `v11`
 Planning document: `docs/roadmap/stage-11/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: pending
+Current phase: Phase 1 PR open
 Blockers: none
 
 ## Summary
@@ -39,7 +39,7 @@ Blockers: none
 
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `error-import-scaffold` | pending | `agent/stage-11-loss-objective-metric-contracts-p1-error-import-scaffold` | pending | `src/rphys/errors.py`, package `__init__.py` import surfaces, package/import tests | Establish broad error bases and import-boundary scaffold. | `make test-package`; focused error/import unit tests; `git diff --check` | Import/API posture |
+| 1 | `error-import-scaffold` | pr_open | `agent/stage-11-loss-objective-metric-contracts-p1-error-import-scaffold` | [#71](https://github.com/samcantrill/rphys/pull/71) | `src/rphys/errors.py`, package `__init__.py` import surfaces, package/import tests | Establish broad error bases and import-boundary scaffold. | `make test-package`; focused error/import unit tests; `git diff --check` | Import/API posture |
 | 2 | `collection-view-collector-contracts` | pending | `agent/stage-11-loss-objective-metric-contracts-p2-collection-view-collector-contracts` | pending | `src/rphys/collections.py`, central collection errors, collection tests/docs | Implement reusable collection, view-plan, view, collector, and collector-result contracts. | focused collection unit/contract tests; `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | Collection/view/collector posture |
 | 3 | `loss-contracts` | pending | `agent/stage-11-loss-objective-metric-contracts-p3-loss-contracts` | pending | `src/rphys/losses/**`, loss tests/docs only | Implement loss specs, protocols, contexts, terms, results, and patch records. | focused loss unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Examples 1 and 5 |
 | 4 | `objective-contracts` | pending | `agent/stage-11-loss-objective-metric-contracts-p4-objective-contracts` | pending | `src/rphys/objectives/**`, objective tests/docs only | Implement objective specs, protocols, contexts, terms, and `ObjectiveResult.total`. | focused objective unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Example 2 and patch handoff |
@@ -70,11 +70,11 @@ No readiness blockers are present. Planning records show the validation and phas
 
 ## Phase 1: Error And Import Scaffold
 
-Status: pending
+Status: pr_open
 Slug: `error-import-scaffold`
 Branch: `agent/stage-11-loss-objective-metric-contracts-p1-error-import-scaffold`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-11-loss-objective-metric-contracts-p1-error-import-scaffold`
-PR: pending
+PR: [#71](https://github.com/samcantrill/rphys/pull/71)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -135,7 +135,7 @@ Workflow path: fast path
 
 - Implementation: pending
 - Validation: pending
-- PR: pending
+- PR: open as [#71](https://github.com/samcantrill/rphys/pull/71)
 - Merge: pending
 - Follow-up: pending
 

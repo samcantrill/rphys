@@ -17,6 +17,7 @@ HEAVY_OPTIONAL_MODULES = [
     "pandas",
     "scipy",
     "torch",
+    "torchmetrics",
 ]
 LIGHTWEIGHT_IMPORTS = [
     "rphys",
@@ -76,6 +77,12 @@ LIGHTWEIGHT_IMPORTS = [
     "rphys.training",
 ]
 
+STAGE_11_IMPORTS = [
+    "rphys.losses",
+    "rphys.objectives",
+    "rphys.metrics",
+]
+
 
 def test_core_imports_do_not_load_heavy_optional_modules() -> None:
     imports = ", ".join(repr(module_name) for module_name in LIGHTWEIGHT_IMPORTS)
@@ -95,6 +102,69 @@ def test_core_imports_do_not_load_heavy_optional_modules() -> None:
         )
         if loaded:
             raise SystemExit("heavy optional modules loaded: " + ", ".join(loaded))
+        """
+    )
+    env = os.environ.copy()
+    existing_pythonpath = env.get("PYTHONPATH")
+    pythonpath_parts = [str(REPO_ROOT / "src"), str(REPO_ROOT)]
+    if existing_pythonpath:
+        pythonpath_parts.append(existing_pythonpath)
+    env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
+
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        check=False,
+        cwd=REPO_ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+
+    assert completed.returncode == 0, completed.stdout
+
+
+def test_stage_11_package_imports_do_not_load_forbidden_dependencies() -> None:
+    imports = ", ".join(repr(module_name) for module_name in STAGE_11_IMPORTS)
+    heavy_modules = ", ".join(repr(module_name) for module_name in HEAVY_OPTIONAL_MODULES)
+    forbidden = ", ".join(
+        repr(module_name)
+        for module_name in [
+            "rphys.analysis",
+            "rphys.datasources",
+            "rphys.evaluation",
+            "rphys.io",
+            "rphys.learning",
+            "rphys.methods",
+            "rphys.models",
+            "rphys.ops",
+            "rphys.ops.export",
+            "rphys.prediction",
+            "rphys.training",
+            "tests.support",
+        ]
+    )
+    script = textwrap.dedent(
+        f"""
+        import importlib
+        import sys
+
+        for module_name in [{imports}]:
+            importlib.import_module(module_name)
+
+        forbidden = sorted(
+            name for name in [{forbidden}]
+            if name in sys.modules
+        )
+        if forbidden:
+            raise SystemExit("forbidden modules loaded: " + ", ".join(forbidden))
+
+        heavy = sorted(
+            name for name in [{heavy_modules}]
+            if name in sys.modules
+        )
+        if heavy:
+            raise SystemExit("heavy optional modules loaded: " + ", ".join(heavy))
         """
     )
     env = os.environ.copy()
