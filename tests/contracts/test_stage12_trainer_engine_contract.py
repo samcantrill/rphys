@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import pytest
-
 from rphys.data import Batch
-from rphys.errors import RemotePhysTrainingError
 from rphys.learning import LoopContext, StepOutput
-from rphys.training import Trainer, TrainingEngine, TrainingPlan, TrainingResult
+from rphys.training import NativeTrainingEngine, Trainer, TrainingEngine, TrainingPlan, TrainingResult
 
 
 class ContractLearner:
@@ -46,6 +43,9 @@ def test_training_engine_is_structural_and_receives_plan_and_learner_separately(
     assert not hasattr(plan, "engine_config")
 
 
-def test_trainer_without_selected_engine_fails_instead_of_running_native_placeholder() -> None:
-    with pytest.raises(RemotePhysTrainingError):
-        Trainer().fit(TrainingPlan(), ContractLearner())
+def test_trainer_without_selected_engine_uses_native_default() -> None:
+    trainer = Trainer()
+
+    assert isinstance(trainer.engine, NativeTrainingEngine)
+    result = trainer.predict(TrainingPlan(predict_batches=(Batch(),)), ContractLearner())
+    assert result.mode.value == "predict"
