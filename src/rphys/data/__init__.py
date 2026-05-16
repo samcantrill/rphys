@@ -9,6 +9,13 @@ from .collation import (
 )
 from .containers import Batch, FieldContainer, Sample
 from .contracts import FieldRequirement, SampleContract
+from .collections import (
+    PlannedSampleCollectionView,
+    SampleCollection,
+    SampleCollectionView,
+    SampleCollectionViewPlan,
+    SampleCollector,
+)
 from .fields import FieldSpec, FieldValue
 from .objects import CompositeDataObjectBase, DataObjectBase
 
@@ -25,6 +32,11 @@ __all__ = [
     "FieldValue",
     "Sample",
     "SampleContract",
+    "SampleCollection",
+    "SampleCollectionView",
+    "SampleCollectionViewPlan",
+    "SampleCollector",
+    "PlannedSampleCollectionView",
     "collate_samples",
     "uncollate_batch",
 ]

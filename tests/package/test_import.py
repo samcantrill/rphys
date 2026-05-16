@@ -31,6 +31,14 @@ STAGE_11_COLLECTION_EXPORTS = [
     "CollectorResult",
 ]
 
+STAGE_11_DATA_COLLECTION_EXPORTS = [
+    "SampleCollection",
+    "SampleCollectionView",
+    "SampleCollectionViewPlan",
+    "SampleCollector",
+    "PlannedSampleCollectionView",
+]
+
 STAGE_11_LOSS_EXPORTS = [
     "Loss",
     "LossContext",
@@ -179,6 +187,7 @@ STAGE_2_DATA_EXPORTS = [
     "FieldValue",
     "Sample",
     "SampleContract",
+    *STAGE_11_DATA_COLLECTION_EXPORTS,
     "collate_samples",
     "uncollate_batch",
 ]
@@ -211,6 +220,7 @@ STAGE_4_DATA_EXPORTS = [
 STAGE_4_DATA_MODULES = {
     "rphys.data.sample_fields": STAGE_4_SAMPLE_FIELD_EXPORTS,
     "rphys.data.sample_builders": STAGE_4_SAMPLE_BUILDER_EXPORTS,
+    "rphys.data.collections": STAGE_11_DATA_COLLECTION_EXPORTS,
 }
 
 STAGE_2_ERROR_NAMES = [
