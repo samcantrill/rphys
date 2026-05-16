@@ -76,7 +76,9 @@ UV_CACHE_DIR=/tmp/uv-cache make validate-pr
   lifecycle, distributed sync, report/dataframe schema, or export behavior was
   introduced.
 - PR preparation: PR body drafted in
-  `docs/roadmap/stage-11/phases/api-validation-closeout-pr-body.md`.
+  `docs/roadmap/stage-11/phases/api-validation-closeout-pr-body.md` and PR
+  [#78](https://github.com/samcantrill/rphys/pull/78) opened against
+  `develop`.
 - Automated review: pending.
 - Merge result: pending.
 - Cleanup: pending.
