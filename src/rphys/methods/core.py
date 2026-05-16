@@ -34,7 +34,11 @@ class Method(Protocol):
 
 @runtime_checkable
 class StatefulMethod(Method, Protocol):
-    """Method capability for inspectable backend-neutral state."""
+    """Method capability for inspectable backend-neutral state.
+
+    Implementations adapt their native state representation into ``StateView``
+    records without requiring a particular framework API.
+    """
 
     def state(self) -> StateView:
         ...
@@ -50,7 +54,12 @@ class StatefulMethod(Method, Protocol):
 
 @runtime_checkable
 class TrainableMethod(StatefulMethod, Protocol):
-    """Method capability for descriptive trainable parameter handles."""
+    """Method capability for descriptive trainable parameter handles.
+
+    Backend-specific parameter objects remain owned by their backend; the
+    returned ``ParameterView`` records expose names, handles, and flags for
+    later orchestration without defining optimizer or device behavior here.
+    """
 
     def parameters(self) -> tuple[ParameterView, ...]:
         ...

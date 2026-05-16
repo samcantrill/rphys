@@ -18,7 +18,10 @@ def test_model_contract_is_structural_callable_below_batch() -> None:
     assert model((1.0, 2.0, 3.0)) == 6.0
 
 
-def test_model_core_import_does_not_load_runtime_containers_or_method_stack() -> None:
+def test_model_core_import_does_not_load_runtime_containers_or_method_stack(
+    monkeypatch,
+) -> None:
+    _remove_import_tree(monkeypatch, "rphys.models.core")
     for module_name in [
         "rphys.data",
         "rphys.methods",
@@ -26,7 +29,7 @@ def test_model_core_import_does_not_load_runtime_containers_or_method_stack() ->
         "rphys.training",
         "torch",
     ]:
-        sys.modules.pop(module_name, None)
+        _remove_import_tree(monkeypatch, module_name)
 
     importlib.import_module("rphys.models.core")
 
@@ -53,3 +56,20 @@ def test_model_contract_does_not_define_framework_or_trainer_hooks() -> None:
         "save_checkpoint",
     ]:
         assert not hasattr(model, forbidden)
+
+
+def _remove_import_tree(monkeypatch, root: str) -> None:
+    for module_name in sorted(
+        [
+            name
+            for name in sys.modules
+            if name == root or name.startswith(f"{root}.")
+        ],
+        key=len,
+        reverse=True,
+    ):
+        parent_name, _, child_name = module_name.rpartition(".")
+        parent = sys.modules.get(parent_name)
+        if parent is not None:
+            monkeypatch.delattr(parent, child_name, raising=False)
+        monkeypatch.delitem(sys.modules, module_name, raising=False)
