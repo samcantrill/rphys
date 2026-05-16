@@ -5,7 +5,7 @@ Roadmap version: `v11`
 Planning document: `docs/roadmap/stage-11/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 1 PR open
+Current phase: Phase 2 pending
 Blockers: none
 
 ## Summary
@@ -39,7 +39,7 @@ Blockers: none
 
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `error-import-scaffold` | pr_open | `agent/stage-11-loss-objective-metric-contracts-p1-error-import-scaffold` | [#71](https://github.com/samcantrill/rphys/pull/71) | `src/rphys/errors.py`, package `__init__.py` import surfaces, package/import tests | Establish broad error bases and import-boundary scaffold. | `make test-package`; focused error/import unit tests; `git diff --check` | Import/API posture |
+| 1 | `error-import-scaffold` | merged | `agent/stage-11-loss-objective-metric-contracts-p1-error-import-scaffold` | [#71](https://github.com/samcantrill/rphys/pull/71) | `src/rphys/errors.py`, package `__init__.py` import surfaces, package/import tests | Established broad error bases and import-boundary scaffold. | `make test-package`; focused error/import unit tests; `git diff --check` | Import/API posture |
 | 2 | `collection-view-collector-contracts` | pending | `agent/stage-11-loss-objective-metric-contracts-p2-collection-view-collector-contracts` | pending | `src/rphys/collections.py`, central collection errors, collection tests/docs | Implement reusable collection, view-plan, view, collector, and collector-result contracts. | focused collection unit/contract tests; `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | Collection/view/collector posture |
 | 3 | `loss-contracts` | pending | `agent/stage-11-loss-objective-metric-contracts-p3-loss-contracts` | pending | `src/rphys/losses/**`, loss tests/docs only | Implement loss specs, protocols, contexts, terms, results, and patch records. | focused loss unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Examples 1 and 5 |
 | 4 | `objective-contracts` | pending | `agent/stage-11-loss-objective-metric-contracts-p4-objective-contracts` | pending | `src/rphys/objectives/**`, objective tests/docs only | Implement objective specs, protocols, contexts, terms, and `ObjectiveResult.total`. | focused objective unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Example 2 and patch handoff |
@@ -70,7 +70,7 @@ No readiness blockers are present. Planning records show the validation and phas
 
 ## Phase 1: Error And Import Scaffold
 
-Status: pr_open
+Status: merged
 Slug: `error-import-scaffold`
 Branch: `agent/stage-11-loss-objective-metric-contracts-p1-error-import-scaffold`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-11-loss-objective-metric-contracts-p1-error-import-scaffold`
@@ -117,13 +117,13 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed in `docs/roadmap/stage-11/phases/error-import-scaffold.md`
 - Planning/refinement budget: small
 - Implementation/refinement budget: small
 - PR review budget: small
 - Blocker-resolution budget: stop on public API expansion or import-boundary conflict.
 - Pre-submit blocker gate: no placeholder exports, no root re-exports, no heavy imports.
-- Merge record: pending
+- Merge record: completed in `docs/roadmap/stage-11/phases/error-import-scaffold-merge-record.md`
 
 ### Risks And Stop Conditions
 
@@ -133,11 +133,11 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: open as [#71](https://github.com/samcantrill/rphys/pull/71)
-- Merge: pending
-- Follow-up: pending
+- Implementation: added central `RemotePhysLossError`, `RemotePhysObjectiveError`, and `RemotePhysMetricError`; package homes stayed lightweight with no placeholder exports.
+- Validation: `uv --cache-dir /tmp/uv-cache run pytest tests/unit/rphys/test_errors.py tests/package/test_import.py tests/package/test_import_boundaries.py`; `UV_CACHE_DIR=/tmp/uv-cache make test-package`; `git diff --check`.
+- PR: [#71](https://github.com/samcantrill/rphys/pull/71)
+- Merge: squash merged to `develop` as `5980cb6` on 2026-05-16.
+- Follow-up: later phases must add code-backed package exports only when their contracts land.
 
 ## Phase 2: Shared Collection, View, And Collector Contracts
 
