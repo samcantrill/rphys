@@ -52,6 +52,9 @@ __all__ = [
     "InvalidLossContextError",
     "InvalidLossResultError",
     "InvalidLossSpecError",
+    "InvalidObjectiveContextError",
+    "InvalidObjectiveResultError",
+    "InvalidObjectiveSpecError",
     "RemotePhysAnalysisError",
     "RemotePhysCodecError",
     "RemotePhysCollateError",
@@ -267,6 +270,18 @@ class InvalidLossContextError(RemotePhysLossError):
 
 class InvalidLossResultError(RemotePhysLossError):
     """Raised when a loss term or result record is invalid."""
+
+
+class InvalidObjectiveSpecError(RemotePhysObjectiveError):
+    """Raised when an objective contract or aggregation descriptor is invalid."""
+
+
+class InvalidObjectiveContextError(RemotePhysObjectiveError):
+    """Raised when an objective execution context is invalid."""
+
+
+class InvalidObjectiveResultError(RemotePhysObjectiveError):
+    """Raised when an objective term or result record is invalid."""
 
 
 class InvalidResourceRefError(RemotePhysIOError):

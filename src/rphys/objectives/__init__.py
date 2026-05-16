@@ -1,3 +1,15 @@
-"""Package home for optimizer-facing objective aggregation."""
+"""Contracts for optimizer-facing objective aggregation."""
 
-__all__: list[str] = []
+from .context import ObjectiveContext
+from .core import Objective
+from .results import ObjectiveResult, ObjectiveTerm
+from .specs import ObjectiveContract, ObjectiveTermSpec
+
+__all__ = [
+    "Objective",
+    "ObjectiveContext",
+    "ObjectiveContract",
+    "ObjectiveResult",
+    "ObjectiveTerm",
+    "ObjectiveTermSpec",
+]
