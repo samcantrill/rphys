@@ -5,7 +5,7 @@ Roadmap version: `v11`
 Planning document: `docs/roadmap/stage-11/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 2 PR open
+Current phase: Phase 3 pending
 Blockers: none
 
 ## Summary
@@ -40,7 +40,7 @@ Blockers: none
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `error-import-scaffold` | merged | `agent/stage-11-loss-objective-metric-contracts-p1-error-import-scaffold` | [#71](https://github.com/samcantrill/rphys/pull/71) | `src/rphys/errors.py`, package `__init__.py` import surfaces, package/import tests | Established broad error bases and import-boundary scaffold. | `make test-package`; focused error/import unit tests; `git diff --check` | Import/API posture |
-| 2 | `collection-view-collector-contracts` | pr_open | `agent/stage-11-loss-objective-metric-contracts-p2-collection-view-collector-contracts` | [#72](https://github.com/samcantrill/rphys/pull/72) | `src/rphys/collections.py`, central collection errors, collection tests/docs | Implement reusable collection, view-plan, view, collector, and collector-result contracts. | focused collection unit/contract tests; `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | Collection/view/collector posture |
+| 2 | `collection-view-collector-contracts` | merged | `agent/stage-11-loss-objective-metric-contracts-p2-collection-view-collector-contracts` | [#72](https://github.com/samcantrill/rphys/pull/72) | `src/rphys/collections.py`, central collection errors, collection tests/docs | Implemented reusable collection, view-plan, view, collector, and collector-result contracts. | focused collection unit/contract tests; `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | Collection/view/collector posture |
 | 3 | `loss-contracts` | pending | `agent/stage-11-loss-objective-metric-contracts-p3-loss-contracts` | pending | `src/rphys/losses/**`, loss tests/docs only | Implement loss specs, protocols, contexts, terms, results, and patch records. | focused loss unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Examples 1 and 5 |
 | 4 | `objective-contracts` | pending | `agent/stage-11-loss-objective-metric-contracts-p4-objective-contracts` | pending | `src/rphys/objectives/**`, objective tests/docs only | Implement objective specs, protocols, contexts, terms, and `ObjectiveResult.total`. | focused objective unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Example 2 and patch handoff |
 | 5 | `sample-collection-views` | pending | `agent/stage-11-loss-objective-metric-contracts-p5-sample-collection-views` | pending | `src/rphys/data/collections.py`, data exports, sample collection/view tests/docs | Implement `SampleCollection`, `SampleCollectionViewPlan`, `SampleCollectionView`, and sample collector behavior for pre-metric reconstruction. | focused data collection unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Example 7 |
@@ -141,7 +141,7 @@ Workflow path: fast path
 
 ## Phase 2: Shared Collection, View, And Collector Contracts
 
-Status: pr_open
+Status: merged
 Slug: `collection-view-collector-contracts`
 Branch: `agent/stage-11-loss-objective-metric-contracts-p2-collection-view-collector-contracts`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-11-loss-objective-metric-contracts-p2-collection-view-collector-contracts`
@@ -193,13 +193,13 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed in `docs/roadmap/stage-11/phases/collection-view-collector-contracts.md`
 - Planning/refinement budget: medium
 - Implementation/refinement budget: medium
 - PR review budget: medium
 - Blocker-resolution budget: stop on generic framework overreach or domain import leakage.
 - Pre-submit blocker gate: no public view-result class, no root exports, no data/metric/loss/objective imports in `rphys.collections`.
-- Merge record: pending
+- Merge record: completed in `docs/roadmap/stage-11/phases/collection-view-collector-contracts-merge-record.md`
 
 ### Risks And Stop Conditions
 
@@ -209,11 +209,11 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: open as [#72](https://github.com/samcantrill/rphys/pull/72)
-- Merge: pending
-- Follow-up: pending
+- Implementation: added `rphys.collections` protocols and frozen records plus central collection validation errors.
+- Validation: focused collection/error/package tests; `UV_CACHE_DIR=/tmp/uv-cache make test-unit`; `UV_CACHE_DIR=/tmp/uv-cache make test-contract`; `UV_CACHE_DIR=/tmp/uv-cache make test-package`; `git diff --check`.
+- PR: [#72](https://github.com/samcantrill/rphys/pull/72)
+- Merge: squash merged to `develop` as `8652c96` on 2026-05-16.
+- Follow-up: Phase 5 and Phase 6 should reuse `CollectionItem` and `CollectorResult` rather than adding one-off row/result families.
 
 ## Phase 3: Loss Contracts And Patch Results
 
