@@ -82,6 +82,7 @@ LIGHTWEIGHT_IMPORTS = [
     "rphys.ops.export",
     "rphys.prediction",
     "rphys.training",
+    "rphys.training.backend",
     "rphys.training.core",
     "rphys.training.experimental",
     "rphys.training.plan",
@@ -99,6 +100,7 @@ STAGE_12_LEARNING_IMPORTS = [
 
 STAGE_12_TRAINING_IMPORTS = [
     "rphys.training",
+    "rphys.training.backend",
     "rphys.training.core",
     "rphys.training.experimental",
     "rphys.training.plan",

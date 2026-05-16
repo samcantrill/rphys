@@ -146,6 +146,24 @@ def test_predict_mode_preserves_method_output_without_objective_or_targets() -> 
     assert not batch.has("predictions/signal.pulse")
 
 
+def test_predict_mode_skips_configured_objective_losses_and_metrics() -> None:
+    learner = SupervisedLearner(
+        SyntheticMethod(),
+        losses=(SyntheticLoss(),),
+        objective=SyntheticObjective(),
+        metrics=(SyntheticMetric(),),
+    )
+    batch = Batch({"inputs/signal.pulse": FieldValue([1.0])})
+
+    output = learner.step(batch, LoopContext("predict", split="inference"))
+
+    assert isinstance(output.predictions, MethodOutput)
+    assert output.objective is None
+    assert output.loss_terms == ()
+    assert output.objective_terms == ()
+    assert output.metric_values == {}
+
+
 def test_train_mode_requires_objective() -> None:
     learner = SupervisedLearner(SyntheticMethod())
 

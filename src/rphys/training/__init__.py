@@ -1,5 +1,6 @@
 """Training plans, results, engines, and facade contracts."""
 
+from .backend import NativeTrainingEngine
 from .core import Trainer, TrainingEngine
 from .plan import TrainingPlan
 from .results import (
@@ -13,6 +14,7 @@ from .results import (
 
 __all__ = [
     "ProfileSummary",
+    "NativeTrainingEngine",
     "Trainer",
     "TrainingEngine",
     "TrainingEventSummary",

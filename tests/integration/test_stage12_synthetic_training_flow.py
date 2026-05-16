@@ -6,6 +6,7 @@ from rphys.losses import LossContext, LossContract, LossInputSpec, LossResult, L
 from rphys.methods import MethodOutput
 from rphys.metrics import MetricContext, MetricContract, MetricObservation, MetricObservationCollection, MetricResult, MetricValue
 from rphys.objectives import ObjectiveContext, ObjectiveContract, ObjectiveResult, ObjectiveTerm, ObjectiveTermSpec
+from rphys.training import NativeTrainingEngine, Trainer, TrainingPlan, TrainingStatus
 
 
 class FakeScalar:
@@ -92,3 +93,61 @@ def test_stage12_supervised_learner_composes_stage10_method_and_stage11_contract
     assert output.objective.value == 0.5
     assert output.metric_values["pulse-mae"].value.value == 0.5
     assert not batch.has("predictions/signal.pulse")
+
+
+class RecordingOptimizer:
+    def __init__(self) -> None:
+        self.zero_grad_calls = 0
+        self.step_calls = 0
+
+    def zero_grad(self) -> None:
+        self.zero_grad_calls += 1
+
+    def step(self) -> None:
+        self.step_calls += 1
+
+
+def test_stage12_native_engine_runs_synthetic_supervised_fit_validate_test_predict() -> None:
+    learner = SupervisedLearner(
+        PulseMethod(),
+        losses=(PulseLoss(),),
+        objective=PulseObjective(),
+        metrics=(PulseMetric(),),
+    )
+    optimizer = RecordingOptimizer()
+    train_batch = Batch(
+        {
+            "inputs/signal.pulse": FieldValue([1.0]),
+            "targets/signal.pulse": FieldValue([2.5]),
+        }
+    )
+    eval_batch = Batch(
+        {
+            "inputs/signal.pulse": FieldValue([1.0]),
+            "targets/signal.pulse": FieldValue([2.0]),
+        }
+    )
+    predict_batch = Batch({"inputs/signal.pulse": FieldValue([1.0])})
+    plan = TrainingPlan(
+        train_batches=(train_batch,),
+        validation_batches=(eval_batch,),
+        test_batches=(eval_batch,),
+        predict_batches=(predict_batch,),
+        optimizer=optimizer,
+    )
+    trainer = Trainer()
+
+    fit_result = trainer.fit(plan, learner)
+    validate_result = NativeTrainingEngine().validate(plan, learner)
+    test_result = NativeTrainingEngine().test(plan, learner)
+    predict_result = trainer.predict(plan, learner)
+
+    assert fit_result.status is TrainingStatus.COMPLETED
+    assert fit_result.step_count == 1
+    assert fit_result.metadata["validation_step_count"] == 1
+    assert optimizer.zero_grad_calls == 1
+    assert optimizer.step_calls == 1
+    assert validate_result.mode.value == "validate"
+    assert test_result.mode.value == "test"
+    assert predict_result.mode.value == "predict"
+    assert predict_result.step_count == 1

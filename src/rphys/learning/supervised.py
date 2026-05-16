@@ -85,6 +85,21 @@ class SupervisedLearner:
                 provenance=context.provenance,
             ),
         )
+        if context.mode is LoopMode.PREDICT:
+            return StepOutput(
+                predictions=predictions,
+                diagnostics=_diagnostics(
+                    predictions=predictions,
+                    loss_results=(),
+                    objective_result=None,
+                    metric_results=(),
+                ),
+                metadata={
+                    "mode": context.mode.value,
+                    "split": context.split,
+                },
+                provenance={"learner": "SupervisedLearner"},
+            )
         working_batch = self._working_batch(batch, predictions)
         loss_results = self._evaluate_losses(working_batch, context)
         objective_result = self._evaluate_objective(loss_results, context)

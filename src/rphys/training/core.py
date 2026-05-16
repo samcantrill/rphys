@@ -42,6 +42,10 @@ class Trainer:
     __slots__ = ("engine",)
 
     def __init__(self, *, engine: TrainingEngine | None = None) -> None:
+        if engine is None:
+            from .backend import NativeTrainingEngine
+
+            engine = NativeTrainingEngine()
         if engine is not None:
             _validate_engine(engine)
         self.engine = engine
@@ -69,7 +73,7 @@ class Trainer:
     def _engine(self) -> TrainingEngine:
         if self.engine is None:
             raise RemotePhysTrainingError(
-                "Trainer requires an explicit engine until NativeTrainingEngine is available.",
+                "Trainer requires a selected training engine.",
                 owner="Trainer",
                 field="engine",
                 expected="TrainingEngine",

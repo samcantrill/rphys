@@ -5,7 +5,7 @@ import pytest
 from rphys.data import Batch
 from rphys.errors import RemotePhysTrainingError
 from rphys.learning import LoopContext, StepOutput
-from rphys.training import Trainer, TrainingPlan, TrainingResult
+from rphys.training import NativeTrainingEngine, Trainer, TrainingPlan, TrainingResult
 
 
 class FakeLearner:
@@ -49,14 +49,12 @@ def test_trainer_delegates_each_mode_to_explicit_engine() -> None:
     assert all(call[2] is learner for call in engine.calls)
 
 
-def test_trainer_has_no_placeholder_default_engine_in_phase_3() -> None:
+def test_trainer_defaults_to_native_training_engine_after_phase_4() -> None:
     trainer = Trainer()
 
-    with pytest.raises(RemotePhysTrainingError) as exc_info:
-        trainer.fit(TrainingPlan(), FakeLearner())
-
-    assert exc_info.value.context["field"] == "engine"
-    assert exc_info.value.context["actual"] == "None"
+    assert isinstance(trainer.engine, NativeTrainingEngine)
+    result = trainer.predict(TrainingPlan(predict_batches=(Batch(),)), FakeLearner())
+    assert result.mode.value == "predict"
 
 
 def test_trainer_rejects_invalid_engine_and_plan() -> None:

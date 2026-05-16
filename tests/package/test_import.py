@@ -130,6 +130,7 @@ STAGE_12_LEARNING_MODULES = {
 
 STAGE_12_TRAINING_EXPORTS = [
     "ProfileSummary",
+    "NativeTrainingEngine",
     "Trainer",
     "TrainingEngine",
     "TrainingEventSummary",
@@ -141,6 +142,7 @@ STAGE_12_TRAINING_EXPORTS = [
 ]
 
 STAGE_12_TRAINING_MODULES = {
+    "rphys.training.backend": ["NativeTrainingEngine"],
     "rphys.training.core": ["Trainer", "TrainingEngine"],
     "rphys.training.experimental": [],
     "rphys.training.plan": ["TrainingPlan"],
