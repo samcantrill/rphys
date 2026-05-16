@@ -49,6 +49,9 @@ __all__ = [
     "InvalidCollectionItemError",
     "InvalidCollectionViewPlanError",
     "InvalidCollectorResultError",
+    "InvalidLossContextError",
+    "InvalidLossResultError",
+    "InvalidLossSpecError",
     "RemotePhysAnalysisError",
     "RemotePhysCodecError",
     "RemotePhysCollateError",
@@ -252,6 +255,18 @@ class InvalidCollectionViewPlanError(RemotePhysCollectionError):
 
 class InvalidCollectorResultError(RemotePhysCollectionError):
     """Raised when collector materialization diagnostics are invalid."""
+
+
+class InvalidLossSpecError(RemotePhysLossError):
+    """Raised when a loss input, contract, or descriptor is invalid."""
+
+
+class InvalidLossContextError(RemotePhysLossError):
+    """Raised when a loss execution context or field container is invalid."""
+
+
+class InvalidLossResultError(RemotePhysLossError):
+    """Raised when a loss term or result record is invalid."""
 
 
 class InvalidResourceRefError(RemotePhysIOError):

@@ -5,7 +5,7 @@ Roadmap version: `v11`
 Planning document: `docs/roadmap/stage-11/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 3 pending
+Current phase: Phase 3 PR open
 Blockers: none
 
 ## Summary
@@ -41,7 +41,7 @@ Blockers: none
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `error-import-scaffold` | merged | `agent/stage-11-loss-objective-metric-contracts-p1-error-import-scaffold` | [#71](https://github.com/samcantrill/rphys/pull/71) | `src/rphys/errors.py`, package `__init__.py` import surfaces, package/import tests | Established broad error bases and import-boundary scaffold. | `make test-package`; focused error/import unit tests; `git diff --check` | Import/API posture |
 | 2 | `collection-view-collector-contracts` | merged | `agent/stage-11-loss-objective-metric-contracts-p2-collection-view-collector-contracts` | [#72](https://github.com/samcantrill/rphys/pull/72) | `src/rphys/collections.py`, central collection errors, collection tests/docs | Implemented reusable collection, view-plan, view, collector, and collector-result contracts. | focused collection unit/contract tests; `make test-unit`; `make test-contract`; `make test-package`; `git diff --check` | Collection/view/collector posture |
-| 3 | `loss-contracts` | pending | `agent/stage-11-loss-objective-metric-contracts-p3-loss-contracts` | pending | `src/rphys/losses/**`, loss tests/docs only | Implement loss specs, protocols, contexts, terms, results, and patch records. | focused loss unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Examples 1 and 5 |
+| 3 | `loss-contracts` | pr_open | `agent/stage-11-loss-objective-metric-contracts-p3-loss-contracts` | [#73](https://github.com/samcantrill/rphys/pull/73) | `src/rphys/losses/**`, loss tests/docs only | Implement loss specs, protocols, contexts, terms, results, and patch records. | focused loss unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Examples 1 and 5 |
 | 4 | `objective-contracts` | pending | `agent/stage-11-loss-objective-metric-contracts-p4-objective-contracts` | pending | `src/rphys/objectives/**`, objective tests/docs only | Implement objective specs, protocols, contexts, terms, and `ObjectiveResult.total`. | focused objective unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Example 2 and patch handoff |
 | 5 | `sample-collection-views` | pending | `agent/stage-11-loss-objective-metric-contracts-p5-sample-collection-views` | pending | `src/rphys/data/collections.py`, data exports, sample collection/view tests/docs | Implement `SampleCollection`, `SampleCollectionViewPlan`, `SampleCollectionView`, and sample collector behavior for pre-metric reconstruction. | focused data collection unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Example 7 |
 | 6 | `metric-observation-collections` | pending | `agent/stage-11-loss-objective-metric-contracts-p6-metric-observation-collections` | pending | `src/rphys/metrics/**` value/observation/collection/grouping records, metric tests/docs | Implement metric values, observations, observation collections, grouping specs, and metric protocol records. | focused metric unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Examples 3, 5, and 6 |
@@ -217,11 +217,11 @@ Workflow path: expanded path
 
 ## Phase 3: Loss Contracts And Patch Results
 
-Status: pending
+Status: pr_open
 Slug: `loss-contracts`
 Branch: `agent/stage-11-loss-objective-metric-contracts-p3-loss-contracts`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-11-loss-objective-metric-contracts-p3-loss-contracts`
-PR: pending
+PR: [#73](https://github.com/samcantrill/rphys/pull/73)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -286,7 +286,7 @@ Workflow path: expanded path
 
 - Implementation: pending
 - Validation: pending
-- PR: pending
+- PR: open as [#73](https://github.com/samcantrill/rphys/pull/73)
 - Merge: pending
 - Follow-up: pending
 
