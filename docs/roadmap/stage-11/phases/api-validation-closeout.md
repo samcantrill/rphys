@@ -79,7 +79,9 @@ UV_CACHE_DIR=/tmp/uv-cache make validate-pr
   `docs/roadmap/stage-11/phases/api-validation-closeout-pr-body.md` and PR
   [#78](https://github.com/samcantrill/rphys/pull/78) opened against
   `develop`.
-- Automated review: pending.
-- Merge result: pending.
-- Cleanup: pending.
+- Automated review: passed manager-local; PR target/title verified, mergeable
+  state reached, and no remote checks were reported.
+- Merge result: PR [#78](https://github.com/samcantrill/rphys/pull/78)
+  squash merged to `develop` as `4c7eb00` on 2026-05-16.
+- Cleanup: phase worktree removed and local/remote phase branches deleted.
 - Remaining blockers: none.

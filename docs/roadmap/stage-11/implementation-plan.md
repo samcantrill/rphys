@@ -1,11 +1,11 @@
 # Roadmap Stage 11 Implementation Plan
 
-Status: approved for implementation after current revised design audit
+Status: implemented
 Roadmap version: `v11`
 Planning document: `docs/roadmap/stage-11/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 8 pr_open
+Current phase: all phases merged
 Blockers: none
 
 ## Summary
@@ -46,7 +46,7 @@ Blockers: none
 | 5 | `sample-collection-views` | merged | `agent/stage-11-loss-objective-metric-contracts-p5-sample-collection-views` | [#75](https://github.com/samcantrill/rphys/pull/75) | `src/rphys/data/collections.py`, data exports, sample collection/view tests/docs | Implemented `SampleCollection`, `SampleCollectionViewPlan`, `SampleCollectionView`, and sample collector behavior for pre-metric reconstruction. | focused data collection unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Example 7 |
 | 6 | `metric-observation-collections` | merged | `agent/stage-11-loss-objective-metric-contracts-p6-metric-observation-collections` | [#76](https://github.com/samcantrill/rphys/pull/76) | `src/rphys/metrics/**` value/observation/collection/grouping records, metric tests/docs | Implemented metric values, observations, observation collections, grouping specs, and metric protocol records. | focused metric unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Examples 3, 5, and 6 |
 | 7 | `metric-observation-views-composition` | merged | `agent/stage-11-loss-objective-metric-contracts-p7-metric-observation-views-composition` | [#77](https://github.com/samcantrill/rphys/pull/77) | observation view descriptors/behavior over metric records plus cross-contract synthetic tests/docs | Implemented metric observation view behavior and synthetic composition across sample/loss/objective/metric records. | metric observation view unit/contract tests; direct synthetic integration; `make test-unit`; `make test-contract`; `make test-integration`; `make validate-pr` | Examples 1-8 |
-| 8 | `api-validation-closeout` | pr_open | `agent/stage-11-loss-objective-metric-contracts-p8-api-validation-closeout` | [#78](https://github.com/samcantrill/rphys/pull/78) | package exports, docs/docstrings, import-boundary and final validation evidence | Close public API, docs, import boundaries, and full-stage validation. | `make test-package`; `make test-unit`; `make test-contract`; relevant `make test-integration`; `make test-summary`; `uv lock --check`; `git diff --check`; `make validate-pr` when practical | Examples 1-8 |
+| 8 | `api-validation-closeout` | merged | `agent/stage-11-loss-objective-metric-contracts-p8-api-validation-closeout` | [#78](https://github.com/samcantrill/rphys/pull/78) | package exports, docs/docstrings, import-boundary and final validation evidence | Closed public API, docs, import boundaries, and full-stage validation. | `make test-package`; `make test-unit`; `make test-contract`; `make test-integration`; `make test-summary`; `uv lock --check`; `git diff --check`; `make validate-pr` | Examples 1-8 |
 
 ## Implementation Readiness Blockers
 
@@ -597,7 +597,7 @@ Workflow path: expanded path
 
 ## Phase 8: API, Docs, Import Review, And Validation Closeout
 
-Status: pr_open
+Status: merged
 Slug: `api-validation-closeout`
 Branch: `agent/stage-11-loss-objective-metric-contracts-p8-api-validation-closeout`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-11-loss-objective-metric-contracts-p8-api-validation-closeout`
@@ -656,7 +656,7 @@ Workflow path: expanded path
 - PR review budget: medium
 - Blocker-resolution budget: stop on public API inconsistency or missing validation evidence.
 - Pre-submit blocker gate: no scope expansion, no unresolved import-boundary failure, no undocumented public contract.
-- Merge record: pending
+- Merge record: completed in `docs/roadmap/stage-11/phases/api-validation-closeout-merge-record.md`
 
 ### Risks And Stop Conditions
 
@@ -669,8 +669,8 @@ Workflow path: expanded path
 - Implementation: reviewed Stage 11 API/import/doc surfaces, added direct `rphys.data` and `rphys.data.collections` import-boundary coverage, added a cross-package private-helper import guard, and refined metric observation/view docstrings without new product behavior.
 - Validation: focused package/view tests, `make test-package`, `make test-unit`, `make test-contract`, `make test-integration`, `make test-summary`, `uv lock --check`, `git diff --check`, and `make validate-pr` passed.
 - PR: [#78](https://github.com/samcantrill/rphys/pull/78)
-- Merge: pending
-- Follow-up: pending
+- Merge: squash merged to `develop` as `4c7eb00` on 2026-05-16.
+- Follow-up: Stage 11 implementation is complete; later stages own scalar/backward/distributed adapters, evaluator/report/dataframe schemas, and concrete algorithm catalogs.
 
 ## Cross-Phase Validation
 
