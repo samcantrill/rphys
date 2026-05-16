@@ -111,6 +111,7 @@ STAGE_12_LEARNING_EXPORTS = [
     "LoopMode",
     "StepOutput",
     "StepPrediction",
+    "SupervisedLearner",
     "require_backwardable_scalar",
 ]
 
@@ -124,6 +125,7 @@ STAGE_12_LEARNING_MODULES = {
         "StepPrediction",
         "require_backwardable_scalar",
     ],
+    "rphys.learning.supervised": ["SupervisedLearner"],
 }
 
 STAGE_10_METHOD_EXPORTS = [

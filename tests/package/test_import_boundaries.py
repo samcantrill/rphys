@@ -65,6 +65,7 @@ LIGHTWEIGHT_IMPORTS = [
     "rphys.learning.core",
     "rphys.learning.modes",
     "rphys.learning.output",
+    "rphys.learning.supervised",
     "rphys.losses",
     "rphys.methods",
     "rphys.methods.adapters",
@@ -89,6 +90,7 @@ STAGE_12_LEARNING_IMPORTS = [
     "rphys.learning.core",
     "rphys.learning.modes",
     "rphys.learning.output",
+    "rphys.learning.supervised",
 ]
 
 STAGE_11_IMPORTS = [

@@ -9,6 +9,7 @@ from .output import (
     StepPrediction,
     require_backwardable_scalar,
 )
+from .supervised import SupervisedLearner
 
 __all__ = [
     "BackwardableScalar",
@@ -17,5 +18,6 @@ __all__ = [
     "LoopMode",
     "StepOutput",
     "StepPrediction",
+    "SupervisedLearner",
     "require_backwardable_scalar",
 ]
