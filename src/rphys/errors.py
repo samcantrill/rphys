@@ -45,9 +45,14 @@ __all__ = [
     "InvalidOperationPipelineError",
     "OperationPipelineExecutionError",
     "UndeclaredSampleFieldMutationError",
+    "InvalidCollectionContextError",
+    "InvalidCollectionItemError",
+    "InvalidCollectionViewPlanError",
+    "InvalidCollectorResultError",
     "RemotePhysAnalysisError",
     "RemotePhysCodecError",
     "RemotePhysCollateError",
+    "RemotePhysCollectionError",
     "RemotePhysDataError",
     "RemotePhysDataSourceError",
     "RemotePhysDependencyError",
@@ -103,6 +108,10 @@ class RemotePhysSliceError(RemotePhysError):
 
 class RemotePhysCollateError(RemotePhysError):
     """Base error for batch collation and shape compatibility failures."""
+
+
+class RemotePhysCollectionError(RemotePhysError):
+    """Base error for dependency-light collection contract failures."""
 
 
 class RemotePhysOperationError(RemotePhysError):
@@ -227,6 +236,22 @@ class FieldSchemaError(RemotePhysFieldError, RemotePhysDataError):
 
 class CollatePolicyError(RemotePhysCollateError):
     """Raised when runtime collation cannot apply the requested policy."""
+
+
+class InvalidCollectionItemError(RemotePhysCollectionError):
+    """Raised when a collection item record is invalid."""
+
+
+class InvalidCollectionContextError(RemotePhysCollectionError):
+    """Raised when collection-level metadata or provenance is invalid."""
+
+
+class InvalidCollectionViewPlanError(RemotePhysCollectionError):
+    """Raised when an inspectable collection view descriptor is invalid."""
+
+
+class InvalidCollectorResultError(RemotePhysCollectionError):
+    """Raised when collector materialization diagnostics are invalid."""
 
 
 class InvalidResourceRefError(RemotePhysIOError):

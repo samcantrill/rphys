@@ -8,6 +8,7 @@ BROAD_ERROR_NAMES = [
     "RemotePhysAnalysisError",
     "RemotePhysCodecError",
     "RemotePhysCollateError",
+    "RemotePhysCollectionError",
     "RemotePhysDataError",
     "RemotePhysDataSourceError",
     "RemotePhysDependencyError",
@@ -89,6 +90,13 @@ STAGE_6_OPERATION_ERROR_NAMES = [
     "UndeclaredSampleFieldMutationError",
 ]
 
+STAGE_11_COLLECTION_ERROR_NAMES = [
+    "InvalidCollectionContextError",
+    "InvalidCollectionItemError",
+    "InvalidCollectionViewPlanError",
+    "InvalidCollectorResultError",
+]
+
 
 def test_errors_public_surface_lists_only_implemented_error_names() -> None:
     assert errors.__all__ == [
@@ -100,6 +108,7 @@ def test_errors_public_surface_lists_only_implemented_error_names() -> None:
         *STAGE_3_IO_ERROR_NAMES,
         *STAGE_4_CODEC_ERROR_NAMES,
         *STAGE_6_OPERATION_ERROR_NAMES,
+        *STAGE_11_COLLECTION_ERROR_NAMES,
         *BROAD_ERROR_NAMES,
     ]
 
@@ -160,6 +169,11 @@ def test_stage_2_runtime_errors_are_exported() -> None:
         assert error_name in errors.__all__
 
 
+def test_stage_11_collection_errors_are_exported() -> None:
+    for error_name in STAGE_11_COLLECTION_ERROR_NAMES:
+        assert error_name in errors.__all__
+
+
 @pytest.mark.parametrize("error_name", STAGE_1_ERROR_NAMES)
 def test_stage_1_errors_preserve_base_message_and_context(error_name: str) -> None:
     error_type = getattr(errors, error_name)
@@ -194,6 +208,11 @@ def test_stage_2_errors_map_to_runtime_categories() -> None:
     assert issubclass(errors.FieldSchemaError, errors.RemotePhysFieldError)
     assert issubclass(errors.FieldSchemaError, errors.RemotePhysDataError)
     assert issubclass(errors.CollatePolicyError, errors.RemotePhysCollateError)
+
+
+def test_stage_11_collection_errors_map_to_collection_category() -> None:
+    for error_name in STAGE_11_COLLECTION_ERROR_NAMES:
+        assert issubclass(getattr(errors, error_name), errors.RemotePhysCollectionError)
 
 
 def test_stage_3_io_errors_map_to_approved_categories() -> None:
