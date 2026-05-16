@@ -2,7 +2,14 @@ from __future__ import annotations
 
 import pytest
 
-from rphys.data import Batch, BatchCollater, CollatePolicy, FieldValue, Sample
+from rphys.data import (
+    Batch,
+    BatchCollater,
+    CollatePolicy,
+    FieldValue,
+    Sample,
+    uncollate_batch,
+)
 from rphys.data.locators import FieldLocator
 from rphys.errors import CollatePolicyError
 
@@ -36,6 +43,11 @@ def test_batch_collater_contract_returns_field_locator_keyed_batch() -> None:
     assert batch.field(VIDEO).collate_policy is CollatePolicy.LIST
     assert batch.require(VIDEO) == ["frame-0", "frame-1"]
     assert batch.require(BVP) == [[0.1], [0.2]]
+    samples = uncollate_batch(batch)
+    assert isinstance(samples, tuple)
+    assert [locator for locator, _ in samples[0].field_items()] == [VIDEO, BVP]
+    assert samples[0].require(VIDEO) == "frame-0"
+    assert samples[1].require(BVP) == [0.2]
 
 
 def test_batch_collater_contract_does_not_format_model_tuples_or_dicts() -> None:

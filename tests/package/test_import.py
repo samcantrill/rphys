@@ -93,6 +93,7 @@ STAGE_2_DATA_EXPORTS = [
     "Sample",
     "SampleContract",
     "collate_samples",
+    "uncollate_batch",
 ]
 
 STAGE_2_COLLATION_EXPORTS = [
@@ -100,6 +101,7 @@ STAGE_2_COLLATION_EXPORTS = [
     "CollateContext",
     "CollatePolicy",
     "collate_samples",
+    "uncollate_batch",
 ]
 
 STAGE_4_SAMPLE_FIELD_EXPORTS = [

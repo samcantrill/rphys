@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from rphys.data import Batch, BatchCollater, CollatePolicy
+from rphys.data import Batch, BatchCollater, CollatePolicy, uncollate_batch
 from rphys.datasources.indexes import DataSourceIndex, DataSourceIndexEntry
 from rphys.datasources.sources import SampleRequest
 from rphys.datasources.torch import TorchIndexSampleDataset
@@ -30,6 +30,10 @@ def test_stage9_torch_dataset_to_batch_collater_flow_preserves_field_locators() 
     assert batch.field(VIDEO).collate_policy is CollatePolicy.LIST
     assert batch.require(VIDEO) == [("f1", "f2"), ("f1", "f2")]
     assert batch.require(BVP) == [(0.1, 0.2, 0.3), (0.1, 0.2, 0.3)]
+    round_tripped = uncollate_batch(batch)
+    assert isinstance(round_tripped, tuple)
+    assert round_tripped[0].require(VIDEO) == ("f1", "f2")
+    assert round_tripped[1].require(BVP) == (0.1, 0.2, 0.3)
 
 
 def _entry_for_item(
