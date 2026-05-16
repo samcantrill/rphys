@@ -120,7 +120,7 @@ class MetricValue:
 
 @dataclass(frozen=True, init=False, slots=True)
 class MetricObservation:
-    """Row-like metric observation with level and grouping metadata."""
+    """Row-like metric observation with level, group, and window metadata."""
 
     name: str
     value: MetricValue
@@ -189,7 +189,13 @@ class MetricObservation:
 
 @dataclass(frozen=True, init=False, slots=True)
 class MetricObservationCollection:
-    """Immutable collection of row-like metric observations."""
+    """Immutable collection of row-like metric observations.
+
+    Iteration yields observations. ``entries`` preserves collection-item
+    metadata for view provenance, grouping diagnostics, and later evaluation
+    adapters. Grouping fails loudly for missing keys unless the caller's
+    ``GroupBySpec`` explicitly allows missing metadata.
+    """
 
     _entries: tuple[CollectionItem[MetricObservation], ...]
     metadata: Mapping[str, object]

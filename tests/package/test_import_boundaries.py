@@ -81,6 +81,8 @@ LIGHTWEIGHT_IMPORTS = [
 
 STAGE_11_IMPORTS = [
     "rphys.collections",
+    "rphys.data",
+    "rphys.data.collections",
     "rphys.losses",
     "rphys.objectives",
     "rphys.metrics",
@@ -188,6 +190,35 @@ def test_stage_11_package_imports_do_not_load_forbidden_dependencies() -> None:
     )
 
     assert completed.returncode == 0, completed.stdout
+
+
+def test_stage_11_modules_do_not_import_cross_package_private_helpers() -> None:
+    source_paths = [
+        REPO_ROOT / "src" / "rphys" / "collections.py",
+        REPO_ROOT / "src" / "rphys" / "data" / "collections.py",
+        *((REPO_ROOT / "src" / "rphys" / "losses").glob("*.py")),
+        *((REPO_ROOT / "src" / "rphys" / "objectives").glob("*.py")),
+        *((REPO_ROOT / "src" / "rphys" / "metrics").glob("*.py")),
+    ]
+    private_helper_imports = [
+        "from rphys.losses._validation",
+        "import rphys.losses._validation",
+        "from rphys.objectives._validation",
+        "import rphys.objectives._validation",
+        "from rphys.metrics._validation",
+        "import rphys.metrics._validation",
+    ]
+    violations: list[str] = []
+
+    for source_path in sorted(source_paths):
+        source_text = source_path.read_text(encoding="utf-8")
+        for forbidden_import in private_helper_imports:
+            if forbidden_import in source_text:
+                violations.append(
+                    f"{source_path.relative_to(REPO_ROOT)} contains {forbidden_import!r}"
+                )
+
+    assert violations == []
 
 
 def test_package_source_does_not_import_or_call_package_level_random() -> None:
