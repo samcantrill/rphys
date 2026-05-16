@@ -5,7 +5,7 @@ Roadmap version: `v11`
 Planning document: `docs/roadmap/stage-11/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 6 PR open
+Current phase: Phase 7 pending
 Blockers: none
 
 ## Summary
@@ -44,7 +44,7 @@ Blockers: none
 | 3 | `loss-contracts` | merged | `agent/stage-11-loss-objective-metric-contracts-p3-loss-contracts` | [#73](https://github.com/samcantrill/rphys/pull/73) | `src/rphys/losses/**`, loss tests/docs only | Implemented loss specs, protocols, contexts, terms, results, and patch records. | focused loss unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Examples 1 and 5 |
 | 4 | `objective-contracts` | merged | `agent/stage-11-loss-objective-metric-contracts-p4-objective-contracts` | [#74](https://github.com/samcantrill/rphys/pull/74) | `src/rphys/objectives/**`, objective tests/docs only | Implemented objective specs, protocols, contexts, terms, and `ObjectiveResult.total`. | focused objective unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Example 2 and patch handoff |
 | 5 | `sample-collection-views` | merged | `agent/stage-11-loss-objective-metric-contracts-p5-sample-collection-views` | [#75](https://github.com/samcantrill/rphys/pull/75) | `src/rphys/data/collections.py`, data exports, sample collection/view tests/docs | Implemented `SampleCollection`, `SampleCollectionViewPlan`, `SampleCollectionView`, and sample collector behavior for pre-metric reconstruction. | focused data collection unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Example 7 |
-| 6 | `metric-observation-collections` | pr_open | `agent/stage-11-loss-objective-metric-contracts-p6-metric-observation-collections` | [#76](https://github.com/samcantrill/rphys/pull/76) | `src/rphys/metrics/**` value/observation/collection/grouping records, metric tests/docs | Implement metric values, observations, observation collections, grouping specs, and metric protocol records. | focused metric unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Examples 3, 5, and 6 |
+| 6 | `metric-observation-collections` | merged | `agent/stage-11-loss-objective-metric-contracts-p6-metric-observation-collections` | [#76](https://github.com/samcantrill/rphys/pull/76) | `src/rphys/metrics/**` value/observation/collection/grouping records, metric tests/docs | Implemented metric values, observations, observation collections, grouping specs, and metric protocol records. | focused metric unit/contract tests; `make test-unit`; `make test-contract`; `make test-package` | Examples 3, 5, and 6 |
 | 7 | `metric-observation-views-composition` | pending | `agent/stage-11-loss-objective-metric-contracts-p7-metric-observation-views-composition` | pending | observation view descriptors/behavior over metric records plus cross-contract synthetic tests/docs | Implement metric observation view behavior and synthetic composition across sample/loss/objective/metric records. | metric observation view unit/contract tests; synthetic integration if feasible; `make test-unit`; `make test-contract`; relevant `make test-integration` | Examples 1-8 |
 | 8 | `api-validation-closeout` | pending | `agent/stage-11-loss-objective-metric-contracts-p8-api-validation-closeout` | pending | package exports, docs/docstrings, import-boundary and final validation evidence | Close public API, docs, import boundaries, and full-stage validation. | `make test-package`; `make test-unit`; `make test-contract`; relevant `make test-integration`; `make test-summary`; `uv lock --check`; `git diff --check`; `make validate-pr` when practical | Examples 1-8 |
 
@@ -443,7 +443,7 @@ Workflow path: expanded path
 
 ## Phase 6: Metric Values, Observations, Collections, And Grouping
 
-Status: pr_open
+Status: merged
 Slug: `metric-observation-collections`
 Branch: `agent/stage-11-loss-objective-metric-contracts-p6-metric-observation-collections`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-11-loss-objective-metric-contracts-p6-metric-observation-collections`
@@ -494,13 +494,13 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed in `docs/roadmap/stage-11/phases/metric-observation-collections.md`
 - Planning/refinement budget: medium
 - Implementation/refinement budget: medium
 - PR review budget: medium
 - Blocker-resolution budget: stop on report/dataframe/schema creep.
 - Pre-submit blocker gate: no public `MetricResultRow` or `MetricResultTable`, no datasource/evaluator/report imports, no hidden metric state.
-- Merge record: pending
+- Merge record: completed in `docs/roadmap/stage-11/phases/metric-observation-collections-merge-record.md`
 
 ### Risks And Stop Conditions
 
@@ -510,11 +510,11 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: open as [#76](https://github.com/samcantrill/rphys/pull/76)
-- Merge: pending
-- Follow-up: pending
+- Implementation: added metric specs/contracts/context/protocol, detached values, observations, observation collections, grouping, results, package exports, and typed metric validation errors.
+- Validation: focused metric/error/package tests; `UV_CACHE_DIR=/tmp/uv-cache make test-unit`; `UV_CACHE_DIR=/tmp/uv-cache make test-contract`; `UV_CACHE_DIR=/tmp/uv-cache make test-package`; `git diff --check`.
+- PR: [#76](https://github.com/samcantrill/rphys/pull/76)
+- Merge: squash merged to `develop` as `5fa1164` on 2026-05-16.
+- Follow-up: Stage 13 owns report/dataframe schemas and first-class identity fields.
 
 ## Phase 7: Metric Observation Views And Synthetic Composition
 
