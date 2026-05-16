@@ -5,7 +5,7 @@ Roadmap version: `v12`
 Planning document: `docs/roadmap/stage-12/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: pending Phase 6 implementation
+Current phase: complete
 Blockers: none
 
 ## Summary
@@ -43,7 +43,7 @@ Blockers: none
 | 3 | `plan-result-facade` | merged | `agent/stage-12-learning-training-p3-plan-result-facade` | [#81](https://github.com/samcantrill/rphys/pull/81) | `src/rphys/training/plan.py`, `results.py`, `core.py`, `experimental.py`, training unit/contract tests | Add neutral plan/result records and facade-to-engine delegation. | `make test-unit`, `make test-contract`, `make test-package`, `git diff --check` | Fake engine delegation; plan neutrality; result summaries |
 | 4 | `native-engine` | merged | `agent/stage-12-learning-training-p4-native-engine` | [#82](https://github.com/samcantrill/rphys/pull/82) | `src/rphys/training/backend.py`, native engine internals, native unit/integration tests | Implement dependency-light reference loop and backend mechanics. | `make test-unit`, `make test-integration`, `make test-contract`, `git diff --check` | Native supervised fit/validate/test/predict smoke run |
 | 5 | `observability-external-pressure` | merged | `agent/stage-12-learning-training-p5-observability-external-pressure` | [#83](https://github.com/samcantrill/rphys/pull/83) | `src/rphys/training/events.py`, `profiling.py`, fake external test support, observability contracts | Add events/profiles and fake external-engine pressure tests. | `make test-unit`, `make test-contract`, `make test-package`, `git diff --check` | Fake external engine; duplicate trainable-owner guardrail; JAX pressure note |
-| 6 | `docs-examples-final-validation` | pending | `agent/stage-12-learning-training-p6-docs-examples-final-validation` | pending | Stage 12 docs/docstrings/examples, final validation evidence, package exports | Finish docs/examples, optional `run_train` polish, future-compatibility notes, and full validation. | `make test-package`, `make test-unit`, `make test-contract`, `make test-integration`, `make test-summary`, `uv lock --check`, `git diff --check`, `make validate-pr` | End-to-end native example; fake external example; future batch-pipeline documentation only |
+| 6 | `docs-examples-final-validation` | merged | `agent/stage-12-learning-training-p6-docs-examples-final-validation` | [#84](https://github.com/samcantrill/rphys/pull/84) | Stage 12 docs/docstrings/examples, final validation evidence, package exports | Finish docs/examples, optional `run_train` polish, future-compatibility notes, and full validation. | `make test-package`, `make test-unit`, `make test-contract`, `make test-integration`, `make test-summary`, `uv lock --check`, `git diff --check`, `make validate-pr` | End-to-end native example; fake external example; future batch-pipeline documentation only |
 
 ## Implementation Readiness Blockers
 
@@ -414,11 +414,11 @@ Workflow path: `.codex/workflows/roadmap-version-implementation.md`
 
 ## Phase 6: Docs, Examples, Experimental Entrypoint, And Final Validation
 
-Status: pending
+Status: merged
 Slug: `docs-examples-final-validation`
 Branch: `agent/stage-12-learning-training-p6-docs-examples-final-validation`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-12-learning-training-p6-docs-examples-final-validation`
-PR: pending
+PR: [#84](https://github.com/samcantrill/rphys/pull/84)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: `.codex/workflows/roadmap-version-implementation.md`
@@ -466,13 +466,13 @@ Workflow path: `.codex/workflows/roadmap-version-implementation.md`
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed inline by manager on 2026-05-16
 - Planning/refinement budget: one docs/final-validation pass.
 - Implementation/refinement budget: one documentation/polish pass plus final validation fixes.
 - PR review budget: one final review focused on public docs, deferrals, and validation evidence.
 - Blocker-resolution budget: stop if docs expose unimplemented features or tests reveal a cross-phase contract mismatch.
 - Pre-submit blocker gate: full relevant validation completed or explicitly recorded with risk.
-- Merge record: pending
+- Merge record: PR [#84](https://github.com/samcantrill/rphys/pull/84) merged to `develop` on 2026-05-16 as `8e434e6` (`docs: finish stage 12 learning training contracts`).
 
 ### Risks And Stop Conditions
 
@@ -482,15 +482,16 @@ Workflow path: `.codex/workflows/roadmap-version-implementation.md`
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: completed Stage 12 examples, README/glossary updates, experimental `run_train` thin helper, public export/package tests, and final validation evidence.
+- Validation: passed `make test-package`, `make test-unit`, `make test-contract`, `make test-integration`, `make test-summary`, `uv lock --check`, `git diff --check`, and `make validate-pr` in `/home/samcantrill/work/rphys-worktrees/stage-12-learning-training-p6-docs-examples-final-validation`.
+- PR: [#84](https://github.com/samcantrill/rphys/pull/84)
+- Merge: merged to `develop` on 2026-05-16 as `8e434e6`.
+- Follow-up: real Lightning/JAX/torch/logger adapters, post-prediction batch pipelines, prediction export/materialization, evaluation/report generation, and deep profiling remain deferred to future roadmap stages.
 
 ## Cross-Phase Validation
 
 - Full relevant test command: `make test-package && make test-unit && make test-contract && make test-integration && make test-summary && uv lock --check && git diff --check && make validate-pr`
+- Final validation evidence: Phase 6 worktree passed `make test-package` (64 passed), `make test-unit` (753 passed), `make test-contract` (153 passed), `make test-integration` (24 passed), `make test-summary`, `uv lock --check`, `git diff --check`, and `make validate-pr` on 2026-05-16. `make test-summary` and `make validate-pr` wrote `build/test-summary.md`; e2e and acceptance suites were not present.
 - Docs/template checks: verify docs/docstrings/examples match the approved facade/engine boundary, assembled-object plan, primitive result, fake external-only Stage 12 scope, and FR-12-9 documentation-only future compatibility.
 - Scientific/workflow contract checks: no datasource scanning, dataloader construction, workflow runtime, config parsing, artifact/checkpoint writer, prediction export/materialization, learner-owned optimizer, Stage 11 stand-in, root-level placeholder export, broad registry, or heavy framework import appears.
 - Example/demo checks: native supervised smoke flow, fake external delegation, duplicate trainable-owner guardrail, prediction pass-through, and future post-prediction batch-pipeline docs-only note.
