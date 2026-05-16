@@ -288,7 +288,7 @@ class InvalidObjectiveResultError(RemotePhysObjectiveError):
 
 
 class InvalidMetricSpecError(RemotePhysMetricError):
-    """Raised when a metric contract or grouping descriptor is invalid."""
+    """Raised when a metric contract, grouping, or view descriptor is invalid."""
 
 
 class InvalidMetricContextError(RemotePhysMetricError):
@@ -296,7 +296,7 @@ class InvalidMetricContextError(RemotePhysMetricError):
 
 
 class InvalidMetricResultError(RemotePhysMetricError):
-    """Raised when a metric value, observation, collection, or result is invalid."""
+    """Raised when metric values, observations, views, or results are invalid."""
 
 
 class InvalidResourceRefError(RemotePhysIOError):

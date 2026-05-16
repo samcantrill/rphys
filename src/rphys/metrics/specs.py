@@ -1,4 +1,4 @@
-"""Metric descriptors, contracts, and grouping specs."""
+"""Metric descriptors, contracts, grouping specs, and observation view plans."""
 
 from __future__ import annotations
 
