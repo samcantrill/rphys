@@ -5,7 +5,7 @@ Roadmap version: `v12`
 Planning document: `docs/roadmap/stage-12/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: pending Phase 2 implementation
+Current phase: pending Phase 3 implementation
 Blockers: none
 
 ## Summary
@@ -39,7 +39,7 @@ Blockers: none
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `learning-contract` | merged | `agent/stage-12-learning-training-p1-learning-contract` | [#79](https://github.com/samcantrill/rphys/pull/79) | `src/rphys/learning`, package import tests, learning unit/contract tests | Establish learning modes, context, step output, scalar boundary, and structural learner contract. | `make test-package`, `make test-unit`, `make test-contract`, `git diff --check` | Prediction pass-through contract foundation |
-| 2 | `supervised-learner` | pending | `agent/stage-12-learning-training-p2-supervised-learner` | pending | `src/rphys/learning/supervised.py`, learning contract/integration tests, test support fakes | Compose Stage 10 methods with Stage 11 objective/metric contracts. | `make test-unit`, `make test-contract`, `make test-integration`, `git diff --check` | Native supervised smoke learner slice; prediction-only mode |
+| 2 | `supervised-learner` | merged | `agent/stage-12-learning-training-p2-supervised-learner` | [#80](https://github.com/samcantrill/rphys/pull/80) | `src/rphys/learning/supervised.py`, learning contract/integration tests, test support fakes | Compose Stage 10 methods with Stage 11 objective/metric contracts. | `make test-unit`, `make test-contract`, `make test-integration`, `git diff --check` | Native supervised smoke learner slice; prediction-only mode |
 | 3 | `plan-result-facade` | pending | `agent/stage-12-learning-training-p3-plan-result-facade` | pending | `src/rphys/training/plan.py`, `results.py`, `core.py`, `experimental.py`, training unit/contract tests | Add neutral plan/result records and facade-to-engine delegation. | `make test-unit`, `make test-contract`, `make test-package`, `git diff --check` | Fake engine delegation; plan neutrality; result summaries |
 | 4 | `native-engine` | pending | `agent/stage-12-learning-training-p4-native-engine` | pending | `src/rphys/training/backend.py`, native engine internals, native unit/integration tests | Implement dependency-light reference loop and backend mechanics. | `make test-unit`, `make test-integration`, `make test-contract`, `git diff --check` | Native supervised fit/validate/test/predict smoke run |
 | 5 | `observability-external-pressure` | pending | `agent/stage-12-learning-training-p5-observability-external-pressure` | pending | `src/rphys/training/events.py`, `profiling.py`, fake external test support, observability contracts | Add events/profiles and fake external-engine pressure tests. | `make test-unit`, `make test-contract`, `make test-package`, `git diff --check` | Fake external engine; duplicate trainable-owner guardrail; JAX pressure note |
@@ -125,11 +125,11 @@ Workflow path: `.codex/workflows/roadmap-version-implementation.md`
 
 ## Phase 2: Supervised Learner Composition
 
-Status: pending
+Status: merged
 Slug: `supervised-learner`
 Branch: `agent/stage-12-learning-training-p2-supervised-learner`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-12-learning-training-p2-supervised-learner`
-PR: pending
+PR: [#80](https://github.com/samcantrill/rphys/pull/80)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: `.codex/workflows/roadmap-version-implementation.md`
@@ -173,13 +173,13 @@ Workflow path: `.codex/workflows/roadmap-version-implementation.md`
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed inline by manager on 2026-05-16
 - Planning/refinement budget: one focused design pass for Stage 10/11 call signatures before editing.
 - Implementation/refinement budget: one implementation pass plus targeted contract/integration fixes.
 - PR review budget: one reviewer pass focused on scientific step semantics and no hidden mutation/export.
 - Blocker-resolution budget: stop if Stage 11 public objective/metric contracts cannot be composed without inventing public stand-ins.
 - Pre-submit blocker gate: no pipeline hook, no trainer import, no optimizer/checkpoint/export behavior.
-- Merge record: pending
+- Merge record: PR [#80](https://github.com/samcantrill/rphys/pull/80) merged to `develop` on 2026-05-16 as `745f78a` (`feat: add stage 12 supervised learner`).
 
 ### Risks And Stop Conditions
 
@@ -189,11 +189,11 @@ Workflow path: `.codex/workflows/roadmap-version-implementation.md`
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: completed `SupervisedLearner` composition over Stage 10 `MethodOutput` and Stage 11 loss/objective/metric contracts with local working-batch prediction application and prediction pass-through.
+- Validation: passed `make test-unit`, `make test-contract`, `make test-integration`, `git diff --check`, and extra `make test-package` in `/home/samcantrill/work/rphys-worktrees/stage-12-learning-training-p2-supervised-learner`.
+- PR: [#80](https://github.com/samcantrill/rphys/pull/80)
+- Merge: merged to `develop` on 2026-05-16 as `745f78a`.
+- Follow-up: Phase 3 should establish neutral plan/result/facade records without placeholder default engine behavior or registries.
 
 ## Phase 3: Plan, Result, Facade, And Delegated Engine Boundary
 
