@@ -60,6 +60,7 @@ LIGHTWEIGHT_IMPORTS = [
     "rphys.learning",
     "rphys.losses",
     "rphys.methods",
+    "rphys.methods.adapters",
     "rphys.methods.context",
     "rphys.methods.core",
     "rphys.methods.output",
@@ -424,6 +425,7 @@ def test_stage_10_method_imports_do_not_load_training_export_or_heavy_modules() 
         import sys
 
         importlib.import_module("rphys.methods")
+        importlib.import_module("rphys.methods.adapters")
         importlib.import_module("rphys.methods.context")
         importlib.import_module("rphys.methods.core")
         importlib.import_module("rphys.methods.output")

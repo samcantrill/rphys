@@ -23,14 +23,25 @@ PLANNED_PACKAGE_NAMES = [
 
 STAGE_10_METHOD_EXPORTS = [
     "Method",
+    "MethodInputAdapter",
+    "MethodInputSpec",
     "MethodOutput",
+    "MethodOutputAdapter",
+    "MethodOutputSpec",
     "PredictionContext",
+    "apply_method_output",
 ]
 
 STAGE_10_METHOD_MODULES = {
+    "rphys.methods.adapters": [
+        "MethodInputAdapter",
+        "MethodInputSpec",
+        "MethodOutputAdapter",
+        "MethodOutputSpec",
+    ],
     "rphys.methods.context": ["PredictionContext"],
     "rphys.methods.core": ["Method"],
-    "rphys.methods.output": ["MethodOutput"],
+    "rphys.methods.output": ["MethodOutput", "apply_method_output"],
 }
 
 STAGE_10_MODEL_EXPORTS = ["Model"]

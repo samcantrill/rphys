@@ -4,15 +4,17 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from typing import Literal
 from types import MappingProxyType
 
+from rphys.data import Batch
 from rphys.data.fields import FieldValue
 from rphys.data.locators import FieldLocator
 from rphys.errors import RemotePhysMethodError
 
 from ._records import freeze_primitive_mapping
 
-__all__ = ["MethodOutput"]
+__all__ = ["MethodOutput", "apply_method_output"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,6 +50,51 @@ class MethodOutput:
             "provenance",
             freeze_primitive_mapping(self.provenance, field="provenance"),
         )
+
+
+def apply_method_output(
+    output: MethodOutput,
+    batch: Batch,
+    *,
+    copy_batch: bool = True,
+    on_conflict: Literal["error", "replace"] = "error",
+) -> Batch:
+    """Apply a ``MethodOutput`` patch to a ``Batch`` explicitly.
+
+    By default the input batch is shallow-copied and existing fields cause an
+    error. Callers that intentionally want mutation must pass
+    ``copy_batch=False``. Callers that intentionally want replacement must pass
+    ``on_conflict="replace"``. The helper does not export, score, train,
+    checkpoint, or otherwise interpret fields.
+    """
+
+    if not isinstance(output, MethodOutput):
+        raise RemotePhysMethodError(
+            "apply_method_output requires a MethodOutput.",
+            actual=type(output).__name__,
+        )
+    if not isinstance(batch, Batch):
+        raise RemotePhysMethodError(
+            "apply_method_output requires a Batch.",
+            actual=type(batch).__name__,
+        )
+    if on_conflict not in {"error", "replace"}:
+        raise RemotePhysMethodError(
+            "Unsupported MethodOutput conflict policy.",
+            policy=on_conflict,
+            expected=["error", "replace"],
+        )
+
+    target = batch.shallow_copy() if copy_batch else batch
+    for locator, field_value in output.fields.items():
+        if target.has(locator) and on_conflict == "error":
+            raise RemotePhysMethodError(
+                "MethodOutput field conflicts with an existing batch field.",
+                locator=str(locator),
+                policy=on_conflict,
+            )
+        target.set_field(locator, field_value)
+    return target
 
 
 def _freeze_fields(
