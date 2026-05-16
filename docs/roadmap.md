@@ -1286,9 +1286,10 @@ adapters do not invoke export code.
 Goal:
 
 ```text
-Bridge DataSourceIndex to framework iteration without turning adapters into
-datasource discovery, split construction, cache orchestration, export, or model
-formatting layers.
+Bridge DataSourceIndex, cache-backed samples, derived datasources, and prepared
+materialized data to framework iteration through one SampleSource contract,
+without turning adapters into datasource discovery, split construction, hidden
+preprocessing, export, or model formatting layers.
 ```
 
 Primary packages:
@@ -1302,6 +1303,13 @@ rphys.datasources.cache
 Key interfaces:
 
 ```text
+SampleRequest
+SampleSource
+IndexSampleSource
+CachedSampleSource
+PreparedSampleSource
+DerivedIndexSampleSource
+TorchSampleSourceDataset
 TorchIndexSampleDataset
 BatchCollater
 TorchDataLoaderPlan
@@ -1315,6 +1323,9 @@ CacheEntry
 CacheManifest
 CacheContext
 DistributedCacheCoordinator
+PreparedDataManifest
+OptimizedStorageBackend
+OptimizedStorageFormat
 OptimizedDataPlan
 MaterializationPlan
 MaterializationManifest
@@ -1334,15 +1345,53 @@ DataPathBenchmark
 Adapter rules:
 
 ```text
-TorchIndexSampleDataset owns a DataSourceIndex, SampleBuilder, optional
-SampleOperationPipelines, usage/split metadata, and WorkerContextFactory.
-__getitem__ resolves an integer position to an IndexItem, derives context,
-builds a Sample, applies optional pipelines, and returns a Sample.
-It does not scan directories, choose splits, build indexes, export fields, or
-format model inputs.
+SampleSource is the canonical training-data boundary. Raw index loading, cache
+lookup, derived datasource loading, and prepared/materialized storage all expose
+the same position-to-Sample behavior.
+
+SampleRequest records requested FieldLocators, eager versus lazy loading, and
+any required materialized deterministic-pipeline fingerprint. A source may
+serve the request directly, prove it has an equivalent prepared representation,
+or fail loudly.
+
+SampleSource implementations provide access to the fields that were linked into
+their backing index, cache, derived index, or prepared manifest. If an item was
+constructed with video, landmarks, masks, physiological signals, metadata-backed
+features, or other role-qualified fields, the source exposes those fields by the
+same FieldLocator keys. Missing requested fields, unsupported eager/lazy modes,
+or unproven deterministic preprocessing equivalence must fail loudly.
+
+SampleSource does not convert samples into model tuples or imply scientific
+alignment beyond the underlying FieldView, schema, metadata, temporal slice, and
+operation provenance. A video field and a landmark field in the same item are
+linked as one training sample, but exact frame alignment, resampling, masking,
+coordinate frames, and temporal interpretation must remain explicit in the
+datasource or materialization contracts.
+
+IndexSampleSource wraps DataSourceIndex plus SampleBuilder. It resolves an
+integer position to an IndexItem, derives context, builds a Sample, optionally
+loads requested fields, and returns a Sample.
+
+CachedSampleSource wraps another SampleSource plus CachePolicy. It may reuse
+or write cached Sample-compatible records only when CacheKey and invalidation
+metadata prove the cached data matches the SampleRequest.
+
+PreparedSampleSource wraps a PreparedDataManifest plus an optimized storage
+reader. It returns the same FieldLocator-addressed Sample shape as
+IndexSampleSource and must prove which deterministic operations have already
+been materialized.
+
+DerivedIndexSampleSource wraps a derived DataSourceIndex produced by export
+flows and otherwise behaves like IndexSampleSource.
+
+TorchSampleSourceDataset consumes a SampleSource. TorchIndexSampleDataset may
+remain a convenience adapter for IndexSampleSource, but framework adapters do
+not scan directories, choose splits, build indexes, export fields, or format
+model inputs.
+
 __getitem__ must not become a hidden preprocessing pipeline. Expensive
-deterministic work should be moved into materialized training data when it can
-be done once and saved.
+deterministic work should be moved into prepared SampleSource implementations
+when it can be done once, saved, and proven equivalent by manifest metadata.
 
 BatchCollater delegates to generic Batch and CollatePolicy behavior. It
 preserves FieldLocator keys and per-item metadata. It does not hard-code
@@ -1361,23 +1410,53 @@ Cache invalidation keys must include the inputs that affect correctness, such
 as raw data version, preprocessing code version, configuration, schema, split
 definition, random seed when relevant, and library/tool versions where they can
 change outputs.
-Prepared training data and expensive intermediate caches should be immutable by
-version. Do not mutate a training data product in place during experimentation.
+Prepared data and expensive intermediate caches should be immutable by version.
+Do not mutate a prepared data product in place during experimentation.
 ```
 
 Optimized data layout planning:
 
 ```text
-Prepared training data is a derived, immutable, manifest-backed data product
-over approved datasource, IO, codec, cache, and operation contracts. It is not
-a generic artifact runtime, a second datasource discovery path, or a bypass
-around FieldRef, FieldView, SampleBuilder, and provenance rules.
+Prepared training data is an alternative SampleSource implementation backed by
+an immutable, manifest-backed materialized product over approved datasource,
+IO, codec, cache, and operation contracts. It is not a generic artifact
+runtime, a second datasource discovery path, or a bypass around FieldRef,
+FieldView, SampleBuilder, and provenance rules.
 
-Materialization plans describe which fields, temporal slices, deterministic
-operations, shard/chunk boundaries, compression choices, cache limits, and
-metadata are written for fast training. If an operation produces the same
-result every time and can be saved, the plan should make it eligible for
-offline materialization rather than training-loop execution.
+Milestone 9 owns the storage-format neutrality concerns that might otherwise
+pressure export design. Exported and derived datasource outputs from Milestone 8
+may become inputs to prepared training data, but training-optimized chunked
+layouts are materialization/cache concerns, not hidden behavior in SaveOp or
+datasource adapters.
+
+Prepared data contracts are storage-backend neutral. A backend may write local
+chunk files, memory-mapped arrays, columnar files, tar-like shards, remote
+object chunks, or a third-party optimized streaming format. The public rphys
+contract is SampleSource behavior plus manifest, provenance, invalidation
+inputs, access pattern, and loader behavior, not a particular file format or
+vendor library.
+
+LitData is one possible OptimizedStorageBackend candidate, not the abstraction.
+The same PreparedSampleSource contract should also admit WebDataset-style
+shards, mmap/Zarr-style arrays, Arrow/Parquet-style columnar products, local
+chunk stores, remote object chunks, or future replacement libraries. Backend
+objects must be hidden behind manifest-backed readers and writers that return
+FieldLocator-keyed Sample objects.
+
+Materialization plans describe which SampleRequest fields, temporal slices,
+deterministic operations, shard/chunk boundaries, compression choices, cache
+limits, and metadata are written for fast training. If an operation produces
+the same result every time and can be saved, the plan should make it eligible
+for a prepared SampleSource rather than training-loop execution.
+
+Prepared data should absorb expensive deterministic work that is stable across
+runs, such as decoding, deterministic cropping, resizing, deterministic
+normalization, landmark loading, mask construction, or fixed feature extraction
+when those outputs can be fingerprinted. Stochastic augmentation, train-mode
+randomness, hardware-dependent transforms, device movement, and model input
+formatting stay after SampleSource loading as explicit SampleOperation,
+BatchOperation, framework, or trainer behavior. GPU augmentation is allowed as
+a later batch/device operation, not as hidden SampleSource behavior.
 
 Materialization manifests record source identity, raw data version,
 preprocessing version, schema, dtypes, record/unit counts, field fingerprints,
@@ -1398,6 +1477,11 @@ records.
 Streaming read plans and resumable DataLoader state may be introduced only as
 explicit contracts. They must preserve deterministic split/rank/worker
 behavior and expose what was skipped, resumed, cached, or re-read.
+
+OptimizedStorageBackend is optional and import-gated. Backends implement
+materialization and read behavior behind rphys contracts; they do not define
+source identity, split semantics, cache invalidation, operation fingerprints,
+batch planning, stochastic augmentation, device movement, or trainer behavior.
 ```
 
 Batch planning rules:
@@ -1420,28 +1504,41 @@ that creates stragglers or compiler/allocator churn should be visible in
 metadata and benchmark reports.
 ```
 
-LitData is relevant prior art for this milestone:
+Optimized storage backends are relevant implementation candidates for this
+milestone:
 
 ```text
-Consider LitData-style ideas such as optimized chunked storage, raw and
-optimized streaming, local and remote sources, cache-size limits, compression,
-parallel data preparation, shared work queues, distributed-aware streaming,
-and resumable dataloader state.
+Consider backend ideas such as optimized chunked storage, raw and optimized
+streaming, local and remote sources, cache-size limits, compression, parallel
+data preparation, shared work queues, distributed-aware streaming, memory
+mapping, columnar access, resumable dataloader state, and explicit cache
+eviction.
 
-Use these ideas to shape rphys contracts and benchmarks first. Do not add a
-LitData runtime dependency or public adapter until the rphys materialization,
-cache, and loading contracts are stable enough to evaluate that integration.
+LitData is one useful prior-art backend candidate, not the abstraction. Similar
+current or future systems should be evaluatable without changing datasource,
+sample, operation, cache-key, manifest, or trainer contracts.
+
+Use backend ideas to shape rphys contracts and benchmarks first. Do not add a
+LitData or equivalent runtime dependency or public adapter until the rphys
+materialization, cache, loading, and benchmark contracts are stable enough to
+evaluate that integration.
 ```
 
-Implementation order for cache:
+Implementation order for sample sources, cache, and prepared data:
 
 ```text
-1. Deterministic CacheKey and CachePolicy.
-2. Local CacheStore with atomic temp-write then commit/rename semantics.
-3. Manifest metadata, hit/miss reporting, and invalidation tests.
-4. Format-agnostic materialization and shard/chunk manifest contracts.
-5. Streaming/resumable loader state contracts.
-6. Distributed coordination only after local semantics are stable.
+1. SampleRequest, SampleSource, and IndexSampleSource over DataSourceIndex plus
+   SampleBuilder.
+2. TorchSampleSourceDataset and FieldLocator-aware collation over SampleSource.
+3. Deterministic CacheKey and CachePolicy.
+4. CachedSampleSource with local CacheStore using atomic temp-write then
+   commit/rename semantics.
+5. PreparedDataManifest and PreparedSampleSource for deterministic
+   materialization equivalence.
+6. Format-agnostic materialization and shard/chunk manifest contracts.
+7. Optional optimized-storage backend adapters behind PreparedSampleSource.
+8. Streaming/resumable loader state contracts.
+9. Distributed coordination only after local semantics are stable.
 ```
 
 DDP-safe coordination must eventually support rank/world/worker context,
@@ -1453,20 +1550,25 @@ per-rank local cache.
 Definition of done:
 
 ```text
-Torch-compatible data loading consumes any DataSourceIndex implementation.
+Torch-compatible data loading consumes SampleSource. IndexSampleSource covers
+DataSourceIndex plus SampleBuilder without changing downstream collation or
+training code.
 Single-worker and multi-worker context derivation is deterministic where
 practical.
 Collation remains FieldLocator-aware.
 Cache primitives are deterministic, provenance-aware, invalidation-aware, and
 atomic for local stores.
+CachedSampleSource and PreparedSampleSource return the same FieldLocator-keyed
+Sample shape as IndexSampleSource.
 Optimized data layout contracts can represent shard/chunk manifests,
-compression metadata, cache limits, resumable loader state, and benchmark
-summaries without committing to a concrete storage format.
-Prepared training data manifests cover source/preprocessing versions, schema,
+compression metadata, backend identity, cache limits, resumable loader state,
+and benchmark summaries without committing to a concrete storage format.
+PreparedDataManifest covers source/preprocessing versions, schema,
 dtypes, counts, splits, checksums, offsets/lengths, cost metadata, and runtime
 assumptions.
 Batch planning can use precomputed layout and cost metadata without inspecting
 raw content at runtime.
+Optional optimized-storage backend adapters remain replaceable and import-gated.
 DDP cache behavior is not labeled stable until rank-safe coordination tests
 exist.
 ```
@@ -1883,7 +1985,7 @@ operation deterministic context and stochastic replay
 SaveOp-derived datasource round trip
 Method/Loss/Objective/Metric/Learner/Trainer boundaries
 cache key determinism and invalidation
-prepared training data manifests and batch-cost metadata
+SampleSource, PreparedDataManifest, and batch-cost metadata
 debug/smoke/signal tiers using the same loader path
 public import and dependency boundaries
 ```
@@ -2004,10 +2106,16 @@ training uses. Small debug or smoke runs may scale down record counts, shards,
 or steps, but they should not switch to a simplified data path that hides
 throughput or shape problems.
 
+Data-path benchmarks should compare backend-neutral plans, not only one storage
+library. Candidate optimized-storage backends, including LitData-style systems,
+should be evaluated on the same manifest, access-pattern, cache, loader-state,
+and provenance contracts.
+
 LitData remains prior art, not a dependency in this milestone. Evaluate its
-ideas for chunked optimized storage, raw and optimized streaming, cache-size
-limits, compression, parallel data preparation, shared queues,
-distributed-aware streaming, and resumable dataloader state before choosing any
+ideas, and comparable ideas from current or future systems, for chunked
+optimized storage, raw and optimized streaming, cache-size limits, compression,
+parallel data preparation, shared queues, distributed-aware streaming, memory
+mapping, columnar access, and resumable dataloader state before choosing any
 concrete rphys storage format or optional adapter.
 ```
 
@@ -2177,7 +2285,8 @@ public testing-helper package
 advanced cache backends
 broad optimizer/scheduler factory library
 concrete optimized training-data storage format
-optional LitData adapter or dependency
+optional optimized-storage backend adapters, including any LitData adapter or
+dependency
 advanced framework-specific distributed, accelerator, and logger adapters beyond
 the native profiling/event contracts and first-class Lightning event mapping
 project configuration systems, workflow engines, and CLIs
@@ -2223,6 +2332,11 @@ add implicit caches
 materialize optimized training data without shard/chunk manifests, source
 fingerprints, operation fingerprints, split/group metadata, and invalidation
 inputs
+bind prepared training data semantics to one optimized-storage backend, vendor
+library, or file format
+let an optimized-storage backend define source identity, split behavior,
+operation fingerprints, stochastic augmentation, device movement, or trainer
+behavior
 keep Python-heavy per-sample transforms in __getitem__ when an equivalent
 BatchOperation can preserve semantics, replay, provenance, and diagnostics
 use a separate simplified data path for debug or smoke tiers that hides
@@ -2255,8 +2369,8 @@ Base Method, Loss, Objective, Metric, Learner, SupervisedLearner, and Trainer
 contracts have tests.
 Trainer profiling/event contracts and optional Lightning event mapping are
 documented as provisional extension points.
-Prepared training data manifest and batch-planning contracts are documented as
-provisional extension points.
+SampleSource, PreparedDataManifest, and batch-planning contracts are documented
+as provisional extension points.
 Dependency-boundary and public API checks pass.
 ```
 
