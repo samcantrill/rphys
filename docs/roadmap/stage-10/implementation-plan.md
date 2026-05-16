@@ -136,8 +136,8 @@ Workflow path: expanded path
 - Merge command: `gh pr merge 66 --squash --delete-branch`
 - Merge result: merged; GitHub reported no status checks for the branch, so merge relied on the completed local validation gate.
 - Merge commit: `739960887b0aab181fb8347ed443f03fcc2887e9`
-- Branch cleanup: remote branch deleted by GitHub; local branch cleanup pending worktree removal.
-- Worktree cleanup: pending after metadata commit.
+- Branch cleanup: completed after metadata commit; remote and local phase branches deleted.
+- Worktree cleanup: completed after metadata commit.
 - Behavior implemented: default LIST-collated `Batch` containers can uncollate to `tuple[Sample, ...]` while preserving field locators, payload order, schemas, collate policies, and sparse metadata presence.
 - Tests and validation: focused unit/contract/integration checks passed; `make validate-pr` passed; `make test-summary` reported package 41 passed, unit 628 passed, contract 118 passed, integration 18 passed, and no e2e/acceptance suites present.
 - Documentation: phase plan and PR body artifacts added under `docs/roadmap/stage-10/phases/`; public docstrings describe tuple return and fail-loud LIST-only behavior.
@@ -225,8 +225,8 @@ Workflow path: expanded path
 - Merge command: `gh pr merge 67 --squash`
 - Merge result: merged; GitHub reported no status checks for the branch, so merge relied on the completed local validation gate.
 - Merge commit: `512e0c6a5dd66954d2f58f38ed8d9a4929e2b219`
-- Branch cleanup: pending after metadata commit.
-- Worktree cleanup: pending after metadata commit.
+- Branch cleanup: completed after metadata commit; remote and local phase branches deleted.
+- Worktree cleanup: completed after metadata commit.
 - Behavior implemented: methods expose primitive `PredictionContext`, patch-like `MethodOutput`, and structural `Method`; models expose a structural generic callable `Model` without importing `Batch`.
 - Tests and validation: focused unit and contract checks passed; `make validate-pr` passed; `make test-summary` reported package 47 passed, unit 637 passed, contract 123 passed, integration 18 passed, and no e2e/acceptance suites present.
 - Documentation: phase plan and PR body artifacts added under `docs/roadmap/stage-10/phases/`; public docstrings describe patch output, primitive context, structural protocols, and out-of-scope trainer/export/loss/device behavior.
@@ -316,8 +316,8 @@ Workflow path: expanded path
 - Merge command: `gh pr merge 68 --squash`
 - Merge result: merged; GitHub reported no status checks for the branch, so merge relied on the completed local validation gate.
 - Merge commit: `1766df6f68a1cf63f88e0d11e337f8370ad666fa`
-- Branch cleanup: pending after metadata commit.
-- Worktree cleanup: pending after metadata commit.
+- Branch cleanup: completed after metadata commit; remote and local phase branches deleted.
+- Worktree cleanup: completed after metadata commit.
 - Behavior implemented: adapter specs normalize field locators and validate names/roles/type/schema; input adapters extract named payloads from `Batch`; output adapters map named results to `MethodOutput`; explicit patch application copies by default and has explicit conflict policy.
 - Tests and validation: focused adapter/output/contract/integration checks passed; `make validate-pr` passed; `make test-summary` reported package 47 passed, unit 649 passed, contract 124 passed, integration 19 passed, and no e2e/acceptance suites present.
 - Documentation: phase plan and PR body artifacts added under `docs/roadmap/stage-10/phases/`; public docstrings describe selector parsing time, output patch semantics, and explicit apply behavior.
@@ -406,8 +406,8 @@ Workflow path: expanded path
 - Merge command: `gh pr merge 69 --squash`
 - Merge result: merged; GitHub reported no status checks for the branch, so merge relied on the completed local validation gate.
 - Merge commit: `f5b6451346744f6de18faa54c280fd6b62d3f98a`
-- Branch cleanup: pending after metadata commit.
-- Worktree cleanup: pending after metadata commit.
+- Branch cleanup: completed after metadata commit; remote and local phase branches deleted.
+- Worktree cleanup: completed after metadata commit.
 - Behavior implemented: state/load/parameter records expose named backend-neutral values and handles with primitive metadata/provenance and strict-load diagnostics; stateful/trainable protocols remain structural.
 - Tests and validation: focused state/trainable/method/package checks passed; `make validate-pr` passed; `make test-summary` reported package 47 passed, unit 654 passed, contract 128 passed, integration 19 passed, and no e2e/acceptance suites present.
 - Documentation: phase plan and PR body artifacts added under `docs/roadmap/stage-10/phases/`; public docstrings describe backend-neutral state/parameter semantics and deferred optimizer/checkpoint/device behavior.
@@ -500,8 +500,8 @@ Workflow path: expanded path
 - Merge command: `gh pr merge 70 --squash --delete-branch`
 - Merge result: merged; GitHub reported no status checks for the branch, so merge relied on the completed local validation gate.
 - Merge commit: `c591808fef3cdc9d6ceb46c65f2b6ca3f97673a9`
-- Branch cleanup: remote branch deletion requested by merge command; local branch cleanup pending worktree removal.
-- Worktree cleanup: pending after metadata commit.
+- Branch cleanup: completed after metadata commit; remote and local phase branches deleted.
+- Worktree cleanup: completed after metadata commit.
 - Behavior implemented: Stage 10 contracts compose through synthetic `Batch` input, adapters, backend-native callable model, patch output, explicit application, prediction context, state load result, and parameter view.
 - Tests and validation: targeted unit/contract/integration checks passed; package/unit/contract/integration suites passed; `make test` reported 850 passed; `make validate-pr` passed; `make test-summary` reported package 47 passed, unit 655 passed, contract 128 passed, integration 20 passed, and no e2e/acceptance suites present.
 - Documentation: phase plan and PR body artifacts added under `docs/roadmap/stage-10/phases/`; glossary and public docstrings now describe arbitrary backend-native state and parameter handles.
