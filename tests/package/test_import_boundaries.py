@@ -64,6 +64,7 @@ LIGHTWEIGHT_IMPORTS = [
     "rphys.methods.context",
     "rphys.methods.core",
     "rphys.methods.output",
+    "rphys.methods.state",
     "rphys.metrics",
     "rphys.models",
     "rphys.models.core",
@@ -429,6 +430,7 @@ def test_stage_10_method_imports_do_not_load_training_export_or_heavy_modules() 
         importlib.import_module("rphys.methods.context")
         importlib.import_module("rphys.methods.core")
         importlib.import_module("rphys.methods.output")
+        importlib.import_module("rphys.methods.state")
 
         forbidden = sorted(
             name for name in [{forbidden}]
