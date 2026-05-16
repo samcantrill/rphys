@@ -5,7 +5,7 @@ Roadmap version: `v12`
 Planning document: `docs/roadmap/stage-12/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: pending Phase 4 implementation
+Current phase: pending Phase 5 implementation
 Blockers: none
 
 ## Summary
@@ -41,7 +41,7 @@ Blockers: none
 | 1 | `learning-contract` | merged | `agent/stage-12-learning-training-p1-learning-contract` | [#79](https://github.com/samcantrill/rphys/pull/79) | `src/rphys/learning`, package import tests, learning unit/contract tests | Establish learning modes, context, step output, scalar boundary, and structural learner contract. | `make test-package`, `make test-unit`, `make test-contract`, `git diff --check` | Prediction pass-through contract foundation |
 | 2 | `supervised-learner` | merged | `agent/stage-12-learning-training-p2-supervised-learner` | [#80](https://github.com/samcantrill/rphys/pull/80) | `src/rphys/learning/supervised.py`, learning contract/integration tests, test support fakes | Compose Stage 10 methods with Stage 11 objective/metric contracts. | `make test-unit`, `make test-contract`, `make test-integration`, `git diff --check` | Native supervised smoke learner slice; prediction-only mode |
 | 3 | `plan-result-facade` | merged | `agent/stage-12-learning-training-p3-plan-result-facade` | [#81](https://github.com/samcantrill/rphys/pull/81) | `src/rphys/training/plan.py`, `results.py`, `core.py`, `experimental.py`, training unit/contract tests | Add neutral plan/result records and facade-to-engine delegation. | `make test-unit`, `make test-contract`, `make test-package`, `git diff --check` | Fake engine delegation; plan neutrality; result summaries |
-| 4 | `native-engine` | pending | `agent/stage-12-learning-training-p4-native-engine` | pending | `src/rphys/training/backend.py`, native engine internals, native unit/integration tests | Implement dependency-light reference loop and backend mechanics. | `make test-unit`, `make test-integration`, `make test-contract`, `git diff --check` | Native supervised fit/validate/test/predict smoke run |
+| 4 | `native-engine` | merged | `agent/stage-12-learning-training-p4-native-engine` | [#82](https://github.com/samcantrill/rphys/pull/82) | `src/rphys/training/backend.py`, native engine internals, native unit/integration tests | Implement dependency-light reference loop and backend mechanics. | `make test-unit`, `make test-integration`, `make test-contract`, `git diff --check` | Native supervised fit/validate/test/predict smoke run |
 | 5 | `observability-external-pressure` | pending | `agent/stage-12-learning-training-p5-observability-external-pressure` | pending | `src/rphys/training/events.py`, `profiling.py`, fake external test support, observability contracts | Add events/profiles and fake external-engine pressure tests. | `make test-unit`, `make test-contract`, `make test-package`, `git diff --check` | Fake external engine; duplicate trainable-owner guardrail; JAX pressure note |
 | 6 | `docs-examples-final-validation` | pending | `agent/stage-12-learning-training-p6-docs-examples-final-validation` | pending | Stage 12 docs/docstrings/examples, final validation evidence, package exports | Finish docs/examples, optional `run_train` polish, future-compatibility notes, and full validation. | `make test-package`, `make test-unit`, `make test-contract`, `make test-integration`, `make test-summary`, `uv lock --check`, `git diff --check`, `make validate-pr` | End-to-end native example; fake external example; future batch-pipeline documentation only |
 
@@ -269,11 +269,11 @@ Workflow path: `.codex/workflows/roadmap-version-implementation.md`
 
 ## Phase 4: Native Engine Mechanics
 
-Status: pending
+Status: merged
 Slug: `native-engine`
 Branch: `agent/stage-12-learning-training-p4-native-engine`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-12-learning-training-p4-native-engine`
-PR: pending
+PR: [#82](https://github.com/samcantrill/rphys/pull/82)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: `.codex/workflows/roadmap-version-implementation.md`
@@ -318,13 +318,13 @@ Workflow path: `.codex/workflows/roadmap-version-implementation.md`
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed inline by manager on 2026-05-16
 - Planning/refinement budget: one pass for call-order details and failure normalization.
 - Implementation/refinement budget: one implementation pass plus integration fixes.
 - PR review budget: one reviewer pass focused on loop mechanics and non-goals.
 - Blocker-resolution budget: stop if native mechanics require framework-specific assumptions or broader result schema.
 - Pre-submit blocker gate: no datasource/dataloader construction, no checkpoint writer, no logger/distributed/precision implementation.
-- Merge record: pending
+- Merge record: PR [#82](https://github.com/samcantrill/rphys/pull/82) merged to `develop` on 2026-05-16 as `99ef239` (`feat: add stage 12 native training engine`).
 
 ### Risks And Stop Conditions
 
@@ -334,11 +334,11 @@ Workflow path: `.codex/workflows/roadmap-version-implementation.md`
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: completed dependency-light `NativeTrainingEngine`, default `Trainer()` engine selection, native fit/validate/test/predict loops, context construction, train-only backward/optimizer/scheduler behavior, step limits, failure normalization, and primitive result accumulation. Also corrected configured `SupervisedLearner` predict mode to skip objective/loss/metric execution.
+- Validation: passed `make test-unit`, `make test-integration`, `make test-contract`, `git diff --check`, and extra `make test-package` in `/home/samcantrill/work/rphys-worktrees/stage-12-learning-training-p4-native-engine`.
+- PR: [#82](https://github.com/samcantrill/rphys/pull/82)
+- Merge: merged to `develop` on 2026-05-16 as `99ef239`.
+- Follow-up: Phase 5 should add event/profile records and fake external pressure while preserving native reference scope and framework deferrals.
 
 ## Phase 5: Observability And Fake External Pressure
 
