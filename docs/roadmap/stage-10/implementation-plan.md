@@ -5,7 +5,7 @@ Roadmap version: `v10`
 Planning document: `docs/roadmap/stage-10/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 2 pending
+Current phase: Phase 3 pending
 Blockers: none
 
 ## Summary
@@ -43,7 +43,7 @@ Blockers: none
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 0 | `list-uncollation-roundtrip` | merged | `agent/stage-10-method-model-contracts-p0-list-uncollation-roundtrip` | [#66](https://github.com/samcantrill/rphys/pull/66) | `src/rphys/data/collation.py`, `src/rphys/data/__init__.py`, focused data/package/contract/integration tests, docs/docstrings | Make default LIST batches unlist back to `tuple[Sample, ...]` before method/model contracts rely on sample reconstruction. | data collation round-trip unit tests; batch collater contract tests; landed Stage 9 torch-collater integration; `make test-package`; `git diff --check` | LIST collate/uncollate round trip with explicit `None` vs missing metadata and generic metadata preservation |
 | 1 | `core-contracts-imports` | merged | `agent/stage-10-method-model-contracts-p1-core-contracts-imports` | [#67](https://github.com/samcantrill/rphys/pull/67) | `src/rphys/methods/core.py`, `src/rphys/methods/context.py`, `src/rphys/methods/output.py`, `src/rphys/models/core.py`, scoped package exports, package/unit/contract tests for these names | Establish code-backed public `Method`, `Model`, `PredictionContext`, and patch-like `MethodOutput` with lightweight imports. | `make test-package`; focused context/output unit tests; method/model contract probes; `git diff --check` | context-aware prediction; synthetic model-independent contract probes |
-| 2 | `adapters-output-apply` | pending | `agent/stage-10-method-model-contracts-p2-adapters-output-apply` | pending | `src/rphys/methods/adapters.py`, private methods validation helpers, explicit `MethodOutput` merge/apply conversion, adapter/output tests | Implement the `Batch`/`FieldLocator` bridge and explicit patch-to-`Batch` application. | adapter unit matrix; output/apply tests; method contract tests using adapters; focused synthetic integration if apply is present | synthetic echo method; explicit prediction merge |
+| 2 | `adapters-output-apply` | merged | `agent/stage-10-method-model-contracts-p2-adapters-output-apply` | [#68](https://github.com/samcantrill/rphys/pull/68) | `src/rphys/methods/adapters.py`, private methods validation helpers, explicit `MethodOutput` merge/apply conversion, adapter/output tests | Implement the `Batch`/`FieldLocator` bridge and explicit patch-to-`Batch` application. | adapter unit matrix; output/apply tests; method contract tests using adapters; focused synthetic integration if apply is present | synthetic echo method; explicit prediction merge |
 | 3 | `state-trainable-records` | pending | `agent/stage-10-method-model-contracts-p3-state-trainable-records` | pending | `src/rphys/methods/state.py`, optional protocol-only `src/rphys/nn/protocols.py` only if code-backed by capability records, package exports, state/trainable tests | Add richer backend-neutral state and parameter capability records without torch, optimizer, checkpoint, or device semantics. | `tests/contracts/test_trainable_method_contract.py`; `tests/unit/rphys/methods/test_state.py`; `make test-package`; `git diff --check` | non-torch trainable fake |
 | 4 | `synthetic-integration-docs-validation` | pending | `agent/stage-10-method-model-contracts-p4-synthetic-integration-docs-validation` | pending | test-only fake methods/models/stateful objects, synthetic `Batch` fixtures, docs/docstrings or glossary updates if public vocabulary changes, full validation evidence | Prove Stage 10 contracts compose without concrete algorithms, Stage 9 loaders, or heavy optional dependencies. | focused integration; `make test-package`; `make test-unit`; `make test-contract`; `make test-integration`; final `make test`; `make test-summary`; `uv lock --check`; `git diff --check` | all recorded examples |
 
@@ -235,11 +235,11 @@ Workflow path: expanded path
 
 ## Phase 2: Adapter Specs And Explicit Output Application
 
-Status: pending
+Status: merged
 Slug: `adapters-output-apply`
 Branch: `agent/stage-10-method-model-contracts-p2-adapters-output-apply`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-10-method-model-contracts-p2-adapters-output-apply`
-PR: pending
+PR: [#68](https://github.com/samcantrill/rphys/pull/68)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -285,13 +285,13 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: completed in `docs/roadmap/stage-10/phases/adapters-output-apply.md`
 - Planning/refinement budget: one planning pass with extra attention to merge/apply conflict policy.
 - Implementation/refinement budget: one implementation pass plus targeted adapter failure refinement.
 - PR review budget: one review pass focused on selector parsing, output role validation, and explicit apply behavior.
 - Blocker-resolution budget: stop and reopen design if adapters need datasource/dataloader access, a public schema language, direct export, or default mutation.
 - Pre-submit blocker gate: adapter/output/contract/integration tests and package imports must pass or record risk.
-- Merge record: pending
+- Merge record: completed below
 
 ### Risks And Stop Conditions
 
@@ -301,11 +301,28 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added `MethodInputSpec`, `MethodOutputSpec`, `MethodInputAdapter`, `MethodOutputAdapter`, explicit `apply_method_output`, scoped methods exports, adapter-backed method contract coverage, and synthetic prediction integration.
+- Validation: `uv run pytest tests/unit/rphys/methods/test_adapters.py`; `uv run pytest tests/unit/rphys/methods/test_output.py`; `uv run pytest tests/contracts/test_method_contract.py`; `uv run pytest tests/integration/test_synthetic_method_prediction_flow.py`; `make test-package`; `make test-unit`; `make validate-pr`; `make test-summary`; `git diff --check`.
+- PR: [#68](https://github.com/samcantrill/rphys/pull/68)
+- Merge: merged to `develop` on 2026-05-16 as `1766df6f68a1cf63f88e0d11e337f8370ad666fa`.
+- Follow-up: Stage 11/13 may factor shared selector semantics only after repeated use; future copied/non-LIST uncollation semantics remain separate.
+
+### Merge Record
+
+- Phase: Phase 2 `adapters-output-apply`
+- Branch: `agent/stage-10-method-model-contracts-p2-adapters-output-apply`
+- PR: [#68](https://github.com/samcantrill/rphys/pull/68)
+- Base branch: `develop`
+- Merge command: `gh pr merge 68 --squash`
+- Merge result: merged; GitHub reported no status checks for the branch, so merge relied on the completed local validation gate.
+- Merge commit: `1766df6f68a1cf63f88e0d11e337f8370ad666fa`
+- Branch cleanup: pending after metadata commit.
+- Worktree cleanup: pending after metadata commit.
+- Behavior implemented: adapter specs normalize field locators and validate names/roles/type/schema; input adapters extract named payloads from `Batch`; output adapters map named results to `MethodOutput`; explicit patch application copies by default and has explicit conflict policy.
+- Tests and validation: focused adapter/output/contract/integration checks passed; `make validate-pr` passed; `make test-summary` reported package 47 passed, unit 649 passed, contract 124 passed, integration 19 passed, and no e2e/acceptance suites present.
+- Documentation: phase plan and PR body artifacts added under `docs/roadmap/stage-10/phases/`; public docstrings describe selector parsing time, output patch semantics, and explicit apply behavior.
+- Scientific contract implications: field roles, locators, schema/type checks, and provenance remain explicit without datasource/loader access, hidden mutation, export, loss, metric, or trainer behavior.
+- Follow-up notes for later phases: Phase 4 can use the synthetic adapter flow for final composition checks; Phase 3 state/trainable records remain independent.
 
 ## Phase 3: Stateful And Trainable Capability Records
 
