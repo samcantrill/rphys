@@ -128,6 +128,32 @@ STAGE_12_LEARNING_MODULES = {
     "rphys.learning.supervised": ["SupervisedLearner"],
 }
 
+STAGE_12_TRAINING_EXPORTS = [
+    "ProfileSummary",
+    "Trainer",
+    "TrainingEngine",
+    "TrainingEventSummary",
+    "TrainingMetricSummary",
+    "TrainingPlan",
+    "TrainingResult",
+    "TrainingStatus",
+    "TrainingStepSummary",
+]
+
+STAGE_12_TRAINING_MODULES = {
+    "rphys.training.core": ["Trainer", "TrainingEngine"],
+    "rphys.training.experimental": [],
+    "rphys.training.plan": ["TrainingPlan"],
+    "rphys.training.results": [
+        "ProfileSummary",
+        "TrainingEventSummary",
+        "TrainingMetricSummary",
+        "TrainingResult",
+        "TrainingStatus",
+        "TrainingStepSummary",
+    ],
+}
+
 STAGE_10_METHOD_EXPORTS = [
     "Method",
     "MethodInputAdapter",
@@ -778,6 +804,7 @@ def test_deferred_package_homes_import_with_empty_public_surfaces() -> None:
             "rphys.metrics",
             "rphys.objectives",
             "rphys.ops",
+            "rphys.training",
         }:
             continue
         package = importlib.import_module(package_name)
@@ -798,6 +825,26 @@ def test_stage_12_learning_package_exports_only_code_backed_contract_names() -> 
 
 def test_stage_12_learning_modules_export_only_code_backed_names() -> None:
     for module_name, expected_all in STAGE_12_LEARNING_MODULES.items():
+        module = importlib.import_module(module_name)
+
+        assert module.__doc__
+        assert module.__all__ == expected_all
+        for public_name in expected_all:
+            assert hasattr(module, public_name)
+
+
+def test_stage_12_training_package_exports_only_code_backed_contract_names() -> None:
+    import rphys
+    import rphys.training
+
+    assert rphys.training.__all__ == STAGE_12_TRAINING_EXPORTS
+    for public_name in STAGE_12_TRAINING_EXPORTS:
+        assert hasattr(rphys.training, public_name)
+        assert not hasattr(rphys, public_name)
+
+
+def test_stage_12_training_modules_export_only_code_backed_names() -> None:
+    for module_name, expected_all in STAGE_12_TRAINING_MODULES.items():
         module = importlib.import_module(module_name)
 
         assert module.__doc__
