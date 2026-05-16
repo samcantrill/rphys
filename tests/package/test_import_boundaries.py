@@ -60,8 +60,12 @@ LIGHTWEIGHT_IMPORTS = [
     "rphys.learning",
     "rphys.losses",
     "rphys.methods",
+    "rphys.methods.context",
+    "rphys.methods.core",
+    "rphys.methods.output",
     "rphys.metrics",
     "rphys.models",
+    "rphys.models.core",
     "rphys.nn",
     "rphys.objectives",
     "rphys.ops",
@@ -357,6 +361,129 @@ def test_ops_sample_import_does_not_load_runtime_or_heavy_modules() -> None:
         import sys
 
         importlib.import_module("rphys.ops.sample")
+
+        forbidden = sorted(
+            name for name in [{forbidden}]
+            if name in sys.modules
+        )
+        if forbidden:
+            raise SystemExit("forbidden modules loaded: " + ", ".join(forbidden))
+
+        heavy = sorted(
+            name for name in [{heavy_modules}]
+            if name in sys.modules
+        )
+        if heavy:
+            raise SystemExit("heavy optional modules loaded: " + ", ".join(heavy))
+        """
+    )
+    env = os.environ.copy()
+    existing_pythonpath = env.get("PYTHONPATH")
+    pythonpath_parts = [str(REPO_ROOT / "src"), str(REPO_ROOT)]
+    if existing_pythonpath:
+        pythonpath_parts.append(existing_pythonpath)
+    env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
+
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        check=False,
+        cwd=REPO_ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+
+    assert completed.returncode == 0, completed.stdout
+
+
+def test_stage_10_method_imports_do_not_load_training_export_or_heavy_modules() -> None:
+    heavy_modules = ", ".join(repr(module_name) for module_name in HEAVY_OPTIONAL_MODULES)
+    forbidden = ", ".join(
+        repr(module_name)
+        for module_name in [
+            "rphys.analysis",
+            "rphys.datasources",
+            "rphys.evaluation",
+            "rphys.io",
+            "rphys.learning",
+            "rphys.losses",
+            "rphys.metrics",
+            "rphys.models",
+            "rphys.objectives",
+            "rphys.ops",
+            "rphys.ops.export",
+            "rphys.prediction",
+            "rphys.training",
+            "tests.support",
+        ]
+    )
+    script = textwrap.dedent(
+        f"""
+        import importlib
+        import sys
+
+        importlib.import_module("rphys.methods")
+        importlib.import_module("rphys.methods.context")
+        importlib.import_module("rphys.methods.core")
+        importlib.import_module("rphys.methods.output")
+
+        forbidden = sorted(
+            name for name in [{forbidden}]
+            if name in sys.modules
+        )
+        if forbidden:
+            raise SystemExit("forbidden modules loaded: " + ", ".join(forbidden))
+
+        heavy = sorted(
+            name for name in [{heavy_modules}]
+            if name in sys.modules
+        )
+        if heavy:
+            raise SystemExit("heavy optional modules loaded: " + ", ".join(heavy))
+        """
+    )
+    env = os.environ.copy()
+    existing_pythonpath = env.get("PYTHONPATH")
+    pythonpath_parts = [str(REPO_ROOT / "src"), str(REPO_ROOT)]
+    if existing_pythonpath:
+        pythonpath_parts.append(existing_pythonpath)
+    env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
+
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        check=False,
+        cwd=REPO_ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+
+    assert completed.returncode == 0, completed.stdout
+
+
+def test_stage_10_model_imports_stay_below_batch_and_heavy_modules() -> None:
+    heavy_modules = ", ".join(repr(module_name) for module_name in HEAVY_OPTIONAL_MODULES)
+    forbidden = ", ".join(
+        repr(module_name)
+        for module_name in [
+            "rphys.data",
+            "rphys.datasources",
+            "rphys.io",
+            "rphys.methods",
+            "rphys.ops",
+            "rphys.training",
+            "tests.support",
+        ]
+    )
+    script = textwrap.dedent(
+        f"""
+        import importlib
+        import sys
+
+        importlib.import_module("rphys.models")
+        importlib.import_module("rphys.models.core")
 
         forbidden = sorted(
             name for name in [{forbidden}]

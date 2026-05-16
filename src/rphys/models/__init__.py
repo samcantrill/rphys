@@ -1,3 +1,5 @@
 """Package home for lower-level computational models."""
 
-__all__: list[str] = []
+from .core import Model
+
+__all__ = ["Model"]
