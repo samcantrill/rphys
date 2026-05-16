@@ -1,8 +1,8 @@
-"""Metric value, observation, collection, and result records."""
+"""Metric value, observation, collection, view, and result records."""
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from types import MappingProxyType
 
@@ -18,13 +18,14 @@ from ._validation import (
     coerce_non_empty_string,
     coerce_optional_string,
 )
-from .specs import GroupBySpec, MetricContract
+from .specs import GroupBySpec, MetricContract, MetricObservationViewPlan
 
 __all__ = [
     "MetricObservation",
     "MetricObservationCollection",
     "MetricResult",
     "MetricValue",
+    "PlannedMetricObservationView",
 ]
 
 
@@ -346,6 +347,104 @@ class MetricResult:
         )
 
 
+MetricObservationViewProjector = Callable[
+    [tuple[object, ...], tuple[MetricObservation, ...], MetricObservationViewPlan],
+    MetricObservation | MetricObservationCollection,
+]
+
+
+class PlannedMetricObservationView:
+    """Execute a metric observation view with an injected projector.
+
+    The executor validates grouping, source levels, empty inputs, mixed levels,
+    and output shape, then asks caller-provided fake or adapter behavior to
+    create observations at ``plan.output_level``. This keeps Stage 11 free of
+    concrete aggregation algorithms while making provenance and grouping
+    inspectable.
+    """
+
+    def __init__(
+        self,
+        plan: MetricObservationViewPlan,
+        *,
+        projector: MetricObservationViewProjector,
+    ) -> None:
+        if not isinstance(plan, MetricObservationViewPlan):
+            raise InvalidMetricSpecError(
+                "PlannedMetricObservationView plan must be a MetricObservationViewPlan.",
+                owner="PlannedMetricObservationView",
+                field="plan",
+                expected="MetricObservationViewPlan",
+                actual=type(plan).__name__,
+            )
+        if not callable(projector):
+            raise InvalidMetricSpecError(
+                "PlannedMetricObservationView requires an injected projector.",
+                owner="PlannedMetricObservationView",
+                field="projector",
+                expected="callable",
+                actual=type(projector).__name__,
+            )
+        self._plan = plan
+        self._projector = projector
+
+    @property
+    def plan(self) -> MetricObservationViewPlan:
+        return self._plan
+
+    def __call__(self, collection: MetricObservationCollection) -> MetricObservationCollection:
+        if not isinstance(collection, MetricObservationCollection):
+            raise InvalidMetricResultError(
+                "Metric observation views require a MetricObservationCollection input.",
+                owner="PlannedMetricObservationView",
+                field="collection",
+                expected="MetricObservationCollection",
+                actual=type(collection).__name__,
+            )
+        if len(collection) == 0:
+            if self.plan.empty_policy == "error":
+                raise InvalidMetricResultError(
+                    "Metric observation view input must not be empty.",
+                    owner="PlannedMetricObservationView",
+                    field="collection",
+                    empty_policy=self.plan.empty_policy,
+                )
+            return MetricObservationCollection(
+                (),
+                metadata=_view_collection_metadata(collection, self.plan),
+                provenance=_view_collection_provenance(collection, self.plan),
+            )
+
+        _validate_source_levels(collection, self.plan)
+        grouped = collection.grouped(
+            GroupBySpec(
+                self.plan.group_keys,
+                level=self.plan.output_level,
+                missing_policy=self.plan.missing_policy,
+            )
+        )
+
+        output_entries: list[CollectionItem[MetricObservation]] = []
+        for group_key, group_collection in grouped.items():
+            observations = tuple(group_collection)
+            _validate_mixed_levels(observations, self.plan, group_key)
+            projected = self._projector(group_key, observations, self.plan)
+            output_entries.extend(
+                _projected_entries(
+                    projected,
+                    plan=self.plan,
+                    group_key=group_key,
+                    source_observations=observations,
+                )
+            )
+
+        return MetricObservationCollection(
+            tuple(output_entries),
+            metadata=_view_collection_metadata(collection, self.plan),
+            provenance=_view_collection_provenance(collection, self.plan),
+        )
+
+
 def _coerce_entries(values):
     try:
         entries = tuple(_coerce_entry(value) for value in values)
@@ -387,6 +486,143 @@ def _coerce_entry(value):
         field="observations",
         expected="MetricObservation | CollectionItem[MetricObservation]",
         actual=type(value).__name__,
+    )
+
+
+def _validate_source_levels(
+    collection: MetricObservationCollection,
+    plan: MetricObservationViewPlan,
+) -> None:
+    if not plan.source_levels:
+        return
+    unsupported = tuple(
+        (index, observation.level)
+        for index, observation in enumerate(collection)
+        if observation.level not in plan.source_levels
+    )
+    if unsupported:
+        raise InvalidMetricResultError(
+            "Metric observation view input contains unsupported source levels.",
+            owner="PlannedMetricObservationView",
+            field="source_levels",
+            expected=plan.source_levels,
+            actual=unsupported,
+        )
+
+
+def _validate_mixed_levels(
+    observations: tuple[MetricObservation, ...],
+    plan: MetricObservationViewPlan,
+    group_key: tuple[object, ...],
+) -> None:
+    levels = tuple(dict.fromkeys(observation.level for observation in observations))
+    if len(levels) > 1 and plan.mixed_level_policy == "error":
+        raise InvalidMetricResultError(
+            "Metric observation view group contains mixed source levels.",
+            owner="PlannedMetricObservationView",
+            field="mixed_level_policy",
+            group_key=group_key,
+            levels=levels,
+        )
+
+
+def _projected_entries(
+    projected: MetricObservation | MetricObservationCollection,
+    *,
+    plan: MetricObservationViewPlan,
+    group_key: tuple[object, ...],
+    source_observations: tuple[MetricObservation, ...],
+) -> tuple[CollectionItem[MetricObservation], ...]:
+    if isinstance(projected, MetricObservation):
+        entries = (CollectionItem(projected),)
+    elif isinstance(projected, MetricObservationCollection):
+        entries = tuple(projected.entries)
+    else:
+        raise InvalidMetricResultError(
+            "Metric observation view projector must return an observation or collection.",
+            owner="PlannedMetricObservationView",
+            field="projector",
+            expected="MetricObservation | MetricObservationCollection",
+            actual=type(projected).__name__,
+        )
+    if not entries and plan.empty_policy == "error":
+        raise InvalidMetricResultError(
+            "Metric observation view projector returned no observations.",
+            owner="PlannedMetricObservationView",
+            field="projector",
+            group_key=group_key,
+        )
+
+    return tuple(
+        _view_entry(
+            entry,
+            plan=plan,
+            group_key=group_key,
+            source_observations=source_observations,
+        )
+        for entry in entries
+    )
+
+
+def _view_entry(
+    entry: CollectionItem[MetricObservation],
+    *,
+    plan: MetricObservationViewPlan,
+    group_key: tuple[object, ...],
+    source_observations: tuple[MetricObservation, ...],
+) -> CollectionItem[MetricObservation]:
+    if entry.value.level != plan.output_level:
+        raise InvalidMetricResultError(
+            "Metric observation view projector returned an observation at the wrong level.",
+            owner="PlannedMetricObservationView",
+            field="output_level",
+            expected=plan.output_level,
+            actual=entry.value.level,
+        )
+    metadata = {
+        **entry.metadata,
+        "view": plan.name,
+        "group_by": plan.group_keys,
+        "group_key": group_key,
+        "output_level": plan.output_level,
+        "source_count": len(source_observations),
+        "source_levels": tuple(dict.fromkeys(observation.level for observation in source_observations)),
+    }
+    provenance = {
+        **entry.provenance,
+        "view": plan.name,
+        "source_observations": tuple(observation.name for observation in source_observations),
+    }
+    return CollectionItem(entry.value, metadata=metadata, provenance=provenance)
+
+
+def _view_collection_metadata(
+    collection: MetricObservationCollection,
+    plan: MetricObservationViewPlan,
+) -> Mapping[str, object]:
+    return MappingProxyType(
+        {
+            **collection.metadata,
+            **plan.metadata,
+            "view": plan.name,
+            "group_by": plan.group_keys,
+            "output_level": plan.output_level,
+            "source_count": len(collection),
+        }
+    )
+
+
+def _view_collection_provenance(
+    collection: MetricObservationCollection,
+    plan: MetricObservationViewPlan,
+) -> Mapping[str, object]:
+    return MappingProxyType(
+        {
+            **collection.provenance,
+            **plan.provenance,
+            "view": plan.name,
+            "source_collection": collection.provenance,
+        }
     )
 
 

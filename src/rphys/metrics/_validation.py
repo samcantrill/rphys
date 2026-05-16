@@ -11,6 +11,8 @@ from rphys.errors import InvalidMetricResultError, InvalidMetricSpecError
 
 LEVELS = frozenset({"sample", "window", "record", "subject", "group", "dataset", "batch", "custom"})
 MISSING_POLICIES = frozenset({"error", "allow"})
+EMPTY_POLICIES = frozenset({"error", "allow"})
+MIXED_LEVEL_POLICIES = frozenset({"error", "allow"})
 
 
 def coerce_non_empty_string(value: object, *, owner: str, field: str, error_type):
@@ -96,21 +98,73 @@ def coerce_key_tuple(values: Iterable[str], *, owner: str, field: str, error_typ
 
 
 def coerce_missing_policy(value: str, *, owner: str):
+    return coerce_policy(
+        value,
+        allowed=MISSING_POLICIES,
+        owner=owner,
+        field="missing_policy",
+    )
+
+
+def coerce_empty_policy(value: str, *, owner: str):
+    return coerce_policy(
+        value,
+        allowed=EMPTY_POLICIES,
+        owner=owner,
+        field="empty_policy",
+    )
+
+
+def coerce_mixed_level_policy(value: str, *, owner: str):
+    return coerce_policy(
+        value,
+        allowed=MIXED_LEVEL_POLICIES,
+        owner=owner,
+        field="mixed_level_policy",
+    )
+
+
+def coerce_policy(value: str, *, allowed: frozenset[str], owner: str, field: str):
     resolved = coerce_non_empty_string(
         value,
         owner=owner,
-        field="missing_policy",
+        field=field,
         error_type=InvalidMetricSpecError,
     )
-    if resolved not in MISSING_POLICIES:
+    if resolved not in allowed:
         raise InvalidMetricSpecError(
-            f"{owner} missing_policy is not supported by the Stage 11 contract.",
+            f"{owner} {field} is not supported by the Stage 11 contract.",
             owner=owner,
-            field="missing_policy",
-            expected=sorted(MISSING_POLICIES),
+            field=field,
+            expected=sorted(allowed),
             actual=resolved,
         )
     return resolved
+
+
+def coerce_level_tuple(values: Iterable[str], *, owner: str, field: str, error_type):
+    try:
+        levels = tuple(
+            coerce_level(value, owner=owner, error_type=error_type)
+            for value in values
+        )
+    except TypeError as exc:
+        raise error_type(
+            f"{owner} {field} must be iterable.",
+            owner=owner,
+            field=field,
+            expected="iterable of metric levels",
+            actual=type(values).__name__,
+        ) from exc
+    duplicates = sorted({level for level in levels if levels.count(level) > 1})
+    if duplicates:
+        raise error_type(
+            f"{owner} {field} must not contain duplicates.",
+            owner=owner,
+            field=field,
+            duplicates=tuple(duplicates),
+        )
+    return levels
 
 
 def coerce_locator(value: FieldLocator | str, *, owner: str, error_type):
