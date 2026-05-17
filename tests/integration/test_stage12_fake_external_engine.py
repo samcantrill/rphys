@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from rphys.data import Batch
-from rphys.learning import LoopContext, StepOutput
-from rphys.training import Trainer, TrainingPlan, TrainingStatus
+from rphys.learning import LoopContext
+from rphys.training import Trainer, TrainingOutputSpec, TrainingPlan, TrainingStatus
 from tests.support.stage12_fake_external import FakeExternalEngine, FakeExternalEvidence
 
 
 class PassiveLearner:
-    def step(self, batch: Batch, context: LoopContext) -> StepOutput:
+    def step(self, batch: Batch, context: LoopContext) -> Batch:
         raise AssertionError("external fake should not call learner.step")
 
 
@@ -19,7 +19,10 @@ def test_stage12_fake_external_engine_normalizes_result_summaries_without_native
             profile_statuses={"external.step": "available"},
         )
     )
-    plan = TrainingPlan(train_batches=(Batch(),))
+    plan = TrainingPlan(
+        train_batches=(Batch(),),
+        output_spec=TrainingOutputSpec(objective="objectives/custom.training.total"),
+    )
     learner = PassiveLearner()
 
     result = Trainer(engine=engine).fit(plan, learner)

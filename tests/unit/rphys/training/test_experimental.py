@@ -4,13 +4,13 @@ import pytest
 
 from rphys.data import Batch
 from rphys.errors import RemotePhysTrainingError
-from rphys.learning import LoopContext, StepOutput
-from rphys.training import Trainer, TrainingPlan, TrainingResult, run_train
+from rphys.learning import LoopContext
+from rphys.training import Trainer, TrainingOutputSpec, TrainingPlan, TrainingResult, run_train
 
 
 class FakeLearner:
-    def step(self, batch: Batch, context: LoopContext) -> StepOutput:
-        return StepOutput()
+    def step(self, batch: Batch, context: LoopContext) -> Batch:
+        return batch
 
 
 class FakeEngine:
@@ -33,7 +33,10 @@ class FakeEngine:
 
 def test_run_train_delegates_to_trainer_fit_without_workflow_ownership() -> None:
     engine = FakeEngine()
-    plan = TrainingPlan(train_batches=(Batch(),))
+    plan = TrainingPlan(
+        train_batches=(Batch(),),
+        output_spec=TrainingOutputSpec(objective="objectives/custom.training.total"),
+    )
     learner = FakeLearner()
 
     result = run_train(plan, learner, engine=engine)
@@ -44,12 +47,22 @@ def test_run_train_delegates_to_trainer_fit_without_workflow_ownership() -> None
 
 def test_run_train_accepts_explicit_trainer_and_rejects_ambiguous_selection() -> None:
     trainer = Trainer(engine=FakeEngine())
-    result = run_train(TrainingPlan(train_batches=(Batch(),)), FakeLearner(), trainer=trainer)
+    result = run_train(
+        TrainingPlan(
+            train_batches=(Batch(),),
+            output_spec=TrainingOutputSpec(objective="objectives/custom.training.total"),
+        ),
+        FakeLearner(),
+        trainer=trainer,
+    )
 
     assert result.mode.value == "train"
     with pytest.raises(RemotePhysTrainingError):
         run_train(
-            TrainingPlan(train_batches=(Batch(),)),
+            TrainingPlan(
+                train_batches=(Batch(),),
+                output_spec=TrainingOutputSpec(objective="objectives/custom.training.total"),
+            ),
             FakeLearner(),
             trainer=trainer,
             engine=FakeEngine(),

@@ -3,10 +3,9 @@ from __future__ import annotations
 from rphys.data import Batch, FieldValue
 from rphys.learning import LoopContext, SupervisedLearner
 from rphys.losses import LossContext, LossContract, LossInputSpec, LossResult, LossTerm
-from rphys.methods import MethodOutput
 from rphys.metrics import MetricContext, MetricContract, MetricObservation, MetricObservationCollection, MetricResult, MetricValue
 from rphys.objectives import ObjectiveContext, ObjectiveContract, ObjectiveResult, ObjectiveTerm, ObjectiveTermSpec
-from rphys.training import NativeTrainingEngine, Trainer, TrainingPlan, TrainingStatus
+from rphys.training import NativeTrainingEngine, Trainer, TrainingOutputSpec, TrainingPlan, TrainingStatus
 
 
 class FakeScalar:
@@ -19,10 +18,10 @@ class FakeScalar:
 
 
 class PulseMethod:
-    def predict(self, batch: Batch, *, context: object | None = None) -> MethodOutput:
-        return MethodOutput(
-            fields={"predictions/signal.pulse": FieldValue([batch.require("inputs/signal.pulse")[0] * 2.0])}
-        )
+    def predict(self, batch: Batch, *, context: object | None = None) -> Batch:
+        output = batch.shallow_copy()
+        output.set_field("predictions/signal.pulse", FieldValue([batch.require("inputs/signal.pulse")[0] * 2.0]))
+        return output
 
 
 class PulseLoss:
@@ -88,10 +87,9 @@ def test_stage12_supervised_learner_composes_stage10_method_and_stage11_contract
 
     output = learner.step(batch, LoopContext("train", split="train", step_index=0))
 
-    assert isinstance(output.predictions, MethodOutput)
-    assert output.objective is not None
-    assert output.objective.value == 0.5
-    assert output.metric_values["pulse-mae"].value.value == 0.5
+    assert isinstance(output, Batch)
+    assert output.require("objectives/custom.training.total").value == 0.5
+    assert output.require("metrics/custom.training.pulse.mae").value.value == 0.5
     assert not batch.has("predictions/signal.pulse")
 
 
@@ -134,6 +132,10 @@ def test_stage12_native_engine_runs_synthetic_supervised_fit_validate_test_predi
         test_batches=(eval_batch,),
         predict_batches=(predict_batch,),
         optimizer=optimizer,
+        output_spec=TrainingOutputSpec(
+            objective="objectives/custom.training.total",
+            metrics=("metrics/custom.training.pulse.mae",),
+        ),
     )
     trainer = Trainer()
 

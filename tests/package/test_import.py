@@ -53,6 +53,15 @@ STAGE_13_FORBIDDEN_PUBLIC_NAMES = [
     "DiagnosticRenderer",
 ]
 
+STAGE_13_REMOVED_OUTPUT_NAMES = [
+    "MethodOutput",
+    "MethodOutputSpec",
+    "MethodOutputAdapter",
+    "apply_method_output",
+    "StepOutput",
+    "StepPrediction",
+]
+
 STAGE_11_COLLECTION_EXPORTS = [
     "Collection",
     "CollectionContext",
@@ -141,8 +150,6 @@ STAGE_12_LEARNING_EXPORTS = [
     "Learner",
     "LoopContext",
     "LoopMode",
-    "StepOutput",
-    "StepPrediction",
     "SupervisedLearner",
     "require_backwardable_scalar",
 ]
@@ -153,8 +160,6 @@ STAGE_12_LEARNING_MODULES = {
     "rphys.learning.modes": ["LoopMode"],
     "rphys.learning.output": [
         "BackwardableScalar",
-        "StepOutput",
-        "StepPrediction",
         "require_backwardable_scalar",
     ],
     "rphys.learning.supervised": ["SupervisedLearner"],
@@ -172,6 +177,7 @@ STAGE_12_TRAINING_EXPORTS = [
     "TrainingEventSummary",
     "TrainingEventSink",
     "TrainingMetricSummary",
+    "TrainingOutputSpec",
     "TrainingPlan",
     "TrainingProfiler",
     "TrainingResult",
@@ -193,7 +199,7 @@ STAGE_12_TRAINING_MODULES = {
         "emit_training_event",
     ],
     "rphys.training.experimental": ["run_train"],
-    "rphys.training.plan": ["TrainingPlan"],
+    "rphys.training.plan": ["TrainingOutputSpec", "TrainingPlan"],
     "rphys.training.profiling": [
         "ProfileSpanSummary",
         "TrainingProfiler",
@@ -210,12 +216,11 @@ STAGE_12_TRAINING_MODULES = {
 }
 
 STAGE_10_METHOD_EXPORTS = [
+    "BatchOutputFieldSpec",
+    "BatchOutputSpec",
     "Method",
     "MethodInputAdapter",
     "MethodInputSpec",
-    "MethodOutput",
-    "MethodOutputAdapter",
-    "MethodOutputSpec",
     "ParameterView",
     "PredictionContext",
     "StateEntry",
@@ -223,19 +228,21 @@ STAGE_10_METHOD_EXPORTS = [
     "StateView",
     "StatefulMethod",
     "TrainableMethod",
-    "apply_method_output",
+    "project_batch_fields",
 ]
 
 STAGE_10_METHOD_MODULES = {
     "rphys.methods.adapters": [
         "MethodInputAdapter",
         "MethodInputSpec",
-        "MethodOutputAdapter",
-        "MethodOutputSpec",
     ],
     "rphys.methods.context": ["PredictionContext"],
     "rphys.methods.core": ["Method", "StatefulMethod", "TrainableMethod"],
-    "rphys.methods.output": ["MethodOutput", "apply_method_output"],
+    "rphys.methods.output": [
+        "BatchOutputFieldSpec",
+        "BatchOutputSpec",
+        "project_batch_fields",
+    ],
     "rphys.methods.state": [
         "ParameterView",
         "StateEntry",
@@ -315,6 +322,8 @@ STAGE_1_DATA_MODULES = {
 STAGE_2_DATA_EXPORTS = [
     "Batch",
     "BatchCollater",
+    "BatchOutputFieldSpec",
+    "BatchOutputSpec",
     "FieldContainer",
     "CollateContext",
     "CollatePolicy",
@@ -327,6 +336,7 @@ STAGE_2_DATA_EXPORTS = [
     "SampleContract",
     *STAGE_11_DATA_COLLECTION_EXPORTS,
     "collate_samples",
+    "project_batch_fields",
     "uncollate_batch",
 ]
 
@@ -887,6 +897,28 @@ def test_stage_13_scaffold_uses_existing_broad_error_categories() -> None:
     assert "RemotePhysAnalysisError" in errors.__all__
     assert "RemotePhysPredictionError" not in errors.__all__
     assert not hasattr(errors, "RemotePhysPredictionError")
+
+
+def test_stage_13_removed_method_and_learner_output_names_are_absent() -> None:
+    import rphys
+    import rphys.learning
+    import rphys.learning.output
+    import rphys.methods
+    import rphys.methods.adapters
+    import rphys.methods.output
+
+    modules = (
+        rphys,
+        rphys.methods,
+        rphys.methods.output,
+        rphys.methods.adapters,
+        rphys.learning,
+        rphys.learning.output,
+    )
+    for public_name in STAGE_13_REMOVED_OUTPUT_NAMES:
+        for module in modules:
+            assert public_name not in getattr(module, "__all__", ())
+            assert not hasattr(module, public_name)
 
 
 def test_stage_12_learning_package_exports_only_code_backed_contract_names() -> None:

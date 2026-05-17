@@ -4,13 +4,13 @@ import pytest
 
 from rphys.data import Batch
 from rphys.errors import RemotePhysTrainingError
-from rphys.learning import LoopContext, StepOutput
-from rphys.training import NativeTrainingEngine, Trainer, TrainingPlan, TrainingResult
+from rphys.learning import LoopContext
+from rphys.training import NativeTrainingEngine, Trainer, TrainingOutputSpec, TrainingPlan, TrainingResult
 
 
 class FakeLearner:
-    def step(self, batch: Batch, context: LoopContext) -> StepOutput:
-        return StepOutput(metadata={"mode": context.mode.value})
+    def step(self, batch: Batch, context: LoopContext) -> Batch:
+        return batch
 
 
 class FakeEngine:
@@ -37,7 +37,10 @@ class FakeEngine:
 def test_trainer_delegates_each_mode_to_explicit_engine() -> None:
     engine = FakeEngine()
     trainer = Trainer(engine=engine)
-    plan = TrainingPlan(train_batches=(Batch(),))
+    plan = TrainingPlan(
+        train_batches=(Batch(),),
+        output_spec=TrainingOutputSpec(objective="objectives/custom.training.total"),
+    )
     learner = FakeLearner()
 
     assert trainer.fit(plan, learner).mode.value == "train"
