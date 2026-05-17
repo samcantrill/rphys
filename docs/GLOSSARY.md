@@ -67,6 +67,14 @@ section disagrees with this file, the code-backed contract and roadmap win.
 | `TrainingEvent` | Observe-only primitive event for native and adapter-owned training loops. | Events do not control loops, choose splits, compute metrics, or mutate learner semantics. |
 | `TrainingProfiler` | Observer-only profiling capability that can produce primitive span summaries or unavailable probes. | Not a hidden synchronization policy, framework profiler timeline, or mandatory dependency on device APIs. |
 | `Analysis` | Evaluation, summarization, interpretation, or reporting work over predictions, metrics, and provenance-aware outputs. | Distinct from training, checkpoint selection, or datasource crawling. |
+| `VisualizationOutput` | In-memory, field-ready visualization descriptor carrying a kind, codec key or hint, payload, metadata, and provenance for later optional rendering/export. | Not a plotting backend object, image/video writer, file path, dashboard handle, or implicit export side effect. |
+| `VisualizationOperation` | Operation-compatible adapter that attaches `VisualizationOutput` descriptor fields to copied `Sample`, `Batch`, or `SampleCollection` outputs. | Not a render engine, plotting registry, report writer, artifact store, or output directory convention. |
+| `Report` | Side-effect-free structured report record containing ordered sections, metadata, diagnostics, and provenance. | Not a markdown/HTML/PDF writer, dataframe, dashboard, artifact manifest, or evaluation runner result. |
+| `ReportSection` | Named in-memory report section that groups text and ordered `ReportTable` records. | Not a page layout, template engine, file section, or renderer-specific block. |
+| `ReportTable` | Ordered in-memory table with validated primitive, metric, or visualization cells plus metadata, diagnostics, and provenance. | Not a pandas dataframe, CSV writer, metric result table family, or hidden aggregation lifecycle. |
+| `ReportOperation` | Operation-compatible adapter that builds a `Report` or `ReportTable` from samples, collections, metric fields, summary fields, visualization fields, or primitives. | Not a generic analysis engine, evaluation runner, report save convention, or filesystem writer. |
+| `DiagnosticRenderer` | Structural callable that returns diagnostic output records as data. | Not a backend renderer, GUI/dashboard adapter, file writer, or dependency-bearing visualization implementation. |
+| `DiagnosticRenderOutput` | In-memory diagnostic renderer result containing the renderer name, report/table/visualization output, metadata, diagnostics, and provenance. | Not rendered bytes, a saved file, a dataframe, or a durable artifact record. |
 | `Export` | An operation that writes fields or derived outputs through codecs and may emit derived refs or datasources. | Not datasource discovery and not implicit codec side effects. |
 
 ## Core Data And Naming Terms

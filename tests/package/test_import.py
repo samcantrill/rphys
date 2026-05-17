@@ -24,7 +24,6 @@ PLANNED_PACKAGE_NAMES = [
 STAGE_13_SCAFFOLD_PACKAGES = [
     "rphys.prediction",
     "rphys.evaluation",
-    "rphys.analysis",
 ]
 
 STAGE_13_FORBIDDEN_PUBLIC_NAMES = [
@@ -61,6 +60,38 @@ STAGE_13_REMOVED_OUTPUT_NAMES = [
     "StepOutput",
     "StepPrediction",
 ]
+
+STAGE_13_ANALYSIS_EXPORTS = [
+    "DiagnosticRenderOutput",
+    "DiagnosticRenderer",
+    "Report",
+    "ReportCell",
+    "ReportOperation",
+    "ReportRow",
+    "ReportSection",
+    "ReportTable",
+    "VisualizationOperation",
+    "VisualizationOutput",
+    "attach_visualization_fields",
+]
+
+STAGE_13_ANALYSIS_MODULES = {
+    "rphys.analysis.reports": [
+        "DiagnosticRenderOutput",
+        "DiagnosticRenderer",
+        "Report",
+        "ReportCell",
+        "ReportOperation",
+        "ReportRow",
+        "ReportSection",
+        "ReportTable",
+    ],
+    "rphys.analysis.visualization": [
+        "VisualizationOperation",
+        "VisualizationOutput",
+        "attach_visualization_fields",
+    ],
+}
 
 STAGE_11_COLLECTION_EXPORTS = [
     "Collection",
@@ -897,6 +928,7 @@ def test_deferred_package_homes_import_with_empty_public_surfaces() -> None:
             "rphys.metrics",
             "rphys.objectives",
             "rphys.ops",
+            "rphys.analysis",
             "rphys.training",
         }:
             continue
@@ -925,6 +957,30 @@ def test_stage_13_scaffold_uses_existing_broad_error_categories() -> None:
     assert "RemotePhysAnalysisError" in errors.__all__
     assert "RemotePhysPredictionError" not in errors.__all__
     assert not hasattr(errors, "RemotePhysPredictionError")
+
+
+def test_stage_13_analysis_package_exports_only_code_backed_names() -> None:
+    import rphys
+    import rphys.analysis
+
+    assert rphys.analysis.__all__ == STAGE_13_ANALYSIS_EXPORTS
+    for public_name in STAGE_13_ANALYSIS_EXPORTS:
+        assert hasattr(rphys.analysis, public_name)
+        assert not hasattr(rphys, public_name)
+
+    for rejected_name in ["AnalysisOp", "AnalysisContext", "AnalysisResult"]:
+        assert rejected_name not in rphys.analysis.__all__
+        assert not hasattr(rphys.analysis, rejected_name)
+
+
+def test_stage_13_analysis_modules_export_only_code_backed_names() -> None:
+    for module_name, expected_all in STAGE_13_ANALYSIS_MODULES.items():
+        module = importlib.import_module(module_name)
+
+        assert module.__doc__
+        assert module.__all__ == expected_all
+        for public_name in expected_all:
+            assert hasattr(module, public_name)
 
 
 def test_stage_13_removed_method_and_learner_output_names_are_absent() -> None:
