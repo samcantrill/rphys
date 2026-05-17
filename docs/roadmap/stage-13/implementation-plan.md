@@ -5,7 +5,7 @@ Roadmap version: `v13`
 Planning document: `docs/roadmap/stage-13/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 5 - `visualization-reports-recipes`
+Current phase: Phase 6 - `docs-examples-final-validation`
 Blockers: none
 
 ## Summary
@@ -94,7 +94,7 @@ Blockers: none
 | 2 | `batch-native-method-learner-output` | merged | `agent/stage-13-prediction-evaluation-analysis-reports-p2-batch-native-method-learner-output` | [#86](https://github.com/samcantrill/rphys/pull/86) | `src/rphys/methods/**`, `src/rphys/learning/**`, `src/rphys/training/**`, batch-operation fakes | Remove `MethodOutput`/method-output adapters and `StepOutput`; make methods/learners return `Batch`; add generic returned-batch output spec/validation, plan-owned training-output spec/validation, field projection, target exclusion, and pass-through policy. | `make test-unit`; `make test-contract`; `make test-package`; focused integration if added | Batch-native prediction; learner Batch output; plan-owned training spec; target-free inference |
 | 3 | `uncollation-sample-artifacts` | merged | `agent/stage-13-prediction-evaluation-analysis-reports-p3-uncollation-sample-artifacts` | [#87](https://github.com/samcantrill/rphys/pull/87) | Data uncollation policy, sample artifact datasource/export adapters, tests | Implement explicit batch-field uncollation policy/evidence and sample-granular artifact export/reload over existing export/save/datasource APIs. | `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check` | Uncollate to samples; sample artifact export/reload |
 | 4 | `sample-collection-metric-ops` | merged | `agent/stage-13-prediction-evaluation-analysis-reports-p4-sample-collection-metric-ops` | [#88](https://github.com/samcantrill/rphys/pull/88) | `src/rphys/data/collections.py`, transitional `src/rphys/collections.py` only if still needed, `src/rphys/ops/**`, `src/rphys/metrics/**` adapters | Implement runtime grouping/collation of `Iterable[Sample]` into `Iterable[SampleCollection]`, collection sort/project/stitch/concat operations, and sample/collection metric operation adapters. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package` | Runtime grouping; stitched samples; metric-as-sample-operation |
-| 5 | `visualization-reports-recipes` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p5-visualization-reports-recipes` | pending | `src/rphys/analysis/**`, visualization/report tests, recipe docs/examples | Implement visualization/report operation-compatible builders, in-memory report/table/diagnostic renderer records, and importable recipe examples without a registry or engine. Analysis remains generic group/reduce/metric pipeline composition. | `make test-unit`; `make test-contract`; `make test-package`; docs review | Visualization fields; report building; structured report dataset handoff; recipe examples |
+| 5 | `visualization-reports-recipes` | merged | `agent/stage-13-prediction-evaluation-analysis-reports-p5-visualization-reports-recipes` | [#89](https://github.com/samcantrill/rphys/pull/89) | `src/rphys/analysis/**`, visualization/report tests, recipe docs/examples | Implement visualization/report operation-compatible builders, in-memory report/table/diagnostic renderer records, and importable recipe examples without a registry or engine. Analysis remains generic group/reduce/metric pipeline composition. | `make test-unit`; `make test-contract`; `make test-package`; docs review | Visualization fields; report building; structured report dataset handoff; recipe examples |
 | 6 | `docs-examples-final-validation` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p6-docs-examples-final-validation` | pending | Stage 13 docs/docstrings/examples, synthetic integration tests, final validation evidence | Complete synthetic composition examples, docs, package export review, and final validation. | `make test-package`; `make test-unit`; `make test-contract`; `make test-integration`; `make test-summary`; `uv lock --check`; `git diff --check`; `make validate-pr` | Full synthetic Stage 13 composition; sample-artifact handoff; dataset-formatting/evaluation recipe analogue |
 
 ## Implementation Readiness Blockers
@@ -826,11 +826,11 @@ Workflow path: fast path
 
 ## Phase 5: Visualization, Reports, And Diagnostics
 
-Status: pending
+Status: merged
 Slug: `visualization-reports-recipes`
 Branch: `agent/stage-13-prediction-evaluation-analysis-reports-p5-visualization-reports-recipes`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-13-prediction-evaluation-analysis-reports-p5-visualization-reports-recipes`
-PR: pending
+PR: [#89](https://github.com/samcantrill/rphys/pull/89)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -941,13 +941,13 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: complete in `docs/roadmap/stage-13/phases/visualization-reports-recipes.md`
 - Planning/refinement budget: medium; refine if report/table schema becomes too broad.
 - Implementation/refinement budget: medium.
 - PR review budget: medium-high; focus on report schema and dependency-light side-effect boundaries.
 - Blocker-resolution budget: reopen DQ-13-5 if report records require file writers or dataframe/plotting behavior.
 - Pre-submit blocker gate: no writer/render backend imports; no report output directory schema; no checkpoint/log/training behavior.
-- Merge record: pending
+- Merge record: `docs/roadmap/stage-13/phases/visualization-reports-recipes-merge-record.md`
 
 ### Risks And Stop Conditions
 
@@ -959,10 +959,10 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
+- Implementation: complete; analysis now exposes dependency-light visualization descriptors, report/table records, report operations, and diagnostic renderer records without public analysis operation/result or writer/backend surfaces.
+- Validation: complete; targeted analysis/contract/package tests, `make test-unit`, `make test-contract`, `make test-package`, `make test-summary`, `make validate-pr`, and `git diff --check` passed.
+- PR: [#89](https://github.com/samcantrill/rphys/pull/89)
+- Merge: merged to `develop` at `2026-05-17T14:25:38Z`; merge commit `8e390b0aae8996c2825e3cf502da4b64e2338f2f`.
 - Follow-up: Phase 6 completes cross-package examples and final validation.
 
 ## Phase 6: Docs, Synthetic Examples, And Final Validation

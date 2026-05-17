@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: ready for PR
+- Status: merged
 - Roadmap stage: `v13`
 - Feature focus: Stage 13 dependency-light visualization descriptors, in-memory report records, and diagnostic renderer records
 - Stage descriptor: Prediction, Evaluation, Analysis, And Reports
@@ -144,6 +144,9 @@ git diff --check
 - Implementation summary: complete.
 - Implementation validation: complete.
 - PR preparation: complete in `docs/roadmap/stage-13/phases/visualization-reports-recipes-pr-body.md`.
-- PR: pending.
-- Merge result: pending.
+- PR: [#89](https://github.com/samcantrill/rphys/pull/89), opened against
+  `develop` with required title.
+- Merge result: PR [#89](https://github.com/samcantrill/rphys/pull/89) merged
+  to `develop` at `2026-05-17T14:25:38Z`; merge commit
+  `8e390b0aae8996c2825e3cf502da4b64e2338f2f`.
 - Cleanup: pending after merge and metadata commit.
