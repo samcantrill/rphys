@@ -335,9 +335,13 @@ STAGE_2_DATA_EXPORTS = [
     "Sample",
     "SampleContract",
     *STAGE_11_DATA_COLLECTION_EXPORTS,
+    "UncollateFieldSpec",
+    "UncollatePlan",
+    "UncollatePolicy",
     "collate_samples",
     "project_batch_fields",
     "uncollate_batch",
+    "uncollate_batch_fields",
 ]
 
 STAGE_2_COLLATION_EXPORTS = [
@@ -584,6 +588,9 @@ STAGE_8_EXPORT_EXPORTS = [
     "RecordExportRequest",
     "SaveOperation",
     "SelectedFieldExport",
+    "build_sample_artifact_record",
+    "export_record_requests",
+    "sample_artifact_export_request",
 ]
 
 STAGE_6_OPERATION_ERROR_NAMES = [
