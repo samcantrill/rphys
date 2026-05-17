@@ -7,26 +7,26 @@ from rphys.data import FieldValue, Sample
 from rphys.data.collections import (
     PlannedSampleCollectionView,
     SampleCollection,
+    SampleCollectionConcatPlan,
+    SampleCollectionGroupPlan,
     SampleCollectionViewPlan,
     SampleCollector,
 )
 from rphys.losses import LossContext, LossContract, LossInputSpec, LossResult, LossTerm
-from rphys.metrics import (
-    MetricContext,
-    MetricContract,
-    MetricObservation,
-    MetricObservationCollection,
-    MetricObservationViewPlan,
-    MetricResult,
-    MetricValue,
-    PlannedMetricObservationView,
-)
+from rphys.metrics import MetricCollectionOperation, MetricContext, MetricContract, MetricValue
 from rphys.objectives import (
     ObjectiveContext,
     ObjectiveContract,
     ObjectiveResult,
     ObjectiveTerm,
     ObjectiveTermSpec,
+)
+from rphys.ops import (
+    OperationContext,
+    OperationPipeline,
+    SampleCollectionConcatOperation,
+    SampleCollectionGroupOperation,
+    SampleCollectionViewOperation,
 )
 
 
@@ -56,48 +56,16 @@ def _entry(
     )
 
 
-class SyntheticWindowMetric:
+class WindowCountMetric:
     contract = MetricContract(
-        "stage11-pulse-mae",
-        level="window",
-        writes=("metrics/custom.stage11.pulse_mae",),
+        "stage13-window-count",
+        level="record",
+        writes=("metrics/custom.stage13.window_count",),
     )
 
-    def __call__(self, context: MetricContext) -> MetricResult:
+    def __call__(self, context: MetricContext) -> MetricValue:
         assert context.samples is not None
-        observations = []
-        for index, entry in enumerate(context.samples.entries):
-            observations.append(
-                MetricObservation(
-                    f"stage11-pulse-mae-{entry.metadata['sample_id']}",
-                    MetricValue(
-                        FakeScalar(float(entry.value.get("inputs/signal.bvp")[0])),
-                        backend="fake",
-                        unit="bpm",
-                    ),
-                    level="window",
-                    groups={
-                        "subject_id": entry.metadata["subject_id"],
-                        "record_id": entry.metadata["record_id"],
-                        "sample_id": entry.metadata["sample_id"],
-                        "split": entry.metadata["split"],
-                    },
-                    window={
-                        "start": entry.metadata["window_start"],
-                        "stop": entry.metadata["window_stop"],
-                    },
-                    metadata={"sample_index": index},
-                    provenance={"metric": self.contract.name},
-                )
-            )
-        return MetricResult(
-            MetricObservationCollection(
-                observations,
-                metadata={"source": "sample_collection"},
-                provenance={"sample_view": context.samples.provenance.get("view")},
-            ),
-            contract=self.contract,
-        )
+        return MetricValue(FakeScalar(float(len(context.samples))), backend="fake")
 
 
 class SyntheticLoss:
@@ -155,23 +123,6 @@ class SyntheticObjective:
         )
 
 
-def _project_subject(
-    group_key: tuple[object, ...],
-    observations: tuple[MetricObservation, ...],
-    plan: MetricObservationViewPlan,
-) -> MetricObservation:
-    total = sum(observation.value.value.value for observation in observations)
-    return MetricObservation(
-        "stage11-pulse-mae-subject",
-        MetricValue(FakeScalar(total), backend="fake", unit="bpm"),
-        level=plan.output_level,
-        groups={"subject_id": group_key[0]},
-        window={"source_count": len(observations)},
-        metadata={"source_observation_count": len(observations)},
-        provenance={"view": plan.name},
-    )
-
-
 def test_stage_11_records_compose_without_trainer_or_evaluator_lifecycle() -> None:
     collector_result = SampleCollector(
         required_metadata=("subject_id", "record_id", "sample_id", "window_start", "split")
@@ -182,27 +133,30 @@ def test_stage_11_records_compose_without_trainer_or_evaluator_lifecycle() -> No
             _entry(4, subject_id="s2", record_id="r2", window_start=1),
         )
     )
-    sample_view = PlannedSampleCollectionView(
-        SampleCollectionViewPlan(
-            "ordered-window-view",
-            group_keys=("subject_id", "record_id"),
-            sort_keys=("window_start",),
-            selected_fields=("inputs/signal.bvp",),
+    group = SampleCollectionGroupOperation(
+        SampleCollectionGroupPlan("record-groups", group_keys=("subject_id", "record_id"))
+    )
+    sort = SampleCollectionViewOperation(
+        PlannedSampleCollectionView(
+            SampleCollectionViewPlan(
+                "ordered-window-view",
+                sort_keys=("window_start",),
+                selected_fields=("inputs/signal.bvp",),
+            )
         )
     )
-    ordered_samples = sample_view(collector_result.collection)
-    metric = SyntheticWindowMetric()
-    metric_result = metric(MetricContext(metric.contract, samples=ordered_samples))
-    observation_view = PlannedMetricObservationView(
-        MetricObservationViewPlan(
-            "subject-metric-view",
-            group_keys=("subject_id",),
-            output_level="subject",
-            source_levels=("window",),
+    metric = MetricCollectionOperation(WindowCountMetric())
+    stitch = SampleCollectionConcatOperation(
+        SampleCollectionConcatPlan(
+            "record-stitch",
+            field_map={"inputs/signal.bvp": "outputs/signal.bvp"},
         ),
-        projector=_project_subject,
+        payload_joiner=lambda payloads: tuple(payload[0] for payload in payloads),
     )
-    subject_observations = observation_view(metric_result.observations)
+
+    grouped = group(collector_result.collection, OperationContext(metadata={"split": "valid"})).output
+    record_collection = OperationPipeline((sort, metric))(grouped[0]).output
+    stitched = stitch(record_collection).output
 
     fields = Sample(
         {
@@ -216,18 +170,13 @@ def test_stage_11_records_compose_without_trainer_or_evaluator_lifecycle() -> No
     objective_result = objective(ObjectiveContext(objective.contract, loss_results=(loss_result,)))
 
     assert isinstance(collector_result, CollectorResult)
-    assert isinstance(ordered_samples, SampleCollection)
-    assert [sample.get("inputs/signal.bvp")[0] for sample in ordered_samples] == [1, 2, 4]
-    assert isinstance(metric_result.observations, MetricObservationCollection)
-    assert [observation.groups["subject_id"] for observation in subject_observations] == [
-        "s1",
-        "s2",
+    assert isinstance(record_collection, SampleCollection)
+    assert [sample.get("inputs/signal.bvp")[0] for sample in record_collection] == [1, 2]
+    assert [sample.require("metrics/custom.stage13.window_count").value for sample in record_collection] == [
+        FakeScalar(2.0),
+        FakeScalar(2.0),
     ]
-    assert [observation.value.value for observation in subject_observations] == [
-        FakeScalar(3.0),
-        FakeScalar(4.0),
-    ]
-    assert subject_observations.entries[0].metadata["source_count"] == 2
+    assert stitched.get("outputs/signal.bvp") == (1, 2)
     assert objective_result.total.value == FakeScalar(0.25)
     assert tuple(str(locator) for locator in loss_result.fields) == (
         "losses/custom.stage11.synthetic_l1",

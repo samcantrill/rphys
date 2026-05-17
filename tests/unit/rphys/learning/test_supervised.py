@@ -6,7 +6,7 @@ from rphys.data import Batch, FieldValue
 from rphys.errors import RemotePhysLearningError
 from rphys.learning import LoopContext, LoopMode, SupervisedLearner
 from rphys.losses import LossContext, LossContract, LossInputSpec, LossResult, LossTerm
-from rphys.metrics import MetricContext, MetricContract, MetricObservation, MetricObservationCollection, MetricResult, MetricValue
+from rphys.metrics import MetricContext, MetricContract, MetricValue
 from rphys.objectives import ObjectiveContext, ObjectiveContract, ObjectiveResult, ObjectiveTerm, ObjectiveTermSpec
 
 
@@ -78,18 +78,21 @@ class SyntheticObjective:
 
 
 class SyntheticMetric:
-    contract = MetricContract("stage12-metric", level="batch")
+    contract = MetricContract(
+        "stage12-metric",
+        level="batch",
+        writes=("metrics/custom.training.pulse.mae",),
+    )
 
-    def __call__(self, context: MetricContext) -> MetricResult:
+    def __call__(self, context: MetricContext) -> MetricValue:
         prediction = context.fields.require("predictions/signal.pulse")[0]
         target = context.fields.require("targets/signal.pulse")[0]
-        observation = MetricObservation(
-            "pulse-mae",
-            MetricValue(FakeScalar(abs(prediction - target)), backend="fake", unit="bpm"),
-            level=context.contract.level,
-            groups={"split": context.metadata["split"]},
+        return MetricValue(
+            FakeScalar(abs(prediction - target)),
+            backend="fake",
+            unit="bpm",
+            metadata={"split": context.metadata["split"]},
         )
-        return MetricResult(MetricObservationCollection((observation,)))
 
 
 def _batch() -> Batch:
