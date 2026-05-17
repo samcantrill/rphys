@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: ready for PR
+- Status: merged
 - Roadmap stage: `v13`
 - Feature focus: Stage 13 runtime sample-collection grouping, collection operations, and metric adapters
 - Stage descriptor: Prediction, Evaluation, Analysis, And Reports
@@ -153,6 +153,9 @@ git diff --check
 - Implementation summary: complete.
 - Implementation validation: complete.
 - PR preparation: complete in `docs/roadmap/stage-13/phases/sample-collection-metric-ops-pr-body.md`.
-- PR: pending.
-- Merge result: pending.
+- PR: [#88](https://github.com/samcantrill/rphys/pull/88), opened against
+  `develop` with required title.
+- Merge result: PR [#88](https://github.com/samcantrill/rphys/pull/88) merged
+  to `develop` at `2026-05-17T14:05:50Z`; merge commit
+  `150f947587463aecde6950f325b8be7a44d374c3`.
 - Cleanup: pending after merge and metadata commit.
