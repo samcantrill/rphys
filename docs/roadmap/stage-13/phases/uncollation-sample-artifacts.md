@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: pr_open
+- Status: merged
 - Roadmap stage: `v13`
 - Feature focus: Stage 13 explicit uncollation and sample artifact handoff
 - Stage descriptor: Prediction, Evaluation, Analysis, And Reports
@@ -135,5 +135,7 @@ git diff --check
 - PR preparation: complete in `docs/roadmap/stage-13/phases/uncollation-sample-artifacts-pr-body.md`.
 - PR: [#87](https://github.com/samcantrill/rphys/pull/87), opened against
   `develop` with required title.
-- Merge result: pending.
+- Merge result: PR [#87](https://github.com/samcantrill/rphys/pull/87) merged to
+  `develop` at `2026-05-17T13:36:25Z`; merge commit
+  `064cbf2ab72ffe15e71129d856f3b66c33b584db`.
 - Cleanup: pending after merge and metadata commit.
