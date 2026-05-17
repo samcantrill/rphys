@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: implemented
+- Status: pr_open
 - Roadmap stage: `v13`
 - Feature focus: Stage 13 Batch-native prediction and training output contracts
 - Stage descriptor: Prediction, Evaluation, Analysis, And Reports
@@ -157,7 +157,8 @@ git diff --check
   storage/runner APIs are absent.
 - PR preparation: complete in
   `docs/roadmap/stage-13/phases/batch-native-method-learner-output-pr-body.md`.
+- PR: [#86](https://github.com/samcantrill/rphys/pull/86), opened against
+  `develop` with required title.
 - Automated review: pending after PR creation.
 - Merge result: pending.
 - Cleanup: pending after merge and metadata commit.
-
