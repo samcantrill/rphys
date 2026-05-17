@@ -9,7 +9,7 @@ from rphys.data import Batch, FieldValue
 from rphys.errors import RemotePhysLearningError
 from rphys.losses import Loss, LossContext, LossResult
 from rphys.methods import Method, PredictionContext
-from rphys.metrics import Metric, MetricContext, MetricResult
+from rphys.metrics import Metric, MetricContext, collect_metric_fields
 from rphys.objectives import Objective, ObjectiveContext, ObjectiveResult
 
 from .context import LoopContext
@@ -159,25 +159,19 @@ class SupervisedLearner:
         self,
         fields: Batch,
         context: LoopContext,
-    ) -> tuple[MetricResult, ...]:
-        results: list[MetricResult] = []
+    ) -> tuple[Mapping[object, FieldValue], ...]:
+        results: list[Mapping[object, FieldValue]] = []
         for metric in self.metrics:
-            result = metric(
+            fields = collect_metric_fields(
+                metric,
                 MetricContext(
                     metric.contract,
                     fields=fields,
                     metadata=_context_metadata(context),
                     provenance=context.provenance,
-                )
+                ),
             )
-            if not isinstance(result, MetricResult):
-                raise RemotePhysLearningError(
-                    "Metric callable must return a MetricResult.",
-                    owner="SupervisedLearner",
-                    field="metrics",
-                    actual=type(result).__name__,
-                )
-            results.append(result)
+            results.append(fields)
         return tuple(results)
 
 
@@ -301,22 +295,10 @@ def _add_objective_fields(batch: Batch, result: ObjectiveResult | None) -> None:
         )
 
 
-def _add_metric_fields(batch: Batch, results: Iterable[MetricResult]) -> None:
-    for result in results:
-        for locator, field_value in result.fields.items():
+def _add_metric_fields(batch: Batch, results: Iterable[Mapping[object, FieldValue]]) -> None:
+    for fields in results:
+        for locator, field_value in fields.items():
             _set_new_field(batch, locator, field_value)
-        for observation in result.observations:
-            _set_new_field(
-                batch,
-                f"metrics/custom.training.{_field_key_suffix(observation.name)}",
-                FieldValue(
-                    observation.value,
-                    metadata={
-                        "name": observation.name,
-                        "level": observation.level,
-                    },
-                ),
-            )
 
 
 def _set_new_field(batch: Batch, locator: object, field_value: FieldValue) -> None:

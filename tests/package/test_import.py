@@ -76,8 +76,16 @@ STAGE_11_DATA_COLLECTION_EXPORTS = [
     "SampleCollection",
     "SampleCollectionView",
     "SampleCollectionViewPlan",
+    "SampleCollectionConcatPlan",
+    "SampleCollectionGroupPlan",
+    "SampleCollectionSortPlan",
     "SampleCollector",
     "PlannedSampleCollectionView",
+    "concat_sample_collection_fields",
+    "filter_sample_collection",
+    "group_sample_collections",
+    "project_sample_collection",
+    "sort_sample_collection",
 ]
 
 STAGE_11_LOSS_EXPORTS = [
@@ -115,33 +123,31 @@ STAGE_11_OBJECTIVE_MODULES = {
 STAGE_11_METRIC_EXPORTS = [
     "GroupBySpec",
     "Metric",
+    "MetricCollectionOperation",
     "MetricContext",
     "MetricContract",
     "MetricInputSpec",
-    "MetricObservation",
-    "MetricObservationCollection",
-    "MetricObservationView",
-    "MetricObservationViewPlan",
-    "MetricResult",
+    "MetricOutput",
+    "MetricSampleOperation",
     "MetricValue",
-    "PlannedMetricObservationView",
+    "collect_metric_fields",
 ]
 
 STAGE_11_METRIC_MODULES = {
     "rphys.metrics.context": ["MetricContext"],
-    "rphys.metrics.core": ["Metric", "MetricObservationView"],
+    "rphys.metrics.core": ["Metric", "MetricOutput"],
+    "rphys.metrics.operations": [
+        "MetricCollectionOperation",
+        "MetricSampleOperation",
+        "collect_metric_fields",
+    ],
     "rphys.metrics.results": [
-        "MetricObservation",
-        "MetricObservationCollection",
-        "MetricResult",
         "MetricValue",
-        "PlannedMetricObservationView",
     ],
     "rphys.metrics.specs": [
         "GroupBySpec",
         "MetricContract",
         "MetricInputSpec",
-        "MetricObservationViewPlan",
     ],
 }
 
@@ -664,6 +670,9 @@ def test_import_ops_public_all_exports() -> None:
         "SampleCheck",
         "SampleDecision",
         "SampleRoute",
+        "SampleCollectionGroupOperation",
+        "SampleCollectionViewOperation",
+        "SampleCollectionConcatOperation",
         "BatchParameterScope",
         "BatchEquivalenceClaim",
         "BatchFieldEffects",
@@ -696,6 +705,9 @@ def test_import_ops_public_all_exports() -> None:
     assert not hasattr(rphys, "SampleCheck")
     assert not hasattr(rphys, "SampleDecision")
     assert not hasattr(rphys, "SampleRoute")
+    assert not hasattr(rphys, "SampleCollectionGroupOperation")
+    assert not hasattr(rphys, "SampleCollectionViewOperation")
+    assert not hasattr(rphys, "SampleCollectionConcatOperation")
     assert not hasattr(rphys, "BatchParameterScope")
     assert not hasattr(rphys, "BatchEquivalenceClaim")
     assert not hasattr(rphys, "BatchFieldEffects")
@@ -738,6 +750,9 @@ def test_import_ops_sample_module_exports() -> None:
         "SampleCheck",
         "SampleDecision",
         "SampleRoute",
+        "SampleCollectionGroupOperation",
+        "SampleCollectionViewOperation",
+        "SampleCollectionConcatOperation",
     ]
 
 
@@ -854,6 +869,12 @@ def test_stage_11_does_not_expose_rejected_metric_table_names() -> None:
     import rphys.metrics
 
     for public_name in [
+        "MetricObservation",
+        "MetricObservationCollection",
+        "MetricObservationView",
+        "MetricObservationViewPlan",
+        "MetricResult",
+        "PlannedMetricObservationView",
         "MetricResultRow",
         "MetricResultTable",
         "MetricAggregationResult",

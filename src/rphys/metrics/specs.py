@@ -1,4 +1,4 @@
-"""Metric descriptors, contracts, grouping specs, and observation view plans."""
+"""Metric descriptors, contracts, and field grouping specs."""
 
 from __future__ import annotations
 
@@ -10,18 +10,15 @@ from rphys.errors import InvalidMetricSpecError
 
 from ._validation import (
     coerce_key_tuple,
-    coerce_empty_policy,
     coerce_level,
-    coerce_level_tuple,
     coerce_locator,
     coerce_locator_tuple,
     coerce_mapping,
     coerce_missing_policy,
-    coerce_mixed_level_policy,
     coerce_non_empty_string,
 )
 
-__all__ = ["GroupBySpec", "MetricContract", "MetricInputSpec", "MetricObservationViewPlan"]
+__all__ = ["GroupBySpec", "MetricContract", "MetricInputSpec"]
 
 
 @dataclass(frozen=True, init=False, slots=True)
@@ -79,7 +76,7 @@ class MetricInputSpec:
 
 @dataclass(frozen=True, init=False, slots=True)
 class GroupBySpec:
-    """Caller-supplied grouping descriptor for metric observations."""
+    """Caller-supplied grouping descriptor for metric-bearing fields."""
 
     keys: tuple[str, ...]
     level: str
@@ -116,115 +113,6 @@ class GroupBySpec:
                 metadata,
                 owner="GroupBySpec",
                 field="metadata",
-                error_type=InvalidMetricSpecError,
-            ),
-        )
-
-
-@dataclass(frozen=True, init=False, slots=True)
-class MetricObservationViewPlan:
-    """Descriptor for grouping or projecting metric observations.
-
-    A view plan is configuration only. ``PlannedMetricObservationView`` uses an
-    injected projector to produce coarser or differently grouped observations;
-    Stage 11 does not define concrete reduction algorithms, streaming state,
-    distributed synchronization, or a separate view-result family.
-    """
-
-    name: str
-    group_keys: tuple[str, ...]
-    output_level: str
-    source_levels: tuple[str, ...]
-    missing_policy: str
-    empty_policy: str
-    mixed_level_policy: str
-    metadata: Mapping[str, object]
-    provenance: Mapping[str, object]
-
-    def __init__(
-        self,
-        name: str,
-        *,
-        group_keys: Iterable[str] = (),
-        output_level: str = "group",
-        source_levels: Iterable[str] = (),
-        missing_policy: str = "error",
-        empty_policy: str = "error",
-        mixed_level_policy: str = "error",
-        metadata: Mapping[object, object] | None = None,
-        provenance: Mapping[object, object] | None = None,
-    ) -> None:
-        object.__setattr__(
-            self,
-            "name",
-            coerce_non_empty_string(
-                name,
-                owner="MetricObservationViewPlan",
-                field="name",
-                error_type=InvalidMetricSpecError,
-            ),
-        )
-        object.__setattr__(
-            self,
-            "group_keys",
-            coerce_key_tuple(
-                group_keys,
-                owner="MetricObservationViewPlan",
-                field="group_keys",
-                error_type=InvalidMetricSpecError,
-            ),
-        )
-        object.__setattr__(
-            self,
-            "output_level",
-            coerce_level(
-                output_level,
-                owner="MetricObservationViewPlan",
-                error_type=InvalidMetricSpecError,
-            ),
-        )
-        object.__setattr__(
-            self,
-            "source_levels",
-            coerce_level_tuple(
-                source_levels,
-                owner="MetricObservationViewPlan",
-                field="source_levels",
-                error_type=InvalidMetricSpecError,
-            ),
-        )
-        object.__setattr__(
-            self,
-            "missing_policy",
-            coerce_missing_policy(missing_policy, owner="MetricObservationViewPlan"),
-        )
-        object.__setattr__(
-            self,
-            "empty_policy",
-            coerce_empty_policy(empty_policy, owner="MetricObservationViewPlan"),
-        )
-        object.__setattr__(
-            self,
-            "mixed_level_policy",
-            coerce_mixed_level_policy(mixed_level_policy, owner="MetricObservationViewPlan"),
-        )
-        object.__setattr__(
-            self,
-            "metadata",
-            coerce_mapping(
-                metadata,
-                owner="MetricObservationViewPlan",
-                field="metadata",
-                error_type=InvalidMetricSpecError,
-            ),
-        )
-        object.__setattr__(
-            self,
-            "provenance",
-            coerce_mapping(
-                provenance,
-                owner="MetricObservationViewPlan",
-                field="provenance",
                 error_type=InvalidMetricSpecError,
             ),
         )
@@ -324,5 +212,4 @@ def _coerce_inputs(values: Iterable[MetricInputSpec]) -> tuple[MetricInputSpec, 
 
 MetricInputSpec.__hash__ = None  # type: ignore[assignment]
 GroupBySpec.__hash__ = None  # type: ignore[assignment]
-MetricObservationViewPlan.__hash__ = None  # type: ignore[assignment]
 MetricContract.__hash__ = None  # type: ignore[assignment]

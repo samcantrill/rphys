@@ -7,9 +7,17 @@ from rphys.data import FieldValue, Sample
 from rphys.data.collections import (
     PlannedSampleCollectionView,
     SampleCollection,
+    SampleCollectionConcatPlan,
+    SampleCollectionGroupPlan,
+    SampleCollectionSortPlan,
     SampleCollectionView,
     SampleCollectionViewPlan,
     SampleCollector,
+    concat_sample_collection_fields,
+    filter_sample_collection,
+    group_sample_collections,
+    project_sample_collection,
+    sort_sample_collection,
 )
 from rphys.errors import (
     InvalidCollectionContextError,
@@ -181,3 +189,80 @@ def test_planned_sample_collection_view_uses_injected_fake_stitch_behavior() -> 
     assert output.entries[0].metadata["source_count"] == 2
     assert output.entries[0].metadata["stitch_policy"] == "fake"
     assert output.entries[0].metadata["record_id"] == "r1"
+
+
+def test_group_sample_collections_materializes_grouped_runtime_collections() -> None:
+    entries = (
+        CollectionItem(
+            Sample({"metadata/metadata.split_label": FieldValue("train")}),
+            metadata={"subject_id": "s1", "record_id": "r1"},
+        ),
+        CollectionItem(
+            Sample({"metadata/metadata.split_label": FieldValue("valid")}),
+            metadata={"subject_id": "s1", "record_id": "r1"},
+        ),
+        CollectionItem(
+            Sample({"metadata/metadata.split_label": FieldValue("train")}),
+            metadata={"subject_id": "s2", "record_id": "r2"},
+        ),
+    )
+    plan = SampleCollectionGroupPlan(
+        "record-groups",
+        group_keys=("subject_id", "record_id"),
+        field_group_keys={"split_from_field": "metadata/metadata.split_label"},
+    )
+
+    grouped = group_sample_collections(entries, plan)
+
+    assert len(grouped) == 3
+    assert grouped[0].metadata["subject_id"] == "s1"
+    assert grouped[0].metadata["record_id"] == "r1"
+    assert grouped[0].metadata["split_from_field"] == "train"
+    assert grouped[0].metadata["source_count"] == 1
+
+
+def test_group_sample_collections_missing_policy_is_explicit() -> None:
+    entry = CollectionItem(_sample(1), metadata={"record_id": "r1"})
+    default_plan = SampleCollectionGroupPlan("subject-groups", group_keys=("subject_id",))
+    with pytest.raises(InvalidCollectionContextError):
+        group_sample_collections((entry,), default_plan)
+
+    allowing_plan = SampleCollectionGroupPlan(
+        "subject-groups",
+        group_keys=("subject_id",),
+        missing_policy="allow",
+    )
+    grouped = group_sample_collections((entry,), allowing_plan)
+
+    assert grouped[0].metadata["subject_id"] is None
+
+
+def test_sort_project_filter_and_concat_collection_operations() -> None:
+    entries = (_entry(2, window_start=2), _entry(1, window_start=1), _entry(3, window_start=3))
+    collection = SampleCollection(entries)
+
+    sorted_collection = sort_sample_collection(
+        collection,
+        SampleCollectionSortPlan("sort-by-window", sort_keys=("window_start",)),
+    )
+    projected = project_sample_collection(sorted_collection, ("inputs/signal.bvp",), name="project-bvp")
+    filtered = filter_sample_collection(
+        projected,
+        lambda entry: entry.metadata["window_start"] != 2,
+        name="drop-middle",
+        skip_policy="diagnose-skips",
+    )
+    stitched = concat_sample_collection_fields(
+        filtered.collection,
+        SampleCollectionConcatPlan(
+            "tuple-stitch",
+            field_map={"inputs/signal.bvp": "outputs/signal.bvp"},
+        ),
+        payload_joiner=lambda payloads: tuple(payload[0] for payload in payloads),
+    )
+
+    assert [sample.get("inputs/signal.bvp")[0] for sample in sorted_collection] == [1, 2, 3]
+    assert filtered.accepted_count == 2
+    assert filtered.skipped[0].metadata["filter_operation"] == "drop-middle"
+    assert stitched.get("outputs/signal.bvp") == (1, 3)
+    assert stitched.field("outputs/signal.bvp").metadata["collection.source_count"] == 2

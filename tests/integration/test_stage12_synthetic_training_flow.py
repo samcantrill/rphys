@@ -3,7 +3,7 @@ from __future__ import annotations
 from rphys.data import Batch, FieldValue
 from rphys.learning import LoopContext, SupervisedLearner
 from rphys.losses import LossContext, LossContract, LossInputSpec, LossResult, LossTerm
-from rphys.metrics import MetricContext, MetricContract, MetricObservation, MetricObservationCollection, MetricResult, MetricValue
+from rphys.metrics import MetricContext, MetricContract, MetricValue
 from rphys.objectives import ObjectiveContext, ObjectiveContract, ObjectiveResult, ObjectiveTerm, ObjectiveTermSpec
 from rphys.training import NativeTrainingEngine, Trainer, TrainingOutputSpec, TrainingPlan, TrainingStatus
 
@@ -50,24 +50,22 @@ class PulseObjective:
 
 
 class PulseMetric:
-    contract = MetricContract("pulse-mae", level="batch")
+    contract = MetricContract(
+        "pulse-mae",
+        level="batch",
+        writes=("metrics/custom.training.pulse.mae",),
+    )
 
-    def __call__(self, context: MetricContext) -> MetricResult:
+    def __call__(self, context: MetricContext) -> MetricValue:
         value = abs(
             context.fields.require("predictions/signal.pulse")[0]
             - context.fields.require("targets/signal.pulse")[0]
         )
-        return MetricResult(
-            MetricObservationCollection(
-                (
-                    MetricObservation(
-                        "pulse-mae",
-                        MetricValue(FakeScalar(value), backend="fake", unit="bpm"),
-                        level="batch",
-                        groups={"split": context.metadata["split"]},
-                    ),
-                )
-            )
+        return MetricValue(
+            FakeScalar(value),
+            backend="fake",
+            unit="bpm",
+            metadata={"split": context.metadata["split"]},
         )
 
 
