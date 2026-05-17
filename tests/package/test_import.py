@@ -21,6 +21,38 @@ PLANNED_PACKAGE_NAMES = [
     "rphys.training",
 ]
 
+STAGE_13_SCAFFOLD_PACKAGES = [
+    "rphys.prediction",
+    "rphys.evaluation",
+    "rphys.analysis",
+]
+
+STAGE_13_FORBIDDEN_PUBLIC_NAMES = [
+    "PredictionRecord",
+    "PredictionCollection",
+    "PredictionCollector",
+    "PredictionRunner",
+    "PredictionResult",
+    "PredictionDataSource",
+    "EvaluationProtocol",
+    "EvaluationPlan",
+    "EvaluationResult",
+    "EvaluationEngine",
+    "InferenceEngine",
+    "EvaluationRunner",
+    "Evaluator",
+    "ComparisonSpec",
+    "PipelineJob",
+    "JobPlan",
+    "JobRunner",
+    "AnalysisOp",
+    "AnalysisContext",
+    "AnalysisResult",
+    "Report",
+    "ReportTable",
+    "DiagnosticRenderer",
+]
+
 STAGE_11_COLLECTION_EXPORTS = [
     "Collection",
     "CollectionContext",
@@ -834,6 +866,27 @@ def test_deferred_package_homes_import_with_empty_public_surfaces() -> None:
 
         assert package.__doc__
         assert package.__all__ == []
+
+
+def test_stage_13_scaffold_packages_are_empty_and_code_backed() -> None:
+    for package_name in STAGE_13_SCAFFOLD_PACKAGES:
+        package = importlib.import_module(package_name)
+
+        assert package.__doc__
+        assert package.__all__ == []
+        for public_name in STAGE_13_FORBIDDEN_PUBLIC_NAMES:
+            assert not hasattr(package, public_name)
+
+
+def test_stage_13_scaffold_uses_existing_broad_error_categories() -> None:
+    from rphys import errors
+
+    assert errors.RemotePhysEvaluationError.__doc__
+    assert errors.RemotePhysAnalysisError.__doc__
+    assert "RemotePhysEvaluationError" in errors.__all__
+    assert "RemotePhysAnalysisError" in errors.__all__
+    assert "RemotePhysPredictionError" not in errors.__all__
+    assert not hasattr(errors, "RemotePhysPredictionError")
 
 
 def test_stage_12_learning_package_exports_only_code_backed_contract_names() -> None:

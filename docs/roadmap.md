@@ -320,7 +320,8 @@ learning/training
 
 prediction/evaluation/analysis
   Thin helpers over field containers, result datasources, metric/report
-  contracts, analysis operations, and structured report outputs.
+  contracts, analysis recipes, visualization fields, and structured report
+  outputs.
 ```
 
 Do not add a top-level `rphys.transforms` package in the initial design.
@@ -1019,7 +1020,8 @@ Goal:
 
 ```text
 Define the generic operation contract and placement rules for pure numerical
-kernels before specialized sample, export, metric, or analysis operations land.
+kernels before specialized sample, export, metric, visualization, or report
+operations land.
 ```
 
 Primary package:
@@ -1598,8 +1600,6 @@ StatefulMethod
 TrainableMethod
 Model
 MethodInputAdapter
-MethodOutputAdapter
-MethodOutput
 PredictionContext
 ```
 
@@ -1668,14 +1668,11 @@ ObjectiveResult
 ObjectiveContext
 Metric
 MetricInputSpec
+MetricOutputSpec
 MetricContract
 MetricValue
-MetricObservation
-MetricResultTable
 MetricContext
 GroupBySpec
-MetricAggregationPlan
-MetricAggregator
 ```
 
 Rules:
@@ -1693,10 +1690,12 @@ regularization, constraints, schedules, parameter penalties, and auxiliary
 values. ObjectiveResult.total is the scalar used for backward. Trainer consumes
 ObjectiveResult.total, not a string field such as loss.total.
 
-Metrics compute detached observations or result tables. They may write declared
-metric fields, but never influence optimizer gradients directly.
-Metric state, if needed, lives in explicit aggregators/adapters rather than
-hidden mutation inside core Metric.
+Metrics compute detached MetricValues and write declared metric fields such as
+metrics/<key> onto Sample or Batch containers through explicit metric
+operations/adapters. They never influence optimizer gradients directly.
+Metric grouping, projection, aggregation, and reduction live in generic
+SampleCollection operations over metric fields, not in metric-specific
+row/collection/view types or hidden mutation inside core Metric.
 ```
 
 Avoid a broad public `Measure` base and broad input adapters unless repeated
@@ -1706,8 +1705,10 @@ helpers should cover the first implementation.
 Metric evaluation supports both orders:
 
 ```text
-per-sample/window metric -> aggregate metric rows
-prediction samples -> aggregate/reconstruct record-level samples -> compute metric
+per-sample/window metric -> Samples with metrics/<key> fields
+  -> SampleCollection grouping/reduction operations
+prediction samples -> SampleCollection view/reconstruction
+  -> metric operation writes metrics/<key> fields
 ```
 
 Definition of done:
@@ -1715,10 +1716,11 @@ Definition of done:
 ```text
 Losses, objectives, and metrics address fields by typed FieldLocators.
 ObjectiveResult provides the optimizer scalar and structured terms.
-MetricResultTable stores per-sample/per-window and aggregated rows with grouping
-metadata.
-No loss, objective, metric, or aggregator scans datasources, loads samples,
-writes files, owns trainer hooks, or depends on logger state.
+Metrics write declared metric fields to Sample/Batch containers. Generic
+SampleCollection operations can group, sort, combine, aggregate, or export those
+metric fields without a metric-specific observation collection family.
+No loss, objective, metric, or collection operation scans datasources, loads
+samples, writes files, owns trainer hooks, or depends on logger state.
 ```
 
 ## 20. Milestone 12: Learner And Trainer Contracts
@@ -1741,13 +1743,15 @@ Key interfaces:
 ```text
 Learner
 SupervisedLearner
-StepOutput
+TrainingOutputSpec
 LoopMode
 LoopContext
 TrainingContext
 PredictionContext
 BackwardableScalar
 Trainer
+TrainingEngine
+NativeTrainingEngine
 TrainingPlan
 TrainingResult
 DeviceMover
@@ -1767,10 +1771,10 @@ Rules:
 ```text
 Learner owns mode-specific step semantics and composes Method + optional
 Objective + Metrics.
-Trainer owns iteration, device movement, grad/no-grad mode, backward, gradient
-accumulation, optimizer/scheduler stepping, clipping, precision policy,
-distributed context, checkpoint hooks, loop logging, callbacks, and default
-profiling spans.
+Trainer is the RemotePhys facade. The selected TrainingEngine owns iteration,
+device movement, grad/no-grad mode, backward, gradient accumulation,
+optimizer/scheduler stepping, clipping, precision policy, distributed context,
+checkpoint hooks, loop logging, callbacks, and default profiling spans.
 Learner does not call optimizer.step, scheduler.step, checkpoint writers,
 dataloader builders, SampleBuilder, datasource adapters, or export ops.
 Trainer does not parse input/target/prediction locators, compute scientific
@@ -1780,20 +1784,20 @@ losses, build IndexItems, export outputs, or assume supervised learning.
 Profiling and callback rules:
 
 ```text
-Trainer-owned profiling is the default path when it is sufficient to diagnose
+Training-engine profiling is the default path when it is sufficient to diagnose
 training-loop bottlenecks. It records structured spans for dataloader wait,
 device transfer, forward, objective/loss, backward, optimizer step,
 callbacks/logging, checkpointing, and whole-step timing.
 
 TrainingEvent, TrainingEventSink, TrainingCallback, and TrainingProfiler form a
-cohesive observer boundary for native rphys Trainer and framework-backed
+cohesive observer boundary for NativeTrainingEngine and framework-backed
 execution. Sinks and callbacks consume events; they do not control learner
 semantics, parse field selectors, choose data splits, or force a logger or
 profiler backend.
 
 PyTorch Lightning Trainer integration is a first-class design target but an
 optional dependency. A Lightning adapter should map Lightning loop hooks into
-the same rphys event schema and profiling records as the native Trainer,
+the same rphys event schema and profiling records as NativeTrainingEngine,
 without making Lightning the canonical training runtime.
 
 Profiler implementations must make synchronization behavior explicit. Default
@@ -1814,17 +1818,30 @@ It is not a datasource split, workflow stage, roadmap phase, or artifact stage.
 `context.split` records data partition or usage label when known and must not be
 treated as equivalent to mode.
 
-`StepOutput` should carry:
+`Learner.step` returns a `Batch`. `TrainingPlan` owns the
+`TrainingOutputSpec`, which declares the fields a training engine is allowed to
+read from each returned batch:
 
 ```text
-predictions: Sample | Batch | None
-objective: BackwardableScalar | None
-loss_terms
-objective_terms
-metric_values
-diagnostics
-metadata
+objective field locator, for example objectives/train.total
+loss field locators
+metric field locators
+diagnostic field locators
+mode-specific required fields
+missing-field and invalid-objective behavior
 ```
+
+The learner may include prediction, loss, objective, metric, and diagnostic
+fields on the same returned `Batch`. The trainer still owns backward,
+optimizer/scheduler stepping, events, and profiling. It does not materialize
+predictions or build artifacts.
+
+Plan-owned output specs are the training source of truth. A learner may expose
+capability documentation, but NativeTrainingEngine validates against the
+TrainingPlan's spec before backward or optimizer steps. Missing specs, missing
+mode-required fields, invalid objective payloads, duplicate locators, unsupported
+field roles, or train-mode objective omissions fail before parameter updates and
+include FieldLocator/mode context.
 
 `SupervisedLearner` is the only initial concrete learner. Contrastive,
 self-supervised, masked-modeling, and multitask learning remain design patterns
@@ -1838,14 +1855,15 @@ configuration schema.
 Definition of done:
 
 ```text
-Trainer can run fit/validate/test/predict over Batch iterables without
+Trainer can delegate fit/validate/test/predict over Batch iterables without
 hard-coded fields or supervised-only assumptions.
-Trainer backpropagates only StepOutput.objective.
+NativeTrainingEngine backpropagates only the objective field declared by
+TrainingOutputSpec on the returned Batch.
 SupervisedLearner works with configured Method, Objective, and Metrics.
 Prediction works without objective or targets.
-Native Trainer and Lightning-backed execution can expose the same provisional
-event/profiling schema without making Lightning, Fabric, accelerator, or logger
-packages core dependencies.
+NativeTrainingEngine and framework-backed execution can expose the same
+provisional event/profiling schema without making Lightning, Fabric,
+accelerator, or logger packages core dependencies.
 ```
 
 ## 21. Milestone 13: Prediction, Evaluation, Analysis, And Reports
@@ -1853,34 +1871,42 @@ packages core dependencies.
 Goal:
 
 ```text
-Treat predictions, processed outputs, diagnostics, metric observations, and
-analysis inputs as normal field containers and structured result objects.
+Treat predictions, processed outputs, diagnostics, metric fields, visualization
+fields, and report inputs as normal field containers and structured result
+objects.
 ```
 
 Primary packages:
 
 ```text
-rphys.prediction
-rphys.evaluation
+rphys.data
+rphys.datasources
+rphys.ops
+rphys.metrics
 rphys.analysis
-rphys.ops.evaluation
 ```
 
 Key interfaces:
 
 ```text
-PredictionRunner
-PredictionResult
-EvaluationProtocol
-EvaluationPlan
-EvaluationRunner
-MetricOp
-SampleAggregatorOp
-MetricAggregatorOp
-AnalysisOp
-VisualizationOp
-AnalysisContext
-AnalysisResult
+Sample
+Batch
+BatchOutputSpec
+TrainingOutputSpec
+SampleCollection
+SampleCollector
+SampleCollectionCollator
+SampleCollectionOperation
+SampleCollectionView
+UncollatePolicy
+UncollatePlan
+SampleArtifactLayout
+SampleArtifactDataSourceAdapter
+SampleMetricOperation
+SampleCollectionMetricOperation
+VisualizationOperation
+VisualizationOutput
+ReportOperation
 Report
 ReportTable
 DiagnosticRenderer
@@ -1889,58 +1915,139 @@ DiagnosticRenderer
 Rules:
 
 ```text
-Predictions are ordinary Sample or Batch fields, not rigid waveform-specific
-objects.
-Durable predictions are exported through SaveOp and DataSourceManifestWriter
-into derived DataSourceRefs.
-Prediction helpers iterate over Batch-producing data, call Method/Learner/
-Trainer prediction entrypoints, attach metadata/provenance, and return field
-containers, typed summaries, or exported derived DataSourceRefs.
-Prediction helpers do not introduce prediction-specific datasources or a second
-storage path.
+Stage 13 is Sample/Batch native. Prediction is not a new public container family:
+it is field meaning expressed by locators such as predictions/<key> on ordinary
+Samples or Batches.
+Batch is the transient execution shape for methods, learners, and batch
+pipelines. Sample is the durable per-entry shape for artifacts and datasource
+reload. SampleCollection remains the collection abstraction; do not add
+PredictionCollection, PredictionRecord, PredictionCollector, BatchCollection, or
+BatchCollector in Stage 13 unless a later implementation review reopens design
+with concrete evidence.
+Method and learner contracts should return Batch values directly. Stage 13
+removes MethodOutput, MethodOutputSpec, MethodOutputAdapter,
+apply_method_output, and StepOutput instead of preserving them as public
+compatibility surfaces. Method.predict returns Batch. Learner.step returns Batch.
+Generic BatchOutputSpec or equivalent returned-batch validation replaces
+method-output specs: it declares required or optional output locators, expected
+roles/schemas/types, metadata/provenance requirements, and conflict/pass-through
+policy. Training engines validate returned learner batches through the
+TrainingPlan-owned TrainingOutputSpec, a training specialization that declares
+objective, loss, metric, diagnostic, and mode-required fields.
+Pipelines own field projection, field merge/pass-through, conflict policy,
+runtime collection/grouping, sorting, stitching, uncollation, and export.
+Durable prediction/test/evaluation artifacts are always sample-granular. A batch
+may be exported only after it has been uncollated into Samples; each exported
+sample becomes one datasource record with descriptor-backed fields.
+Inference inputs must not require targets/ground-truth. Evaluation-ready artifact
+exports may carry target/reference fields alongside prediction fields as explicit
+pass-through fields so later evaluation scripts can reload one self-contained
+sample datasource.
+Stage 13 must strengthen collation/uncollation. Every batch field that can be
+serialized per sample must carry public uncollation evidence or an explicit
+uncollate policy, for example list, batch-axis split, broadcast, drop/error, or
+adapter-provided custom split. Missing or incompatible uncollation evidence must
+fail loudly before export.
+Prediction, evaluation, and reporting may be launched by separate downstream
+scripts. The durable handoff between those scripts is a sample-artifact datasource
+layout: Samples produce export requests, existing export/save writes fields, and
+normal datasource descriptors/index/sample-source behavior reloads them.
+Once serialized, prediction, evaluation, metric, and structured report outputs
+are ordinary datasource records with fields. Stage 13 does not add
+PredictionDataSource, EvaluationDataSource, ReportDataSource, runner-owned result
+caches, or domain-specific storage readers.
 ```
 
-`EvaluationProtocol` is the scientific comparison contract. It names:
+Runtime sample/collection operation rules:
 
 ```text
-prediction selectors
-reference selectors
-grouping metadata
-pre-metric sample aggregation or reconstruction
-metric computation
-post-metric aggregation
-report requirements
-failure behavior
+DataSource/sample-source -> Iterable[Sample]
+Iterable[Sample] -> SampleCollectionCollator or grouping op -> Iterable[SampleCollection]
+SampleCollectionOperation may sort, filter, select fields, validate metadata, or
+  stitch/concatenate member samples into a revised SampleCollection or Sample
+SampleOperation and SampleMetricOperation add derived fields to each Sample
+SampleCollectionMetricOperation computes collection-level metric fields
+Pipeline recipes are importable Python objects or examples, not a global registry
 ```
 
-`EvaluationPlan` binds a protocol to concrete datasource/index/run inputs.
-`EvaluationRunner`, if present, is only a thin executor over existing indexes,
-SampleBuilder, SampleOperationPipeline, MetricOps, aggregators, and report
-builders.
-It must not own datasource scanning, split construction, training losses, codec
-logic, or custom report file conventions.
+Evaluation is not a fixed public procedure in Stage 13. Do not add
+EvaluationProtocol, EvaluationPlan, EvaluationResult, ComparisonSpec,
+EvaluationEngine, or InferenceEngine by default. Evaluation examples should be
+ordinary recipes composed from generic sample, collection, metric, report, and
+export operations. A future evaluation module is justified only if code-backed
+repeated semantics emerge that cannot be expressed by generic operations and
+metric contracts. A load-datasource -> run pipeline -> export engine would also
+apply to inference, reporting, dataset formatting, and analysis, so it belongs as
+a later generic pipeline/orchestration layer, or downstream/loom behavior, not as
+an evaluation-specific Stage 13 API.
 
 Analysis/reporting rules:
 
 ```text
-AnalysisOp and VisualizationOp consume Samples, Batches, MetricResultTables,
-AnalysisResults, or Reports and return structured outputs.
-Analysis does not train models, select checkpoints, mutate predictions, crawl ad
-hoc log files, or write plot files outside explicit report/export contracts.
+Analysis is ordinary pipeline composition over Samples, Batches,
+SampleCollections, and metric fields. Do not add AnalysisOp, AnalysisContext, or
+AnalysisResult by default; group/reduce/project/stitch/metric operations should
+produce summary fields or report-ready rows when analysis is needed.
+VisualizationOperation is an optional operation-compatible adapter that consumes
+Samples, Batches, SampleCollections, metric-field-bearing containers, or Reports
+and writes visualization fields such as visualizations/<key>,
+figures/<key>, or videos/<key> with provenance and explicit export codec hints.
+Stage 13 may define codec keys/hints, field-ready render descriptors, and fake
+dependency-light test codecs only. Concrete matplotlib, video, image, markdown,
+and rich-media render/save codecs are deferred optional import-gated adapters
+selected through explicit export/save behavior, not hidden core imports.
+ReportOperation is an optional operation-compatible builder over sample,
+collection, metric, visualization, and primitive summary fields. It may run
+explicitly supplied pipeline components or consume already materialized fields to
+produce Report/ReportTable objects or report fields. Any markdown, figure,
+video, or rich-media file materialization must route through explicit
+codec/export/save requests.
 Report and DiagnosticRenderer return structured result objects. Durable files,
 when needed, are written by explicit export/report save behavior or user code.
+ReportTable is a lightweight structured row/column view over primitive values,
+metric fields, visualization references, derived summary values, and provenance.
+Pandas/dataframe, plotting, and rich media adapters are optional import-gated
+adapters, not Stage 13 core dependencies.
+When structured evaluation or report datasets need durable handoff, they should
+use the same item-to-export-request plus export/save plus derived datasource
+flow as predictions, not a report-specific storage family.
 ```
 
 Definition of done:
 
 ```text
-Prediction Samples can be exported as derived DataSourceRefs and loaded again.
-EvaluationProtocol records selector, grouping, aggregation, metric, and report
-semantics without owning workflow execution.
-Analysis and visualization outputs are structured and side-effect free by
-default.
-No alternate scoring runtime, hidden plotting system, or waveform-only
-prediction object is introduced.
+Methods or prediction operations can run over Batches and return Batches with
+prediction fields without target-field leakage.
+MethodOutput, MethodOutputSpec, MethodOutputAdapter, apply_method_output, and
+StepOutput are removed from public contracts; methods and learners return Batch
+values directly, returned batches can be checked by generic BatchOutputSpec
+validation, and training output fields are validated through the
+TrainingPlan-owned TrainingOutputSpec.
+Batch outputs can be merged with explicit pass-through fields, uncollated into
+Samples using public uncollation evidence, exported one sample per record, and
+loaded again through datasource/sample-source machinery.
+The same exported sample-artifact datasource can feed multiple evaluation
+workflows; evaluation/report fields can also be exported as ordinary sample
+artifact fields when a downstream script needs to reload them.
+Runtime grouping, sorting, stitching, field comparison, and metric computation
+are available as generic sample or SampleCollection operations that can be
+composed into evaluation, analysis, reporting, or dataset-formatting recipes.
+MetricObservation, MetricObservationCollection, MetricObservationView, and
+MetricResult are removed from public metric contracts or made private migration
+details; metrics and metric operations expose MetricValue plus ordinary
+metrics/<key> fields.
+Analysis summaries are expressible through generic group/reduce/project and
+metric-field operations. Visualization and report operations attach ordinary
+fields or return structured report objects and are side-effect free by default.
+Reports are structured, dependency-light objects by default and can be saved
+only through explicit save/export/report behavior.
+No public PredictionRecord/PredictionCollection/PredictionRunner family,
+BatchCollection/BatchCollector, MethodOutput/MethodOutputSpec/
+MethodOutputAdapter family, StepOutput, MetricObservation/MetricResult public
+family, evaluation runner lifecycle, alternate scoring runtime,
+EvaluationProtocol/EvaluationPlan/EvaluationResult by default, hidden analysis
+operation family, hidden plotting system, implicit trainer prediction capture
+path, dataframe dependency, or waveform-only prediction object is introduced.
 ```
 
 ## 22. Milestone 14: Synthetic Fixtures, Contract Tests, And Smoke Hardening
@@ -2002,7 +2109,8 @@ synthetic scan
 -> trivial Method prediction
 -> SaveOp derived DataSourceRef
 -> reload predictions
--> MetricOp / AnalysisOp
+-> metric operation writes metrics/<key> fields
+-> SampleCollection grouping/reduction / ReportOperation
 -> Report
 ```
 
@@ -2238,10 +2346,15 @@ SyntheticDataSourceAdapter
   -> SampleBuilder creates lazy Samples
   -> SampleOperationPipeline applies one deterministic SampleOperation
   -> BatchCollater creates Batch using explicit LIST collation
-  -> trivial Method returns prediction Batch
-  -> SaveOp exports predictions into derived DataSourceRef
-  -> derived DataSourceRef reloads
-  -> MetricOp/AnalysisOp produces MetricResultTable and Report
+  -> trivial Method or BatchOperation returns Batch with predictions/<key> fields
+  -> explicit pass-through policy keeps allowed target/reference fields for
+     evaluation-ready artifacts without exposing them to inference
+  -> uncollate policy reconstructs per-entry Samples
+  -> SaveOp exports one sample artifact record per Sample
+  -> sample-artifact DataSourceRef reloads
+  -> metric operation writes metrics/<key> fields to Samples
+  -> SampleCollection operations group/combine metric fields
+  -> ReportOperation or report builders produce Report
 ```
 
 Success means the architecture composes without real data, concrete rPPG
@@ -2327,7 +2440,8 @@ let Method, Learner, Trainer, Loss, Objective, or Metric write prediction
 artifacts implicitly
 make Prediction objects waveform-only
 require users to edit rphys internals for extensions
-let visualization or analysis write ad hoc files from loaded attributes
+let visualization, report, or analysis recipes write ad hoc files from loaded
+attributes instead of explicit codec/export/save behavior
 add implicit caches
 materialize optimized training data without shard/chunk manifests, source
 fingerprints, operation fingerprints, split/group metadata, and invalidation
