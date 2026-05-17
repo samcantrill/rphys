@@ -39,6 +39,7 @@ LIGHTWEIGHT_IMPORTS = [
     "rphys.data.schemas",
     "rphys.data.splits",
     "rphys.data.types",
+    "rphys.data.uncollation",
     "rphys.datasources",
     "rphys.datasources.adapters",
     "rphys.datasources.cache",
