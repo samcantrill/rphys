@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: implemented
+- Status: pr_open
 - Roadmap stage: `v13`
 - Feature focus: Stage 13 explicit uncollation and sample artifact handoff
 - Stage descriptor: Prediction, Evaluation, Analysis, And Reports
@@ -133,5 +133,7 @@ git diff --check
 - Implementation summary: complete.
 - Implementation validation: complete.
 - PR preparation: complete in `docs/roadmap/stage-13/phases/uncollation-sample-artifacts-pr-body.md`.
+- PR: [#87](https://github.com/samcantrill/rphys/pull/87), opened against
+  `develop` with required title.
 - Merge result: pending.
 - Cleanup: pending after merge and metadata commit.

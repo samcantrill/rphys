@@ -92,7 +92,7 @@ Blockers: none
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `scaffold-imports-errors` | merged | `agent/stage-13-prediction-evaluation-analysis-reports-p1-scaffold-imports-errors` | [#85](https://github.com/samcantrill/rphys/pull/85) | Package homes, central errors, package/import tests | Establish scoped package scaffold, optional code-backed errors, and lightweight import boundaries. | `make test-package`; focused error tests if added; `git diff --check` | Import/API posture |
 | 2 | `batch-native-method-learner-output` | merged | `agent/stage-13-prediction-evaluation-analysis-reports-p2-batch-native-method-learner-output` | [#86](https://github.com/samcantrill/rphys/pull/86) | `src/rphys/methods/**`, `src/rphys/learning/**`, `src/rphys/training/**`, batch-operation fakes | Remove `MethodOutput`/method-output adapters and `StepOutput`; make methods/learners return `Batch`; add generic returned-batch output spec/validation, plan-owned training-output spec/validation, field projection, target exclusion, and pass-through policy. | `make test-unit`; `make test-contract`; `make test-package`; focused integration if added | Batch-native prediction; learner Batch output; plan-owned training spec; target-free inference |
-| 3 | `uncollation-sample-artifacts` | in_progress | `agent/stage-13-prediction-evaluation-analysis-reports-p3-uncollation-sample-artifacts` | pending | Data uncollation policy, sample artifact datasource/export adapters, tests | Implement explicit batch-field uncollation policy/evidence and sample-granular artifact export/reload over existing export/save/datasource APIs. | `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check` | Uncollate to samples; sample artifact export/reload |
+| 3 | `uncollation-sample-artifacts` | pr_open | `agent/stage-13-prediction-evaluation-analysis-reports-p3-uncollation-sample-artifacts` | [#87](https://github.com/samcantrill/rphys/pull/87) | Data uncollation policy, sample artifact datasource/export adapters, tests | Implement explicit batch-field uncollation policy/evidence and sample-granular artifact export/reload over existing export/save/datasource APIs. | `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check` | Uncollate to samples; sample artifact export/reload |
 | 4 | `sample-collection-metric-ops` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p4-sample-collection-metric-ops` | pending | `src/rphys/data/collections.py`, transitional `src/rphys/collections.py` only if still needed, `src/rphys/ops/**`, `src/rphys/metrics/**` adapters | Implement runtime grouping/collation of `Iterable[Sample]` into `Iterable[SampleCollection]`, collection sort/project/stitch/concat operations, and sample/collection metric operation adapters. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package` | Runtime grouping; stitched samples; metric-as-sample-operation |
 | 5 | `visualization-reports-recipes` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p5-visualization-reports-recipes` | pending | `src/rphys/analysis/**`, visualization/report tests, recipe docs/examples | Implement visualization/report operation-compatible builders, in-memory report/table/diagnostic renderer records, and importable recipe examples without a registry or engine. Analysis remains generic group/reduce/metric pipeline composition. | `make test-unit`; `make test-contract`; `make test-package`; docs review | Visualization fields; report building; structured report dataset handoff; recipe examples |
 | 6 | `docs-examples-final-validation` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p6-docs-examples-final-validation` | pending | Stage 13 docs/docstrings/examples, synthetic integration tests, final validation evidence | Complete synthetic composition examples, docs, package export review, and final validation. | `make test-package`; `make test-unit`; `make test-contract`; `make test-integration`; `make test-summary`; `uv lock --check`; `git diff --check`; `make validate-pr` | Full synthetic Stage 13 composition; sample-artifact handoff; dataset-formatting/evaluation recipe analogue |
@@ -509,11 +509,11 @@ Workflow path: fast path
 
 ## Phase 3: Uncollation And Sample Artifact Export/Reload
 
-Status: in_progress
+Status: pr_open
 Slug: `uncollation-sample-artifacts`
 Branch: `agent/stage-13-prediction-evaluation-analysis-reports-p3-uncollation-sample-artifacts`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-13-prediction-evaluation-analysis-reports-p3-uncollation-sample-artifacts`
-PR: pending
+PR: [#87](https://github.com/samcantrill/rphys/pull/87)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -655,7 +655,7 @@ Workflow path: fast path
 - Validation: targeted uncollation/export/sample-artifact tests; `make test-unit`;
   `make test-contract`; `make test-package`; `make test-integration`;
   `make test-summary`; `make validate-pr`; `git diff --check`.
-- PR: pending; PR body prepared in `docs/roadmap/stage-13/phases/uncollation-sample-artifacts-pr-body.md`
+- PR: [#87](https://github.com/samcantrill/rphys/pull/87), opened against `develop` with required title.
 - Merge: pending
 - Follow-up: Phase 4 consumes sample/batch field projection and sample artifact
   reload policy in runtime sample-collection and metric operation recipes.
