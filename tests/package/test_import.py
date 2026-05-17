@@ -93,6 +93,40 @@ STAGE_13_ANALYSIS_MODULES = {
     ],
 }
 
+STAGE_13_FINAL_FORBIDDEN_PUBLIC_NAMES = [
+    "PredictionRecord",
+    "PredictionCollection",
+    "PredictionCollector",
+    "PredictionRunner",
+    "PredictionResult",
+    "PredictionDataSource",
+    "BatchCollection",
+    "BatchCollector",
+    "EvaluationProtocol",
+    "EvaluationPlan",
+    "EvaluationResult",
+    "EvaluationEngine",
+    "InferenceEngine",
+    "EvaluationRunner",
+    "Evaluator",
+    "ComparisonSpec",
+    "PipelineJob",
+    "JobPlan",
+    "JobRunner",
+    "AnalysisOp",
+    "AnalysisContext",
+    "AnalysisResult",
+    "MethodOutput",
+    "StepOutput",
+    "MetricObservation",
+    "MetricObservationCollection",
+    "MetricObservationView",
+    "MetricResult",
+    "ReportWriter",
+    "ReportRenderer",
+    "ReportOutputDirectory",
+]
+
 STAGE_11_COLLECTION_EXPORTS = [
     "Collection",
     "CollectionContext",
@@ -981,6 +1015,23 @@ def test_stage_13_analysis_modules_export_only_code_backed_names() -> None:
         assert module.__all__ == expected_all
         for public_name in expected_all:
             assert hasattr(module, public_name)
+
+
+def test_stage_13_final_forbidden_public_surfaces_remain_absent() -> None:
+    modules = (
+        importlib.import_module("rphys"),
+        importlib.import_module("rphys.analysis"),
+        importlib.import_module("rphys.evaluation"),
+        importlib.import_module("rphys.learning"),
+        importlib.import_module("rphys.methods"),
+        importlib.import_module("rphys.metrics"),
+        importlib.import_module("rphys.prediction"),
+    )
+
+    for public_name in STAGE_13_FINAL_FORBIDDEN_PUBLIC_NAMES:
+        for module in modules:
+            assert public_name not in getattr(module, "__all__", ())
+            assert not hasattr(module, public_name)
 
 
 def test_stage_13_removed_method_and_learner_output_names_are_absent() -> None:
