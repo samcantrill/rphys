@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: pr_open
+- Status: merged
 - Roadmap stage: `v13`
 - Feature focus: Stage 13 Batch-native prediction and training output contracts
 - Stage descriptor: Prediction, Evaluation, Analysis, And Reports
@@ -159,6 +159,8 @@ git diff --check
   `docs/roadmap/stage-13/phases/batch-native-method-learner-output-pr-body.md`.
 - PR: [#86](https://github.com/samcantrill/rphys/pull/86), opened against
   `develop` with required title.
-- Automated review: pending after PR creation.
-- Merge result: pending.
+- Automated review: GitHub reported no CI checks for the phase branch; local validation gate passed before merge.
+- Merge result: PR [#86](https://github.com/samcantrill/rphys/pull/86) merged to
+  `develop` at `2026-05-17T13:16:04Z`; merge commit
+  `184d85ff90d3342762ec642b61abbef585fe0546`.
 - Cleanup: pending after merge and metadata commit.
