@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: ready for PR
+- Status: merged
 - Roadmap stage: `v13`
 - Feature focus: Stage 13 final synthetic composition examples, documentation, package posture, and validation evidence
 - Stage descriptor: Prediction, Evaluation, Analysis, And Reports
@@ -141,6 +141,9 @@ env UV_CACHE_DIR=/tmp/uv-cache make validate-pr
 - Implementation summary: complete.
 - Implementation validation: complete.
 - PR preparation: complete in `docs/roadmap/stage-13/phases/docs-examples-final-validation-pr-body.md`.
-- PR: pending.
-- Merge result: pending.
+- PR: [#90](https://github.com/samcantrill/rphys/pull/90), opened against
+  `develop` with required title.
+- Merge result: PR [#90](https://github.com/samcantrill/rphys/pull/90) merged
+  to `develop` at `2026-05-17T14:40:24Z`; merge commit
+  `745e5e9dcaf30e5114c1ce8566e538e0297c8391`.
 - Cleanup: pending after merge and metadata commit.

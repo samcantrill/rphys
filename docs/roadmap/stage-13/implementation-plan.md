@@ -1,11 +1,11 @@
 # Roadmap Stage 13 Implementation Plan
 
-Status: ready for implementation workflow
+Status: complete
 Roadmap version: `v13`
 Planning document: `docs/roadmap/stage-13/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 6 - `docs-examples-final-validation`
+Current phase: complete - all phases merged
 Blockers: none
 
 ## Summary
@@ -95,7 +95,7 @@ Blockers: none
 | 3 | `uncollation-sample-artifacts` | merged | `agent/stage-13-prediction-evaluation-analysis-reports-p3-uncollation-sample-artifacts` | [#87](https://github.com/samcantrill/rphys/pull/87) | Data uncollation policy, sample artifact datasource/export adapters, tests | Implement explicit batch-field uncollation policy/evidence and sample-granular artifact export/reload over existing export/save/datasource APIs. | `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check` | Uncollate to samples; sample artifact export/reload |
 | 4 | `sample-collection-metric-ops` | merged | `agent/stage-13-prediction-evaluation-analysis-reports-p4-sample-collection-metric-ops` | [#88](https://github.com/samcantrill/rphys/pull/88) | `src/rphys/data/collections.py`, transitional `src/rphys/collections.py` only if still needed, `src/rphys/ops/**`, `src/rphys/metrics/**` adapters | Implement runtime grouping/collation of `Iterable[Sample]` into `Iterable[SampleCollection]`, collection sort/project/stitch/concat operations, and sample/collection metric operation adapters. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package` | Runtime grouping; stitched samples; metric-as-sample-operation |
 | 5 | `visualization-reports-recipes` | merged | `agent/stage-13-prediction-evaluation-analysis-reports-p5-visualization-reports-recipes` | [#89](https://github.com/samcantrill/rphys/pull/89) | `src/rphys/analysis/**`, visualization/report tests, recipe docs/examples | Implement visualization/report operation-compatible builders, in-memory report/table/diagnostic renderer records, and importable recipe examples without a registry or engine. Analysis remains generic group/reduce/metric pipeline composition. | `make test-unit`; `make test-contract`; `make test-package`; docs review | Visualization fields; report building; structured report dataset handoff; recipe examples |
-| 6 | `docs-examples-final-validation` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p6-docs-examples-final-validation` | pending | Stage 13 docs/docstrings/examples, synthetic integration tests, final validation evidence | Complete synthetic composition examples, docs, package export review, and final validation. | `make test-package`; `make test-unit`; `make test-contract`; `make test-integration`; `make test-summary`; `uv lock --check`; `git diff --check`; `make validate-pr` | Full synthetic Stage 13 composition; sample-artifact handoff; dataset-formatting/evaluation recipe analogue |
+| 6 | `docs-examples-final-validation` | merged | `agent/stage-13-prediction-evaluation-analysis-reports-p6-docs-examples-final-validation` | [#90](https://github.com/samcantrill/rphys/pull/90) | Stage 13 docs/docstrings/examples, synthetic integration tests, final validation evidence | Complete synthetic composition examples, docs, package export review, and final validation. | `make test-package`; `make test-unit`; `make test-contract`; `make test-integration`; `make test-summary`; `uv lock --check`; `git diff --check`; `make validate-pr` | Full synthetic Stage 13 composition; sample-artifact handoff; dataset-formatting/evaluation recipe analogue |
 
 ## Implementation Readiness Blockers
 
@@ -967,11 +967,11 @@ Workflow path: fast path
 
 ## Phase 6: Docs, Synthetic Examples, And Final Validation
 
-Status: pending
+Status: merged
 Slug: `docs-examples-final-validation`
 Branch: `agent/stage-13-prediction-evaluation-analysis-reports-p6-docs-examples-final-validation`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-13-prediction-evaluation-analysis-reports-p6-docs-examples-final-validation`
-PR: pending
+PR: [#90](https://github.com/samcantrill/rphys/pull/90)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path unless final validation failures trigger expanded refinement
@@ -1055,13 +1055,13 @@ Workflow path: fast path unless final validation failures trigger expanded refin
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: complete in `docs/roadmap/stage-13/phases/docs-examples-final-validation.md`
 - Planning/refinement budget: medium; refine if final examples reveal cross-package inconsistencies.
 - Implementation/refinement budget: medium-high due final validation surface.
 - PR review budget: high; focus on cross-package API coherence, docs, examples, and validation evidence.
 - Blocker-resolution budget: stop and reopen the relevant queue if final examples require any forbidden runner/job/storage/report-writer/workflow behavior.
 - Pre-submit blocker gate: all final validation commands run or residual risks recorded; no forbidden public APIs; no docs/examples implying out-of-scope behavior.
-- Merge record: pending
+- Merge record: `docs/roadmap/stage-13/phases/docs-examples-final-validation-merge-record.md`
 
 ### Risks And Stop Conditions
 
@@ -1071,10 +1071,10 @@ Workflow path: fast path unless final validation failures trigger expanded refin
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
+- Implementation: complete; final synthetic examples, docs, and forbidden-surface package checks are implemented.
+- Validation: complete; focused Stage 13 integration/package tests, `make test-package`, `make test-unit`, `make test-contract`, `make test-integration`, `make test-summary`, `uv lock --check`, `git diff --check`, and `make validate-pr` passed.
+- PR: [#90](https://github.com/samcantrill/rphys/pull/90)
+- Merge: merged to `develop` at `2026-05-17T14:40:24Z`; merge commit `745e5e9dcaf30e5114c1ce8566e538e0297c8391`.
 - Follow-up: Stage 14 should harden the synthetic smoke path rather than expand Stage 13 core behavior.
 
 ## Cross-Phase Validation
