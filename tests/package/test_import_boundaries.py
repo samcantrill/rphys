@@ -22,6 +22,8 @@ HEAVY_OPTIONAL_MODULES = [
 LIGHTWEIGHT_IMPORTS = [
     "rphys",
     "rphys.analysis",
+    "rphys.analysis.reports",
+    "rphys.analysis.visualization",
     "rphys.collections",
     "rphys.data",
     "rphys.data.collation",

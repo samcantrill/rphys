@@ -5,4 +5,32 @@ exports are added only when implemented records or operation-compatible builders
 exist.
 """
 
-__all__: list[str] = []
+from .reports import (
+    DiagnosticRenderOutput,
+    DiagnosticRenderer,
+    Report,
+    ReportCell,
+    ReportOperation,
+    ReportRow,
+    ReportSection,
+    ReportTable,
+)
+from .visualization import (
+    VisualizationOperation,
+    VisualizationOutput,
+    attach_visualization_fields,
+)
+
+__all__ = [
+    "DiagnosticRenderOutput",
+    "DiagnosticRenderer",
+    "Report",
+    "ReportCell",
+    "ReportOperation",
+    "ReportRow",
+    "ReportSection",
+    "ReportTable",
+    "VisualizationOperation",
+    "VisualizationOutput",
+    "attach_visualization_fields",
+]
