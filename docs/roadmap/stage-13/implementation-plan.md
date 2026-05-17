@@ -5,7 +5,7 @@ Roadmap version: `v13`
 Planning document: `docs/roadmap/stage-13/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 1 - `scaffold-imports-errors`
+Current phase: Phase 2 - `batch-native-method-learner-output`
 Blockers: none
 
 ## Summary
@@ -90,7 +90,7 @@ Blockers: none
 
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `scaffold-imports-errors` | pr_open | `agent/stage-13-prediction-evaluation-analysis-reports-p1-scaffold-imports-errors` | [#85](https://github.com/samcantrill/rphys/pull/85) | Package homes, central errors, package/import tests | Establish scoped package scaffold, optional code-backed errors, and lightweight import boundaries. | `make test-package`; focused error tests if added; `git diff --check` | Import/API posture |
+| 1 | `scaffold-imports-errors` | merged | `agent/stage-13-prediction-evaluation-analysis-reports-p1-scaffold-imports-errors` | [#85](https://github.com/samcantrill/rphys/pull/85) | Package homes, central errors, package/import tests | Establish scoped package scaffold, optional code-backed errors, and lightweight import boundaries. | `make test-package`; focused error tests if added; `git diff --check` | Import/API posture |
 | 2 | `batch-native-method-learner-output` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p2-batch-native-method-learner-output` | pending | `src/rphys/methods/**`, `src/rphys/learning/**`, `src/rphys/training/**`, batch-operation fakes | Remove `MethodOutput`/method-output adapters and `StepOutput`; make methods/learners return `Batch`; add generic returned-batch output spec/validation, plan-owned training-output spec/validation, field projection, target exclusion, and pass-through policy. | `make test-unit`; `make test-contract`; `make test-package`; focused integration if added | Batch-native prediction; learner Batch output; plan-owned training spec; target-free inference |
 | 3 | `uncollation-sample-artifacts` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p3-uncollation-sample-artifacts` | pending | Data uncollation policy, sample artifact datasource/export adapters, tests | Implement explicit batch-field uncollation policy/evidence and sample-granular artifact export/reload over existing export/save/datasource APIs. | `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check` | Uncollate to samples; sample artifact export/reload |
 | 4 | `sample-collection-metric-ops` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p4-sample-collection-metric-ops` | pending | `src/rphys/data/collections.py`, transitional `src/rphys/collections.py` only if still needed, `src/rphys/ops/**`, `src/rphys/metrics/**` adapters | Implement runtime grouping/collation of `Iterable[Sample]` into `Iterable[SampleCollection]`, collection sort/project/stitch/concat operations, and sample/collection metric operation adapters. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package` | Runtime grouping; stitched samples; metric-as-sample-operation |
@@ -251,7 +251,7 @@ sample artifact datasource(s)
 
 ## Phase 1: Scaffold, Imports, And Errors
 
-Status: pr_open
+Status: merged
 Slug: `scaffold-imports-errors`
 Branch: `agent/stage-13-prediction-evaluation-analysis-reports-p1-scaffold-imports-errors`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-13-prediction-evaluation-analysis-reports-p1-scaffold-imports-errors`
@@ -322,7 +322,7 @@ Workflow path: fast path
 - Blocker-resolution budget: stop if implementing a broad error requires a
   specific subclass tree, root exports, or new shared public helper.
 - Pre-submit blocker gate: no placeholder exports; no forbidden imports; no public generic job/diagnostic APIs.
-- Merge record: pending
+- Merge record: `docs/roadmap/stage-13/phases/scaffold-imports-errors-merge-record.md`
 
 ### Risks And Stop Conditions
 
@@ -336,7 +336,7 @@ Workflow path: fast path
 - Implementation: complete; package-home docstrings, broad error docstrings, Stage 13 scaffold package tests, and import-boundary tests.
 - Validation: `uv run pytest tests/package/test_import.py tests/package/test_import_boundaries.py`; `make test-package`; `make test-summary`; `make validate-pr`; `git diff --check`.
 - PR: [#85](https://github.com/samcantrill/rphys/pull/85), opened against `develop` with required title.
-- Merge: pending
+- Merge: merged to `develop` via PR [#85](https://github.com/samcantrill/rphys/pull/85) at `2026-05-17T12:46:19Z`; merge commit `66bb4df50e90961298dbeb4f581a8453db1a5206`.
 - Follow-up: Phase 2 replaces legacy method/learner output records with
   returned-`Batch` contracts; it should not add a public prediction record family.
 

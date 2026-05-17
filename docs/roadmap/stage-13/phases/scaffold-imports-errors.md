@@ -215,7 +215,7 @@ git diff --check
 - Refinement summary: not needed.
 - Pre-submit blocker gate: passed; no placeholder exports, broad prediction error, forbidden Stage 13 public names, backend/workflow/export imports, or root re-exports were introduced.
 - PR preparation: complete in `docs/roadmap/stage-13/phases/scaffold-imports-errors-pr-body.md`; PR [#85](https://github.com/samcantrill/rphys/pull/85) opened against `develop`.
-- Automated review: pending.
-- Merge result: pending.
-- Cleanup: pending.
+- Automated review: manager review passed; scope stayed within scaffold/import/error posture and no forbidden Stage 13 public API was introduced.
+- Merge result: PR [#85](https://github.com/samcantrill/rphys/pull/85) merged to `develop` at `2026-05-17T12:46:19Z`; merge commit `66bb4df50e90961298dbeb4f581a8453db1a5206`.
+- Cleanup: pending after metadata commit.
 - Remaining blockers: none.
