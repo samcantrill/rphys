@@ -214,7 +214,7 @@ git diff --check
 - Implementation validation: `uv run pytest tests/package/test_import.py tests/package/test_import_boundaries.py` passed with 64 tests; `make test-package` passed with 67 tests; `make test-summary` passed across package, unit, contract, and integration suites; `make validate-pr` passed; `git diff --check` passed.
 - Refinement summary: not needed.
 - Pre-submit blocker gate: passed; no placeholder exports, broad prediction error, forbidden Stage 13 public names, backend/workflow/export imports, or root re-exports were introduced.
-- PR preparation: complete in `docs/roadmap/stage-13/phases/scaffold-imports-errors-pr-body.md`.
+- PR preparation: complete in `docs/roadmap/stage-13/phases/scaffold-imports-errors-pr-body.md`; PR [#85](https://github.com/samcantrill/rphys/pull/85) opened against `develop`.
 - Automated review: pending.
 - Merge result: pending.
 - Cleanup: pending.
