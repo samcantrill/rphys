@@ -18,10 +18,13 @@ from .collections import (
 )
 from .fields import FieldSpec, FieldValue
 from .objects import CompositeDataObjectBase, DataObjectBase
+from .output import BatchOutputFieldSpec, BatchOutputSpec, project_batch_fields
 
 __all__ = [
     "Batch",
     "BatchCollater",
+    "BatchOutputFieldSpec",
+    "BatchOutputSpec",
     "FieldContainer",
     "CollateContext",
     "CollatePolicy",
@@ -38,5 +41,6 @@ __all__ = [
     "SampleCollector",
     "PlannedSampleCollectionView",
     "collate_samples",
+    "project_batch_fields",
     "uncollate_batch",
 ]

@@ -7,22 +7,17 @@ from dataclasses import dataclass
 from typing import TypeAlias
 
 from rphys.data import Batch
-from rphys.data.fields import FieldValue
 from rphys.data.locators import FieldLocator, FieldRole
 from rphys.data.schemas import SchemaName
-from rphys.errors import FieldSchemaError, FieldTypeError, RemotePhysMethodError
-
-from .output import MethodOutput
+from rphys.errors import RemotePhysMethodError
 
 __all__ = [
     "MethodInputAdapter",
     "MethodInputSpec",
-    "MethodOutputAdapter",
-    "MethodOutputSpec",
 ]
 
 ExpectedType: TypeAlias = type | tuple[type, ...]
-_OUTPUT_ROLES = (FieldRole.PREDICTIONS, FieldRole.OUTPUTS)
+_INPUT_ROLES = (FieldRole.INPUTS, FieldRole.SOURCE, FieldRole.METADATA)
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,35 +36,14 @@ class MethodInputSpec:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "name", _validate_name(self.name, field="name"))
-        object.__setattr__(self, "locator", _coerce_locator(self.locator))
-        object.__setattr__(
-            self,
-            "expected_type",
-            _validate_expected_type(self.expected_type, field=self.name),
-        )
-        if self.schema is not None:
-            object.__setattr__(self, "schema", SchemaName(self.schema))
-
-
-@dataclass(frozen=True, slots=True)
-class MethodOutputSpec:
-    """Declared output field produced by a method/model adapter."""
-
-    name: str
-    locator: FieldLocator | str
-    expected_type: ExpectedType | None = None
-    schema: SchemaName | str | None = None
-
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "name", _validate_name(self.name, field="name"))
         locator = _coerce_locator(self.locator)
-        if locator.role not in _OUTPUT_ROLES:
+        if locator.role not in _INPUT_ROLES:
             raise RemotePhysMethodError(
-                "Method output locators must use prediction or output roles.",
+                "Method input locators must not consume targets, predictions, outputs, or score fields.",
                 name=self.name,
                 locator=str(locator),
                 role=locator.role.value,
-                expected=[role.value for role in _OUTPUT_ROLES],
+                expected=[role.value for role in _INPUT_ROLES],
             )
         object.__setattr__(self, "locator", locator)
         object.__setattr__(
@@ -79,7 +53,6 @@ class MethodOutputSpec:
         )
         if self.schema is not None:
             object.__setattr__(self, "schema", SchemaName(self.schema))
-
 
 @dataclass(frozen=True, slots=True)
 class MethodInputAdapter:
@@ -106,110 +79,6 @@ class MethodInputAdapter:
             )
             for spec in self.specs
         }
-
-
-@dataclass(frozen=True, slots=True)
-class MethodOutputAdapter:
-    """Map named model/method result values into a ``MethodOutput`` patch."""
-
-    specs: Sequence[MethodOutputSpec]
-
-    def __post_init__(self) -> None:
-        specs = _coerce_specs(self.specs, expected_type=MethodOutputSpec, field="specs")
-        _validate_unique_specs(specs)
-        object.__setattr__(self, "specs", specs)
-
-    def adapt(
-        self,
-        result: Mapping[str, object] | Sequence[object] | object,
-        *,
-        diagnostics: Mapping[str, object] | None = None,
-        metadata: Mapping[str, object] | None = None,
-        provenance: Mapping[str, object] | None = None,
-    ) -> MethodOutput:
-        values = self._result_mapping(result)
-        fields = {
-            spec.locator: _coerce_output_field_value(spec, values[spec.name])
-            for spec in self.specs
-        }
-        return MethodOutput(
-            fields=fields,
-            diagnostics=diagnostics,
-            metadata=metadata,
-            provenance=provenance,
-        )
-
-    def _result_mapping(
-        self,
-        result: Mapping[str, object] | Sequence[object] | object,
-    ) -> dict[str, object]:
-        names = tuple(spec.name for spec in self.specs)
-        if isinstance(result, Mapping):
-            keys = tuple(result)
-            invalid_keys = [key for key in keys if not isinstance(key, str)]
-            if invalid_keys:
-                raise RemotePhysMethodError(
-                    "Model result mapping keys must be strings.",
-                    actual=type(invalid_keys[0]).__name__,
-                )
-            missing = sorted(set(names) - set(keys))
-            extra = sorted(set(keys) - set(names))
-            if missing or extra:
-                raise RemotePhysMethodError(
-                    "Model result mapping does not match declared outputs.",
-                    missing=missing,
-                    extra=extra,
-                )
-            return {name: result[name] for name in names}
-
-        if len(self.specs) == 1:
-            return {names[0]: result}
-
-        if isinstance(result, Sequence) and not isinstance(result, (str, bytes)):
-            if len(result) != len(self.specs):
-                raise RemotePhysMethodError(
-                    "Model result sequence length does not match declared outputs.",
-                    expected=len(self.specs),
-                    actual=len(result),
-                )
-            return {name: value for name, value in zip(names, result)}
-
-        raise RemotePhysMethodError(
-            "Model result shape is incompatible with declared outputs.",
-            expected="mapping or sequence",
-            actual=type(result).__name__,
-        )
-
-
-def _coerce_output_field_value(
-    spec: MethodOutputSpec,
-    value: object,
-) -> FieldValue:
-    if isinstance(value, FieldValue):
-        _validate_output_payload(spec, value.payload)
-        if spec.schema is not None and value.schema != spec.schema:
-            raise FieldSchemaError(
-                "Output field schema does not match the declared schema.",
-                locator=str(spec.locator),
-                name=spec.name,
-                expected=str(spec.schema),
-                actual=str(value.schema) if value.schema is not None else None,
-            )
-        return value
-
-    _validate_output_payload(spec, value)
-    return FieldValue(value, schema=spec.schema)
-
-
-def _validate_output_payload(spec: MethodOutputSpec, value: object) -> None:
-    if spec.expected_type is not None and not isinstance(value, spec.expected_type):
-        raise FieldTypeError(
-            "Output payload has the wrong type.",
-            locator=str(spec.locator),
-            name=spec.name,
-            expected=_expected_type_name(spec.expected_type),
-            actual=type(value).__name__,
-        )
 
 
 def _coerce_specs(

@@ -6,7 +6,6 @@ from rphys.data import Batch, FieldValue
 from rphys.errors import RemotePhysLearningError
 from rphys.learning import LoopContext, LoopMode, SupervisedLearner
 from rphys.losses import LossContext, LossContract, LossInputSpec, LossResult, LossTerm
-from rphys.methods import MethodOutput
 from rphys.metrics import MetricContext, MetricContract, MetricObservation, MetricObservationCollection, MetricResult, MetricValue
 from rphys.objectives import ObjectiveContext, ObjectiveContract, ObjectiveResult, ObjectiveTerm, ObjectiveTermSpec
 
@@ -27,13 +26,12 @@ class SyntheticMethod:
     def __init__(self) -> None:
         self.calls: list[tuple[Batch, object]] = []
 
-    def predict(self, batch: Batch, *, context: object | None = None) -> MethodOutput:
+    def predict(self, batch: Batch, *, context: object | None = None) -> Batch:
         self.calls.append((batch, context))
         source = batch.require("inputs/signal.pulse")[0]
-        return MethodOutput(
-            fields={"predictions/signal.pulse": FieldValue([source + 0.5])},
-            diagnostics={"method": "synthetic"},
-        )
+        output = batch.shallow_copy()
+        output.set_field("predictions/signal.pulse", FieldValue([source + 0.5]))
+        return output
 
 
 class SyntheticLoss:
@@ -115,19 +113,13 @@ def test_supervised_learner_composes_method_loss_objective_and_metric_without_mu
 
     output = learner.step(batch, LoopContext(LoopMode.TRAIN, split="train", batch_index=4))
 
-    assert isinstance(output.predictions, MethodOutput)
+    assert isinstance(output, Batch)
     assert not batch.has("predictions/signal.pulse")
-    assert output.objective == FakeScalar(0.5)
-    assert [term.name for term in output.loss_terms] == ["l1"]
-    assert [term.name for term in output.objective_terms] == ["total", "l1"]
-    assert output.metric_values["pulse-mae"].value == FakeScalar(0.5)
-    assert output.diagnostics == {
-        "method": "synthetic",
-        "loss_result_count": 1,
-        "objective_present": True,
-        "metric_result_count": 1,
-    }
-    assert output.metadata == {"mode": "train", "split": "train"}
+    assert output.require("predictions/signal.pulse") == [1.5]
+    assert output.require("losses/custom.training.l1") == FakeScalar(0.5)
+    assert output.require("objectives/custom.training.total") == FakeScalar(0.5)
+    assert output.require("objectives/custom.training.l1") == FakeScalar(0.5)
+    assert output.require("metrics/custom.training.pulse.mae").value == FakeScalar(0.5)
     assert len(method.calls) == 1
 
 
@@ -138,11 +130,9 @@ def test_predict_mode_preserves_method_output_without_objective_or_targets() -> 
 
     output = learner.step(batch, LoopContext("predict", split="inference"))
 
-    assert isinstance(output.predictions, MethodOutput)
-    assert output.objective is None
-    assert output.loss_terms == ()
-    assert output.objective_terms == ()
-    assert output.metric_values == {}
+    assert isinstance(output, Batch)
+    assert output.require("predictions/signal.pulse") == [1.5]
+    assert not output.has("objectives/custom.training.total")
     assert not batch.has("predictions/signal.pulse")
 
 
@@ -157,11 +147,10 @@ def test_predict_mode_skips_configured_objective_losses_and_metrics() -> None:
 
     output = learner.step(batch, LoopContext("predict", split="inference"))
 
-    assert isinstance(output.predictions, MethodOutput)
-    assert output.objective is None
-    assert output.loss_terms == ()
-    assert output.objective_terms == ()
-    assert output.metric_values == {}
+    assert isinstance(output, Batch)
+    assert output.require("predictions/signal.pulse") == [1.5]
+    assert not output.has("objectives/custom.training.total")
+    assert not output.has("metrics/custom.training.pulse.mae")
 
 
 def test_train_mode_requires_objective() -> None:

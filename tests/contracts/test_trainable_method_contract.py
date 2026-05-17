@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from rphys.data import Batch, FieldValue
 from rphys.data.locators import FieldLocator
 from rphys.methods import (
-    MethodOutput,
     ParameterView,
     PredictionContext,
     StateEntry,
@@ -35,10 +34,10 @@ class SyntheticBackendMethod:
         batch: Batch,
         *,
         context: PredictionContext | None = None,
-    ) -> MethodOutput:
+    ) -> Batch:
         values = batch.require(INPUT, expected_type=list)
-        return MethodOutput(
-            fields={
+        return Batch(
+            {
                 PREDICTION: FieldValue(
                     [self.scale.value * value + self.offset for value in values],
                     schema=batch.field(INPUT).schema,
@@ -111,7 +110,7 @@ def test_trainable_method_contract_uses_backend_neutral_records() -> None:
 
     assert isinstance(method, StatefulMethod)
     assert isinstance(method, TrainableMethod)
-    assert output.fields[PREDICTION].payload == [0.7, 0.9]
+    assert output.require(PREDICTION) == [0.7, 0.9]
     assert state.entry("offset").value == 0.5
     assert state.entry("scale").value is method.scale
     assert state.provenance == {"backend": "synthetic-array-runtime"}

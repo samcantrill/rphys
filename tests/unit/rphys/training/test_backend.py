@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from rphys.data import Batch
-from rphys.learning import LoopContext, LoopMode, StepOutput
+from rphys.data import Batch, FieldValue
+from rphys.learning import LoopContext, LoopMode
 from rphys.metrics import MetricValue
-from rphys.training import NativeTrainingEngine, TrainingPlan, TrainingStatus
+from rphys.training import NativeTrainingEngine, TrainingOutputSpec, TrainingPlan, TrainingStatus
 from rphys.training.events import TrainingEvent
 
 
@@ -40,15 +40,14 @@ class RecordingLearner:
         self.calls = calls
         self.contexts: list[LoopContext] = []
 
-    def step(self, batch: Batch, context: LoopContext) -> StepOutput:
+    def step(self, batch: Batch, context: LoopContext) -> Batch:
         self.contexts.append(context)
         self.calls.append(f"step:{context.mode.value}:{context.step_index}")
-        objective = FakeScalar(self.calls, value=0.5) if context.mode is LoopMode.TRAIN else None
-        return StepOutput(
-            objective=objective,
-            metric_values={"mae": MetricValue(0.5, unit="bpm")},
-            metadata={"mode": context.mode.value},
-        )
+        output = batch.shallow_copy()
+        if context.mode is LoopMode.TRAIN:
+            output.set_field("objectives/custom.training.total", FieldValue(FakeScalar(self.calls, value=0.5)))
+        output.set_field("metrics/custom.training.mae", FieldValue(MetricValue(0.5, unit="bpm")))
+        return output
 
 
 class RecordingSink:
@@ -72,6 +71,10 @@ def test_native_fit_runs_train_loop_with_device_backward_optimizer_and_scheduler
         device_mover=move,
         optimizer=RecordingOptimizer(calls),
         scheduler=RecordingScheduler(calls),
+        output_spec=TrainingOutputSpec(
+            objective="objectives/custom.training.total",
+            metrics=("metrics/custom.training.mae",),
+        ),
     )
     learner = RecordingLearner(calls)
 
@@ -84,17 +87,17 @@ def test_native_fit_runs_train_loop_with_device_backward_optimizer_and_scheduler
     assert result.epoch_count == 1
     assert result.last_step is not None
     assert result.last_step.objective == 0.5
-    assert result.metrics["mae"].value == 0.5
+    assert result.metrics["metrics/custom.training.mae"].value == 0.5
     assert calls == [
         "device_mover",
-        "zero_grad",
         "step:train:0",
+        "zero_grad",
         "backward",
         "optimizer_step",
         "scheduler_step",
         "device_mover",
-        "zero_grad",
         "step:train:1",
+        "zero_grad",
         "backward",
         "optimizer_step",
         "scheduler_step",
@@ -103,7 +106,11 @@ def test_native_fit_runs_train_loop_with_device_backward_optimizer_and_scheduler
 
 def test_native_engine_emits_observer_events_and_unavailable_profiles() -> None:
     sink = RecordingSink()
-    plan = TrainingPlan(train_batches=(Batch(),), event_sinks=(sink,))
+    plan = TrainingPlan(
+        train_batches=(Batch(),),
+        event_sinks=(sink,),
+        output_spec=TrainingOutputSpec(objective="objectives/custom.training.total"),
+    )
     learner = RecordingLearner([])
 
     result = NativeTrainingEngine().fit(plan, learner)
@@ -121,7 +128,12 @@ def test_native_engine_emits_observer_events_and_unavailable_profiles() -> None:
 def test_native_engine_respects_step_limits_and_builds_contexts() -> None:
     calls: list[str] = []
     learner = RecordingLearner(calls)
-    plan = TrainingPlan(train_batches=(Batch(), Batch()), max_epochs=3, max_train_steps=3)
+    plan = TrainingPlan(
+        train_batches=(Batch(), Batch()),
+        max_epochs=3,
+        max_train_steps=3,
+        output_spec=TrainingOutputSpec(objective="objectives/custom.training.total"),
+    )
 
     result = NativeTrainingEngine().fit(plan, learner)
 
@@ -155,6 +167,7 @@ def test_native_fit_runs_optional_validation_without_train_mechanics() -> None:
         train_batches=(Batch(),),
         validation_batches=(Batch(),),
         optimizer=RecordingOptimizer(calls),
+        output_spec=TrainingOutputSpec(objective="objectives/custom.training.total"),
     )
     learner = RecordingLearner(calls)
 
@@ -164,8 +177,8 @@ def test_native_fit_runs_optional_validation_without_train_mechanics() -> None:
     assert result.step_count == 1
     assert result.metadata["validation_step_count"] == 1
     assert calls == [
-        "zero_grad",
         "step:train:0",
+        "zero_grad",
         "backward",
         "optimizer_step",
         "step:validate:0",
@@ -178,11 +191,14 @@ def test_native_engine_normalizes_missing_batches_and_step_failures() -> None:
     assert stopped.failure == "No validate_batches configured."
 
     class MissingObjectiveLearner:
-        def step(self, batch: Batch, context: LoopContext) -> StepOutput:
-            return StepOutput()
+        def step(self, batch: Batch, context: LoopContext) -> Batch:
+            return Batch()
 
     failed = NativeTrainingEngine().fit(
-        TrainingPlan(train_batches=(Batch(),)),
+        TrainingPlan(
+            train_batches=(Batch(),),
+            output_spec=TrainingOutputSpec(objective="objectives/custom.training.total"),
+        ),
         MissingObjectiveLearner(),
     )
     assert failed.status is TrainingStatus.FAILED

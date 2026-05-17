@@ -91,7 +91,7 @@ Blockers: none
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `scaffold-imports-errors` | merged | `agent/stage-13-prediction-evaluation-analysis-reports-p1-scaffold-imports-errors` | [#85](https://github.com/samcantrill/rphys/pull/85) | Package homes, central errors, package/import tests | Establish scoped package scaffold, optional code-backed errors, and lightweight import boundaries. | `make test-package`; focused error tests if added; `git diff --check` | Import/API posture |
-| 2 | `batch-native-method-learner-output` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p2-batch-native-method-learner-output` | pending | `src/rphys/methods/**`, `src/rphys/learning/**`, `src/rphys/training/**`, batch-operation fakes | Remove `MethodOutput`/method-output adapters and `StepOutput`; make methods/learners return `Batch`; add generic returned-batch output spec/validation, plan-owned training-output spec/validation, field projection, target exclusion, and pass-through policy. | `make test-unit`; `make test-contract`; `make test-package`; focused integration if added | Batch-native prediction; learner Batch output; plan-owned training spec; target-free inference |
+| 2 | `batch-native-method-learner-output` | in_progress | `agent/stage-13-prediction-evaluation-analysis-reports-p2-batch-native-method-learner-output` | pending | `src/rphys/methods/**`, `src/rphys/learning/**`, `src/rphys/training/**`, batch-operation fakes | Remove `MethodOutput`/method-output adapters and `StepOutput`; make methods/learners return `Batch`; add generic returned-batch output spec/validation, plan-owned training-output spec/validation, field projection, target exclusion, and pass-through policy. | `make test-unit`; `make test-contract`; `make test-package`; focused integration if added | Batch-native prediction; learner Batch output; plan-owned training spec; target-free inference |
 | 3 | `uncollation-sample-artifacts` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p3-uncollation-sample-artifacts` | pending | Data uncollation policy, sample artifact datasource/export adapters, tests | Implement explicit batch-field uncollation policy/evidence and sample-granular artifact export/reload over existing export/save/datasource APIs. | `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check` | Uncollate to samples; sample artifact export/reload |
 | 4 | `sample-collection-metric-ops` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p4-sample-collection-metric-ops` | pending | `src/rphys/data/collections.py`, transitional `src/rphys/collections.py` only if still needed, `src/rphys/ops/**`, `src/rphys/metrics/**` adapters | Implement runtime grouping/collation of `Iterable[Sample]` into `Iterable[SampleCollection]`, collection sort/project/stitch/concat operations, and sample/collection metric operation adapters. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package` | Runtime grouping; stitched samples; metric-as-sample-operation |
 | 5 | `visualization-reports-recipes` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p5-visualization-reports-recipes` | pending | `src/rphys/analysis/**`, visualization/report tests, recipe docs/examples | Implement visualization/report operation-compatible builders, in-memory report/table/diagnostic renderer records, and importable recipe examples without a registry or engine. Analysis remains generic group/reduce/metric pipeline composition. | `make test-unit`; `make test-contract`; `make test-package`; docs review | Visualization fields; report building; structured report dataset handoff; recipe examples |
@@ -342,7 +342,7 @@ Workflow path: fast path
 
 ## Phase 2: Batch-Native Method, Learner, And Training Output
 
-Status: pending
+Status: in_progress
 Slug: `batch-native-method-learner-output`
 Branch: `agent/stage-13-prediction-evaluation-analysis-reports-p2-batch-native-method-learner-output`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-13-prediction-evaluation-analysis-reports-p2-batch-native-method-learner-output`
@@ -468,7 +468,7 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: complete; `docs/roadmap/stage-13/phases/batch-native-method-learner-output.md`
 - Planning/refinement budget: medium; refine if field-role projection or
   training-output spec scope becomes ambiguous.
 - Implementation/refinement budget: medium.
@@ -494,9 +494,15 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
+- Implementation: complete; methods and learners now return ordinary `Batch`
+  values, generic returned-batch validation lives in `rphys.data`, training
+  output fields are declared by `TrainingOutputSpec`, and the native engine
+  validates returned learner batches before backward/optimizer/scheduler or
+  summary recording.
+- Validation: targeted package/data/learning/training tests; `make test-unit`;
+  `make test-contract`; `make test-package`; `make test-integration`;
+  `make test-summary`; `make validate-pr`; `git diff --check`.
+- PR: pending; PR body prepared in `docs/roadmap/stage-13/phases/batch-native-method-learner-output-pr-body.md`
 - Merge: pending
 - Follow-up: Phase 3 consumes `Batch` prediction fields for explicit uncollation
   and sample artifact export/reload behavior.

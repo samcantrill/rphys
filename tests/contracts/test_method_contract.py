@@ -5,12 +5,11 @@ from dataclasses import dataclass
 from rphys.data import Batch, FieldValue
 from rphys.data.locators import FieldLocator
 from rphys.methods import (
+    BatchOutputFieldSpec,
+    BatchOutputSpec,
     Method,
     MethodInputAdapter,
     MethodInputSpec,
-    MethodOutput,
-    MethodOutputAdapter,
-    MethodOutputSpec,
     PredictionContext,
 )
 
@@ -28,41 +27,40 @@ class EchoMethod:
         batch: Batch,
         *,
         context: PredictionContext | None = None,
-    ) -> MethodOutput:
+    ) -> Batch:
         values = batch.require(INPUT, expected_type=list)
         metadata = {"source": context.metadata["source"]} if context is not None else {}
-        return MethodOutput(
-            fields={
+        output = Batch(
+            {
                 PREDICTION: FieldValue(
                     [value * self.scale for value in values],
                     schema=batch.field(INPUT).schema,
+                    metadata=metadata,
                 )
-            },
-            metadata=metadata,
-            provenance={"method": "echo"},
+            }
         )
+        return output
 
 
 @dataclass
 class AdapterBackedEchoMethod:
     input_adapter: MethodInputAdapter
-    output_adapter: MethodOutputAdapter
+    output_spec: BatchOutputSpec
 
     def predict(
         self,
         batch: Batch,
         *,
         context: PredictionContext | None = None,
-    ) -> MethodOutput:
+    ) -> Batch:
         inputs = self.input_adapter.extract(batch)
         scaled = [value * 2.0 for value in inputs["signal"]]
-        return self.output_adapter.adapt(
+        return self.output_spec.build(
             {"prediction": scaled},
-            metadata={"source": context.metadata["source"]} if context is not None else {},
         )
 
 
-def test_method_contract_is_structural_and_returns_method_output_patch() -> None:
+def test_method_contract_is_structural_and_returns_batch_output() -> None:
     method = EchoMethod(scale=2.0)
     batch = Batch({INPUT: FieldValue([0.1, 0.2], schema="signal.bvp.v1")})
     before_items = batch.field_items()
@@ -73,13 +71,11 @@ def test_method_contract_is_structural_and_returns_method_output_patch() -> None
     )
 
     assert isinstance(method, Method)
-    assert isinstance(output, MethodOutput)
-    assert output.fields[PREDICTION].payload == [0.2, 0.4]
-    assert output.fields[PREDICTION].schema == "signal.bvp.v1"
-    assert output.metadata == {"source": "contract"}
-    assert output.provenance == {"method": "echo"}
+    assert isinstance(output, Batch)
+    assert output.field(PREDICTION).payload == [0.2, 0.4]
+    assert output.field(PREDICTION).schema == "signal.bvp.v1"
+    assert output.field(PREDICTION).metadata["source"] == "contract"
     assert batch.field_items() == before_items
-    assert not isinstance(output, Batch)
 
 
 def test_adapter_backed_method_contract_keeps_prediction_patch_only() -> None:
@@ -94,9 +90,9 @@ def test_adapter_backed_method_contract_keeps_prediction_patch_only() -> None:
                 )
             ]
         ),
-        output_adapter=MethodOutputAdapter(
+        output_spec=BatchOutputSpec(
             [
-                MethodOutputSpec(
+                BatchOutputFieldSpec(
                     "prediction",
                     PREDICTION,
                     expected_type=list,
@@ -113,9 +109,8 @@ def test_adapter_backed_method_contract_keeps_prediction_patch_only() -> None:
     )
 
     assert isinstance(method, Method)
-    assert output.fields[PREDICTION].payload == [0.2, 0.4]
-    assert output.fields[PREDICTION].schema == "signal.bvp.v1"
-    assert output.metadata == {"source": "adapter-contract"}
+    assert output.field(PREDICTION).payload == [0.2, 0.4]
+    assert output.field(PREDICTION).schema == "signal.bvp.v1"
     assert not batch.has(PREDICTION)
 
 
