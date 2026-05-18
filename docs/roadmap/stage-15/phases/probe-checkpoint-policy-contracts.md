@@ -654,14 +654,23 @@ git diff --check
 - Draft plan: complete in this file
 - Final phase execution plan: complete in this file after expanded-path
   refinement
-- Implementation summary: pending
-- Implementation validation: pending
+- Implementation summary: completed. Added dependency-light probe, checkpoint,
+  and policy contracts with public exports; added unit coverage and contract
+  validation for vocabularies, primitive dataclass inspection, deterministic
+  checkpoint restart selection, and fallback/unsupported policy states.
+- Implementation validation: completed. Ran
+  `tests/unit/rphys/training/test_probes.py`,
+  `tests/unit/rphys/training/test_checkpoint.py`,
+  `tests/unit/rphys/training/test_policies.py`,
+  `tests/contracts/test_stage15_probe_checkpoint_policy_contract.py`,
+  `tests/contracts/test_stage15_training_profile_contract.py`,
+  `make test-package`, `uv lock --check`, and `git diff --check`.
 - Refinement summary: completed for public provisional schema, primitive
   serialization/dataclass inspection, Phase 1 compatibility, import
   boundaries, checkpoint catalog/restart selector semantics, Stage 9
   pipeline-stage naming, precision/compile/kernel fallback evidence, and
   explicit future-phase exclusions
-- Pre-submit blocker gate: pending implementation
+- Pre-submit blocker gate: resolved for phase scope; remaining blockers: none.
 - PR preparation: pending implementation
 - Automated review: pending implementation
 - Merge result: pending implementation
