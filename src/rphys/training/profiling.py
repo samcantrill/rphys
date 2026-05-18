@@ -19,7 +19,25 @@ from ._validation import (
     coerce_optional_non_empty_string,
     freeze_primitive_mapping,
 )
+from .checkpoint import (
+    CheckpointPruneResult,
+    CheckpointRestoreResult,
+    CheckpointSaveResult,
+    CheckpointSelectionResult,
+)
 from .events import TrainingEvent, TrainingEventLog
+from .probes import (
+    DataFieldProbeSummary,
+    DataProbeSummary,
+    DataSampleProbeSummary,
+    ModelActivationProbeSummary,
+    ModelGradientProbeSummary,
+    ModelHealthProbeSummary,
+    ModelParameterProbeSummary,
+    ModelProbeSummary,
+    ModelUpdateProbeSummary,
+    UnavailableProbeEvidence,
+)
 
 __all__ = [
     "ProfileSpanSummary",
@@ -2472,6 +2490,27 @@ class AsyncTrainingProfileWriter:
         return _coerce_non_negative_timestamp(timestamp, owner="AsyncTrainingProfileWriter", field="clock")
 
 
+_PROBE_RESULT_TYPES = (
+    ModelProbeSummary,
+    ModelParameterProbeSummary,
+    ModelGradientProbeSummary,
+    ModelUpdateProbeSummary,
+    ModelActivationProbeSummary,
+    ModelHealthProbeSummary,
+    DataProbeSummary,
+    DataFieldProbeSummary,
+    DataSampleProbeSummary,
+    UnavailableProbeEvidence,
+)
+
+_CHECKPOINT_RESULT_TYPES = (
+    CheckpointSelectionResult,
+    CheckpointRestoreResult,
+    CheckpointSaveResult,
+    CheckpointPruneResult,
+)
+
+
 @dataclass(frozen=True, init=False, slots=True)
 class TrainingProfile:
     """Minimal profile aggregate with primitive trace evidence."""
@@ -2482,6 +2521,26 @@ class TrainingProfile:
     resource_traces: tuple[ResourceTrace, ...]
     monitor_lifecycle_records: tuple[ResourceMonitorLifecycleRecord, ...]
     writer_results: tuple[ProfileWriterAppendResult | ProfileWriterFlushResult, ...]
+    probe_results: tuple[
+        ModelProbeSummary
+        | ModelParameterProbeSummary
+        | ModelGradientProbeSummary
+        | ModelUpdateProbeSummary
+        | ModelActivationProbeSummary
+        | ModelHealthProbeSummary
+        | DataProbeSummary
+        | DataFieldProbeSummary
+        | DataSampleProbeSummary
+        | UnavailableProbeEvidence,
+        ...,
+    ]
+    checkpoint_results: tuple[
+        CheckpointSelectionResult
+        | CheckpointRestoreResult
+        | CheckpointSaveResult
+        | CheckpointPruneResult,
+        ...,
+    ]
     decisions: tuple[str, ...]
 
     def __init__(
@@ -2493,6 +2552,24 @@ class TrainingProfile:
         resource_traces: Iterable[ResourceTrace] = (),
         monitor_lifecycle_records: Iterable[ResourceMonitorLifecycleRecord] = (),
         writer_results: Iterable[ProfileWriterAppendResult | ProfileWriterFlushResult] = (),
+        probe_results: Iterable[
+            ModelProbeSummary
+            | ModelParameterProbeSummary
+            | ModelGradientProbeSummary
+            | ModelUpdateProbeSummary
+            | ModelActivationProbeSummary
+            | ModelHealthProbeSummary
+            | DataProbeSummary
+            | DataFieldProbeSummary
+            | DataSampleProbeSummary
+            | UnavailableProbeEvidence
+        ] = (),
+        checkpoint_results: Iterable[
+            CheckpointSelectionResult
+            | CheckpointRestoreResult
+            | CheckpointSaveResult
+            | CheckpointPruneResult
+        ] = (),
         decisions: Iterable[str] = (),
     ) -> None:
         object.__setattr__(
@@ -2548,6 +2625,26 @@ class TrainingProfile:
                 (ProfileWriterAppendResult, ProfileWriterFlushResult),
                 owner="TrainingProfile",
                 field="writer_results",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "probe_results",
+            _coerce_records_of_types(
+                probe_results,
+                _PROBE_RESULT_TYPES,
+                owner="TrainingProfile",
+                field="probe_results",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "checkpoint_results",
+            _coerce_records_of_types(
+                checkpoint_results,
+                _CHECKPOINT_RESULT_TYPES,
+                owner="TrainingProfile",
+                field="checkpoint_results",
             ),
         )
         object.__setattr__(
@@ -2619,6 +2716,19 @@ class TrainingProfile:
             and (probe_id is None or record.probe_id == probe_id)
         )
 
+    def probe_results_for(
+        self,
+        *,
+        probe_id: str | None = None,
+    ) -> tuple[object, ...]:
+        if probe_id is None:
+            return self.probe_results
+        return tuple(
+            result
+            for result in self.probe_results
+            if getattr(result, "probe_id", getattr(getattr(result, "summary", None), "probe_id", None)) == probe_id
+        )
+
     def as_profile_summaries(self) -> tuple[ProfileSpanSummary, ...]:
         return self.scalar_spans + tuple(probe.as_span() for probe in self.unavailable_spans)
 
@@ -2638,6 +2748,8 @@ class TrainingProfileRecorder:
         self._resource_traces: tuple[ResourceTrace, ...] = ()
         self._monitor_lifecycle_records: tuple[ResourceMonitorLifecycleRecord, ...] = ()
         self._writer_results: tuple[ProfileWriterAppendResult | ProfileWriterFlushResult, ...] = ()
+        self._probe_results: tuple[object, ...] = ()
+        self._checkpoint_results: tuple[object, ...] = ()
         self._decisions: tuple[str, ...] = ()
 
     def record_event(self, event: TrainingEvent) -> None:
@@ -2765,6 +2877,28 @@ class TrainingProfileRecorder:
             )
         self._writer_results += (result,)
 
+    def record_probe_result(self, result: object) -> None:
+        if not isinstance(result, _PROBE_RESULT_TYPES):
+            raise RemotePhysTrainingError(
+                "TrainingProfileRecorder.record_probe_result expects a probe result record.",
+                owner="TrainingProfileRecorder",
+                field="result",
+                expected=_type_names(_PROBE_RESULT_TYPES),
+                actual=type(result).__name__,
+            )
+        self._probe_results += (result,)
+
+    def record_checkpoint_result(self, result: object) -> None:
+        if not isinstance(result, _CHECKPOINT_RESULT_TYPES):
+            raise RemotePhysTrainingError(
+                "TrainingProfileRecorder.record_checkpoint_result expects a checkpoint result record.",
+                owner="TrainingProfileRecorder",
+                field="result",
+                expected=_type_names(_CHECKPOINT_RESULT_TYPES),
+                actual=type(result).__name__,
+            )
+        self._checkpoint_results += (result,)
+
     def record_decision(self, decision: str) -> None:
         """Record a primitive decision string."""
 
@@ -2786,6 +2920,8 @@ class TrainingProfileRecorder:
             resource_traces=self._resource_traces,
             monitor_lifecycle_records=self._monitor_lifecycle_records,
             writer_results=self._writer_results,
+            probe_results=self._probe_results,
+            checkpoint_results=self._checkpoint_results,
             decisions=self._decisions,
         )
 
@@ -2931,6 +3067,10 @@ class TrainingProfiler(Protocol):
 
 def _exception_reason(exc: Exception) -> str:
     return str(exc) or type(exc).__name__
+
+
+def _type_names(types: tuple[type, ...]) -> str:
+    return " | ".join(expected_type.__name__ for expected_type in types)
 
 
 def _coerce_name(value: object, *, owner: str, field: str) -> str:

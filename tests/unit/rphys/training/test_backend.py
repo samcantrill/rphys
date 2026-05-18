@@ -3,7 +3,30 @@ from __future__ import annotations
 from rphys.data import Batch, FieldValue
 from rphys.learning import LoopContext, LoopMode
 from rphys.metrics import MetricValue
-from rphys.training import NativeTrainingEngine, TrainingOutputSpec, TrainingPlan, TrainingStatus
+from rphys.training import (
+    AsyncTrainingProfileWriter,
+    CheckpointPrunePolicy,
+    CheckpointPruneResult,
+    CheckpointRef,
+    CheckpointRefStatus,
+    CheckpointResultStatus,
+    CheckpointSavePolicy,
+    FakeCPUResourceProbe,
+    InMemoryProfileWriterBackend,
+    ModelProbeSummary,
+    NativeTrainingEngine,
+    ProbeCadence,
+    ProbeHookPoint,
+    ProbeSelector,
+    ProbeSelectorMode,
+    ResourceMetricKind,
+    ResourceMonitor,
+    ResourceMonitorExecutionMode,
+    TrainingEventPhase,
+    TrainingOutputSpec,
+    TrainingPlan,
+    TrainingStatus,
+)
 from rphys.training.events import TrainingEvent
 
 
@@ -116,13 +139,165 @@ def test_native_engine_emits_observer_events_and_unavailable_profiles() -> None:
     result = NativeTrainingEngine().fit(plan, learner)
 
     assert [event.phase.value for event in sink.events] == [
+        "setup",
+        "setup",
         "loop_started",
+        "data_wait",
+        "device_transfer",
         "step_started",
         "step_completed",
         "loop_completed",
+        "teardown",
+        "profiling_summary",
+        "teardown",
     ]
-    assert result.profiles[0].name == "native.step"
-    assert result.profiles[0].status == "unavailable"
+    assert result.training_profile is not None
+    assert result.profiles[0].name == "native.setup"
+    assert result.profiles[0].status == "available"
+
+
+def test_native_engine_attaches_stage15_profile_monitors_writers_probes_and_checkpoints() -> None:
+    clock_values = [1.0 + index * 0.1 for index in range(40)]
+
+    def clock() -> float:
+        return clock_values.pop(0)
+
+    monitor = ResourceMonitor(
+        FakeCPUResourceProbe(values=(10.0, 20.0), probe_id="fake-cpu"),
+        execution_mode=ResourceMonitorExecutionMode.INLINE,
+        clock=clock,
+        run_id="run-1",
+        timeline_id="timeline-1",
+    )
+    writer_backend = InMemoryProfileWriterBackend()
+    writer = AsyncTrainingProfileWriter(writer_backend, queue_capacity=64, clock=clock)
+
+    class RecordingProbe:
+        def __init__(self) -> None:
+            self.hook_points: list[str] = []
+
+        def collect(self, context: dict[object, object]) -> tuple[ModelProbeSummary, ...]:
+            hook_point = str(context["hook_point"])
+            self.hook_points.append(hook_point)
+            if hook_point != "step_completed":
+                return ()
+            return (
+                ModelProbeSummary(
+                    "fake-model",
+                    "parameter_norm",
+                    hook_point=ProbeHookPoint.STEP_COMPLETED,
+                    selector=ProbeSelector(ProbeSelectorMode.ALL),
+                    cadence=ProbeCadence(),
+                    value=1.5,
+                    run_id=str(context["run_id"]),
+                    timeline_id=str(context["timeline_id"]),
+                    split=str(context["split"]),
+                    step_index=int(context["step_index"]),
+                ),
+            )
+
+    probe = RecordingProbe()
+    saved_refs: list[CheckpointRef] = []
+
+    def save_hook(context: dict[str, object]) -> CheckpointRef:
+        ref = CheckpointRef(
+            f"ckpt-{len(saved_refs)}",
+            run_id=str(context["run_id"]),
+            timeline_id=str(context["timeline_id"]),
+            step=int(context["step_index"] or 0),
+            timestamp=10.0 + len(saved_refs),
+            sequence_id=len(saved_refs),
+            status=CheckpointRefStatus.COMPLETED,
+            metadata={"reason": str(context["reason"])},
+        )
+        saved_refs.append(ref)
+        return ref
+
+    def prune_hook(catalog: object) -> CheckpointPruneResult:
+        refs = getattr(catalog, "refs")
+        return CheckpointPruneResult(
+            status=CheckpointResultStatus.COMPLETED,
+            kept=refs[-1:],
+            keep_count=1,
+            run_id="run-1",
+            timeline_id="timeline-1",
+        )
+
+    plan = TrainingPlan(
+        train_batches=(Batch(),),
+        max_epochs=1,
+        output_spec=TrainingOutputSpec(
+            objective="objectives/custom.training.total",
+            metrics=("metrics/custom.training.mae",),
+        ),
+        resource_monitors=(monitor,),
+        profile_writers=(writer,),
+        training_probes=(probe,),
+        checkpoint_save_policy=CheckpointSavePolicy(by_step=1, on_final=True),
+        checkpoint_save_hook=save_hook,
+        checkpoint_prune_policy=CheckpointPrunePolicy(keep_recent=1),
+        checkpoint_prune_hook=prune_hook,
+        run_id="run-1",
+        timeline_id="timeline-1",
+    )
+
+    result = NativeTrainingEngine().fit(plan, RecordingLearner([]))
+
+    assert result.status is TrainingStatus.COMPLETED
+    assert result.training_profile is not None
+    profile = result.training_profile
+    assert {event.phase.value for event in profile.events()} >= {
+        "setup",
+        "data_wait",
+        "device_transfer",
+        "checkpoint",
+        "teardown",
+    }
+    assert {span.stage_name for span in profile.scalar_spans} >= {
+        "setup",
+        "data_wait",
+        "device_transfer",
+        "forward",
+        "backward",
+        "optimizer_step",
+        "checkpoint",
+        "teardown",
+    }
+    assert profile.resource_samples(metric_kind=ResourceMetricKind.CPU_UTILIZATION)
+    assert profile.monitor_lifecycle_records
+    assert profile.writer_results
+    assert writer_backend.written_records
+    assert profile.probe_results_for(probe_id="fake-model")
+    assert any(getattr(item, "ref_id", None) == result.checkpoint_id for item in profile.checkpoint_results)
+    assert result.checkpoint_id in {ref.ref_id for ref in saved_refs}
+    assert probe.hook_points
+
+
+def test_native_engine_records_failure_profile_and_teardown_after_observer_failure() -> None:
+    class FailingSink:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def record(self, event: TrainingEvent) -> None:
+            self.calls += 1
+            if event.phase is TrainingEventPhase.STEP_STARTED:
+                raise RuntimeError("sink failed")
+
+    sink = FailingSink()
+    plan = TrainingPlan(
+        train_batches=(Batch(),),
+        event_sinks=(sink,),
+        output_spec=TrainingOutputSpec(objective="objectives/custom.training.total"),
+    )
+
+    result = NativeTrainingEngine().fit(plan, RecordingLearner([]))
+
+    assert result.status is TrainingStatus.FAILED
+    assert result.training_profile is not None
+    phases = [event.phase.value for event in result.training_profile.events()]
+    assert "loop_failed" in phases
+    assert "teardown" in phases
+    assert "RuntimeError" in (result.failure or "")
 
 
 def test_native_engine_respects_step_limits_and_builds_contexts() -> None:

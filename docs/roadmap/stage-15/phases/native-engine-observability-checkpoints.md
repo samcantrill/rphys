@@ -699,7 +699,25 @@ requirements to default validation.
 
 ## Completion Notes
 
-- Planning artifact only. No product code, tests, broad checks, PR creation, or
-  implementation work was performed in this phase-planning pass.
-- Changed path for this planning pass:
-  `docs/roadmap/stage-15/phases/native-engine-observability-checkpoints.md`.
+- Planning artifact completed in commit
+  `558ddbab9e8a5834bbc339fc88333b48b768cd38`.
+- Implementation completed. Added explicit native `TrainingPlan` inputs for
+  resource monitors, async profile writers, training probes, checkpoint
+  catalogs/selectors/policies/hooks, run/timeline/rank/device attribution, and
+  private Native orchestration that records setup/teardown, data wait, device
+  transfer, forward/output validation, backward, optimizer, scheduler,
+  checkpoint, writer, monitor, probe, failure, and profiling-summary evidence
+  into `TrainingResult.training_profile`.
+- Shared profile schema was extended additively with primitive
+  `probe_results` and `checkpoint_results`; Native uses those shared records
+  instead of creating native-only result families.
+- Focused validation passed:
+  `uv run pytest tests/unit/rphys/training/test_plan.py tests/unit/rphys/training/test_backend.py tests/unit/rphys/training/test_checkpoint.py tests/unit/rphys/training/test_profiling.py tests/unit/rphys/training/test_probes.py tests/contracts/test_stage15_training_profile_contract.py tests/contracts/test_stage15_probe_checkpoint_policy_contract.py tests/contracts/test_stage12_observability_contract.py tests/integration/test_stage15_native_observability_flow.py`
+  passed with 60 tests.
+- Suite validation passed on 2026-05-18: `make test-package` passed
+  (72 tests), `make test-unit` passed (791 tests), `make test-contract`
+  passed (187 tests), `make test-integration` passed (31 tests),
+  `make test-summary` passed (package 72, unit 791, contract 187,
+  integration 31; e2e/acceptance not present), `make validate-pr` passed,
+  `uv lock --check` passed, and `git diff --check` passed.
+- PR preparation, automated review, merge result, and cleanup are pending.
