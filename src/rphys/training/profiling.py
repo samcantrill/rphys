@@ -1226,12 +1226,12 @@ class ResourceTrace:
                     actual=sample.source_probe_id,
                 )
             if previous is not None:
-                if sample.sequence_id < previous.sequence_id:
+                if sample.sequence_id <= previous.sequence_id:
                     raise RemotePhysTrainingError(
-                        "ResourceTrace sample sequence_id must be monotonic.",
+                        "ResourceTrace sample sequence_id must be strictly increasing.",
                         owner="ResourceTrace",
                         field="samples",
-                        expected="non-decreasing sequence_id",
+                        expected="strictly increasing sequence_id",
                         previous=previous.sequence_id,
                         current=sample.sequence_id,
                     )
@@ -1369,16 +1369,17 @@ class ResourceSampleBuffer:
         return self._dropped_count
 
     def push(self, sample: object) -> ResourceSampleBufferState:
-        self._accepted_count += 1
         if len(self._queue) >= self._capacity:
             if self._overflow_policy is ResourceBufferOverflowPolicy.DROP_OLDEST:
                 self._queue.popleft()
                 self._dropped_count += 1
                 self._queue.append(sample)
+                self._accepted_count += 1
             else:
                 self._dropped_count += 1
         else:
             self._queue.append(sample)
+            self._accepted_count += 1
 
         return self.snapshot()
 
@@ -1652,7 +1653,6 @@ class FakeResourceProbe:
         source_probe_id: str | None = None,
         resource_id: str | None = None,
     ) -> ResourceSample:
-        del process_id, node_id, local_rank, global_rank, device_id  # retained for interface parity
         values_index = self._index % len(self.values)
         status_index = self._index % len(self.statuses)
         self._index += 1
@@ -1672,6 +1672,11 @@ class FakeResourceProbe:
             timeline_id=timeline_id,
             clock_name=clock_name,
             clock_origin=clock_origin,
+            process_id=process_id,
+            node_id=node_id,
+            local_rank=local_rank,
+            global_rank=global_rank,
+            device_id=device_id,
             source_probe_id=source_probe_id or self.source_probe_id,
             resource_id=resource_id or self.resource_id,
             series_key=self.series_key,
@@ -1941,21 +1946,29 @@ class ResourceMonitor:
             )
             return None
 
-        sample = self._probe.sample(
-            timestamp=self._next_timestamp(),
-            sequence_id=self._sample_sequence,
-            run_id=self._run_id,
-            timeline_id=self._timeline_id,
-            clock_name=self._clock_name,
-            clock_origin=self._clock_origin,
-            process_id=self._process_id,
-            node_id=self._node_id,
-            local_rank=self._local_rank,
-            global_rank=self._global_rank,
-            device_id=self._device_id,
-            source_probe_id=self._probe.probe_id,
-            resource_id=self._resource_id,
-        )
+        sample_timestamp = self._next_timestamp()
+        try:
+            sample = self._probe.sample(
+                timestamp=sample_timestamp,
+                sequence_id=self._sample_sequence,
+                run_id=self._run_id,
+                timeline_id=self._timeline_id,
+                clock_name=self._clock_name,
+                clock_origin=self._clock_origin,
+                process_id=self._process_id,
+                node_id=self._node_id,
+                local_rank=self._local_rank,
+                global_rank=self._global_rank,
+                device_id=self._device_id,
+                source_probe_id=self._probe.probe_id,
+                resource_id=self._resource_id,
+            )
+        except Exception as exc:
+            self._record_lifecycle(
+                ResourceMonitorLifecycleEvent.FAILED,
+                reason=_exception_reason(exc),
+            )
+            return None
         self._sample_sequence += 1
         buffer_state = self._buffer.push(sample)
         self._record_lifecycle(
@@ -2036,9 +2049,16 @@ class ResourceMonitor:
 
     def _next_timestamp(self) -> float:
         try:
-            return self._clock()
-        except IndexError:
-            return monotonic()
+            timestamp = self._clock()
+        except Exception as exc:
+            raise RemotePhysTrainingError(
+                "ResourceMonitor clock failed to produce a timestamp.",
+                owner="ResourceMonitor",
+                field="clock",
+                expected="callable returning a finite non-negative timestamp",
+                actual=type(exc).__name__,
+            ) from exc
+        return _coerce_non_negative_timestamp(timestamp, owner="ResourceMonitor", field="clock")
 
 
 @dataclass(frozen=True, init=False, slots=True)
@@ -2196,7 +2216,7 @@ class AsyncTrainingProfileWriter:
                 owner="AsyncTrainingProfileWriter",
                 field="flush_cadence_seconds",
             )
-            self._last_periodic_check = self._clock()
+            self._last_periodic_check = self._next_timestamp()
         else:
             self._flush_cadence_seconds = None
             self._last_periodic_check = None
@@ -2218,7 +2238,7 @@ class AsyncTrainingProfileWriter:
             append_result = ProfileWriterAppendResult(
                 ProfileWriterResultStatus.DISABLED,
                 sequence_id=self._sequence_id,
-                timestamp=self._clock(),
+                timestamp=self._next_timestamp(),
                 queue_depth=self._buffer.queue_depth,
                 queue_capacity=self._buffer.capacity,
                 accepted_count=self._buffer.accepted_count,
@@ -2239,7 +2259,7 @@ class AsyncTrainingProfileWriter:
         append_result = ProfileWriterAppendResult(
             status,
             sequence_id=self._sequence_id,
-            timestamp=self._clock(),
+            timestamp=self._next_timestamp(),
             queue_depth=after.queue_depth,
             queue_capacity=after.capacity,
             accepted_count=after.accepted_count,
@@ -2250,7 +2270,7 @@ class AsyncTrainingProfileWriter:
         self._append_results += (append_result,)
 
         if self._flush_cadence_seconds is not None and self._last_periodic_check is not None:
-            now = self._clock()
+            now = self._next_timestamp()
             elapsed = now - self._last_periodic_check
             if elapsed >= self._flush_cadence_seconds:
                 self.flush(ProfileWriterFlushScope.PERIODIC)
@@ -2276,12 +2296,14 @@ class AsyncTrainingProfileWriter:
         return self._flush_results
 
     def _flush_records(self, scope: ProfileWriterFlushScope) -> ProfileWriterFlushResult:
-        timestamp = self._clock()
+        sequence_id = self._flush_sequence_id
+        self._flush_sequence_id += 1
+        timestamp = self._next_timestamp()
         if not self._enabled or self._backend is None:
             return ProfileWriterFlushResult(
                 scope,
                 ProfileWriterResultStatus.DISABLED,
-                sequence_id=self._flush_sequence_id,
+                sequence_id=sequence_id,
                 timestamp=timestamp,
                 requested_count=0,
                 written_count=0,
@@ -2295,44 +2317,54 @@ class AsyncTrainingProfileWriter:
             result = ProfileWriterFlushResult(
                 scope,
                 ProfileWriterResultStatus.SKIPPED,
-                sequence_id=self._flush_sequence_id,
+                sequence_id=sequence_id,
                 timestamp=timestamp,
                 requested_count=0,
                 written_count=0,
                 dropped_count=0,
                 remaining_count=0,
             )
-            self._flush_sequence_id += 1
             return result
 
         pending = self._buffer.items()
         try:
-            written = self._backend.write(pending, scope=scope, sequence_id=self._flush_sequence_id)
+            written = self._backend.write(pending, scope=scope, sequence_id=sequence_id)
         except Exception as exc:
             return ProfileWriterFlushResult(
                 scope,
                 ProfileWriterResultStatus.FAILED,
-                sequence_id=self._flush_sequence_id,
+                sequence_id=sequence_id,
                 timestamp=timestamp,
                 requested_count=requested,
                 written_count=0,
                 dropped_count=0,
                 remaining_count=requested,
-                failure_reason=str(exc),
+                failure_reason=_exception_reason(exc),
                 retry_requested=self._enable_retry,
             )
-        finally:
-            self._flush_sequence_id += 1
+
+        if isinstance(written, bool) or not isinstance(written, int) or written < 0:
+            return ProfileWriterFlushResult(
+                scope,
+                ProfileWriterResultStatus.FAILED,
+                sequence_id=sequence_id,
+                timestamp=timestamp,
+                requested_count=requested,
+                written_count=0,
+                dropped_count=0,
+                remaining_count=requested,
+                failure_reason="invalid_write_count",
+            )
 
         if written != requested:
             return ProfileWriterFlushResult(
                 scope,
                 ProfileWriterResultStatus.FAILED,
-                sequence_id=self._flush_sequence_id - 1,
+                sequence_id=sequence_id,
                 timestamp=timestamp,
                 requested_count=requested,
                 written_count=written,
-                dropped_count=0 if written >= 0 else requested,
+                dropped_count=0,
                 remaining_count=requested,
                 failure_reason="partial_or_non_monotonic_write_count",
             )
@@ -2341,13 +2373,26 @@ class AsyncTrainingProfileWriter:
         return ProfileWriterFlushResult(
             scope,
             ProfileWriterResultStatus.COMPLETED,
-            sequence_id=self._flush_sequence_id - 1,
+            sequence_id=sequence_id,
             timestamp=timestamp,
             requested_count=requested,
             written_count=written,
             dropped_count=0,
             remaining_count=0,
         )
+
+    def _next_timestamp(self) -> float:
+        try:
+            timestamp = self._clock()
+        except Exception as exc:
+            raise RemotePhysTrainingError(
+                "AsyncTrainingProfileWriter clock failed to produce a timestamp.",
+                owner="AsyncTrainingProfileWriter",
+                field="clock",
+                expected="callable returning a finite non-negative timestamp",
+                actual=type(exc).__name__,
+            ) from exc
+        return _coerce_non_negative_timestamp(timestamp, owner="AsyncTrainingProfileWriter", field="clock")
 
 
 @dataclass(frozen=True, init=False, slots=True)
@@ -2785,6 +2830,10 @@ class TrainingProfiler(Protocol):
         provenance: Mapping[object, object] | None = None,
     ) -> ProfileSpanSummary:
         ...
+
+
+def _exception_reason(exc: Exception) -> str:
+    return str(exc) or type(exc).__name__
 
 
 def _coerce_name(value: object, *, owner: str, field: str) -> str:

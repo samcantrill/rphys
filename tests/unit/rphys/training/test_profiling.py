@@ -231,7 +231,37 @@ def test_resource_sample_and_trace_enforce_contract_and_ordering() -> None:
 
     assert trace.metric_kind is ResourceMetricKind.CPU_UTILIZATION
     assert trace.samples[0].value == 12.5
-    assert trace.append(second).samples == (first, second, second)
+
+    third = ResourceSample(
+        ResourceMetricKind.CPU_UTILIZATION,
+        metric_name="cpu_utilization",
+        unit=ResourceMetricUnit.PERCENT,
+        value=14.2,
+        status=ResourceSampleStatus.AVAILABLE,
+        timestamp=1.2,
+        sequence_id=2,
+        source_probe_id="fake-cpu",
+    )
+    assert trace.append(third).samples == (first, second, third)
+
+    with pytest.raises(RemotePhysTrainingError) as duplicate_sequence:
+        trace.append(second)
+    assert duplicate_sequence.value.context["expected"] == "strictly increasing sequence_id"
+
+    with pytest.raises(RemotePhysTrainingError) as decreasing_timestamp:
+        trace.append(
+            ResourceSample(
+                ResourceMetricKind.CPU_UTILIZATION,
+                metric_name="cpu_utilization",
+                unit=ResourceMetricUnit.PERCENT,
+                value=14.2,
+                status=ResourceSampleStatus.AVAILABLE,
+                timestamp=1.0,
+                sequence_id=2,
+                source_probe_id="fake-cpu",
+            ),
+        )
+    assert decreasing_timestamp.value.context["expected"] == "non-decreasing timestamp"
 
     with pytest.raises(RemotePhysTrainingError):
         ResourceSample(
@@ -306,6 +336,7 @@ def test_resource_sample_buffer_records_drop_policy_behavior() -> None:
         state = drop_oldest.push(sample)
     assert drop_oldest.items() == ("b", "c")
     assert state.queue_depth == 2
+    assert state.accepted_count == 3
     assert state.dropped_count == 1
     assert state.overflow_policy is ResourceBufferOverflowPolicy.DROP_OLDEST
 
@@ -318,11 +349,12 @@ def test_resource_sample_buffer_records_drop_policy_behavior() -> None:
     state = reject_new.push("c")
     assert reject_new.items() == ("a", "b")
     assert state.queue_depth == 2
+    assert state.accepted_count == 2
     assert state.dropped_count == 1
 
 
 def test_resource_monitor_records_lifecycle_and_rejected_sample_backpressure() -> None:
-    clock_values = [1.0, 1.1, 1.2, 1.3, 1.4]
+    clock_values = [1.0 + index * 0.1 for index in range(20)]
 
     def clock() -> float:
         return clock_values.pop(0)
@@ -333,14 +365,29 @@ def test_resource_monitor_records_lifecycle_and_rejected_sample_backpressure() -
         buffer_capacity=2,
         buffer_overflow_policy=ResourceBufferOverflowPolicy.REJECT_NEW,
         clock=clock,
+        run_id="run-1",
+        timeline_id="timeline-1",
+        process_id=123,
+        node_id="node-a",
+        local_rank=0,
+        global_rank=2,
+        device_id="cpu",
     )
 
     monitor.start()
-    monitor.collect_sample()
+    first_sample = monitor.collect_sample()
     monitor.collect_sample()
     monitor.collect_sample()
 
     assert monitor.execution_mode is ResourceMonitorExecutionMode.INLINE
+    assert first_sample is not None
+    assert first_sample.run_id == "run-1"
+    assert first_sample.timeline_id == "timeline-1"
+    assert first_sample.process_id == 123
+    assert first_sample.node_id == "node-a"
+    assert first_sample.local_rank == 0
+    assert first_sample.global_rank == 2
+    assert first_sample.device_id == "cpu"
     lifecycle_events = monitor.lifecycle_events
     assert lifecycle_events[0].event is ResourceMonitorLifecycleEvent.CONFIGURED
     assert lifecycle_events[1].event is ResourceMonitorLifecycleEvent.STARTED
@@ -355,6 +402,53 @@ def test_resource_monitor_records_lifecycle_and_rejected_sample_backpressure() -
     monitor.stop()
     monitor.cleanup_orphan()
     assert ResourceMonitorLifecycleEvent.STOPPED in {event.event for event in monitor.lifecycle_events}
+
+
+def test_resource_monitor_clock_and_probe_failures_are_explicit() -> None:
+    exhausted_clock_values = [1.0]
+
+    def exhausted_clock() -> float:
+        return exhausted_clock_values.pop(0)
+
+    monitor = ResourceMonitor(
+        FakeCPUResourceProbe(probe_id="fake-cpu"),
+        execution_mode=ResourceMonitorExecutionMode.INLINE,
+        clock=exhausted_clock,
+    )
+
+    with pytest.raises(RemotePhysTrainingError) as clock_error:
+        monitor.start()
+    assert clock_error.value.context["owner"] == "ResourceMonitor"
+    assert clock_error.value.context["field"] == "clock"
+
+    class FailingProbe:
+        probe_id = "failing"
+        metric_kind = ResourceMetricKind.CPU_UTILIZATION
+        metric_name = "cpu_utilization"
+        unit = ResourceMetricUnit.PERCENT
+        series_key = "cpu"
+
+        def sample(self, **kwargs: object) -> ResourceSample:
+            del kwargs
+            raise RuntimeError()
+
+    stable_clock_values = [2.0 + index * 0.1 for index in range(8)]
+
+    def stable_clock() -> float:
+        return stable_clock_values.pop(0)
+
+    failing_monitor = ResourceMonitor(
+        FailingProbe(),
+        execution_mode=ResourceMonitorExecutionMode.INLINE,
+        clock=stable_clock,
+    )
+    failing_monitor.start()
+
+    assert failing_monitor.collect_sample() is None
+    failure_events = [
+        event for event in failing_monitor.lifecycle_events if event.event is ResourceMonitorLifecycleEvent.FAILED
+    ]
+    assert failure_events[-1].reason == "RuntimeError"
 
 
 def test_async_training_profile_writer_tracks_append_and_flush_contract() -> None:
@@ -393,6 +487,8 @@ def test_async_training_profile_writer_tracks_append_and_flush_contract() -> Non
     assert one.status is ProfileWriterResultStatus.ENQUEUED
     assert two.status is ProfileWriterResultStatus.REJECTED
     assert two.failure_reason == "buffer_full"
+    assert reject.queue_state.accepted_count == 1
+    assert reject.queue_state.dropped_count == 1
 
 
 def test_async_training_profile_writer_failure_records_retry_intent() -> None:
@@ -409,6 +505,53 @@ def test_async_training_profile_writer_failure_records_retry_intent() -> None:
     second = writer.flush()
     assert second.status is ProfileWriterResultStatus.COMPLETED
     assert writer.queue_state.queue_depth == 0
+
+
+def test_async_training_profile_writer_disabled_and_invalid_backend_results_are_records() -> None:
+    disabled = AsyncTrainingProfileWriter(backend=None, enabled=False, clock=lambda: 1.0)
+
+    append = disabled.append("ignored")
+    first_flush = disabled.flush()
+    second_flush = disabled.flush()
+
+    assert append.status is ProfileWriterResultStatus.DISABLED
+    assert first_flush.status is ProfileWriterResultStatus.DISABLED
+    assert second_flush.status is ProfileWriterResultStatus.DISABLED
+    assert (first_flush.sequence_id, second_flush.sequence_id) == (0, 1)
+
+    class EmptyFailureBackend:
+        def write(
+            self,
+            records: tuple[object, ...],
+            *,
+            scope: ProfileWriterFlushScope,
+            sequence_id: int,
+        ) -> int:
+            del records, scope, sequence_id
+            raise RuntimeError()
+
+    failing = AsyncTrainingProfileWriter(backend=EmptyFailureBackend(), clock=lambda: 1.0)
+    failing.append("a")
+    failure = failing.flush()
+    assert failure.status is ProfileWriterResultStatus.FAILED
+    assert failure.failure_reason == "RuntimeError"
+
+    class InvalidCountBackend:
+        def write(
+            self,
+            records: tuple[object, ...],
+            *,
+            scope: ProfileWriterFlushScope,
+            sequence_id: int,
+        ) -> int:
+            del records, scope, sequence_id
+            return -1
+
+    invalid = AsyncTrainingProfileWriter(backend=InvalidCountBackend(), clock=lambda: 1.0)
+    invalid.append("a")
+    invalid_count = invalid.flush()
+    assert invalid_count.status is ProfileWriterResultStatus.FAILED
+    assert invalid_count.failure_reason == "invalid_write_count"
 
 
 def test_profile_recorder_collects_resource_traces_and_writer_lifecycle_records() -> None:

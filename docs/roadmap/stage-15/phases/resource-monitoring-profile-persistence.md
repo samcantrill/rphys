@@ -583,8 +583,18 @@ git diff --check
   `TrainingProfile`/`TrainingProfileRecorder` resource-trace helpers. Updated
   package/profiling exports and phase-contract coverage.
 - Implementation validation: focused unit + contract + import-boundary tests run and
-  reviewed.
-- Refinement summary: no separate refinement requested or needed
+  reviewed; local refinement reran focused unit, Stage 15 contract, package
+  export, and import-boundary tests. Final validation on 2026-05-18:
+  `make test-package` passed (72 tests), `make test-unit` passed (788 tests),
+  `make test-contract` passed (187 tests), `make test-summary` passed
+  (package 72, unit 788, contract 187, integration 30; e2e/acceptance not
+  present), `make validate-pr` passed, `uv lock --check` passed, and
+  `git diff --check` passed.
+- Refinement summary: tightened trace ordering to reject duplicate sequence ids,
+  made monitor/writer clock failures explicit instead of falling back to
+  wall-clock timestamps, passed monitor attribution into fake probe samples,
+  recorded probe failures as monitor lifecycle evidence, and aligned bounded
+  buffer accepted counts with actual enqueues.
 - Pre-submit blocker gate: implementation completed with no new blockers
 - PR preparation: waiting for maintainer workflow; no PR prepared in this phase
   handoff context
