@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: implemented; ready for PR submission
+- Status: merged
 - Roadmap stage: `v14`
 - Feature focus: upstream synthetic smoke composition and validation tier notes
 - Stage descriptor: Synthetic Fixtures, Contract Tests, And Smoke Hardening
@@ -107,7 +107,8 @@ git diff --check
   dependency, public helper package, or fake Stage 13 surface.
 - PR preparation: PR body drafted at
   `docs/roadmap/stage-14/phases/upstream-smoke-validation-tiers-pr-body.md`.
-- Automated review: pending.
-- Merge result: pending.
+- Automated review: GitHub reported no status checks; local validation passed.
+- Merge result: squash-merged to `develop` on 2026-05-18 as
+  `6a15f2e47af2c1aae38b25ca06fd35a062db1670`.
 - Cleanup: pending.
 - Remaining blockers: none.
