@@ -673,7 +673,7 @@ git diff --check
   pipeline-stage naming, precision/compile/kernel fallback evidence, and
   explicit future-phase exclusions
 - Pre-submit blocker gate: resolved for phase scope; remaining blockers: none.
-- Post-implementation refinement summary: completed on 2026-05-19 for the
+- Post-implementation refinement summary: completed on 2026-05-18 for the
   assigned blocker cluster. Exported `CheckpointMetricDirection` intentionally;
   made disabled checkpoint save/prune policies constructible only as explicit
   no-op records; required `best_metric_direction` for `keep_best`; added
@@ -684,7 +684,11 @@ git diff --check
 - Post-implementation refinement validation: completed. Ran
   `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/unit/rphys/training/test_checkpoint.py tests/unit/rphys/training/test_probes.py tests/unit/rphys/training/test_policies.py tests/contracts/test_stage15_probe_checkpoint_policy_contract.py tests/package/test_import.py tests/package/test_import_boundaries.py`
   (93 passed). `git diff --check` passed.
-- PR preparation: pending implementation
+- PR preparation: complete; PR body artifact drafted at
+  `docs/roadmap/stage-15/phases/probe-checkpoint-policy-contracts-pr-body.md`
+  with local validation evidence from targeted checks, `make test-package`,
+  `uv lock --check`, `git diff --check`, `make test-summary`, and
+  `make validate-pr`.
 - Automated review: pending implementation
 - Merge result: pending implementation
 - Cleanup: pending implementation
@@ -701,7 +705,7 @@ git diff --check
   distinct from unavailable evidence, primitive model-summary values accepted
   non-finite floats, and checkpoint result records lacked rank/process and
   provenance evidence.
-- Source: implementation refinement request on 2026-05-19 plus Phase 2 scope
+- Source: implementation refinement request on 2026-05-18 plus Phase 2 scope
   contract for primitive public exports, disabled policies, metric-direction
   significance, unavailable/unsupported evidence, finite diagnostic values,
   and rank/process evidence in save/restore/prune results.
