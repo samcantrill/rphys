@@ -81,6 +81,8 @@ def _refs() -> tuple[CheckpointRef, ...]:
             metric_name="val_loss",
             metric_direction="max",
             metric_value=0.4,
+            global_rank=1,
+            provenance={"created_by": "unit"},
         ),
     )
 
@@ -98,14 +100,24 @@ def test_checkpoint_ref_validates_primitive_fields_and_serialization() -> None:
         metric_name="loss",
         metric_direction="min",
         metric_value=0.123,
+        process_id=17,
+        node_id="node-a",
+        local_rank=0,
+        global_rank=2,
+        device_id="cuda:0",
         metadata={"creator": "unit"},
+        provenance={"adapter": "unit"},
     )
 
     assert ref.ref_id == "ckpt-1"
     assert ref.metric_direction is not None
     assert ref.metric_direction.value == "min"
     assert ref.status is CheckpointRefStatus.PENDING
-    assert asdict(ref)["metadata"] == {"creator": "unit"}
+    inspected = asdict(ref)
+    assert inspected["metadata"] == {"creator": "unit"}
+    assert inspected["provenance"] == {"adapter": "unit"}
+    assert inspected["global_rank"] == 2
+    assert inspected["device_id"] == "cuda:0"
 
     with pytest.raises(RemotePhysTrainingError) as invalid_status:
         CheckpointRef("bad", status="bad")  # type: ignore[arg-type]
@@ -121,12 +133,12 @@ def test_checkpoint_save_policy_requires_consistent_triggers() -> None:
         CheckpointSavePolicy(on_metric=True, metric_name="loss")
     assert direction_error.value.context["field"] == "metric_direction"
 
-    disabled = CheckpointSavePolicy(enabled=False, on_final=False)
+    disabled = CheckpointSavePolicy(enabled=False)
     assert disabled.enabled is False
     assert disabled.on_final is False
 
     with pytest.raises(RemotePhysTrainingError) as disabled_trigger_error:
-        CheckpointSavePolicy(enabled=False)
+        CheckpointSavePolicy(enabled=False, on_final=True)
     assert disabled_trigger_error.value.context["field"] == "enabled"
 
     with pytest.raises(RemotePhysTrainingError) as disabled_metric_error:
@@ -160,10 +172,14 @@ def test_checkpoint_prune_policy_validates_required_fields() -> None:
         CheckpointPrunePolicy(enabled=False, keep_recent=1)
     assert keep_rule_error.value.context["field"] == "enabled"
 
-    disabled = CheckpointPrunePolicy(enabled=False, keep_final=False, keep_failure=False)
+    disabled = CheckpointPrunePolicy(enabled=False)
     assert disabled.enabled is False
     assert disabled.keep_final is False
     assert disabled.keep_failure is False
+
+    with pytest.raises(RemotePhysTrainingError) as disabled_keep_error:
+        CheckpointPrunePolicy(enabled=False, keep_failure=True)
+    assert disabled_keep_error.value.context["field"] == "enabled"
 
     policy = CheckpointPrunePolicy(keep_recent=2, keep_failure=True, keep_final=True)
     assert policy.keep_recent == 2
@@ -177,6 +193,8 @@ def test_checkpoint_selection_result_and_modes_are_deterministic() -> None:
     assert latest.status is CheckpointResultStatus.COMPLETED
     assert latest.ref is not None
     assert latest.ref.ref_id == "ckpt-final"
+    assert asdict(latest)["ref"]["global_rank"] == 1
+    assert asdict(latest)["ref"]["provenance"] == {"created_by": "unit"}
 
     best_min = catalog.select(
         CheckpointSelection(
@@ -219,6 +237,24 @@ def test_checkpoint_selection_result_and_modes_are_deterministic() -> None:
             status=CheckpointResultStatus.COMPLETED,
         )
     assert completed_without_ref.value.context["field"] == "status"
+
+
+def test_checkpoint_rewind_selectors_prioritize_requested_dimension() -> None:
+    catalog = CheckpointCatalog(
+        (
+            CheckpointRef("step-1", status="completed", epoch=1, step=1, timestamp=100.0),
+            CheckpointRef("step-8", status="completed", epoch=8, step=8, timestamp=1.0),
+            CheckpointRef("step-10", status="completed", epoch=10, step=10, timestamp=10.0),
+        ),
+    )
+
+    steps_back = catalog.select(CheckpointSelection(CheckpointSelectionMode.N_STEPS_BACK, step_back=2))
+    assert steps_back.ref is not None
+    assert steps_back.ref.ref_id == "step-8"
+
+    epochs_back = catalog.select(CheckpointSelection(CheckpointSelectionMode.N_EPOCHS_BACK, epoch_back=2))
+    assert epochs_back.ref is not None
+    assert epochs_back.ref.ref_id == "step-8"
 
 
 def test_checkpoint_selection_validation_errors() -> None:
@@ -278,6 +314,14 @@ def test_checkpoint_restore_and_result_records_are_lightweight() -> None:
     with pytest.raises(RemotePhysTrainingError) as rank_error:
         CheckpointSaveResult(status="skipped", local_rank=-1)
     assert rank_error.value.context["field"] == "local_rank"
+
+    with pytest.raises(RemotePhysTrainingError) as save_ref_error:
+        CheckpointSaveResult(status=CheckpointResultStatus.COMPLETED)
+    assert save_ref_error.value.context["field"] == "ref_id"
+
+    with pytest.raises(RemotePhysTrainingError) as restore_ref_error:
+        CheckpointRestoreResult(status=CheckpointResultStatus.COMPLETED, mode="catalog")
+    assert restore_ref_error.value.context["field"] == "ref_id"
 
 
 def test_checkpoint_prune_evidence_retains_reference_and_reason() -> None:

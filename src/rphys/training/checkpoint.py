@@ -247,7 +247,13 @@ class CheckpointRef:
     metric_name: str | None
     metric_direction: CheckpointMetricDirection | None
     metric_value: float | None
+    process_id: int | None
+    node_id: str | None
+    local_rank: int | None
+    global_rank: int | None
+    device_id: str | None
     metadata: PrimitiveMapping
+    provenance: PrimitiveMapping
 
     def __init__(
         self,
@@ -268,7 +274,13 @@ class CheckpointRef:
         metric_name: str | None = None,
         metric_direction: CheckpointMetricDirection | str | None = None,
         metric_value: float | None = None,
+        process_id: int | None = None,
+        node_id: str | None = None,
+        local_rank: int | None = None,
+        global_rank: int | None = None,
+        device_id: str | None = None,
         metadata: Mapping[object, object] | None = None,
+        provenance: Mapping[object, object] | None = None,
     ) -> None:
         object.__setattr__(
             self,
@@ -361,7 +373,19 @@ class CheckpointRef:
                     actual=timestamp,
                 )
         object.__setattr__(self, "timestamp", timestamp)
-        object.__setattr__(self, "metadata", freeze_primitive_mapping(metadata, owner="CheckpointRef", field="metadata"))
+        _set_result_context(
+            self,
+            owner="CheckpointRef",
+            run_id=run_id,
+            timeline_id=timeline_id,
+            process_id=process_id,
+            node_id=node_id,
+            local_rank=local_rank,
+            global_rank=global_rank,
+            device_id=device_id,
+            metadata=metadata,
+            provenance=provenance,
+        )
 
 
 @dataclass(frozen=True, init=False, slots=True)
@@ -391,12 +415,12 @@ class CheckpointSavePolicy:
         metric_direction: CheckpointMetricDirection | str | None = None,
         metric_threshold: float | None = None,
         on_failure: bool = False,
-        on_final: bool = True,
+        on_final: bool | None = None,
     ) -> None:
         enabled = _coerce_bool(enabled, owner="CheckpointSavePolicy", field="enabled")
         on_metric = _coerce_bool(on_metric, owner="CheckpointSavePolicy", field="on_metric")
         on_failure = _coerce_bool(on_failure, owner="CheckpointSavePolicy", field="on_failure")
-        on_final = _coerce_bool(on_final, owner="CheckpointSavePolicy", field="on_final")
+        on_final = enabled if on_final is None else _coerce_bool(on_final, owner="CheckpointSavePolicy", field="on_final")
         object.__setattr__(self, "enabled", enabled)
         object.__setattr__(
             self,
@@ -487,12 +511,12 @@ class CheckpointPrunePolicy:
         keep_best: int | None = None,
         best_metric_name: str | None = None,
         best_metric_direction: CheckpointMetricDirection | str | None = None,
-        keep_final: bool = True,
-        keep_failure: bool = True,
+        keep_final: bool | None = None,
+        keep_failure: bool | None = None,
     ) -> None:
         enabled = _coerce_bool(enabled, owner="CheckpointPrunePolicy", field="enabled")
-        keep_final = _coerce_bool(keep_final, owner="CheckpointPrunePolicy", field="keep_final")
-        keep_failure = _coerce_bool(keep_failure, owner="CheckpointPrunePolicy", field="keep_failure")
+        keep_final = enabled if keep_final is None else _coerce_bool(keep_final, owner="CheckpointPrunePolicy", field="keep_final")
+        keep_failure = enabled if keep_failure is None else _coerce_bool(keep_failure, owner="CheckpointPrunePolicy", field="keep_failure")
         object.__setattr__(self, "enabled", enabled)
         object.__setattr__(
             self,
@@ -832,7 +856,7 @@ class CheckpointCatalog:
                 return None
             anchor = max(ref.step for ref in completed)
             target = max(0, anchor - (selector.step_back or 0))
-            ordered = sorted(completed, key=_selection_key, reverse=True)
+            ordered = sorted(completed, key=_step_rewind_key, reverse=True)
             ordered = [ref for ref in ordered if (ref.step or 0) <= target]
             return ordered[min(selector.metric_count or 1, len(ordered)) - 1] if ordered else None
 
@@ -842,7 +866,7 @@ class CheckpointCatalog:
                 return None
             anchor = max(ref.epoch for ref in completed)
             target = max(0, anchor - (selector.epoch_back or 0))
-            ordered = sorted(completed, key=_selection_key, reverse=True)
+            ordered = sorted(completed, key=_epoch_rewind_key, reverse=True)
             ordered = [ref for ref in ordered if (ref.epoch or 0) <= target]
             return ordered[min(selector.metric_count or 1, len(ordered)) - 1] if ordered else None
 
@@ -943,7 +967,15 @@ class CheckpointSaveResult:
         metadata: Mapping[object, object] | None = None,
         provenance: Mapping[object, object] | None = None,
     ) -> None:
-        object.__setattr__(self, "status", CheckpointResultStatus.coerce(status))
+        status = CheckpointResultStatus.coerce(status)
+        if status is CheckpointResultStatus.COMPLETED and ref_id is None:
+            raise RemotePhysTrainingError(
+                "Completed checkpoint save results require ref_id.",
+                owner="CheckpointSaveResult",
+                field="ref_id",
+                status=status.value,
+            )
+        object.__setattr__(self, "status", status)
         object.__setattr__(self, "ref_id", _coerce_optional_name(ref_id, owner="CheckpointSaveResult", field="ref_id"))
         object.__setattr__(self, "retention_policy_applied", _coerce_optional_name(retention_policy_applied, owner="CheckpointSaveResult", field="retention_policy_applied"))
         object.__setattr__(self, "reason", _coerce_optional_name(reason, owner="CheckpointSaveResult", field="reason"))
@@ -997,7 +1029,15 @@ class CheckpointRestoreResult:
         metadata: Mapping[object, object] | None = None,
         provenance: Mapping[object, object] | None = None,
     ) -> None:
-        object.__setattr__(self, "status", CheckpointResultStatus.coerce(status))
+        status = CheckpointResultStatus.coerce(status)
+        if status is CheckpointResultStatus.COMPLETED and ref_id is None:
+            raise RemotePhysTrainingError(
+                "Completed checkpoint restore results require ref_id.",
+                owner="CheckpointRestoreResult",
+                field="ref_id",
+                status=status.value,
+            )
+        object.__setattr__(self, "status", status)
         object.__setattr__(self, "mode", CheckpointRestoreMode.coerce(mode))
         object.__setattr__(self, "ref_id", _coerce_optional_name(ref_id, owner="CheckpointRestoreResult", field="ref_id"))
         object.__setattr__(self, "reason", _coerce_optional_name(reason, owner="CheckpointRestoreResult", field="reason"))
@@ -1114,6 +1154,28 @@ def _selection_key(ref: CheckpointRef) -> tuple[float, int, int, int, int, int, 
         ref.step if ref.step is not None else -1,
         ref.sequence_id if ref.sequence_id is not None else -1,
         0 if ref.stream_id is None else 1,
+        ref.stream_id or "",
+        ref.ref_id,
+    )
+
+
+def _step_rewind_key(ref: CheckpointRef) -> tuple[int, float, int, int, str, str]:
+    return (
+        ref.step if ref.step is not None else -1,
+        ref.timestamp if ref.timestamp is not None else -1.0,
+        ref.epoch if ref.epoch is not None else -1,
+        ref.sequence_id if ref.sequence_id is not None else -1,
+        ref.stream_id or "",
+        ref.ref_id,
+    )
+
+
+def _epoch_rewind_key(ref: CheckpointRef) -> tuple[int, float, int, int, str, str]:
+    return (
+        ref.epoch if ref.epoch is not None else -1,
+        ref.timestamp if ref.timestamp is not None else -1.0,
+        ref.step if ref.step is not None else -1,
+        ref.sequence_id if ref.sequence_id is not None else -1,
         ref.stream_id or "",
         ref.ref_id,
     )

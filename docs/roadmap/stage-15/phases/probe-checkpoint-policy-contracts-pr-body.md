@@ -70,7 +70,7 @@ Suite summary from `make test-summary` / `make validate-pr`:
 | Suite | Result |
 | --- | --- |
 | package | 72 passed |
-| unit | 778 passed |
+| unit | 779 passed |
 | contract | 187 passed |
 | integration | 30 passed |
 | e2e | not present |

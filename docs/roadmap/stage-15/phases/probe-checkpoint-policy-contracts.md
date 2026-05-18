@@ -643,13 +643,15 @@ git diff --check
 
 ## Refinement And Review Budget Status
 
-- Phase execution plan refinement: complete; unused PR review budget remains
+- Phase execution plan refinement: complete
 - Phase implementation refinement: 1/3 used for post-implementation blocker
   cluster on public exports, disabled policies, metric-direction retention,
   unsupported probe evidence, finite primitive summaries, and checkpoint result
   provenance.
-- PR review: unused
-- Blocker resolution: 1/3 used
+- PR review: complete; automated review found a checkpoint blocker cluster on
+  checkpoint-ref distributed attribution, rewind selector ordering, disabled
+  no-op policies, and completed save/restore checkpoint identity.
+- Blocker resolution: 2/3 used
 
 ## Completion Notes
 
@@ -689,7 +691,17 @@ git diff --check
   with local validation evidence from targeted checks, `make test-package`,
   `uv lock --check`, `git diff --check`, `make test-summary`, and
   `make validate-pr`.
-- Automated review: pending implementation
+- Automated review: complete for PR #96. Blocking findings were resolved by
+  adding checkpoint ref process/rank/node/device/provenance fields, making
+  `enabled=False` checkpoint save/prune policies explicit no-op defaults,
+  ordering rewind selectors by step/epoch before timestamp tie-breakers, and
+  requiring `ref_id` for completed save/restore evidence.
+- Automated review blocker validation: completed. Ran
+  `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/unit/rphys/training/test_checkpoint.py tests/unit/rphys/training/test_probes.py tests/unit/rphys/training/test_policies.py tests/contracts/test_stage15_probe_checkpoint_policy_contract.py tests/package/test_import.py tests/package/test_import_boundaries.py`
+  (94 passed).
+- Final post-review validation: completed. `make validate-pr` passed with
+  package 72, unit 779, contract 187, and integration 30 tests passing; e2e and
+  acceptance suites were not present.
 - Merge result: pending implementation
 - Cleanup: pending implementation
 - Remaining blockers: none
@@ -733,6 +745,42 @@ git diff --check
 - Remaining blocker: none for this blocker cluster.
 - Recommended next gate: commit refinement fix, then continue Phase 2 PR
   preparation/review.
+
+## Phase Refinement Report: PR Review Checkpoint Evidence Blockers
+
+## Assigned Blocker
+
+- Blocker: Phase 2 PR review found incomplete checkpoint ref distributed
+  attribution, rewind selectors ordered by timestamp before the requested
+  step/epoch dimension, disabled checkpoint policies that required caller
+  overrides for no-op construction, and completed save/restore results that
+  could omit checkpoint identity.
+- Source: automated PR review for PR #96 plus Phase 2 scope contract for
+  checkpoint refs, deterministic selectors, explicit disabled policies, and
+  save/restore evidence.
+- Scope: `src/rphys/training/checkpoint.py`, focused checkpoint unit/contract
+  tests, and this phase artifact update only.
+- Budget use: phase implementation refinement 2/3; blocker resolution 2/3.
+
+## Resolution
+
+- Changes made: added optional process/node/rank/device/provenance fields to
+  `CheckpointRef`; made disabled save/prune policies derive no-op defaults
+  when `enabled=False`; changed rewind ordering to prioritize step or epoch
+  before timestamp tie-breakers; and required `ref_id` for completed
+  save/restore results.
+- Tests or docs updated: checkpoint unit tests now cover ref provenance through
+  selection-result inspection, non-monotonic rewind ordering, disabled no-op
+  defaults, and completed save/restore identity validation.
+- Validation rerun: targeted Phase 2 unit/contract/package command passed with
+  94 tests.
+
+## Result
+
+- Blocker resolved: yes.
+- Remaining blocker: none for this blocker cluster.
+- Recommended next gate: commit blocker fix, rerun final Phase 2 validation,
+  push PR #96, then verify merge state.
 
 ## Files Changed
 
