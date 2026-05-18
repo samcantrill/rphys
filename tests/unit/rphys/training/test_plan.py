@@ -5,7 +5,19 @@ import pytest
 from rphys.data import Batch, FieldValue
 from rphys.errors import RemotePhysTrainingError
 from rphys.learning import LoopMode
-from rphys.training import TrainingOutputSpec, TrainingPlan
+from rphys.training import (
+    AsyncTrainingProfileWriter,
+    CheckpointCatalog,
+    CheckpointPrunePolicy,
+    CheckpointRestorePolicy,
+    CheckpointSavePolicy,
+    FakeCPUResourceProbe,
+    InMemoryProfileWriterBackend,
+    ResourceMonitor,
+    ResourceMonitorExecutionMode,
+    TrainingOutputSpec,
+    TrainingPlan,
+)
 
 
 class FakeScalar:
@@ -101,6 +113,82 @@ def test_training_plan_accepts_observe_only_event_and_profiler_hooks() -> None:
     with pytest.raises(RemotePhysTrainingError) as observer_error:
         TrainingPlan(event_sinks=(object(),))
     assert observer_error.value.context["field"] == "event_sinks"
+
+
+def test_training_plan_accepts_typed_native_observability_and_checkpoint_inputs() -> None:
+    class Probe:
+        def collect(self, context: object) -> tuple[object, ...]:
+            del context
+            return ()
+
+    def restore_hook(result: object) -> object:
+        return result
+
+    def save_hook(context: object) -> object:
+        return context
+
+    def prune_hook(catalog: object) -> object:
+        return catalog
+
+    monitor = ResourceMonitor(
+        FakeCPUResourceProbe(),
+        execution_mode=ResourceMonitorExecutionMode.INLINE,
+    )
+    writer = AsyncTrainingProfileWriter(InMemoryProfileWriterBackend())
+    plan = TrainingPlan(
+        resource_monitors=(monitor,),
+        profile_writers=(writer,),
+        training_probes=(Probe(),),
+        checkpoint_catalog=CheckpointCatalog(),
+        checkpoint_restore_policy=CheckpointRestorePolicy(),
+        checkpoint_save_policy=CheckpointSavePolicy(by_step=1),
+        checkpoint_prune_policy=CheckpointPrunePolicy(keep_recent=1),
+        checkpoint_restore_hook=restore_hook,
+        checkpoint_save_hook=save_hook,
+        checkpoint_prune_hook=prune_hook,
+        run_id="run-1",
+        timeline_id="timeline-1",
+        process_id=1,
+        node_id="node-a",
+        local_rank=0,
+        global_rank=2,
+        device_id="cpu",
+    )
+
+    assert plan.resource_monitors == (monitor,)
+    assert plan.profile_writers == (writer,)
+    assert len(plan.training_probes) == 1
+    assert isinstance(plan.checkpoint_catalog, CheckpointCatalog)
+    assert plan.checkpoint_restore_policy is not None
+    assert plan.checkpoint_save_policy is not None
+    assert plan.checkpoint_prune_policy is not None
+    assert plan.run_id == "run-1"
+    assert plan.timeline_id == "timeline-1"
+    assert plan.process_id == 1
+    assert plan.node_id == "node-a"
+    assert plan.local_rank == 0
+    assert plan.global_rank == 2
+    assert plan.device_id == "cpu"
+
+    with pytest.raises(RemotePhysTrainingError) as monitor_error:
+        TrainingPlan(resource_monitors=(object(),))  # type: ignore[arg-type]
+    assert monitor_error.value.context["field"] == "resource_monitors"
+
+    with pytest.raises(RemotePhysTrainingError) as writer_error:
+        TrainingPlan(profile_writers=(object(),))  # type: ignore[arg-type]
+    assert writer_error.value.context["field"] == "profile_writers"
+
+    with pytest.raises(RemotePhysTrainingError) as probe_error:
+        TrainingPlan(training_probes=(object(),))
+    assert probe_error.value.context["field"] == "training_probes"
+
+    with pytest.raises(RemotePhysTrainingError) as hook_error:
+        TrainingPlan(checkpoint_save_hook=object())  # type: ignore[arg-type]
+    assert hook_error.value.context["field"] == "checkpoint_save_hook"
+
+    with pytest.raises(RemotePhysTrainingError) as run_id_error:
+        TrainingPlan(run_id="")
+    assert run_id_error.value.context["field"] == "run_id"
 
 
 def test_training_output_spec_validates_mode_required_fields_and_objective() -> None:

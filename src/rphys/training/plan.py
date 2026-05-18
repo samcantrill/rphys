@@ -12,8 +12,21 @@ from rphys.errors import RemotePhysLearningError, RemotePhysTrainingError
 from rphys.learning import LoopMode, require_backwardable_scalar
 from rphys.metrics import MetricValue
 
+from .checkpoint import (
+    CheckpointCatalog,
+    CheckpointPrunePolicy,
+    CheckpointPruneResult,
+    CheckpointRef,
+    CheckpointRestorePolicy,
+    CheckpointRestoreResult,
+    CheckpointSavePolicy,
+    CheckpointSaveResult,
+    CheckpointSelection,
+    CheckpointSelectionResult,
+)
 from .events import TrainingCallback, TrainingEventSink
-from .profiling import TrainingProfiler
+from .profiling import AsyncTrainingProfileWriter, ResourceMonitor, TrainingProfiler
+from .probes import TrainingProbe
 from ._validation import (
     PrimitiveMapping,
     coerce_optional_positive_int,
@@ -187,6 +200,24 @@ class TrainingPlan:
     event_sinks: tuple[TrainingEventSink, ...]
     callbacks: tuple[TrainingCallback, ...]
     profilers: tuple[TrainingProfiler, ...]
+    resource_monitors: tuple[ResourceMonitor, ...]
+    profile_writers: tuple[AsyncTrainingProfileWriter, ...]
+    training_probes: tuple[TrainingProbe, ...]
+    checkpoint_catalog: CheckpointCatalog
+    checkpoint_restore_policy: CheckpointRestorePolicy | None
+    checkpoint_restore_selection: CheckpointSelection | None
+    checkpoint_save_policy: CheckpointSavePolicy | None
+    checkpoint_prune_policy: CheckpointPrunePolicy | None
+    checkpoint_restore_hook: Callable[[CheckpointSelectionResult], CheckpointRestoreResult] | None
+    checkpoint_save_hook: Callable[[Mapping[str, object]], CheckpointSaveResult | CheckpointRef] | None
+    checkpoint_prune_hook: Callable[[CheckpointCatalog], CheckpointPruneResult] | None
+    run_id: str | None
+    timeline_id: str | None
+    process_id: int | None
+    node_id: str | None
+    local_rank: int | None
+    global_rank: int | None
+    device_id: str | None
     metadata: PrimitiveMapping
     provenance: PrimitiveMapping
 
@@ -210,6 +241,24 @@ class TrainingPlan:
         event_sinks: Iterable[TrainingEventSink] = (),
         callbacks: Iterable[TrainingCallback] = (),
         profilers: Iterable[TrainingProfiler] = (),
+        resource_monitors: Iterable[ResourceMonitor] = (),
+        profile_writers: Iterable[AsyncTrainingProfileWriter] = (),
+        training_probes: Iterable[TrainingProbe] = (),
+        checkpoint_catalog: CheckpointCatalog | None = None,
+        checkpoint_restore_policy: CheckpointRestorePolicy | None = None,
+        checkpoint_restore_selection: CheckpointSelection | None = None,
+        checkpoint_save_policy: CheckpointSavePolicy | None = None,
+        checkpoint_prune_policy: CheckpointPrunePolicy | None = None,
+        checkpoint_restore_hook: Callable[[CheckpointSelectionResult], CheckpointRestoreResult] | None = None,
+        checkpoint_save_hook: Callable[[Mapping[str, object]], CheckpointSaveResult | CheckpointRef] | None = None,
+        checkpoint_prune_hook: Callable[[CheckpointCatalog], CheckpointPruneResult] | None = None,
+        run_id: str | None = None,
+        timeline_id: str | None = None,
+        process_id: int | None = None,
+        node_id: str | None = None,
+        local_rank: int | None = None,
+        global_rank: int | None = None,
+        device_id: str | None = None,
         metadata: Mapping[object, object] | None = None,
         provenance: Mapping[object, object] | None = None,
     ) -> None:
@@ -310,6 +359,68 @@ class TrainingPlan:
             "profilers",
             _coerce_observers(profilers, field="profilers", method_name="span"),
         )
+        object.__setattr__(
+            self,
+            "resource_monitors",
+            _coerce_records(resource_monitors, ResourceMonitor, field="resource_monitors"),
+        )
+        object.__setattr__(
+            self,
+            "profile_writers",
+            _coerce_records(profile_writers, AsyncTrainingProfileWriter, field="profile_writers"),
+        )
+        object.__setattr__(
+            self,
+            "training_probes",
+            _coerce_observers(training_probes, field="training_probes", method_name="collect"),
+        )
+        object.__setattr__(
+            self,
+            "checkpoint_catalog",
+            _coerce_checkpoint_catalog(checkpoint_catalog),
+        )
+        object.__setattr__(
+            self,
+            "checkpoint_restore_policy",
+            _coerce_optional_record(checkpoint_restore_policy, CheckpointRestorePolicy, field="checkpoint_restore_policy"),
+        )
+        object.__setattr__(
+            self,
+            "checkpoint_restore_selection",
+            _coerce_optional_record(checkpoint_restore_selection, CheckpointSelection, field="checkpoint_restore_selection"),
+        )
+        object.__setattr__(
+            self,
+            "checkpoint_save_policy",
+            _coerce_optional_record(checkpoint_save_policy, CheckpointSavePolicy, field="checkpoint_save_policy"),
+        )
+        object.__setattr__(
+            self,
+            "checkpoint_prune_policy",
+            _coerce_optional_record(checkpoint_prune_policy, CheckpointPrunePolicy, field="checkpoint_prune_policy"),
+        )
+        object.__setattr__(
+            self,
+            "checkpoint_restore_hook",
+            _coerce_optional_callable(checkpoint_restore_hook, field="checkpoint_restore_hook"),
+        )
+        object.__setattr__(
+            self,
+            "checkpoint_save_hook",
+            _coerce_optional_callable(checkpoint_save_hook, field="checkpoint_save_hook"),
+        )
+        object.__setattr__(
+            self,
+            "checkpoint_prune_hook",
+            _coerce_optional_callable(checkpoint_prune_hook, field="checkpoint_prune_hook"),
+        )
+        object.__setattr__(self, "run_id", _coerce_optional_name(run_id, field="run_id"))
+        object.__setattr__(self, "timeline_id", _coerce_optional_name(timeline_id, field="timeline_id"))
+        object.__setattr__(self, "process_id", _coerce_optional_non_negative_int(process_id, field="process_id"))
+        object.__setattr__(self, "node_id", _coerce_optional_name(node_id, field="node_id"))
+        object.__setattr__(self, "local_rank", _coerce_optional_non_negative_int(local_rank, field="local_rank"))
+        object.__setattr__(self, "global_rank", _coerce_optional_non_negative_int(global_rank, field="global_rank"))
+        object.__setattr__(self, "device_id", _coerce_optional_name(device_id, field="device_id"))
         object.__setattr__(
             self,
             "metadata",
@@ -426,6 +537,91 @@ def _coerce_observers(
                 actual=type(observer).__name__,
             )
     return observers
+
+
+def _coerce_records(
+    values: Iterable[object],
+    expected_type: type,
+    *,
+    field: str,
+) -> tuple[object, ...]:
+    try:
+        records = tuple(values)
+    except TypeError as exc:
+        raise RemotePhysTrainingError(
+            f"TrainingPlan {field} must be iterable.",
+            owner="TrainingPlan",
+            field=field,
+            expected=f"iterable of {expected_type.__name__}",
+            actual=type(values).__name__,
+        ) from exc
+    for index, record in enumerate(records):
+        if not isinstance(record, expected_type):
+            raise RemotePhysTrainingError(
+                f"TrainingPlan {field} contains an invalid record.",
+                owner="TrainingPlan",
+                field=field,
+                index=index,
+                expected=expected_type.__name__,
+                actual=type(record).__name__,
+            )
+    return records
+
+
+def _coerce_optional_record(value: object | None, expected_type: type, *, field: str) -> object | None:
+    if value is None:
+        return None
+    if not isinstance(value, expected_type):
+        raise RemotePhysTrainingError(
+            f"TrainingPlan {field} must be {expected_type.__name__} when provided.",
+            owner="TrainingPlan",
+            field=field,
+            expected=f"{expected_type.__name__} | None",
+            actual=type(value).__name__,
+        )
+    return value
+
+
+def _coerce_checkpoint_catalog(value: CheckpointCatalog | None) -> CheckpointCatalog:
+    if value is None:
+        return CheckpointCatalog()
+    if not isinstance(value, CheckpointCatalog):
+        raise RemotePhysTrainingError(
+            "TrainingPlan checkpoint_catalog must be a CheckpointCatalog.",
+            owner="TrainingPlan",
+            field="checkpoint_catalog",
+            expected="CheckpointCatalog | None",
+            actual=type(value).__name__,
+        )
+    return value
+
+
+def _coerce_optional_name(value: str | None, *, field: str) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str) or not value:
+        raise RemotePhysTrainingError(
+            f"TrainingPlan {field} must be a non-empty string when provided.",
+            owner="TrainingPlan",
+            field=field,
+            expected="non-empty string | None",
+            actual=type(value).__name__,
+        )
+    return value
+
+
+def _coerce_optional_non_negative_int(value: int | None, *, field: str) -> int | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise RemotePhysTrainingError(
+            f"TrainingPlan {field} must be a non-negative integer when provided.",
+            owner="TrainingPlan",
+            field=field,
+            expected="non-negative int | None",
+            actual=type(value).__name__,
+        )
+    return value
 
 
 def _coerce_output_spec(value: TrainingOutputSpec | None) -> TrainingOutputSpec:
