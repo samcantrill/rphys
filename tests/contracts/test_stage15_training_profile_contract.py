@@ -11,6 +11,40 @@ from rphys.training import (
 )
 
 
+def test_stage15_lifecycle_event_phases_are_observe_only_primitive_evidence() -> None:
+    lifecycle_values = (
+        "setup",
+        "teardown",
+        "data_wait",
+        "device_transfer",
+        "validation",
+        "checkpoint",
+        "profiling_summary",
+        "stage",
+    )
+
+    for sequence_id, value in enumerate(lifecycle_values):
+        event = TrainingEvent(
+            value,
+            "train",
+            sequence_id=sequence_id,
+            timeline_id="timeline-1",
+            run_id="run-1",
+            metadata={"stage": value},
+        )
+
+        assert event.phase is TrainingEventPhase.coerce(value)
+        assert event.metadata == {"stage": value}
+        for forbidden in (
+            "stop",
+            "skip_batch",
+            "checkpoint",
+            "probe",
+            "resource_trace",
+        ):
+            assert not callable(getattr(event, forbidden, None))
+
+
 def test_stage15_training_profile_records_are_immutable_and_tuple_backed() -> None:
     profile = TrainingProfile(
         event_logs=(

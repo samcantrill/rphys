@@ -28,6 +28,22 @@ def test_observability_records_preserve_mode_phase_status_and_unavailable_probe_
     assert span.mode.value == "train"
 
 
+def test_observability_contract_preserves_stage12_phase_values() -> None:
+    stage12_values = (
+        "loop_started",
+        "step_started",
+        "step_completed",
+        "loop_completed",
+        "loop_failed",
+        "external_summary",
+    )
+
+    assert (
+        tuple(TrainingEventPhase.coerce(value).value for value in stage12_values)
+        == stage12_values
+    )
+
+
 def test_observability_contract_does_not_define_loop_control_methods() -> None:
     event = TrainingEvent("step_started", "predict")
 

@@ -550,9 +550,10 @@ git diff --check
 
 - Phase execution plan refinement: completed on 2026-05-18 for the assigned
   expanded-path triggers
-- Phase implementation refinement: unused
+- Phase implementation refinement: 1/3 used on 2026-05-18 for additive
+  lifecycle event phase coverage
 - PR review: unused
-- Blocker resolution: 0/3 used
+- Blocker resolution: 1/3 used
 
 ## Completion Notes
 
@@ -580,6 +581,52 @@ git diff --check
   - `git diff --check`
 - Automated review: command evidence indicates package/unit/contract checks pass for
   touched training/profiling/result surface.
+- Implementation refinement evidence: added additive `TrainingEventPhase`
+  values for setup, teardown, data wait, device transfer, validation,
+  checkpoint, profiling summary, and generic stage evidence while preserving
+  the Stage 12 values unchanged. Narrow validation rerun:
+  - `uv run pytest tests/unit/rphys/training/test_events.py` (5 passed)
+  - `uv run pytest tests/contracts/test_stage12_observability_contract.py tests/contracts/test_stage15_training_profile_contract.py`
+    (7 passed)
 - Merge result: pending local PR review completion and merge gate.
 - Cleanup: pending implementation phase.
 - Remaining blockers: none for implementation start.
+
+## Phase Refinement Report: Additive Lifecycle Event Phases
+
+## Assigned Blocker
+
+- Blocker: Phase 1 preserved Stage 12 `TrainingEventPhase` values but missed
+  the additive lifecycle phase values required by the finalized execution plan.
+- Source: implementation refinement request on 2026-05-18 and Phase 1 scope
+  contract requiring setup, teardown, data wait, device transfer, validation,
+  checkpoint, profiling/summary, and generic stage evidence.
+- Scope: `TrainingEventPhase` values plus focused unit/contract tests and this
+  phase artifact update only.
+- Budget use: phase implementation refinement 1/3; blocker resolution 1/3.
+
+## Resolution
+
+- Changes made: added `setup`, `teardown`, `data_wait`, `device_transfer`,
+  `validation`, `checkpoint`, `profiling_summary`, and `stage` as additive
+  `TrainingEventPhase` values.
+- Tests or docs updated: unit and contract tests now prove Stage 12 values still
+  coerce, new lifecycle values coerce, unsupported values fail with phase
+  context, and new values remain observe-only primitive evidence.
+- Validation rerun: narrow event and observability contract tests passed; final
+  `git diff --check` evidence is recorded in the handoff.
+
+## Result
+
+- Blocker resolved: yes.
+- Remaining blocker: none for this blocker cluster.
+- Recommended next gate: commit refinement fix, then continue PR review/merge
+  gate for the Phase 1 branch.
+
+## Files Changed
+
+- `src/rphys/training/events.py`
+- `tests/unit/rphys/training/test_events.py`
+- `tests/contracts/test_stage12_observability_contract.py`
+- `tests/contracts/test_stage15_training_profile_contract.py`
+- `docs/roadmap/stage-15/phases/core-timeline-profile-records.md`

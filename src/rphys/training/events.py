@@ -36,6 +36,14 @@ class TrainingEventPhase(StrEnum):
     LOOP_COMPLETED = "loop_completed"
     LOOP_FAILED = "loop_failed"
     EXTERNAL_SUMMARY = "external_summary"
+    SETUP = "setup"
+    TEARDOWN = "teardown"
+    DATA_WAIT = "data_wait"
+    DEVICE_TRANSFER = "device_transfer"
+    VALIDATION = "validation"
+    CHECKPOINT = "checkpoint"
+    PROFILING_SUMMARY = "profiling_summary"
+    STAGE = "stage"
 
     @classmethod
     def coerce(cls, value: "TrainingEventPhase | str") -> "TrainingEventPhase":

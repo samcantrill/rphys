@@ -30,6 +30,34 @@ class RecordingCallback:
         return "ignored"
 
 
+def test_training_event_phase_coerces_stage12_and_stage15_values() -> None:
+    stage12_values = {
+        "loop_started": TrainingEventPhase.LOOP_STARTED,
+        "step_started": TrainingEventPhase.STEP_STARTED,
+        "step_completed": TrainingEventPhase.STEP_COMPLETED,
+        "loop_completed": TrainingEventPhase.LOOP_COMPLETED,
+        "loop_failed": TrainingEventPhase.LOOP_FAILED,
+        "external_summary": TrainingEventPhase.EXTERNAL_SUMMARY,
+    }
+    stage15_values = {
+        "setup": TrainingEventPhase.SETUP,
+        "teardown": TrainingEventPhase.TEARDOWN,
+        "data_wait": TrainingEventPhase.DATA_WAIT,
+        "device_transfer": TrainingEventPhase.DEVICE_TRANSFER,
+        "validation": TrainingEventPhase.VALIDATION,
+        "checkpoint": TrainingEventPhase.CHECKPOINT,
+        "profiling_summary": TrainingEventPhase.PROFILING_SUMMARY,
+        "stage": TrainingEventPhase.STAGE,
+    }
+
+    for value, expected in stage12_values.items():
+        assert TrainingEventPhase.coerce(value) is expected
+
+    for value, expected in stage15_values.items():
+        assert TrainingEventPhase.coerce(value) is expected
+        assert TrainingEvent(value, "train").phase is expected
+
+
 def test_training_event_preserves_extended_timeline_and_timestamps() -> None:
     event = TrainingEvent(
         "step_completed",
@@ -113,6 +141,8 @@ def test_training_events_reject_invalid_context_and_observers() -> None:
     with pytest.raises(RemotePhysTrainingError) as phase_error:
         TrainingEvent("done", "train")  # type: ignore[arg-type]
     assert phase_error.value.context["field"] == "phase"
+    assert "setup" in phase_error.value.context["expected"]
+    assert "loop_started" in phase_error.value.context["expected"]
 
     with pytest.raises(RemotePhysTrainingError) as metadata_error:
         TrainingEvent("step_started", "train", metadata={"raw": object()})
