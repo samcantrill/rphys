@@ -769,6 +769,15 @@ STAGE_9_DATASOURCE_DATAPATH_EXPORTS = [
     "DataLoaderState",
     "DataPathProfile",
     "DataPathBenchmark",
+    "DATA_PATH_MEASUREMENT_UNITS",
+    "DataPipelineStage",
+    "DataPipelineStageContext",
+    "DataQualityIssueKind",
+    "DataQualityProbeResult",
+    "FakeDataQualityProbe",
+    "build_data_path_benchmark",
+    "build_data_path_profile",
+    "build_data_pipeline_stage_context",
 ]
 
 STAGE_3_DATASOURCE_ERROR_NAMES = [
@@ -1545,6 +1554,15 @@ def test_stage_5_datasource_names_are_not_parent_or_root_exports() -> None:
         "DataLoaderState",
         "DataPathProfile",
         "DataPathBenchmark",
+        "DATA_PATH_MEASUREMENT_UNITS",
+        "DataPipelineStage",
+        "DataPipelineStageContext",
+        "DataQualityIssueKind",
+        "DataQualityProbeResult",
+        "FakeDataQualityProbe",
+        "build_data_path_benchmark",
+        "build_data_path_profile",
+        "build_data_pipeline_stage_context",
     ]
 
     for public_name in forbidden_names:
