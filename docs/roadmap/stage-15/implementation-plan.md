@@ -1,11 +1,11 @@
 # Roadmap Stage 15 Implementation Plan
 
-Status: in implementation; Phase 1, Phase 2, Phase 3, Phase 4, and Phase 5 merged.
+Status: in implementation; Phase 1, Phase 2, Phase 3, Phase 4, Phase 5, and Phase 6 merged.
 Roadmap version: `v15`
 Planning document: `docs/roadmap/stage-15/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 6 pending
+Current phase: Phase 7 pending
 Blockers: none for implementation-plan approval. Before Lightning and
 fixture-dependent code work, refresh Lightning public API/security evidence and
 verify whether Stage 14 synthetic fixtures are available in the target branch.
@@ -199,7 +199,7 @@ The implementation plan is reshaped into eight phases below.
 | 3 | `resource-monitoring-profile-persistence` | merged | `agent/stage-15-training-profiling-p3-resource-monitoring-profile-persistence` | [#97](https://github.com/samcantrill/rphys/pull/97) | resource profiler helpers, async writer contracts, fake sampler tests | Implement engine-neutral resource traces, fake CPU/GPU/disk/network probes, background thread/process sampler contracts, async profile writer contracts, and drop/backpressure evidence. | Fake resource probe tests, fake process/thread tests, async writer tests, package checks. | GPU idle trace, disk IO trace, dropped samples, writer flush lifecycle. |
 | 4 | `native-engine-observability-checkpoints` | merged | `agent/stage-15-training-profiling-p4-native-engine-observability-checkpoints` | [#98](https://github.com/samcantrill/rphys/pull/98) | `src/rphys/training/backend.py`, `plan.py`, `checkpoint.py`, native integration tests | Wire Native setup/teardown, spans, event logs, probes, checkpoint save/restore/prune, restart selectors, async writer, and failure evidence. | Native unit/integration tests, checkpoint retention/catalog tests, fake probe tests. | Native whole-path profile, keep-last checkpoints, rewind two epochs, model/data probes. |
 | 5 | `datapath-pipeline-probes-batch-evidence` | merged | `agent/stage-15-training-profiling-p5-datapath-pipeline-probes-batch-evidence` | [#99](https://github.com/samcantrill/rphys/pull/99) | `src/rphys/datasources/datapath.py`, Stage 9 source/cache/prepared helpers, `src/rphys/ops/batch.py` tests/docs as needed | Add Stage 9 aligned pipeline-stage probe contexts, data-path benchmark/profile producers, data-quality probes, and BatchOperation equivalence evidence. | Data-path contract/integration tests, dataset-stage hook tests, BatchOperation tests, package import checks. | Process-cache-augment-process, cache/prepared-load-augment-process, queue starvation, batch NaNs. |
-| 6 | `lightning-api-policy-foundation` | pending | `agent/stage-15-training-profiling-p6-lightning-api-policy-foundation` | pending | `src/rphys/training/lightning.py`, policy mapping tests, import/security tests | Add optional first-class Lightning public API, lazy import/security preflight, shared `TrainingEngine` path, Lightning-native entrypoints, and precision/compile/kernel policy mapping. | Fake-Lightning API tests, policy tests, package import checks, optional installed-Lightning smoke when safe. | `Trainer(engine=LightningTrainingEngine)`, LightningModule/DataModule entrypoint, precision policy mapping. |
+| 6 | `lightning-api-policy-foundation` | merged | `agent/stage-15-training-profiling-p6-lightning-api-policy-foundation` | [#100](https://github.com/samcantrill/rphys/pull/100) | `src/rphys/training/lightning.py`, policy mapping tests, import/security tests | Add optional first-class Lightning public API, lazy import/security preflight, shared `TrainingEngine` path, Lightning-native entrypoints, and precision/compile/kernel policy mapping. | Fake-Lightning API tests, policy tests, package import checks, optional installed-Lightning smoke when safe. | `Trainer(engine=LightningTrainingEngine)`, LightningModule/DataModule entrypoint, precision policy mapping. |
 | 7 | `lightning-observability-checkpoint-bridges` | pending | `agent/stage-15-training-profiling-p7-lightning-observability-checkpoint-bridges` | pending | Lightning callback/profiler/checkpoint/probe bridges, fake-Lightning integration tests | Normalize Lightning callbacks, profiler hooks, ranks, checkpoints, retention, restart selectors, model/data probes, resource monitors, and async writer evidence into shared records. | Fake-Lightning bridge tests, checkpoint pruning/restart tests, model/data probe bridge tests, optional acceptance. | Lightning DDP-style rank attribution, best-k and keep-last retention, custom rphys probes under Lightning. |
 | 8 | `tiers-docs-final-hardening` | pending | `agent/stage-15-training-profiling-p8-tiers-docs-final-hardening` | pending | tier/restart/docs/examples, package exports, final validation evidence | Add descriptive tiers/restart snapshots if not already complete, finalize docs/examples, and run broad validation. | Focused tests plus package/contract/integration/summary/lock/PR checks where feasible. | Debug/smoke/signal/comparison/full tiers, complete Native/Lightning/data-path examples. |
 
@@ -645,11 +645,11 @@ Workflow path: expanded path
 
 ## Phase 6: Lightning API And Policy Foundation
 
-Status: pending
+Status: merged
 Slug: `lightning-api-policy-foundation`
 Branch: `agent/stage-15-training-profiling-p6-lightning-api-policy-foundation`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-15-training-profiling-p6-lightning-api-policy-foundation`
-PR: pending
+PR: [#100](https://github.com/samcantrill/rphys/pull/100)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -692,6 +692,16 @@ Workflow path: expanded path
 - Example/demo evidence: examples show rphys learner path, Lightning-native path, and policy mapping.
 - Documentation evidence: docs explain dependency/security preflight and unsupported boundaries.
 - Scientific contract evidence: precision/compile/kernel policies record requested/applied/fallback state.
+- Merge evidence: PR #100 squash-merged to `develop` on 2026-05-18 at
+  `15258542f197fea24d0c50625ee0522f0c985980`.
+- Validation evidence: focused fake-Lightning suite passed (12 tests),
+  optional installed-Lightning preflight reported `absent` so real smoke was
+  skipped without importing Lightning, `make test-package` passed (72 tests),
+  `make test-unit` passed (801 tests), `make test-contract` passed
+  (192 tests), `make test-integration` passed (32 tests), `make test-summary`
+  passed (package 72, unit 801, contract 192, integration 32; e2e/acceptance
+  not present), `make validate-pr` passed, `uv lock --check` passed, and
+  `git diff --check` passed.
 
 ## Phase 7: Lightning Observability, Checkpoint, And Probe Bridges
 
