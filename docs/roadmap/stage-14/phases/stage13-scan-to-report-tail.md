@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: implemented; ready for PR submission
+- Status: merged
 - Roadmap stage: `v14`
 - Feature focus: Stage 13 scan-to-report smoke tail and final validation
 - Stage descriptor: Synthetic Fixtures, Contract Tests, And Smoke Hardening
@@ -35,7 +35,7 @@
 Complete the Stage 14 root smoke by extending the synthetic scan/index/sample
 path through real Stage 13 public APIs: returned `Batch` prediction fields,
 explicit uncollation, sample artifact export/reload, metric-as-operation
-fields, visualization/report records, and grouped/stiched sample-collection
+fields, visualization/report records, and grouped/stitched sample-collection
 outputs.
 
 ## In-Scope Work
@@ -128,7 +128,8 @@ git diff --check
   dependency, or workflow runtime.
 - PR preparation: PR body drafted at
   `docs/roadmap/stage-14/phases/stage13-scan-to-report-tail-pr-body.md`.
-- Automated review: pending.
-- Merge result: pending.
+- Automated review: GitHub reported no status checks; local validation passed.
+- Merge result: squash-merged to `develop` on 2026-05-18 as
+  `e5f30f81e98a6250c1b0f732324163dc39ef2961`.
 - Cleanup: pending.
 - Remaining blockers: none.
