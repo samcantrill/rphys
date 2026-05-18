@@ -7,11 +7,29 @@ import pytest
 from rphys.errors import RemotePhysTrainingError
 from rphys.training import (
     ProfileSpanSummary,
+    ProfileWriterFlushResult,
+    ProfileWriterFlushScope,
+    ProfileWriterResultStatus,
+    ResourceBufferOverflowPolicy,
+    ResourceMetricKind,
+    ResourceMetricUnit,
+    ResourceMonitor,
+    ResourceMonitorExecutionMode,
+    ResourceMonitorLifecycleEvent,
+    ResourceMonitorLifecycleRecord,
+    ResourceSample,
+    ResourceSampleBuffer,
+    ResourceSampleStatus,
+    ResourceTrace,
+    FakeCPUResourceProbe,
+    FakeUnavailableResourceProbe,
     TrainingEvent,
     TrainingEventLog,
     TrainingProfile,
     TrainingProfileRecorder,
     TrainingProfiler,
+    InMemoryProfileWriterBackend,
+    AsyncTrainingProfileWriter,
     UnavailableProfileProbe,
 )
 
@@ -179,3 +197,281 @@ def test_training_profile_recorder_preserves_duration_with_partial_timestamps() 
     assert first.end_timestamp == 2.5
     assert second.start_timestamp == 4.75
     assert second.end_timestamp == 5.0
+
+
+def test_resource_sample_and_trace_enforce_contract_and_ordering() -> None:
+    first = ResourceSample(
+        ResourceMetricKind.CPU_UTILIZATION,
+        metric_name="cpu_utilization",
+        unit=ResourceMetricUnit.PERCENT,
+        value=12.5,
+        status=ResourceSampleStatus.AVAILABLE,
+        timestamp=1.0,
+        sequence_id=0,
+        source_probe_id="fake-cpu",
+    )
+    second = ResourceSample(
+        ResourceMetricKind.CPU_UTILIZATION,
+        metric_name="cpu_utilization",
+        unit=ResourceMetricUnit.PERCENT,
+        value=13.1,
+        status=ResourceSampleStatus.AVAILABLE,
+        timestamp=1.1,
+        sequence_id=1,
+        source_probe_id="fake-cpu",
+    )
+    trace = ResourceTrace(
+        ResourceMetricKind.CPU_UTILIZATION,
+        metric_name="cpu_utilization",
+        unit=ResourceMetricUnit.PERCENT,
+        source_probe_id="fake-cpu",
+        samples=(first, second),
+        series_key="cpu",
+    )
+
+    assert trace.metric_kind is ResourceMetricKind.CPU_UTILIZATION
+    assert trace.samples[0].value == 12.5
+    assert trace.append(second).samples == (first, second, second)
+
+    with pytest.raises(RemotePhysTrainingError):
+        ResourceSample(
+            ResourceMetricKind.CPU_UTILIZATION,
+            metric_name="cpu_utilization",
+            unit=ResourceMetricUnit.PERCENT,
+            value=None,
+            status=ResourceSampleStatus.AVAILABLE,
+            timestamp=1.0,
+            sequence_id=0,
+            source_probe_id="fake-cpu",
+        )
+
+    with pytest.raises(RemotePhysTrainingError):
+        ResourceTrace(
+            ResourceMetricKind.GPU_UTILIZATION,
+            metric_name="gpu_utilization",
+            unit=ResourceMetricUnit.PERCENT,
+            source_probe_id="fake-gpu",
+            samples=(
+                ResourceSample(
+                    ResourceMetricKind.CPU_UTILIZATION,
+                    metric_name="cpu_utilization",
+                    unit=ResourceMetricUnit.PERCENT,
+                    value=1.0,
+                    timestamp=1.0,
+                    sequence_id=0,
+                    source_probe_id="fake-cpu",
+                ),
+            ),
+        )
+
+
+def test_fake_resource_probes_advance_deterministically() -> None:
+    probe = FakeCPUResourceProbe(values=(0.5, 0.6), probe_id="fake-cpu", series_key="cpu")
+    unavailable = FakeUnavailableResourceProbe(
+        probe_id="fake-offline",
+        metric_kind=ResourceMetricKind.GPU_UTILIZATION,
+        metric_name="gpu_utilization",
+        reason="missing_dependency",
+    )
+
+    for index, expected in enumerate((0.5, 0.6, 0.5, 0.6)):
+        sample = probe.sample(
+            timestamp=1.0 + index,
+            sequence_id=index,
+            run_id="run-1",
+            timeline_id="timeline-1",
+            source_probe_id="fake-cpu",
+        )
+        assert sample.value == expected
+        assert sample.status is ResourceSampleStatus.AVAILABLE
+
+    sample = unavailable.sample(
+        timestamp=4.0,
+        sequence_id=0,
+        run_id="run-1",
+        timeline_id="timeline-1",
+        source_probe_id="fake-offline",
+    )
+
+    assert sample.status is ResourceSampleStatus.UNAVAILABLE
+    assert sample.reason == "missing_dependency"
+
+
+def test_resource_sample_buffer_records_drop_policy_behavior() -> None:
+    drop_oldest = ResourceSampleBuffer(
+        capacity=2,
+        overflow_policy=ResourceBufferOverflowPolicy.DROP_OLDEST,
+    )
+    for sample in ("a", "b", "c"):
+        state = drop_oldest.push(sample)
+    assert drop_oldest.items() == ("b", "c")
+    assert state.queue_depth == 2
+    assert state.dropped_count == 1
+    assert state.overflow_policy is ResourceBufferOverflowPolicy.DROP_OLDEST
+
+    reject_new = ResourceSampleBuffer(
+        capacity=2,
+        overflow_policy=ResourceBufferOverflowPolicy.REJECT_NEW,
+    )
+    reject_new.push("a")
+    reject_new.push("b")
+    state = reject_new.push("c")
+    assert reject_new.items() == ("a", "b")
+    assert state.queue_depth == 2
+    assert state.dropped_count == 1
+
+
+def test_resource_monitor_records_lifecycle_and_rejected_sample_backpressure() -> None:
+    clock_values = [1.0, 1.1, 1.2, 1.3, 1.4]
+
+    def clock() -> float:
+        return clock_values.pop(0)
+
+    monitor = ResourceMonitor(
+        FakeCPUResourceProbe(values=(10.0, 20.0), probe_id="fake-cpu"),
+        execution_mode=ResourceMonitorExecutionMode.INLINE,
+        buffer_capacity=2,
+        buffer_overflow_policy=ResourceBufferOverflowPolicy.REJECT_NEW,
+        clock=clock,
+    )
+
+    monitor.start()
+    monitor.collect_sample()
+    monitor.collect_sample()
+    monitor.collect_sample()
+
+    assert monitor.execution_mode is ResourceMonitorExecutionMode.INLINE
+    lifecycle_events = monitor.lifecycle_events
+    assert lifecycle_events[0].event is ResourceMonitorLifecycleEvent.CONFIGURED
+    assert lifecycle_events[1].event is ResourceMonitorLifecycleEvent.STARTED
+    assert lifecycle_events[2].event is ResourceMonitorLifecycleEvent.SAMPLE_EMITTED
+    assert monitor.buffer.snapshot().dropped_count == 1
+
+    state = monitor.request_flush()
+    assert state.queue_depth == 2
+    assert ResourceMonitorLifecycleEvent.FLUSH_COMPLETED in {
+        event.event for event in monitor.lifecycle_events
+    }
+    monitor.stop()
+    monitor.cleanup_orphan()
+    assert ResourceMonitorLifecycleEvent.STOPPED in {event.event for event in monitor.lifecycle_events}
+
+
+def test_async_training_profile_writer_tracks_append_and_flush_contract() -> None:
+    backend = InMemoryProfileWriterBackend()
+    writer = AsyncTrainingProfileWriter(
+        backend=backend,
+        queue_capacity=2,
+        overflow_policy=ResourceBufferOverflowPolicy.DROP_OLDEST,
+        flush_cadence_seconds=None,
+    )
+
+    first = writer.append("a")
+    second = writer.append("b")
+    third = writer.append("c")
+
+    assert first.status is ProfileWriterResultStatus.ENQUEUED
+    assert second.status is ProfileWriterResultStatus.ENQUEUED
+    assert third.status is ProfileWriterResultStatus.ENQUEUED
+    assert writer.queue_state.queue_depth == 2
+    assert writer.queue_state.dropped_count == 1
+
+    flush = writer.flush(ProfileWriterFlushScope.STEP)
+    assert flush.status is ProfileWriterResultStatus.COMPLETED
+    assert flush.requested_count == 2
+    assert flush.written_count == 2
+    assert backend.written_records == ("b", "c")
+    assert writer.queue_state.queue_depth == 0
+
+    reject = AsyncTrainingProfileWriter(
+        backend=backend,
+        queue_capacity=1,
+        overflow_policy=ResourceBufferOverflowPolicy.REJECT_NEW,
+    )
+    one = reject.append("a")
+    two = reject.append("b")
+    assert one.status is ProfileWriterResultStatus.ENQUEUED
+    assert two.status is ProfileWriterResultStatus.REJECTED
+    assert two.failure_reason == "buffer_full"
+
+
+def test_async_training_profile_writer_failure_records_retry_intent() -> None:
+    backend = InMemoryProfileWriterBackend(fail_on_calls=(1,))
+    writer = AsyncTrainingProfileWriter(backend=backend, enable_retry=True)
+
+    writer.append("a")
+    first = writer.flush()
+    assert first.status is ProfileWriterResultStatus.FAILED
+    assert first.retry_requested is True
+    assert first.failure_reason is not None
+    assert writer.queue_state.queue_depth == 1
+
+    second = writer.flush()
+    assert second.status is ProfileWriterResultStatus.COMPLETED
+    assert writer.queue_state.queue_depth == 0
+
+
+def test_profile_recorder_collects_resource_traces_and_writer_lifecycle_records() -> None:
+    cpu_sample = ResourceSample(
+        metric_kind=ResourceMetricKind.CPU_UTILIZATION,
+        metric_name="cpu_utilization",
+        unit=ResourceMetricUnit.PERCENT,
+        value=15.0,
+        status=ResourceSampleStatus.AVAILABLE,
+        timestamp=1.0,
+        sequence_id=0,
+        source_probe_id="fake-cpu",
+    )
+    cpu_sample_2 = ResourceSample(
+        metric_kind=ResourceMetricKind.CPU_UTILIZATION,
+        metric_name="cpu_utilization",
+        unit=ResourceMetricUnit.PERCENT,
+        value=16.0,
+        status=ResourceSampleStatus.AVAILABLE,
+        timestamp=1.1,
+        sequence_id=1,
+        source_probe_id="fake-cpu",
+    )
+    mem_sample = ResourceSample(
+        metric_kind=ResourceMetricKind.HOST_MEMORY_BYTES,
+        metric_name="host_memory_bytes",
+        unit=ResourceMetricUnit.BYTES,
+        value=128_000_000.0,
+        status=ResourceSampleStatus.AVAILABLE,
+        timestamp=1.0,
+        sequence_id=0,
+        source_probe_id="fake-memory",
+    )
+
+    writer_result = ProfileWriterFlushResult(
+        ProfileWriterFlushScope.MANUAL,
+        ProfileWriterResultStatus.SKIPPED,
+        sequence_id=0,
+        timestamp=1.0,
+        requested_count=0,
+        written_count=0,
+        dropped_count=0,
+        remaining_count=0,
+    )
+    monitor_record = ResourceMonitorLifecycleRecord(
+        ResourceMonitorLifecycleEvent.CONFIGURED,
+        sequence_id=0,
+        probe_id="fake-cpu",
+        timestamp=0.0,
+    )
+
+    recorder = TrainingProfileRecorder()
+    recorder.record_resource_sample(cpu_sample)
+    recorder.record_resource_sample(cpu_sample_2)
+    recorder.record_resource_sample(mem_sample)
+    recorder.record_writer_result(writer_result)
+    recorder.record_monitor_lifecycle_record(monitor_record)
+
+    snapshot = recorder.snapshot()
+    cpu_traces = snapshot.resource_traces_for(metric_kind=ResourceMetricKind.CPU_UTILIZATION)
+
+    assert len(snapshot.resource_traces) == 2
+    assert len(cpu_traces) == 1
+    assert len(cpu_traces[0].samples) == 2
+    assert snapshot.monitor_lifecycle_records[0] is monitor_record
+    assert snapshot.writer_results[0] is writer_result
