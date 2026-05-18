@@ -306,10 +306,8 @@ Workflow path: expanded path
 - Merge result: merged; GitHub reported no CI checks for the branch, with
   local `make validate-pr` and `make test-summary` passing before merge.
 - Merge commit: `4af785a40c5e0fb7791afe5a2b897fb50d53ad13`
-- Branch cleanup: remote branch deletion was requested by `gh pr merge`; local
-  branch cleanup is pending worktree removal because the branch is checked out
-  in the Phase 1 worktree.
-- Worktree cleanup: pending after metadata commit.
+- Branch cleanup: local branch and remote branch deleted after merge.
+- Worktree cleanup: Phase 1 worktree removed and `git worktree prune` completed.
 
 ## Completion Summary
 
@@ -338,7 +336,7 @@ Workflow path: expanded path
 - Validation evidence recorded: yes
 - Remaining blockers: none for Phase 1; Phase 6/7 Lightning and fixture
   preflights remain phase-local.
-- Metadata commit: direct `develop` metadata commit for this merge record.
+- Metadata commit: direct `develop` metadata commits recorded merge and cleanup.
 
 ## Phase 2: Probe, Checkpoint, Pipeline, And Policy Contracts
 
