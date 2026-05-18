@@ -580,6 +580,8 @@ git diff --check
 - PR preparation evidence:
   - `make test-package`
   - `git diff --check`
+  - `make test-summary` (overall 1043 passed; e2e and acceptance not present)
+  - `make validate-pr` (passed, including `uv build` and `git diff --check`)
 - Automated review: command evidence indicates package/unit/contract checks pass for
   touched training/profiling/result surface.
 - Implementation refinement evidence: added additive `TrainingEventPhase`

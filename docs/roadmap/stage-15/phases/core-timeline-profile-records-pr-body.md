@@ -45,7 +45,7 @@ targeted unit coverage for training events/profiling/results: 18 passed
 targeted contract coverage for Stage 12/15 training observability/results/profile contracts: 10 passed
 make test-package: 72 passed
 uv lock --check: passed after cache escalation
-make test-summary: overall 1042 passed; package 72 passed, unit 760 passed, contract 180 passed, integration 30 passed; e2e and acceptance suites not present
+make test-summary: overall 1043 passed; package 72 passed, unit 761 passed, contract 180 passed, integration 30 passed; e2e and acceptance suites not present
 make validate-pr: passed, including uv build and git diff --check
 ```
 
