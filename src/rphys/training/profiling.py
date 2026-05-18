@@ -683,10 +683,16 @@ class TrainingProfileRecorder:
                 end_timestamp = now + span.duration_seconds
         elif span.start_timestamp is None:
             end_timestamp = span.end_timestamp
-            start_timestamp = end_timestamp
+            if span.duration_seconds is None:
+                start_timestamp = end_timestamp
+            else:
+                start_timestamp = max(0.0, end_timestamp - span.duration_seconds)
         else:
             start_timestamp = span.start_timestamp
-            end_timestamp = start_timestamp
+            if span.duration_seconds is None:
+                end_timestamp = start_timestamp
+            else:
+                end_timestamp = start_timestamp + span.duration_seconds
         return ProfileSpanSummary(
             span.name,
             mode=span.mode,

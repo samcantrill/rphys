@@ -135,3 +135,21 @@ def test_training_profile_recorder_snapshots_immutable_state_and_injects_clock()
         summary for summary in first.as_profile_summaries() if summary.status == "unavailable"
     ]
     assert unavailable_summaries[0].metadata["reason"] == "disabled"
+
+
+def test_training_profile_recorder_preserves_duration_with_partial_timestamps() -> None:
+    recorder = TrainingProfileRecorder(clock=lambda: 10.0)
+
+    recorder.record_scalar_span(
+        ProfileSpanSummary("start-only", start_timestamp=2.0, duration_seconds=0.5),
+    )
+    recorder.record_scalar_span(
+        ProfileSpanSummary("end-only", end_timestamp=5.0, duration_seconds=0.25),
+    )
+
+    first, second = recorder.snapshot().scalar_spans
+
+    assert first.start_timestamp == 2.0
+    assert first.end_timestamp == 2.5
+    assert second.start_timestamp == 4.75
+    assert second.end_timestamp == 5.0
