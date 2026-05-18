@@ -36,6 +36,10 @@ mark it so it stays out of default validation.
 Support modules are not a runnable suite. `tests/support` holds test-only
 helpers and synthetic implementations that are validated through the package,
 unit, contract, integration, e2e, and acceptance suites that consume them.
+Synthetic support should stay generated, deterministic, CPU-only, license-safe,
+and private to this repository. Do not treat helper module paths as public API,
+and do not add raw data, external services, heavy optional dependencies, or
+production imports from `tests.support`.
 
 ## Suite Targets
 
