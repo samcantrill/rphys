@@ -5,12 +5,17 @@ import pytest
 from rphys.errors import RemotePhysTrainingError
 from rphys.learning import LoopMode
 from rphys.training import (
+    ProfileSpanSummary,
     ProfileSummary,
-    TrainingEventSummary,
     TrainingMetricSummary,
+    TrainingEvent,
+    TrainingEventSummary,
+    TrainingEventLog,
+    TrainingProfile,
     TrainingResult,
     TrainingStatus,
     TrainingStepSummary,
+    UnavailableProfileProbe,
 )
 
 
@@ -78,6 +83,63 @@ def test_training_result_rejects_nonprimitive_and_duplicate_summaries() -> None:
     with pytest.raises(RemotePhysTrainingError) as metadata_error:
         TrainingResult(status="completed", mode="train", metadata={"raw": object()})
     assert metadata_error.value.context["field"] == "metadata"
+
+
+def test_training_result_can_derive_profiles_from_training_profile() -> None:
+    profile = TrainingProfile(
+        event_logs=(
+            TrainingEventLog(
+                "timeline-1",
+                run_id="run-1",
+                events=(
+                    TrainingEvent(
+                        "loop_started",
+                        "train",
+                        timeline_id="timeline-1",
+                        run_id="run-1",
+                        sequence_id=0,
+                    ),
+                ),
+            ),
+        ),
+        scalar_spans=(ProfileSpanSummary("forward", status="available", duration_seconds=0.1),),
+        unavailable_spans=(UnavailableProfileProbe("cuda", reason="disabled"),),
+    )
+    result = TrainingResult(status="completed", mode="train", training_profile=profile)
+
+    assert result.training_profile is profile
+    assert len(result.profiles) == 2
+    assert result.profiles[0].name == "forward"
+    assert result.profiles[0].duration_seconds == 0.1
+    assert result.profiles[1].status == "unavailable"
+    assert result.profiles[1].metadata["reason"] == "disabled"
+
+
+def test_training_result_keeps_profiles_when_explicitly_passed_with_training_profile() -> None:
+    profile = TrainingProfile(
+        event_logs=(
+            TrainingEventLog(
+                "timeline-1",
+                events=(TrainingEvent("loop_started", "train", timeline_id="timeline-1"),),
+            ),
+        ),
+        scalar_spans=(ProfileSpanSummary("forward", status="available"),),
+    )
+    explicit_summary = ProfileSummary("manual", status="available", duration_seconds=0.5)
+    result = TrainingResult(
+        status="completed",
+        mode="train",
+        training_profile=profile,
+        profiles=(explicit_summary,),
+    )
+
+    assert result.profiles == (explicit_summary,)
+
+
+def test_training_result_rejects_invalid_training_profile_type() -> None:
+    with pytest.raises(RemotePhysTrainingError) as profile_error:
+        TrainingResult(status="completed", mode="train", training_profile=object())  # type: ignore[arg-type]
+    assert profile_error.value.context["field"] == "training_profile"
 
 
 def test_training_result_has_no_raw_framework_or_artifact_state() -> None:

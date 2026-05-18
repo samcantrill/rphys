@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-from rphys.training import ProfileSpanSummary, TrainingEvent, TrainingEventPhase, UnavailableProfileProbe
+from rphys.training import (
+    ProfileSpanSummary,
+    TrainingEvent,
+    TrainingEventLog,
+    TrainingEventPhase,
+    UnavailableProfileProbe,
+)
 
 
 def test_observability_records_preserve_mode_phase_status_and_unavailable_probe_reason() -> None:
@@ -27,3 +33,23 @@ def test_observability_contract_does_not_define_loop_control_methods() -> None:
 
     for forbidden in ["stop", "skip_batch", "set_lr", "backward", "optimizer_step"]:
         assert not hasattr(event, forbidden)
+
+
+def test_observability_contract_records_timeline_log_evidence() -> None:
+    event = TrainingEvent(
+        TrainingEventPhase.STEP_COMPLETED,
+        "train",
+        sequence_id=1,
+        timestamp=0.25,
+        timeline_id="timeline-1",
+        run_id="run-1",
+    )
+    log = TrainingEventLog(
+        "timeline-1",
+        run_id="run-1",
+        events=(event,),
+    )
+
+    assert log.timeline_id == "timeline-1"
+    assert log.events[0].timestamp == 0.25
+    assert log.events[0].run_id == "run-1"

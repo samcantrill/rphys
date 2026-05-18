@@ -559,16 +559,27 @@ git diff --check
 - Draft plan: created in the verified dedicated Phase 1 worktree.
 - Final phase execution plan: completed after expanded-path refinement on
   2026-05-18.
-- Implementation summary: pending implementation phase.
-- Implementation validation: pending implementation phase.
+- Implementation summary: events, timeline metadata, immutable append-only event
+  logs, scalar span/unavailable evidence schema, recorder with injectable clock,
+  optional `TrainingResult.training_profile`, and compat-derived profile
+  summaries; updated unit/contract/package tests and exports in `rphys.training`
+  for the new public Phase 1 names.
+- Implementation validation: completed for targeted phase artifacts using explicit pass/fail
+  evidence:
+  - `uv run pytest tests/unit/rphys/training/test_events.py tests/unit/rphys/training/test_profiling.py tests/unit/rphys/training/test_results.py` (15 passed)
+  - `uv run pytest tests/contracts/test_stage12_observability_contract.py tests/contracts/test_stage12_training_result_contract.py tests/contracts/test_stage15_training_profile_contract.py` (8 passed)
+  - `make test-package` (72 passed)
 - Refinement summary: clarified the public provisional schema, primitive
   serialization boundary, Stage 12 compatibility obligations, import
   boundaries, timestamp/timeline semantics, result compatibility, and explicit
   Phase 3 ownership of concrete resource trace records and `resource_traces`
   helpers without changing scope.
-- Pre-submit blocker gate: pending implementation phase.
-- PR preparation: pending implementation phase.
-- Automated review: pending implementation phase.
-- Merge result: pending implementation phase.
+- Pre-submit blocker gate: none found during implementation.
+- PR preparation evidence:
+  - `make test-package`
+  - `git diff --check`
+- Automated review: command evidence indicates package/unit/contract checks pass for
+  touched training/profiling/result surface.
+- Merge result: pending local PR review completion and merge gate.
 - Cleanup: pending implementation phase.
 - Remaining blockers: none for implementation start.

@@ -6,6 +6,7 @@ from rphys.errors import RemotePhysTrainingError
 from rphys.training import (
     TrainingCallback,
     TrainingEvent,
+    TrainingEventLog,
     TrainingEventPhase,
     TrainingEventSink,
     emit_training_event,
@@ -29,7 +30,7 @@ class RecordingCallback:
         return "ignored"
 
 
-def test_training_event_preserves_primitive_loop_evidence() -> None:
+def test_training_event_preserves_extended_timeline_and_timestamps() -> None:
     event = TrainingEvent(
         "step_completed",
         "train",
@@ -38,6 +39,16 @@ def test_training_event_preserves_primitive_loop_evidence() -> None:
         step_index=4,
         batch_index=2,
         split="train",
+        run_id="run-1",
+        timeline_id="timeline-1",
+        sequence_id=2,
+        timestamp=12.5,
+        clock_name="monotonic",
+        process_id=0,
+        local_rank=1,
+        global_rank=0,
+        node_id="node-a",
+        device_id="cuda:0",
         metadata={"loss": 0.2},
         provenance={"engine": "native"},
     )
@@ -47,6 +58,13 @@ def test_training_event_preserves_primitive_loop_evidence() -> None:
     assert event.step_index == 4
     assert event.metadata == {"loss": 0.2}
     assert event.provenance == {"engine": "native"}
+    assert event.run_id == "run-1"
+    assert event.timeline_id == "timeline-1"
+    assert event.sequence_id == 2
+    assert event.timestamp == 12.5
+    assert event.clock_name == "monotonic"
+    assert event.process_id == 0
+    assert event.local_rank == 1
 
 
 def test_emit_training_event_is_observe_only_for_sinks_and_callbacks() -> None:
@@ -60,6 +78,35 @@ def test_emit_training_event_is_observe_only_for_sinks_and_callbacks() -> None:
     assert isinstance(callback, TrainingCallback)
     assert sink.events == [event]
     assert callback.events == [event]
+
+
+def test_training_event_log_is_append_only_and_validates_sequence_ids() -> None:
+    baseline = TrainingEventLog(
+        "timeline-1",
+        run_id="run-1",
+        events=(TrainingEvent("loop_started", "train", sequence_id=0, timeline_id="timeline-1", run_id="run-1"),),
+    )
+    updated = baseline.append(
+        TrainingEvent("step_started", "train", sequence_id=1, timeline_id="timeline-1", run_id="run-1"),
+    )
+
+    assert baseline.events[0].sequence_id == 0
+    assert updated.events[0].sequence_id == 0
+    assert updated.events[1].sequence_id == 1
+
+    with pytest.raises(RemotePhysTrainingError) as duplicate_error:
+        updated.append(TrainingEvent("step_completed", "train", sequence_id=1, timeline_id="timeline-1", run_id="run-1"))
+    assert duplicate_error.value.context["field"] == "sequence_id"
+
+    with pytest.raises(RemotePhysTrainingError) as out_of_order_error:
+        updated.append(TrainingEvent("step_completed", "train", sequence_id=0, timeline_id="timeline-1", run_id="run-1"))
+    assert out_of_order_error.value.context["field"] == "sequence_id"
+
+    with pytest.raises(RemotePhysTrainingError) as timeline_error:
+        updated.append(
+            TrainingEvent("step_completed", "train", sequence_id=2, timeline_id="timeline-2", run_id="run-1"),
+        )
+    assert timeline_error.value.context["field"] == "event"
 
 
 def test_training_events_reject_invalid_context_and_observers() -> None:
