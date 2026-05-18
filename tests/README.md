@@ -72,3 +72,12 @@ PR-ready validation section under `build/test-pr-summary.md`; pass
 Check/Result/Evidence rows. Detailed summaries write artifacts under
 `build/test-summary/`; PR summaries write artifacts under
 `build/test-pr-summary/`.
+
+## Synthetic Validation Tiers
+
+Debug, smoke, and signal checks should differ by breadth and runtime cost, not
+by fixture semantics. Stage 14 synthetic smoke tests use the same generated
+datasource descriptors, codecs, manifests, sample builders, operations,
+collaters, methods, and export/reload paths as the focused contract and
+integration tests. Upstream smoke coverage is explicitly incomplete until the
+Stage 13 scan-to-report tail is exercised in its own phase.
