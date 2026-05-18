@@ -36,6 +36,10 @@ mark it so it stays out of default validation.
 Support modules are not a runnable suite. `tests/support` holds test-only
 helpers and synthetic implementations that are validated through the package,
 unit, contract, integration, e2e, and acceptance suites that consume them.
+Synthetic support should stay generated, deterministic, CPU-only, license-safe,
+and private to this repository. Do not treat helper module paths as public API,
+and do not add raw data, external services, heavy optional dependencies, or
+production imports from `tests.support`.
 
 ## Suite Targets
 
@@ -68,3 +72,12 @@ PR-ready validation section under `build/test-pr-summary.md`; pass
 Check/Result/Evidence rows. Detailed summaries write artifacts under
 `build/test-summary/`; PR summaries write artifacts under
 `build/test-pr-summary/`.
+
+## Synthetic Validation Tiers
+
+Debug, smoke, and signal checks should differ by breadth and runtime cost, not
+by fixture semantics. Stage 14 synthetic smoke tests use the same generated
+datasource descriptors, codecs, manifests, sample builders, operations,
+collaters, methods, and export/reload paths as the focused contract and
+integration tests. Upstream smoke coverage is explicitly incomplete until the
+Stage 13 scan-to-report tail is exercised in its own phase.

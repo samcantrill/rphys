@@ -465,13 +465,26 @@ def test_rphys_does_not_define_generic_workflow_or_artifact_runtime_packages() -
     forbidden_packages = [
         "rphys.artifacts",
         "rphys.datasets",
+        "rphys.fixtures",
         "rphys.stages",
+        "rphys.testing",
         "rphys.workflow",
         "rphys.workflows",
     ]
 
     for package_name in forbidden_packages:
         assert importlib.util.find_spec(package_name) is None
+
+
+def test_production_source_does_not_import_test_support_modules() -> None:
+    violations: list[str] = []
+
+    for source_path in sorted((REPO_ROOT / "src" / "rphys").rglob("*.py")):
+        source_text = source_path.read_text(encoding="utf-8")
+        if "tests.support" in source_text:
+            violations.append(f"{source_path.relative_to(REPO_ROOT)} imports tests.support")
+
+    assert violations == []
 
 
 def test_codec_contract_import_does_not_load_datasource_or_runtime_builders() -> None:

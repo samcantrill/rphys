@@ -1,16 +1,15 @@
 # Roadmap Stage 14 Implementation Plan
 
-Status: design-reviewed and approved for implementation; Stage 13 dependency
-satisfied by plan
+Status: completed
 Roadmap version: `v14`
 Planning document: `docs/roadmap/stage-14/planning.md`
 Functionality/design explainer:
 `docs/roadmap/stage-14/functionality-behavior-design.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 1 pending execution
-Blockers: none for Stage 14 planning. Phase 4 must run on a branch that
-contains the completed Stage 13 implementation outputs from PRs #85-#90.
+Current phase: all phases merged
+Blockers: none. Stage 13 PRs #85-#90 are merged into the active `develop`
+history and the code-backed recheck below satisfies the Phase 4 prerequisite.
 
 ## Summary
 
@@ -30,8 +29,7 @@ contains the completed Stage 13 implementation outputs from PRs #85-#90.
 
 ## Implementation Workflow State
 
-- Implementation-plan quality gate: passed; Stage 13 dependency refreshed
-  against the complete Stage 13 implementation plan
+- Implementation-plan quality gate: passed; Phase 4 prerequisite satisfied
 - Review pass: completed by managing agent on 2026-05-17
 - Refinement pass: Stage 13 alignment and implementation-plan recheck completed
   on 2026-05-18
@@ -45,42 +43,45 @@ contains the completed Stage 13 implementation outputs from PRs #85-#90.
 
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `private-synthetic-catalog-governance` | pending | `agent/stage-14-synthetic-smoke-hardening-p1-private-synthetic-catalog-governance` | pending | `tests/support`, first consuming tests, concise support governance docs | Establish private fixture catalog, edge variants, deterministic payload evidence, URI refs, optional fields, and helper privacy governance. | Focused support-consuming tests, `make test-package`, `git diff --check` | Positive catalog and edge fixture examples |
-| 2 | `contract-boundaries-goldens` | pending | `agent/stage-14-synthetic-smoke-hardening-p2-contract-boundaries-goldens` | pending | `tests/support` assertion helpers, `tests/contracts`, `tests/package`, targeted integration/golden tests | Turn fixtures into reusable public-object invariants, package/import guardrails, and narrow durable-manifest goldens. | `make test-contract`, `make test-package`, targeted integration checks, `git diff --check` | Contract assertion, import-boundary, and golden manifest examples |
-| 3 | `upstream-smoke-validation-tiers` | pending | `agent/stage-14-synthetic-smoke-hardening-p3-upstream-smoke-validation-tiers` | pending | Integration/e2e smoke slice, tier docs/markers, existing Stage 5-12 flow composition | Compose code-backed Stage 5-12 surfaces through one public loader/materialization path and record debug/smoke/signal tier semantics. | `make test-integration`, `make test` if default smoke remains cheap, `make test-e2e` if introduced, `git diff --check` | Upstream root-smoke slice before Stage 13 tail |
-| 4 | `stage13-scan-to-report-tail` | pending after Phases 1-3 | `agent/stage-14-synthetic-smoke-hardening-p4-stage13-scan-to-report-tail` | pending | Stage 13-dependent smoke tail, package checks for code-backed Stage 13 exports, final validation evidence | Complete scan-to-report smoke over the completed Stage 13 Sample/Batch-native behavior. | `make test-package`, `make test-contract`, `make test-integration`, `make test-e2e` if present, `make test-summary`, `make validate-pr`, `uv lock --check`, `git diff --check` | Full scan-to-report smoke through returned `Batch` fields, uncollation, sample artifact reload, collection/metric operations, and report records/fields |
+| 1 | `private-synthetic-catalog-governance` | merged | `agent/stage-14-synthetic-smoke-hardening-p1-private-synthetic-catalog-governance` | [#91](https://github.com/samcantrill/rphys/pull/91) | `tests/support`, first consuming tests, concise support governance docs | Established private fixture catalog, edge variants, deterministic payload evidence, URI refs, optional fields, and helper privacy governance. | Focused support-consuming tests, `make test-package`, `make test-contract`, `make test-integration`, `make validate-pr`, `make test-summary`, `git diff --check` | Positive catalog and edge fixture examples |
+| 2 | `contract-boundaries-goldens` | merged | `agent/stage-14-synthetic-smoke-hardening-p2-contract-boundaries-goldens` | [#92](https://github.com/samcantrill/rphys/pull/92) | `tests/support` assertion helpers, `tests/contracts`, `tests/package`, targeted integration/golden tests | Turned fixtures into reusable public-object invariants, package/import guardrails, and narrow durable-manifest goldens. | `make test-contract`, `make test-package`, `make test-integration`, `make validate-pr`, `make test-summary`, `git diff --check` | Contract assertion, import-boundary, and golden manifest examples |
+| 3 | `upstream-smoke-validation-tiers` | merged | `agent/stage-14-synthetic-smoke-hardening-p3-upstream-smoke-validation-tiers` | [#93](https://github.com/samcantrill/rphys/pull/93) | Integration/e2e smoke slice, tier docs/markers, existing Stage 5-12 flow composition | Composed code-backed Stage 5-12 surfaces through one public loader/materialization path and recorded debug/smoke/signal tier semantics. | Focused upstream smoke test, `make test-integration`, `make test`, `make validate-pr`, `make test-summary`, `git diff --check` | Upstream root-smoke slice before Stage 13 tail |
+| 4 | `stage13-scan-to-report-tail` | merged | `agent/stage-14-synthetic-smoke-hardening-p4-stage13-scan-to-report-tail` | [#94](https://github.com/samcantrill/rphys/pull/94) | Stage 13-dependent smoke tail, package checks for code-backed Stage 13 exports, final validation evidence | Completed scan-to-report smoke now that revised Stage 13 Sample/Batch-native behavior is code-backed in active `develop`. | Focused tail and Stage 13 package checks, `make test-package`, `make test-contract`, `make test-integration`, `make test-e2e`, `make test-summary`, `make validate-pr`, `uv lock --check`, `git diff --check` | Full scan-to-report smoke through returned `Batch` fields, uncollation, sample artifact reload, collection/metric operations, and report records/fields |
 
 ## Implementation Readiness Blockers
 
 | Blocker | Source | Required resolution | Status |
 | --- | --- | --- | --- |
-| None for implementation-plan drafting. | Plan quality gate passed and was revised on 2026-05-18 against the complete Stage 13 implementation plan. | Treat Stage 13 as complete for roadmap planning; require normal implementation preflight to ensure the Phase 4 branch contains the merged Stage 13 outputs. | resolved |
+| None for implementation-plan drafting. | Plan quality gate passed with prerequisite gate and was revised on 2026-05-18 for Stage 13 Sample/Batch-native alignment. | Keep the Stage 13-dependent smoke tail prerequisite-gated in checkouts where revised Stage 13 behavior is not code-backed; do not fake Sample/Batch-native artifact, collection/metric, visualization/report, or recipe behavior. | resolved for planning |
+| Full scan-to-report tail prerequisite. | FQ-14-3, DD-14-5, plan quality gate, and Stage 13 PRs #85-#90. | Revised Stage 13 behavior must land, be code-backed, and be approved in the active checkout before Phase 4 starts. | satisfied in active `develop` |
 
 ## Stage 13 Implementation-Plan Recheck
 
-Rechecked on 2026-05-18 against `docs/roadmap/stage-13/implementation-plan.md`.
-The Stage 13 implementation plan is the authoritative roadmap artifact for
-Stage 14 sequencing. It is marked `Status: complete`, `Current phase: complete
-- all phases merged`, and `Blockers: none`. All six Stage 13 phase PRs are
-recorded as merged.
+Rechecked on 2026-05-18 against active `origin/develop` at
+`6a15f2e47af2c1aae38b25ca06fd35a062db1670`. Stage 13 PRs #85-#90 are present
+in history and the source tree is code-backed enough to start Stage 14 Phase 4.
 
 | Area | Stage 13 implementation-plan evidence | Phase 4 impact |
 | --- | --- | --- |
-| Overall status | Stage 13 `Status: complete`; all phases merged; no blockers. | Phase 4 is ordered after Stage 14 Phases 1-3 and starts with a merge/preflight check. |
-| Phase 2 | PR #86 merged; removes `MethodOutput`/method-output adapters and `StepOutput`; `Method.predict` and `Learner.step` return `Batch`; training uses plan-owned `TrainingOutputSpec` or equivalent. | Phase 4 should exercise returned-`Batch` fields and must not reintroduce method-output or step-output compatibility surfaces. |
-| Phase 3 | PR #87 merged; implements explicit returned-batch uncollation, per-sample artifact export/reload, source `RecordRef`/descriptor evidence, and a narrow multi-record export helper over existing export/save. | Phase 4 should include sample artifact export/reload through normal datasource/index/sample-source behavior. |
-| Phase 4 | PR #88 merged; implements runtime sample-collection grouping/sorting/stitching and metric-as-sample/collection operation adapters; public metric observation/result surfaces are removed or made private migration details. | Phase 4 should use field-native metric operation outputs, not `MetricObservation*` or public evaluator-runner surfaces. |
-| Phase 5 | PR #89 merged; implements dependency-light visualization/report operation-compatible builders, in-memory report/table/diagnostic renderer records, and report fields/records without public analysis operation/result families. | Phase 4 can complete report evidence through report records/fields while keeping report writers and plotting/dataframe dependencies out of scope. |
-| Phase 6 | PR #90 merged; final synthetic examples, docs, package export review, and validation completed. | Phase 4 should harden the Stage 13 synthetic composition rather than expand Stage 13 core behavior. |
-| Implementation preflight | Stage 13 plan records merge commits for PRs #85-#90. | Before executing Phase 4, ensure the phase worktree is based on the `develop` state that contains those merged outputs; if the local checkout is stale, sync before opening the phase. |
+| Stage 13 merge history | `git log` shows Stage 13 PRs #85-#90 plus merge-record commits before Stage 14. | Phase 4 may consume Stage 13 public APIs instead of staying blocked on missing implementation. |
+| Method prediction output | `rphys.methods` exports `Method`, `PredictionContext`, `BatchOutputSpec`, and related batch-native adapters; `MethodOutput*` and `apply_method_output` are absent from public exports. | Phase 4 may exercise returned `Batch` prediction fields and package tests should continue guarding legacy absence. |
+| Learner output | `rphys.learning` exports `Learner`, `LoopContext`, `LoopMode`, `SupervisedLearner`, `BackwardableScalar`, and `require_backwardable_scalar`; `StepOutput` and `StepPrediction` are absent. | Phase 4 may consume ordinary `Batch` learner outputs without relying on rejected public step-output records. |
+| Uncollation and sample artifacts | `rphys.data` exports `UncollatePlan` and `uncollate_batch_fields`; `rphys.ops.export` exports `sample_artifact_export_request` and `export_record_requests`; Stage 13 sample-artifact tests are present. | Phase 4 may uncollate returned batch fields, export per-sample artifacts, assemble derived datasources, and reload through generic sample paths. |
+| Collections and metrics | `rphys.data.collections` provides sample collection/group/view/concat substrates; `rphys.metrics` exports `MetricSampleOperation`, `MetricCollectionOperation`, `MetricOutput`, and `MetricValue` while legacy `MetricObservation*` surfaces are package-forbidden. | Phase 4 may build metric-as-operation fields and collection grouping/sorting/stitching without old observation-view APIs. |
+| Reports and visualization | `rphys.analysis` exports `VisualizationOperation`, `VisualizationOutput`, `ReportOperation`, `ReportTable`, `Report`, and related report records. | Phase 4 may complete report/visualization evidence through dependency-light Stage 13 analysis records. |
+| Package and integration evidence | `tests/package/test_import.py` includes Stage 13 public exports and forbidden legacy names; Stage 13 contract/integration tests cover batch training output, sample artifacts, metric operations, visualization, reports, and final composition examples. | Phase 4 should extend Stage 14 smoke coverage over these real APIs and rerun package, contract, integration, summary, and PR validation. |
+
+Phase 4 is unblocked in the active checkout. It must still fail closed if a
+future branch lacks these code-backed Stage 13 APIs or reintroduces unapproved
+legacy public surfaces.
 
 ## Phase 1: Private Synthetic Catalog And Governance
 
-Status: pending
+Status: merged
 Slug: `private-synthetic-catalog-governance`
 Branch: `agent/stage-14-synthetic-smoke-hardening-p1-private-synthetic-catalog-governance`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-14-synthetic-smoke-hardening-p1-private-synthetic-catalog-governance`
-PR: pending
+PR: [#91](https://github.com/samcantrill/rphys/pull/91)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -140,19 +141,30 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added private deterministic synthetic catalog and edge
+  helpers under `tests/support`, first contract and integration consumers, a
+  Phase 1 execution plan, PR body, and concise support-governance notes in
+  `tests/README.md`.
+- Validation: focused catalog contract and integration tests passed;
+  `make test-package`, `make test-contract`, `make test-integration`,
+  `make validate-pr`, `make test-summary`, and `git diff --check` passed.
+  `make test-summary` reported 1024 passed tests across package, unit,
+  contract, and integration suites; e2e and acceptance suites were not present.
+- PR: [#91](https://github.com/samcantrill/rphys/pull/91), opened against
+  `develop` with the required title and verified base/head metadata.
+- Merge: squash-merged to `develop` on 2026-05-18 as
+  `cc958fb2864cb4b9d864a8bcf3a2bab3444502c5`.
+- Follow-up: Phase 2 should add only private assertion helpers and narrow
+  durable manifest/fingerprint goldens where repeated public-object invariants
+  justify them.
 
 ## Phase 2: Contract Boundaries And Durable Goldens
 
-Status: pending
+Status: merged
 Slug: `contract-boundaries-goldens`
 Branch: `agent/stage-14-synthetic-smoke-hardening-p2-contract-boundaries-goldens`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-14-synthetic-smoke-hardening-p2-contract-boundaries-goldens`
-PR: pending
+PR: [#92](https://github.com/samcantrill/rphys/pull/92)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -212,19 +224,30 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added private contract assertion helpers, a narrow
+  datasource-index manifest/fingerprint golden, consuming contract coverage,
+  and package/import guardrails for absent public testing/fixture packages and
+  production `tests.support` imports.
+- Validation: focused contract/package checks passed; `make test-package`,
+  `make test-contract`, `make test-integration`, `make validate-pr`, rerun
+  `make test-summary`, and `git diff --check` passed. A concurrent
+  `make test-summary` attempt collided with `make validate-pr` while writing
+  summary artifacts and was rerun alone; the clean summary reported 1026
+  passed tests across package, unit, contract, and integration suites.
+- PR: [#92](https://github.com/samcantrill/rphys/pull/92), opened against
+  `develop` with the required title and verified base/head metadata.
+- Merge: squash-merged to `develop` on 2026-05-18 as
+  `d013aed5e84b66b9bde6b85ad4eeec670d5b1584`.
+- Follow-up: Phase 3 should consume these helpers for the upstream smoke slice
+  without turning them into a support runner or public helper API.
 
 ## Phase 3: Upstream Synthetic Smoke And Validation Tiers
 
-Status: pending
+Status: merged
 Slug: `upstream-smoke-validation-tiers`
 Branch: `agent/stage-14-synthetic-smoke-hardening-p3-upstream-smoke-validation-tiers`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-14-synthetic-smoke-hardening-p3-upstream-smoke-validation-tiers`
-PR: pending
+PR: [#93](https://github.com/samcantrill/rphys/pull/93)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -287,19 +310,33 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added a Stage 14 upstream smoke integration test that
+  composes scan validation, group/split/index construction, manifest round
+  trip, lazy sample building, sample operation preparation, LIST collation,
+  Batch-returning method prediction, and Stage 8 export/derived datasource
+  reload through public APIs; added validation-tier guidance to
+  `tests/README.md`.
+- Validation: focused upstream smoke test passed; `make test-integration`,
+  `make test`, `make validate-pr`, `make test-summary`, and
+  `git diff --check` passed. The clean summary reported 1027 passed tests
+  across package, unit, contract, and integration suites, with e2e and
+  acceptance not present.
+- PR: [#93](https://github.com/samcantrill/rphys/pull/93), opened against
+  `develop` with the required title and verified base/head metadata; GitHub
+  reported a clean merge state and no status checks.
+- Merge: squash-merged to `develop` on 2026-05-18 as
+  `6a15f2e47af2c1aae38b25ca06fd35a062db1670`.
+- Follow-up: Phase 4 must complete the Stage 13 scan-to-report tail using real
+  code-backed Stage 13 APIs; Phase 3 remains explicitly incomplete before that
+  tail.
 
 ## Phase 4: Stage 13-Gated Scan-To-Report Tail And Final Validation
 
-Status: pending after Phases 1-3
+Status: merged
 Slug: `stage13-scan-to-report-tail`
 Branch: `agent/stage-14-synthetic-smoke-hardening-p4-stage13-scan-to-report-tail`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-14-synthetic-smoke-hardening-p4-stage13-scan-to-report-tail`
-PR: pending
+PR: [#94](https://github.com/samcantrill/rphys/pull/94)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -315,10 +352,11 @@ Workflow path: expanded path
 - Future-roadmap/reuse constraints: Stage 13 owns Sample/Batch-native artifact, collection/metric, visualization/report, and recipe behavior; Stage 14 consumes only public Stage 13 APIs; Stage 15 profiling stays separate.
 - Examples or demos covered: full scan-to-report smoke through returned `Batch` fields, uncollation, sample artifact reload, collection/metric operations, and report records/fields.
 - Out of scope: private Stage 13 stand-ins, skipped fake tail treated as success, placeholder production modules, broad production refactors, real/acceptance datasets, or rejected Stage 13 public runner/record surfaces.
-- Dependencies: Phases 1-3 plus the completed Stage 13 implementation plan.
-  Phase 4 execution must use a worktree based on the `develop` state containing
-  Stage 13 PRs #85-#90, because the smoke tail consumes those merged public
-  contracts rather than recreating them.
+- Dependencies: Phases 1-3 plus approved, code-backed revised Stage 13 behavior.
+  The 2026-05-18 active-`develop` recheck confirms returned-`Batch`
+  method/learner behavior, explicit sample artifact handoff,
+  metric-as-operation fields, report/visualization records, final composition
+  examples, and package tests for revised code-backed exports.
 
 ### Tasks
 
@@ -369,34 +407,51 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
-- Planning/refinement budget: 1 planner/reviewer cycle
-- Implementation/refinement budget: 1 implementation pass plus scoped preflight refinements
+- Phase execution plan: pending execution after Phase 3 merge
+- Planning/refinement budget: hold until revised Stage 13 behavior lands, then 1 planner/reviewer cycle
+- Implementation/refinement budget: 1 implementation pass plus scoped prerequisite refinements
 - PR review budget: full smoke-tail and package-boundary review
-- Blocker-resolution budget: sync/stale-branch issues only; no fake substitute
-- Pre-submit blocker gate: worktree includes completed Stage 13 outputs and
-  keeps rejected Stage 13 surfaces absent
+- Blocker-resolution budget: prerequisite only; no fake substitute
+- Pre-submit blocker gate: revised Stage 13 public behavior is code-backed and
+  approved in active `develop`; recheck before PR submission
 - Merge record: pending
 
 ### Risks And Stop Conditions
 
-- Risks: accidental fake completion, stale phase worktree missing Stage 13
-  merges, building on old public method/learner/metric observation surfaces, or
-  broad production refactors under a test-hardening phase.
-- Stop conditions: the phase worktree does not contain the completed Stage 13
-  outputs; full tail requires private stand-ins; implementation relies on
-  `MethodOutput*`, `StepOutput`, `MetricObservation*`, `MetricResult`, or
-  evaluator/runner surfaces; implementation requires real datasets or heavy
-  optional dependencies.
+- Risks: accidental fake completion, freezing placeholder Stage 13 exports,
+  building on old public method/learner/metric observation surfaces, or broad
+  production refactors under a test-hardening phase.
+- Stop conditions: revised Stage 13 behavior is absent, unapproved, or
+  ambiguous in the active checkout; full tail requires private stand-ins;
+  implementation relies on `MethodOutput*`, `StepOutput`,
+  `MetricObservation*`, `MetricResult`, or evaluator/runner surfaces without a
+  later approved Stage 13 revision; implementation requires real datasets or
+  heavy optional dependencies.
 - Assumptions: Stage 13 defines the Sample/Batch-native artifact, collection/metric, visualization/report, and recipe behavior consumed by the final tail.
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added a Stage 14 scan-to-report tail integration that
+  starts from synthetic scan validation and index construction, runs a
+  Batch-returning method through `SupervisedLearner`, explicitly uncollates
+  prediction/target/input fields, exports and reloads per-sample artifacts,
+  applies metric and visualization operations, builds report rows, and formats
+  grouped record-level outputs through sample-collection operations.
+- Validation: focused scan-to-report tail test passed; focused Stage 13
+  package guardrails passed; `make test-package`, `make test-contract`,
+  `make test-integration`, `make test-e2e`, `make test-summary`,
+  `make validate-pr`, `uv lock --check`, and `git diff --check` passed.
+  `make test-e2e` reported the e2e suite is not present. The clean summary
+  reported 1028 passed tests across package, unit, contract, and integration
+  suites, with e2e and acceptance not present.
+- PR: [#94](https://github.com/samcantrill/rphys/pull/94), opened against
+  `develop` with the required title and verified base/head metadata; GitHub
+  reported a clean merge state and no status checks.
+- Merge: squash-merged to `develop` on 2026-05-18 as
+  `e5f30f81e98a6250c1b0f732324163dc39ef2961`.
+- Follow-up: none for Stage 14 planned phase scope; deferred items remain
+  public helper extraction, real datasource smoke, acceptance datasets, Stage
+  15 profiling/data-path optimization, and broader golden snapshots.
 
 ## Cross-Phase Validation
 
@@ -451,30 +506,25 @@ Design review findings:
 
 | Finding | Severity | Resolution | Status |
 | --- | --- | --- | --- |
-| Stage 13 dependency is satisfied by the completed Stage 13 implementation plan, but Phase 4 must run on a worktree containing those merged outputs. | preflight requirement | Require a Stage 13 merge/preflight check before Phase 4 execution; do not rebuild or fake Stage 13 behavior inside Stage 14. | accepted |
+| Phase 4 is blocked in checkouts where revised Stage 13 behavior is not code-backed and approved. | blocker for stale checkouts only | Stage 13 PRs #85-#90 are merged in active `develop`; Phase 4 is unblocked here but must recheck before PR submission. | resolved for active `develop` |
 | Stage 14 production changes are not planned. | concern | If tests expose a real public-contract gap, route it as a scoped fix with tests/docs or a follow-up decision. | accepted |
 | Private helpers could grow into a hidden framework. | concern | Review support helpers with first consuming tests and reject unused runners/registries. | accepted |
 
 Gate result:
 
-- Status: approved by maintainer and passed design review, with Stage 13
-  dependency refreshed as satisfied by the completed Stage 13 implementation
-  plan.
-- Review evidence: this plan is derived from the passed Stage 14 plan quality
-  gate, the complete Stage 13 implementation plan, and roadmap-compliant
-  branch/worktree slugs.
-- Accepted risks: Phase 4 still needs a branch/preflight check to ensure the
-  phase worktree contains the Stage 13 PR #85-#90 outputs.
-- Revisit triggers: `docs/roadmap.md` changes Stage 14 or Stage 13 scope; public testing-helper package is requested; smoke requires real data/heavy dependencies/workflow tooling; tests expose a real public-contract ambiguity; the Phase 4 worktree does not contain the completed Stage 13 outputs.
+- Status: completed; all Stage 14 implementation phases are merged into
+  `develop`.
+- Review evidence: this plan is derived from the passed Stage 14 plan quality gate, preserves the Stage 13 prerequisite gate, and uses roadmap-compliant branch/worktree slugs.
+- Accepted risks: stale checkouts without the Stage 13 PRs still must keep
+  Phase 4 blocked rather than fake the report tail.
+- Revisit triggers: Stage 13 implementation lands; `docs/roadmap.md` changes Stage 14 or Stage 13 scope; public testing-helper package is requested; smoke requires real data/heavy dependencies/workflow tooling; tests expose a real public-contract ambiguity.
 
 ## Final Approval
 
-- Approval status: approved by maintainer on 2026-05-17 and approved by
-  managing-agent design review on 2026-05-18.
-- Approved scope: Phases 1-4 are scoped for implementation in order; Phase 4
-  consumes the completed Stage 13 outputs after Phases 1-3 and branch preflight.
-- Accepted risks: Phase 4 depends on the Stage 13 merged outputs and must fail
-  preflight on a stale worktree.
+- Approval status: approved by maintainer on 2026-05-17.
+- Approved scope: Phases 1-4 are approved for implementation in active
+  `develop`; Phase 4 remains prerequisite-gated for stale checkouts.
+- Accepted risks: Phase 4 prerequisite gating is accepted and satisfied here.
 - Deferred items: public testing-helper package, real datasource smoke,
   acceptance dataset checks, Stage 15 profiling/data-path optimization, and
   broad golden snapshots.

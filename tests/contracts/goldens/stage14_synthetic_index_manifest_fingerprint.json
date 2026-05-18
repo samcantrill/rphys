@@ -1,0 +1,16 @@
+{
+  "artifact": "stage14.synthetic_catalog.datasource_index",
+  "schema_version": "rphys.datasource_index.v1",
+  "index_kind": "datasource_index",
+  "index_id": "stage14-golden-index",
+  "item_count": 1,
+  "entry_count": 1,
+  "content_fingerprint": "9900fa383a748068db2a947382c0a7941e6fb81fbbeeeca7b4a11f24e99528ae",
+  "checksum": "bc4e96589dd418e0619075cdb795144f3e1d3398a78d16c465bc6efb47b03d1a",
+  "forbidden_manifest_keys": [
+    "payload",
+    "payloads",
+    "loaded_payload",
+    "open_handle"
+  ]
+}
