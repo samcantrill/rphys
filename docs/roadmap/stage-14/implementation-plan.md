@@ -7,7 +7,7 @@ Functionality/design explainer:
 `docs/roadmap/stage-14/functionality-behavior-design.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 4 pending execution
+Current phase: Phase 4 PR open
 Blockers: none. Stage 13 PRs #85-#90 are merged into the active `develop`
 history and the code-backed recheck below satisfies the Phase 4 prerequisite.
 
@@ -45,7 +45,7 @@ history and the code-backed recheck below satisfies the Phase 4 prerequisite.
 | 1 | `private-synthetic-catalog-governance` | merged | `agent/stage-14-synthetic-smoke-hardening-p1-private-synthetic-catalog-governance` | [#91](https://github.com/samcantrill/rphys/pull/91) | `tests/support`, first consuming tests, concise support governance docs | Established private fixture catalog, edge variants, deterministic payload evidence, URI refs, optional fields, and helper privacy governance. | Focused support-consuming tests, `make test-package`, `make test-contract`, `make test-integration`, `make validate-pr`, `make test-summary`, `git diff --check` | Positive catalog and edge fixture examples |
 | 2 | `contract-boundaries-goldens` | merged | `agent/stage-14-synthetic-smoke-hardening-p2-contract-boundaries-goldens` | [#92](https://github.com/samcantrill/rphys/pull/92) | `tests/support` assertion helpers, `tests/contracts`, `tests/package`, targeted integration/golden tests | Turned fixtures into reusable public-object invariants, package/import guardrails, and narrow durable-manifest goldens. | `make test-contract`, `make test-package`, `make test-integration`, `make validate-pr`, `make test-summary`, `git diff --check` | Contract assertion, import-boundary, and golden manifest examples |
 | 3 | `upstream-smoke-validation-tiers` | merged | `agent/stage-14-synthetic-smoke-hardening-p3-upstream-smoke-validation-tiers` | [#93](https://github.com/samcantrill/rphys/pull/93) | Integration/e2e smoke slice, tier docs/markers, existing Stage 5-12 flow composition | Composed code-backed Stage 5-12 surfaces through one public loader/materialization path and recorded debug/smoke/signal tier semantics. | Focused upstream smoke test, `make test-integration`, `make test`, `make validate-pr`, `make test-summary`, `git diff --check` | Upstream root-smoke slice before Stage 13 tail |
-| 4 | `stage13-scan-to-report-tail` | pending after Phases 1-3 | `agent/stage-14-synthetic-smoke-hardening-p4-stage13-scan-to-report-tail` | pending | Stage 13-dependent smoke tail, package checks for code-backed Stage 13 exports, final validation evidence | Complete scan-to-report smoke now that revised Stage 13 Sample/Batch-native behavior is code-backed in active `develop`. | `make test-package`, `make test-contract`, `make test-integration`, `make test-e2e` if present, `make test-summary`, `make validate-pr`, `uv lock --check`, `git diff --check` | Full scan-to-report smoke through returned `Batch` fields, uncollation, sample artifact reload, collection/metric operations, and report records/fields |
+| 4 | `stage13-scan-to-report-tail` | pr_open | `agent/stage-14-synthetic-smoke-hardening-p4-stage13-scan-to-report-tail` | [#94](https://github.com/samcantrill/rphys/pull/94) | Stage 13-dependent smoke tail, package checks for code-backed Stage 13 exports, final validation evidence | Complete scan-to-report smoke now that revised Stage 13 Sample/Batch-native behavior is code-backed in active `develop`. | Focused tail and Stage 13 package checks, `make test-package`, `make test-contract`, `make test-integration`, `make test-e2e`, `make test-summary`, `make validate-pr`, `uv lock --check`, `git diff --check` | Full scan-to-report smoke through returned `Batch` fields, uncollation, sample artifact reload, collection/metric operations, and report records/fields |
 
 ## Implementation Readiness Blockers
 
@@ -329,11 +329,11 @@ Workflow path: expanded path
 
 ## Phase 4: Stage 13-Gated Scan-To-Report Tail And Final Validation
 
-Status: pending after Phases 1-3
+Status: pr_open
 Slug: `stage13-scan-to-report-tail`
 Branch: `agent/stage-14-synthetic-smoke-hardening-p4-stage13-scan-to-report-tail`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-14-synthetic-smoke-hardening-p4-stage13-scan-to-report-tail`
-PR: pending
+PR: [#94](https://github.com/samcantrill/rphys/pull/94)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -429,11 +429,26 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added a Stage 14 scan-to-report tail integration that
+  starts from synthetic scan validation and index construction, runs a
+  Batch-returning method through `SupervisedLearner`, explicitly uncollates
+  prediction/target/input fields, exports and reloads per-sample artifacts,
+  applies metric and visualization operations, builds report rows, and formats
+  grouped record-level outputs through sample-collection operations.
+- Validation: focused scan-to-report tail test passed; focused Stage 13
+  package guardrails passed; `make test-package`, `make test-contract`,
+  `make test-integration`, `make test-e2e`, `make test-summary`,
+  `make validate-pr`, `uv lock --check`, and `git diff --check` passed.
+  `make test-e2e` reported the e2e suite is not present. The clean summary
+  reported 1028 passed tests across package, unit, contract, and integration
+  suites, with e2e and acceptance not present.
+- PR: [#94](https://github.com/samcantrill/rphys/pull/94), opened against
+  `develop` with the required title and verified base/head metadata; GitHub
+  reported a clean merge state and no status checks.
+- Merge: pending.
+- Follow-up: none for Stage 14 planned phase scope; deferred items remain
+  public helper extraction, real datasource smoke, acceptance datasets, Stage
+  15 profiling/data-path optimization, and broader golden snapshots.
 
 ## Cross-Phase Validation
 
