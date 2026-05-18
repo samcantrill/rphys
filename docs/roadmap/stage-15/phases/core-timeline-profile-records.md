@@ -567,7 +567,7 @@ git diff --check
   for the new public Phase 1 names.
 - Implementation validation: completed for targeted phase artifacts using explicit pass/fail
   evidence:
-  - `uv run pytest tests/unit/rphys/training/test_events.py tests/unit/rphys/training/test_profiling.py tests/unit/rphys/training/test_results.py` (15 passed)
+  - `uv run pytest tests/unit/rphys/training/test_events.py tests/unit/rphys/training/test_profiling.py tests/unit/rphys/training/test_results.py` (17 passed after manager-local pre-submit timing fix)
   - `uv run pytest tests/contracts/test_stage12_observability_contract.py tests/contracts/test_stage12_training_result_contract.py tests/contracts/test_stage15_training_profile_contract.py` (8 passed)
   - `make test-package` (72 passed)
 - Refinement summary: clarified the public provisional schema, primitive
@@ -575,7 +575,9 @@ git diff --check
   boundaries, timestamp/timeline semantics, result compatibility, and explicit
   Phase 3 ownership of concrete resource trace records and `resource_traces`
   helpers without changing scope.
-- Pre-submit blocker gate: none found during implementation.
+- Pre-submit blocker gate: manager-local pre-submit review found and fixed one
+  narrow recorder consistency issue: spans with one endpoint timestamp and a
+  duration now preserve the duration when the missing endpoint is filled.
 - PR preparation evidence:
   - `make test-package`
   - `git diff --check`
@@ -588,6 +590,12 @@ git diff --check
   - `uv run pytest tests/unit/rphys/training/test_events.py` (5 passed)
   - `uv run pytest tests/contracts/test_stage12_observability_contract.py tests/contracts/test_stage15_training_profile_contract.py`
     (7 passed)
+- Manager-local pre-submit fix evidence: preserved scalar span duration when
+  recorder timing fills a missing start or end timestamp. Narrow validation
+  rerun:
+  - `uv run pytest tests/unit/rphys/training/test_profiling.py tests/unit/rphys/training/test_events.py tests/unit/rphys/training/test_results.py`
+    (17 passed)
+  - `git diff --check` (passed)
 - Merge result: pending local PR review completion and merge gate.
 - Cleanup: pending implementation phase.
 - Remaining blockers: none for implementation start.
