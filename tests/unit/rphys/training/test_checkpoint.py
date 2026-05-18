@@ -7,6 +7,7 @@ import pytest
 from rphys.errors import RemotePhysTrainingError
 from rphys.training import (
     CheckpointCatalog,
+    CheckpointMetricDirection,
     CheckpointPruneEvidence,
     CheckpointPruneResult,
     CheckpointPrunePolicy,
@@ -120,9 +121,17 @@ def test_checkpoint_save_policy_requires_consistent_triggers() -> None:
         CheckpointSavePolicy(on_metric=True, metric_name="loss")
     assert direction_error.value.context["field"] == "metric_direction"
 
-    with pytest.raises(RemotePhysTrainingError) as no_trigger_error:
-        CheckpointSavePolicy(enabled=False, on_final=False)
-    assert no_trigger_error.value.context["field"] == "enabled"
+    disabled = CheckpointSavePolicy(enabled=False, on_final=False)
+    assert disabled.enabled is False
+    assert disabled.on_final is False
+
+    with pytest.raises(RemotePhysTrainingError) as disabled_trigger_error:
+        CheckpointSavePolicy(enabled=False)
+    assert disabled_trigger_error.value.context["field"] == "enabled"
+
+    with pytest.raises(RemotePhysTrainingError) as disabled_metric_error:
+        CheckpointSavePolicy(enabled=False, on_final=False, metric_name="loss")
+    assert disabled_metric_error.value.context["field"] == "enabled"
 
     policy = CheckpointSavePolicy(
         enabled=True,
@@ -143,9 +152,18 @@ def test_checkpoint_prune_policy_validates_required_fields() -> None:
         CheckpointPrunePolicy(keep_best=2)
     assert best_requires_name.value.context["field"] == "best_metric_name"
 
+    with pytest.raises(RemotePhysTrainingError) as best_requires_direction:
+        CheckpointPrunePolicy(keep_best=2, best_metric_name="loss")
+    assert best_requires_direction.value.context["field"] == "best_metric_direction"
+
     with pytest.raises(RemotePhysTrainingError) as keep_rule_error:
         CheckpointPrunePolicy(enabled=False, keep_recent=1)
     assert keep_rule_error.value.context["field"] == "enabled"
+
+    disabled = CheckpointPrunePolicy(enabled=False, keep_final=False, keep_failure=False)
+    assert disabled.enabled is False
+    assert disabled.keep_final is False
+    assert disabled.keep_failure is False
 
     policy = CheckpointPrunePolicy(keep_recent=2, keep_failure=True, keep_final=True)
     assert policy.keep_recent == 2
@@ -224,16 +242,42 @@ def test_checkpoint_restore_and_result_records_are_lightweight() -> None:
     restore_result = CheckpointRestoreResult(
         status=CheckpointResultStatus.UNSUPPORTED,
         mode="catalog",
+        run_id="run-1",
+        timeline_id="timeline-1",
+        process_id=7,
+        node_id="node-a",
+        local_rank=0,
+        global_rank=2,
+        device_id="cuda:0",
+        metadata={"scope": "restore"},
+        provenance={"adapter": "unit"},
     )
     assert restore_result.mode is CheckpointRestoreMode.CATALOG
     assert restore_result.status is CheckpointResultStatus.UNSUPPORTED
+    assert restore_result.global_rank == 2
+    assert asdict(restore_result)["provenance"] == {"adapter": "unit"}
 
     save_result = CheckpointSaveResult(
         status=CheckpointResultStatus.UNAVAILABLE,
         reason="disabled",
+        run_id="run-1",
+        timeline_id="timeline-1",
+        process_id=7,
+        node_id="node-a",
+        local_rank=0,
+        global_rank=2,
+        device_id="cuda:0",
+        metadata={"stream": "main"},
+        provenance={"adapter": "unit"},
     )
     assert save_result.status is CheckpointResultStatus.UNAVAILABLE
     assert save_result.reason == "disabled"
+    assert save_result.device_id == "cuda:0"
+    assert asdict(save_result)["metadata"] == {"stream": "main"}
+
+    with pytest.raises(RemotePhysTrainingError) as rank_error:
+        CheckpointSaveResult(status="skipped", local_rank=-1)
+    assert rank_error.value.context["field"] == "local_rank"
 
 
 def test_checkpoint_prune_evidence_retains_reference_and_reason() -> None:
@@ -249,6 +293,7 @@ def test_checkpoint_prune_evidence_retains_reference_and_reason() -> None:
         keep_recent=1,
         keep_best=1,
         best_metric_name="val_loss",
+        best_metric_direction=CheckpointMetricDirection.MIN,
         keep_final=True,
         keep_failure=True,
     )
@@ -259,7 +304,7 @@ def test_checkpoint_prune_evidence_retains_reference_and_reason() -> None:
         "keep_recent": 1,
         "keep_best": 1,
         "best_metric_name": "val_loss",
-        "best_metric_direction": None,
+        "best_metric_direction": CheckpointMetricDirection.MIN,
         "keep_final": True,
         "keep_failure": True,
     }
@@ -273,9 +318,20 @@ def test_checkpoint_prune_result_models_kept_and_dropped_evidence() -> None:
         kept=(kept,),
         dropped=(dropped,),
         keep_count=1,
+        run_id="run-1",
+        timeline_id="timeline-1",
+        process_id=7,
+        node_id="node-a",
+        local_rank=0,
+        global_rank=2,
+        device_id="cuda:0",
+        metadata={"pruner": "unit"},
+        provenance={"policy": "keep-one"},
     )
 
     assert result.status is CheckpointResultStatus.COMPLETED
     assert result.kept[0].ref_id == "kept"
     assert result.dropped[0].ref is kept
     assert result.keep_count == 1
+    assert result.process_id == 7
+    assert asdict(result)["metadata"] == {"pruner": "unit"}

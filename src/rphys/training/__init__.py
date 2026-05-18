@@ -4,6 +4,7 @@ from .backend import NativeTrainingEngine
 from .core import Trainer, TrainingEngine
 from .checkpoint import (
     CheckpointCatalog,
+    CheckpointMetricDirection,
     CheckpointPruneEvidence,
     CheckpointPrunePolicy,
     CheckpointRef,
@@ -92,6 +93,7 @@ __all__ = [
     "TrainingStepSummary",
     "UnavailableProfileProbe",
     "CheckpointCatalog",
+    "CheckpointMetricDirection",
     "CheckpointPruneEvidence",
     "CheckpointPrunePolicy",
     "CheckpointRef",

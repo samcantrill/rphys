@@ -18,6 +18,7 @@ from ._validation import (
 
 __all__ = [
     "CheckpointCatalog",
+    "CheckpointMetricDirection",
     "CheckpointPruneEvidence",
     "CheckpointPrunePolicy",
     "CheckpointRef",
@@ -392,7 +393,11 @@ class CheckpointSavePolicy:
         on_failure: bool = False,
         on_final: bool = True,
     ) -> None:
-        object.__setattr__(self, "enabled", _coerce_bool(enabled, owner="CheckpointSavePolicy", field="enabled"))
+        enabled = _coerce_bool(enabled, owner="CheckpointSavePolicy", field="enabled")
+        on_metric = _coerce_bool(on_metric, owner="CheckpointSavePolicy", field="on_metric")
+        on_failure = _coerce_bool(on_failure, owner="CheckpointSavePolicy", field="on_failure")
+        on_final = _coerce_bool(on_final, owner="CheckpointSavePolicy", field="on_final")
+        object.__setattr__(self, "enabled", enabled)
         object.__setattr__(
             self,
             "by_step",
@@ -410,7 +415,7 @@ class CheckpointSavePolicy:
                 field="by_elapsed_seconds",
             )
         object.__setattr__(self, "by_elapsed_seconds", by_elapsed_seconds)
-        object.__setattr__(self, "on_metric", _coerce_bool(on_metric, owner="CheckpointSavePolicy", field="on_metric"))
+        object.__setattr__(self, "on_metric", on_metric)
         object.__setattr__(
             self,
             "metric_name",
@@ -434,7 +439,17 @@ class CheckpointSavePolicy:
                 field="metric_direction",
             )
         if not enabled and any(
-            value is not None for value in (by_step, by_epoch, by_elapsed_seconds, on_metric, on_failure)
+            (
+                by_step is not None,
+                by_epoch is not None,
+                by_elapsed_seconds is not None,
+                on_metric,
+                self.metric_name is not None,
+                metric_direction is not None,
+                metric_threshold is not None,
+                on_failure,
+                on_final,
+            )
         ):
             raise RemotePhysTrainingError(
                 "CheckpointSavePolicy cannot configure triggers when disabled.",
@@ -442,21 +457,14 @@ class CheckpointSavePolicy:
                 field="enabled",
                 value=enabled,
             )
-        if not enabled and not on_final:
-            raise RemotePhysTrainingError(
-                "CheckpointSavePolicy disabled checkpoints should keep final behavior explicit.",
-                owner="CheckpointSavePolicy",
-                field="on_final",
-                value=on_final,
-            )
-        if not any((by_step, by_epoch, by_elapsed_seconds, on_metric, on_failure, on_final)):
+        if enabled and not any((by_step, by_epoch, by_elapsed_seconds, on_metric, on_failure, on_final)):
             raise RemotePhysTrainingError(
                 "CheckpointSavePolicy must specify at least one save trigger.",
                 owner="CheckpointSavePolicy",
                 field="triggers",
             )
-        object.__setattr__(self, "on_failure", _coerce_bool(on_failure, owner="CheckpointSavePolicy", field="on_failure"))
-        object.__setattr__(self, "on_final", _coerce_bool(on_final, owner="CheckpointSavePolicy", field="on_final"))
+        object.__setattr__(self, "on_failure", on_failure)
+        object.__setattr__(self, "on_final", on_final)
 
 
 @dataclass(frozen=True, init=False, slots=True)
@@ -482,7 +490,10 @@ class CheckpointPrunePolicy:
         keep_final: bool = True,
         keep_failure: bool = True,
     ) -> None:
-        object.__setattr__(self, "enabled", _coerce_bool(enabled, owner="CheckpointPrunePolicy", field="enabled"))
+        enabled = _coerce_bool(enabled, owner="CheckpointPrunePolicy", field="enabled")
+        keep_final = _coerce_bool(keep_final, owner="CheckpointPrunePolicy", field="keep_final")
+        keep_failure = _coerce_bool(keep_failure, owner="CheckpointPrunePolicy", field="keep_failure")
+        object.__setattr__(self, "enabled", enabled)
         object.__setattr__(
             self,
             "keep_recent",
@@ -498,6 +509,12 @@ class CheckpointPrunePolicy:
                 "CheckpointPrunePolicy keep_best requires best_metric_name.",
                 owner="CheckpointPrunePolicy",
                 field="best_metric_name",
+            )
+        if keep_best is not None and best_metric_direction is None:
+            raise RemotePhysTrainingError(
+                "CheckpointPrunePolicy keep_best requires best_metric_direction.",
+                owner="CheckpointPrunePolicy",
+                field="best_metric_direction",
             )
         object.__setattr__(
             self,
@@ -517,21 +534,30 @@ class CheckpointPrunePolicy:
                 best_metric_name=best_metric_name,
             )
         if not enabled:
-            if any(v is not None for v in (keep_recent, keep_best, best_metric_name, best_metric_direction)):
+            if any(
+                (
+                    keep_recent is not None,
+                    keep_best is not None,
+                    best_metric_name is not None,
+                    best_metric_direction is not None,
+                    keep_final,
+                    keep_failure,
+                )
+            ):
                 raise RemotePhysTrainingError(
                     "CheckpointPrunePolicy cannot configure keeps when disabled.",
                     owner="CheckpointPrunePolicy",
                     field="enabled",
                     value=enabled,
                 )
-        if not any((keep_recent, keep_best)) and not (keep_final or keep_failure):
+        if enabled and not any((keep_recent, keep_best)) and not (keep_final or keep_failure):
             raise RemotePhysTrainingError(
                 "CheckpointPrunePolicy must retain something when enabled.",
                 owner="CheckpointPrunePolicy",
                 field="policy",
             )
-        object.__setattr__(self, "keep_final", _coerce_bool(keep_final, owner="CheckpointPrunePolicy", field="keep_final"))
-        object.__setattr__(self, "keep_failure", _coerce_bool(keep_failure, owner="CheckpointPrunePolicy", field="keep_failure"))
+        object.__setattr__(self, "keep_final", keep_final)
+        object.__setattr__(self, "keep_failure", keep_failure)
 
 
 @dataclass(frozen=True, init=False, slots=True)
@@ -890,6 +916,15 @@ class CheckpointSaveResult:
     ref_id: str | None
     retention_policy_applied: str | None
     reason: str | None
+    run_id: str | None
+    timeline_id: str | None
+    process_id: int | None
+    node_id: str | None
+    local_rank: int | None
+    global_rank: int | None
+    device_id: str | None
+    metadata: PrimitiveMapping
+    provenance: PrimitiveMapping
 
     def __init__(
         self,
@@ -898,11 +933,33 @@ class CheckpointSaveResult:
         ref_id: str | None = None,
         retention_policy_applied: str | None = None,
         reason: str | None = None,
+        run_id: str | None = None,
+        timeline_id: str | None = None,
+        process_id: int | None = None,
+        node_id: str | None = None,
+        local_rank: int | None = None,
+        global_rank: int | None = None,
+        device_id: str | None = None,
+        metadata: Mapping[object, object] | None = None,
+        provenance: Mapping[object, object] | None = None,
     ) -> None:
         object.__setattr__(self, "status", CheckpointResultStatus.coerce(status))
         object.__setattr__(self, "ref_id", _coerce_optional_name(ref_id, owner="CheckpointSaveResult", field="ref_id"))
         object.__setattr__(self, "retention_policy_applied", _coerce_optional_name(retention_policy_applied, owner="CheckpointSaveResult", field="retention_policy_applied"))
         object.__setattr__(self, "reason", _coerce_optional_name(reason, owner="CheckpointSaveResult", field="reason"))
+        _set_result_context(
+            self,
+            owner="CheckpointSaveResult",
+            run_id=run_id,
+            timeline_id=timeline_id,
+            process_id=process_id,
+            node_id=node_id,
+            local_rank=local_rank,
+            global_rank=global_rank,
+            device_id=device_id,
+            metadata=metadata,
+            provenance=provenance,
+        )
 
 
 @dataclass(frozen=True, init=False, slots=True)
@@ -913,6 +970,15 @@ class CheckpointRestoreResult:
     ref_id: str | None
     mode: CheckpointRestoreMode
     reason: str | None
+    run_id: str | None
+    timeline_id: str | None
+    process_id: int | None
+    node_id: str | None
+    local_rank: int | None
+    global_rank: int | None
+    device_id: str | None
+    metadata: PrimitiveMapping
+    provenance: PrimitiveMapping
 
     def __init__(
         self,
@@ -921,11 +987,33 @@ class CheckpointRestoreResult:
         mode: CheckpointRestoreMode,
         ref_id: str | None = None,
         reason: str | None = None,
+        run_id: str | None = None,
+        timeline_id: str | None = None,
+        process_id: int | None = None,
+        node_id: str | None = None,
+        local_rank: int | None = None,
+        global_rank: int | None = None,
+        device_id: str | None = None,
+        metadata: Mapping[object, object] | None = None,
+        provenance: Mapping[object, object] | None = None,
     ) -> None:
         object.__setattr__(self, "status", CheckpointResultStatus.coerce(status))
         object.__setattr__(self, "mode", CheckpointRestoreMode.coerce(mode))
         object.__setattr__(self, "ref_id", _coerce_optional_name(ref_id, owner="CheckpointRestoreResult", field="ref_id"))
         object.__setattr__(self, "reason", _coerce_optional_name(reason, owner="CheckpointRestoreResult", field="reason"))
+        _set_result_context(
+            self,
+            owner="CheckpointRestoreResult",
+            run_id=run_id,
+            timeline_id=timeline_id,
+            process_id=process_id,
+            node_id=node_id,
+            local_rank=local_rank,
+            global_rank=global_rank,
+            device_id=device_id,
+            metadata=metadata,
+            provenance=provenance,
+        )
 
 
 @dataclass(frozen=True, init=False, slots=True)
@@ -956,6 +1044,15 @@ class CheckpointPruneResult:
     kept: tuple[CheckpointRef, ...]
     dropped: tuple[CheckpointPruneEvidence, ...]
     keep_count: int | None
+    run_id: str | None
+    timeline_id: str | None
+    process_id: int | None
+    node_id: str | None
+    local_rank: int | None
+    global_rank: int | None
+    device_id: str | None
+    metadata: PrimitiveMapping
+    provenance: PrimitiveMapping
 
     def __init__(
         self,
@@ -964,6 +1061,15 @@ class CheckpointPruneResult:
         kept: Iterable[CheckpointRef] = (),
         dropped: Iterable[CheckpointPruneEvidence] = (),
         keep_count: int | None = None,
+        run_id: str | None = None,
+        timeline_id: str | None = None,
+        process_id: int | None = None,
+        node_id: str | None = None,
+        local_rank: int | None = None,
+        global_rank: int | None = None,
+        device_id: str | None = None,
+        metadata: Mapping[object, object] | None = None,
+        provenance: Mapping[object, object] | None = None,
     ) -> None:
         object.__setattr__(self, "status", CheckpointResultStatus.coerce(status))
         object.__setattr__(
@@ -979,6 +1085,19 @@ class CheckpointPruneResult:
         if keep_count is not None:
             keep_count = coerce_non_negative_int(keep_count, owner="CheckpointPruneResult", field="keep_count")
         object.__setattr__(self, "keep_count", keep_count)
+        _set_result_context(
+            self,
+            owner="CheckpointPruneResult",
+            run_id=run_id,
+            timeline_id=timeline_id,
+            process_id=process_id,
+            node_id=node_id,
+            local_rank=local_rank,
+            global_rank=global_rank,
+            device_id=device_id,
+            metadata=metadata,
+            provenance=provenance,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -1117,6 +1236,67 @@ def _coerce_positive_float(value: object, *, owner: str, field: str) -> float:
             actual=value,
         )
     return value
+
+
+def _set_result_context(
+    instance: object,
+    *,
+    owner: str,
+    run_id: str | None,
+    timeline_id: str | None,
+    process_id: int | None,
+    node_id: str | None,
+    local_rank: int | None,
+    global_rank: int | None,
+    device_id: str | None,
+    metadata: Mapping[object, object] | None,
+    provenance: Mapping[object, object] | None,
+) -> None:
+    object.__setattr__(
+        instance,
+        "run_id",
+        _coerce_optional_name(run_id, owner=owner, field="run_id"),
+    )
+    object.__setattr__(
+        instance,
+        "timeline_id",
+        _coerce_optional_name(timeline_id, owner=owner, field="timeline_id"),
+    )
+    object.__setattr__(
+        instance,
+        "process_id",
+        coerce_non_negative_int(process_id, owner=owner, field="process_id") if process_id is not None else None,
+    )
+    object.__setattr__(
+        instance,
+        "node_id",
+        _coerce_optional_name(node_id, owner=owner, field="node_id"),
+    )
+    object.__setattr__(
+        instance,
+        "local_rank",
+        coerce_non_negative_int(local_rank, owner=owner, field="local_rank") if local_rank is not None else None,
+    )
+    object.__setattr__(
+        instance,
+        "global_rank",
+        coerce_non_negative_int(global_rank, owner=owner, field="global_rank") if global_rank is not None else None,
+    )
+    object.__setattr__(
+        instance,
+        "device_id",
+        _coerce_optional_name(device_id, owner=owner, field="device_id"),
+    )
+    object.__setattr__(
+        instance,
+        "metadata",
+        freeze_primitive_mapping(metadata, owner=owner, field="metadata"),
+    )
+    object.__setattr__(
+        instance,
+        "provenance",
+        freeze_primitive_mapping(provenance, owner=owner, field="provenance"),
+    )
 
 
 def _coerce_finite_float(value: object, *, owner: str, field: str) -> float:

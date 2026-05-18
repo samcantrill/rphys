@@ -154,6 +154,17 @@ def test_model_probe_summaries_capture_nested_primitive_context() -> None:
     assert activation.shape == (1, 3, 224, 224)
     assert health.saturation_fraction == 0.03
 
+    with pytest.raises(RemotePhysTrainingError) as nonfinite_value:
+        ModelProbeSummary(
+            "bad-model-probe",
+            "gradient",
+            hook_point=ProbeHookPoint.FORWARD,
+            selector=selector,
+            cadence=cadence,
+            value=float("nan"),
+        )
+    assert nonfinite_value.value.context["field"] == "value"
+
 
 def test_data_probe_summaries_capture_field_and_batch_evidence() -> None:
     selector = ProbeSelector(ProbeSelectorMode.BY_SPLIT, ("train", "val"))
@@ -202,6 +213,15 @@ def test_unavailable_probe_evidence_remains_primitive_and_protocol_is_structural
     )
     assert detailed.reason == "disabled"
     assert detailed.run_id == "run-1"
+
+    unsupported = UnavailableProbeEvidence(
+        "probe",
+        reason="backend_missing",
+        hook_point="checkpoint",
+        selector=ProbeSelector(ProbeSelectorMode.ALL),
+        failure_policy="unsupported",
+    )
+    assert unsupported.failure_policy is ProbeFailurePolicy.UNSUPPORTED
 
     collector = ProbeCollector()
     assert isinstance(collector, TrainingProbe)

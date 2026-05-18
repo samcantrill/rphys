@@ -7,13 +7,20 @@ import pytest
 from rphys.errors import RemotePhysTrainingError
 from rphys.training import (
     CheckpointCatalog,
+    CheckpointMetricDirection,
     CheckpointRef,
     CheckpointRefStatus,
+    CheckpointPruneResult,
+    CheckpointRestoreMode,
+    CheckpointRestoreResult,
+    CheckpointResultStatus,
+    CheckpointSaveResult,
     CheckpointSelection,
     CheckpointSelectionMode,
     CheckpointSelectionResult,
     ProbeCadence,
     ProbeCadenceMode,
+    ProbeFailurePolicy,
     ProbeHookPoint,
     PrecisionPolicy,
     PolicyStatus,
@@ -24,6 +31,7 @@ from rphys.training import (
     ModelProbeSummary,
     ProbeSelector,
     ProbeSelectorMode,
+    UnavailableProbeEvidence,
 )
 
 
@@ -174,6 +182,53 @@ def test_checkpoint_selection_contracts_cover_latest_best_and_rewind_cases() -> 
     evidence = asdict(no_match)
     assert evidence["status"] == "unavailable"
     assert evidence["selection"]["mode"] == "explicit"
+
+
+def test_checkpoint_result_records_carry_rank_process_and_provenance_evidence() -> None:
+    save = CheckpointSaveResult(
+        status=CheckpointResultStatus.COMPLETED,
+        ref_id="ckpt-1",
+        run_id="run-1",
+        timeline_id="timeline-1",
+        process_id=10,
+        node_id="node-a",
+        local_rank=0,
+        global_rank=1,
+        device_id="cuda:0",
+        metadata={"stream": "main"},
+        provenance={"adapter": "contract"},
+    )
+    restore = CheckpointRestoreResult(
+        status="unsupported",
+        mode=CheckpointRestoreMode.CATALOG,
+        run_id="run-1",
+        global_rank=1,
+        provenance={"adapter": "contract"},
+    )
+    prune = CheckpointPruneResult(
+        status="skipped",
+        run_id="run-1",
+        global_rank=1,
+        provenance={"adapter": "contract"},
+    )
+
+    assert asdict(save)["global_rank"] == 1
+    assert asdict(save)["provenance"] == {"adapter": "contract"}
+    assert asdict(restore)["mode"] == "catalog"
+    assert asdict(prune)["status"] == "skipped"
+
+
+def test_public_metric_direction_and_unsupported_probe_evidence_are_explicit() -> None:
+    assert CheckpointMetricDirection.MIN.value == "min"
+
+    evidence = UnavailableProbeEvidence(
+        "gpu-probe",
+        reason="not_available_on_backend",
+        hook_point="setup",
+        selector=ProbeSelector(ProbeSelectorMode.ALL),
+        failure_policy="unsupported",
+    )
+    assert evidence.failure_policy is ProbeFailurePolicy.UNSUPPORTED
 
 
 def test_precision_policy_contract_records_backend_applicability() -> None:

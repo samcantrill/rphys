@@ -235,6 +235,7 @@ class ProbeFailurePolicy(StrEnum):
     RECORD_AND_CONTINUE = "record_and_continue"
     DISABLED = "disabled"
     UNAVAILABLE = "unavailable"
+    UNSUPPORTED = "unsupported"
 
     @classmethod
     def coerce(cls, value: "ProbeFailurePolicy | str") -> "ProbeFailurePolicy":
@@ -1223,6 +1224,14 @@ def _coerce_primitive(value: object, *, owner: str, field: str) -> PrimitiveValu
             field=field,
             expected="str | int | float | bool | None",
             actual=type(value).__name__,
+        )
+    if isinstance(value, float) and not isfinite(value):
+        raise RemotePhysTrainingError(
+            f"{owner} {field} must be finite when provided as a float.",
+            owner=owner,
+            field=field,
+            expected="finite primitive float",
+            actual=value,
         )
     return value
 

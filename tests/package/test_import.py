@@ -259,6 +259,7 @@ STAGE_12_TRAINING_EXPORTS = [
     "TrainingStepSummary",
     "UnavailableProfileProbe",
     "CheckpointCatalog",
+    "CheckpointMetricDirection",
     "CheckpointPruneEvidence",
     "CheckpointPrunePolicy",
     "CheckpointRef",
@@ -332,6 +333,7 @@ STAGE_12_TRAINING_MODULES = {
     ],
     "rphys.training.checkpoint": [
         "CheckpointCatalog",
+        "CheckpointMetricDirection",
         "CheckpointPruneEvidence",
         "CheckpointPrunePolicy",
         "CheckpointRef",

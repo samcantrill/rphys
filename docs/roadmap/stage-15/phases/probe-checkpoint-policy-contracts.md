@@ -643,11 +643,13 @@ git diff --check
 
 ## Refinement And Review Budget Status
 
-- Phase execution plan refinement: complete; unused implementation,
-  refinement, review, and blocker budgets remain
-- Phase implementation refinement: unused
+- Phase execution plan refinement: complete; unused PR review budget remains
+- Phase implementation refinement: 1/3 used for post-implementation blocker
+  cluster on public exports, disabled policies, metric-direction retention,
+  unsupported probe evidence, finite primitive summaries, and checkpoint result
+  provenance.
 - PR review: unused
-- Blocker resolution: 0/3 used
+- Blocker resolution: 1/3 used
 
 ## Completion Notes
 
@@ -671,8 +673,70 @@ git diff --check
   pipeline-stage naming, precision/compile/kernel fallback evidence, and
   explicit future-phase exclusions
 - Pre-submit blocker gate: resolved for phase scope; remaining blockers: none.
+- Post-implementation refinement summary: completed on 2026-05-19 for the
+  assigned blocker cluster. Exported `CheckpointMetricDirection` intentionally;
+  made disabled checkpoint save/prune policies constructible only as explicit
+  no-op records; required `best_metric_direction` for `keep_best`; added
+  `ProbeFailurePolicy.UNSUPPORTED`; rejected non-finite `ModelProbeSummary`
+  primitive values; and added optional run/timeline/process/rank/device,
+  metadata, and provenance evidence to checkpoint save/restore/prune result
+  records.
+- Post-implementation refinement validation: completed. Ran
+  `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/unit/rphys/training/test_checkpoint.py tests/unit/rphys/training/test_probes.py tests/unit/rphys/training/test_policies.py tests/contracts/test_stage15_probe_checkpoint_policy_contract.py tests/package/test_import.py tests/package/test_import_boundaries.py`
+  (93 passed). `git diff --check` passed.
 - PR preparation: pending implementation
 - Automated review: pending implementation
 - Merge result: pending implementation
 - Cleanup: pending implementation
 - Remaining blockers: none
+
+## Phase Refinement Report: Probe And Checkpoint Contract Blockers
+
+## Assigned Blocker
+
+- Blocker: Phase 2 public checkpoint/probe contracts missed several accepted
+  contract details: `CheckpointMetricDirection` was not exported, disabled
+  checkpoint policies could not represent explicit no-op behavior, best
+  retention did not require direction, unsupported probe evidence was not
+  distinct from unavailable evidence, primitive model-summary values accepted
+  non-finite floats, and checkpoint result records lacked rank/process and
+  provenance evidence.
+- Source: implementation refinement request on 2026-05-19 plus Phase 2 scope
+  contract for primitive public exports, disabled policies, metric-direction
+  significance, unavailable/unsupported evidence, finite diagnostic values,
+  and rank/process evidence in save/restore/prune results.
+- Scope: `src/rphys/training/checkpoint.py`, `src/rphys/training/probes.py`,
+  package exports, focused unit/contract/package tests, and this phase artifact
+  update only.
+- Budget use: phase implementation refinement 1/3; blocker resolution 1/3.
+
+## Resolution
+
+- Changes made: exported `CheckpointMetricDirection`; allowed only explicit
+  disabled no-op save/prune policies; required `best_metric_direction` with
+  `keep_best`; added `ProbeFailurePolicy.UNSUPPORTED`; rejected non-finite
+  `ModelProbeSummary.value` floats; and added optional run/timeline/process,
+  node, rank, device, metadata, and provenance fields to checkpoint
+  save/restore/prune result records.
+- Tests or docs updated: checkpoint, probe, Stage 15 contract, and package
+  export tests cover the refined public behavior and primitive evidence shape.
+- Validation rerun: targeted Phase 2 unit/contract/package command passed with
+  93 tests; final `git diff --check` evidence is recorded in the handoff.
+
+## Result
+
+- Blocker resolved: yes.
+- Remaining blocker: none for this blocker cluster.
+- Recommended next gate: commit refinement fix, then continue Phase 2 PR
+  preparation/review.
+
+## Files Changed
+
+- `src/rphys/training/checkpoint.py`
+- `src/rphys/training/probes.py`
+- `src/rphys/training/__init__.py`
+- `tests/unit/rphys/training/test_checkpoint.py`
+- `tests/unit/rphys/training/test_probes.py`
+- `tests/contracts/test_stage15_probe_checkpoint_policy_contract.py`
+- `tests/package/test_import.py`
+- `docs/roadmap/stage-15/phases/probe-checkpoint-policy-contracts.md`
