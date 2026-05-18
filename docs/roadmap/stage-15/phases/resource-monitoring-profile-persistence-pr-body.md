@@ -13,7 +13,8 @@ contracts:
   bounded queueing, flush scopes, in-memory backend, failure records, and
   monotonic flush sequence evidence.
 - Extends `TrainingProfile` and `TrainingProfileRecorder` additively with
-  resource traces, monitor lifecycle records, and writer result summaries.
+  resource traces, monitor lifecycle records, writer append/drop evidence, and
+  writer flush summaries.
 - Updates package exports, Stage 15 contracts, import-boundary coverage, and
   focused unit tests.
 
@@ -27,6 +28,11 @@ contracts:
 - Unavailable, ambiguous, disabled, dropped, monitor failure, writer failure,
   and backpressure cases are represented as inspectable records instead of
   logs or silent omissions.
+- Resource traces reject ambiguous mixed attribution and recorder-created
+  traces are keyed by metric, unit, probe, series, run/timeline, clock,
+  process, node, rank, device, and resource attribution.
+- Writer append/drop results can be persisted in `TrainingProfile`, and flush
+  summaries carry queue drops since the previous flush result.
 - Cross-process/rank/device timestamp comparison remains descriptive unless
   downstream code supplies clock-origin/alignment evidence.
 - No real hardware probes, engine hooks, durable file format, artifact store,

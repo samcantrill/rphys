@@ -7,6 +7,7 @@ import pytest
 from rphys.errors import RemotePhysTrainingError
 from rphys.training import (
     ProfileSpanSummary,
+    ProfileWriterAppendResult,
     ProfileWriterFlushResult,
     ProfileWriterFlushScope,
     ProfileWriterResultStatus,
@@ -263,6 +264,74 @@ def test_resource_sample_and_trace_enforce_contract_and_ordering() -> None:
         )
     assert decreasing_timestamp.value.context["expected"] == "non-decreasing timestamp"
 
+    wrong_device = ResourceSample(
+        ResourceMetricKind.CPU_UTILIZATION,
+        metric_name="cpu_utilization",
+        unit=ResourceMetricUnit.PERCENT,
+        value=15.2,
+        status=ResourceSampleStatus.AVAILABLE,
+        timestamp=1.3,
+        sequence_id=3,
+        source_probe_id="fake-cpu",
+        device_id="cpu:1",
+    )
+    device_trace = ResourceTrace(
+        ResourceMetricKind.CPU_UTILIZATION,
+        metric_name="cpu_utilization",
+        unit=ResourceMetricUnit.PERCENT,
+        source_probe_id="fake-cpu",
+        samples=(
+            ResourceSample(
+                ResourceMetricKind.CPU_UTILIZATION,
+                metric_name="cpu_utilization",
+                unit=ResourceMetricUnit.PERCENT,
+                value=14.2,
+                status=ResourceSampleStatus.AVAILABLE,
+                timestamp=1.2,
+                sequence_id=2,
+                source_probe_id="fake-cpu",
+                device_id="cpu:0",
+            ),
+        ),
+        device_id="cpu:0",
+    )
+    with pytest.raises(RemotePhysTrainingError) as mixed_device:
+        device_trace.append(wrong_device)
+    assert mixed_device.value.context["field"] == "device_id"
+
+    with pytest.raises(RemotePhysTrainingError) as mixed_rank:
+        ResourceTrace(
+            ResourceMetricKind.CPU_UTILIZATION,
+            metric_name="cpu_utilization",
+            unit=ResourceMetricUnit.PERCENT,
+            source_probe_id="fake-cpu",
+            samples=(
+                ResourceSample(
+                    ResourceMetricKind.CPU_UTILIZATION,
+                    metric_name="cpu_utilization",
+                    unit=ResourceMetricUnit.PERCENT,
+                    value=14.2,
+                    status=ResourceSampleStatus.AVAILABLE,
+                    timestamp=1.2,
+                    sequence_id=2,
+                    source_probe_id="fake-cpu",
+                    local_rank=0,
+                ),
+                ResourceSample(
+                    ResourceMetricKind.CPU_UTILIZATION,
+                    metric_name="cpu_utilization",
+                    unit=ResourceMetricUnit.PERCENT,
+                    value=15.2,
+                    status=ResourceSampleStatus.AVAILABLE,
+                    timestamp=1.3,
+                    sequence_id=3,
+                    source_probe_id="fake-cpu",
+                    local_rank=1,
+                ),
+            ),
+        )
+    assert mixed_rank.value.context["field"] == "local_rank"
+
     with pytest.raises(RemotePhysTrainingError):
         ResourceSample(
             ResourceMetricKind.CPU_UTILIZATION,
@@ -474,6 +543,7 @@ def test_async_training_profile_writer_tracks_append_and_flush_contract() -> Non
     assert flush.status is ProfileWriterResultStatus.COMPLETED
     assert flush.requested_count == 2
     assert flush.written_count == 2
+    assert flush.dropped_count == 1
     assert backend.written_records == ("b", "c")
     assert writer.queue_state.queue_depth == 0
 
@@ -575,6 +645,17 @@ def test_profile_recorder_collects_resource_traces_and_writer_lifecycle_records(
         sequence_id=1,
         source_probe_id="fake-cpu",
     )
+    cpu_sample_device_1 = ResourceSample(
+        metric_kind=ResourceMetricKind.CPU_UTILIZATION,
+        metric_name="cpu_utilization",
+        unit=ResourceMetricUnit.PERCENT,
+        value=17.0,
+        status=ResourceSampleStatus.AVAILABLE,
+        timestamp=1.2,
+        sequence_id=2,
+        source_probe_id="fake-cpu",
+        device_id="cpu:1",
+    )
     mem_sample = ResourceSample(
         metric_kind=ResourceMetricKind.HOST_MEMORY_BYTES,
         metric_name="host_memory_bytes",
@@ -596,6 +677,16 @@ def test_profile_recorder_collects_resource_traces_and_writer_lifecycle_records(
         dropped_count=0,
         remaining_count=0,
     )
+    writer_append_result = ProfileWriterAppendResult(
+        ProfileWriterResultStatus.REJECTED,
+        sequence_id=1,
+        timestamp=1.1,
+        queue_depth=1,
+        queue_capacity=1,
+        accepted_count=1,
+        dropped_count=1,
+        failure_reason="buffer_full",
+    )
     monitor_record = ResourceMonitorLifecycleRecord(
         ResourceMonitorLifecycleEvent.CONFIGURED,
         sequence_id=0,
@@ -606,15 +697,20 @@ def test_profile_recorder_collects_resource_traces_and_writer_lifecycle_records(
     recorder = TrainingProfileRecorder()
     recorder.record_resource_sample(cpu_sample)
     recorder.record_resource_sample(cpu_sample_2)
+    recorder.record_resource_sample(cpu_sample_device_1)
     recorder.record_resource_sample(mem_sample)
+    recorder.record_writer_result(writer_append_result)
     recorder.record_writer_result(writer_result)
     recorder.record_monitor_lifecycle_record(monitor_record)
 
     snapshot = recorder.snapshot()
     cpu_traces = snapshot.resource_traces_for(metric_kind=ResourceMetricKind.CPU_UTILIZATION)
 
-    assert len(snapshot.resource_traces) == 2
-    assert len(cpu_traces) == 1
+    assert len(snapshot.resource_traces) == 3
+    assert len(cpu_traces) == 2
     assert len(cpu_traces[0].samples) == 2
+    assert cpu_traces[1].device_id == "cpu:1"
+    assert len(cpu_traces[1].samples) == 1
     assert snapshot.monitor_lifecycle_records[0] is monitor_record
-    assert snapshot.writer_results[0] is writer_result
+    assert snapshot.writer_results[0] is writer_append_result
+    assert snapshot.writer_results[1] is writer_result

@@ -594,7 +594,12 @@ git diff --check
   made monitor/writer clock failures explicit instead of falling back to
   wall-clock timestamps, passed monitor attribution into fake probe samples,
   recorded probe failures as monitor lifecycle evidence, and aligned bounded
-  buffer accepted counts with actual enqueues.
+  buffer accepted counts with actual enqueues. PR-review blocker resolution
+  additionally made trace attribution coherent across metric name, unit,
+  run/timeline, clock, process, node, rank, device, and resource fields;
+  split recorder traces by the same key; made writer append/drop lifecycle
+  results attachable to `TrainingProfile`; and carried queue drops into writer
+  flush summaries.
 - Pre-submit blocker gate: implementation completed with no new blockers
 - PR preparation: waiting for maintainer workflow; no PR prepared in this phase
   handoff context

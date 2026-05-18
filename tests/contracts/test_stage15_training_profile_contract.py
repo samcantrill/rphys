@@ -4,6 +4,7 @@ from dataclasses import asdict
 
 from rphys.training import (
     ProfileSpanSummary,
+    ProfileWriterAppendResult,
     ProfileWriterFlushResult,
     ProfileWriterFlushScope,
     ProfileWriterResultStatus,
@@ -104,14 +105,24 @@ def test_stage15_training_profile_records_are_immutable_and_tuple_backed() -> No
             ),
         ),
         writer_results=(
+            ProfileWriterAppendResult(
+                ProfileWriterResultStatus.REJECTED,
+                sequence_id=0,
+                timestamp=0.9,
+                queue_depth=1,
+                queue_capacity=1,
+                accepted_count=1,
+                dropped_count=1,
+                failure_reason="buffer_full",
+            ),
             ProfileWriterFlushResult(
                 ProfileWriterFlushScope.MANUAL,
                 ProfileWriterResultStatus.COMPLETED,
-                sequence_id=0,
+                sequence_id=1,
                 timestamp=1.0,
                 requested_count=1,
                 written_count=1,
-                dropped_count=0,
+                dropped_count=1,
                 remaining_count=0,
             ),
         ),
@@ -124,6 +135,8 @@ def test_stage15_training_profile_records_are_immutable_and_tuple_backed() -> No
     assert isinstance(profile.resource_traces, tuple)
     assert isinstance(profile.monitor_lifecycle_records, tuple)
     assert isinstance(profile.writer_results, tuple)
+    assert profile.writer_results[0].dropped_count == 1
+    assert profile.writer_results[1].dropped_count == 1
     assert profile.decisions == ("decision-a",)
 
     inspected = asdict(profile)

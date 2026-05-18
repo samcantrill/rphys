@@ -1106,53 +1106,102 @@ class ResourceTrace:
         object.__setattr__(self, "samples", samples_tuple)
         object.__setattr__(
             self,
+            "series_key",
+            self._coerce_samples_value(
+                coerce_optional_non_empty_string(series_key, owner="ResourceTrace", field="series_key"),
+                samples_tuple,
+                "series_key",
+            ),
+        )
+        object.__setattr__(
+            self,
             "run_id",
-            _coerce_resource_scope_string(run_id, self._coerce_samples_value(samples_tuple, "run_id"), owner="ResourceTrace", field="run_id"),
+            self._coerce_samples_value(
+                coerce_optional_non_empty_string(run_id, owner="ResourceTrace", field="run_id"),
+                samples_tuple,
+                "run_id",
+            ),
         )
         object.__setattr__(
             self,
             "timeline_id",
-            _coerce_resource_scope_string(timeline_id, self._coerce_samples_value(samples_tuple, "timeline_id"), owner="ResourceTrace", field="timeline_id"),
+            self._coerce_samples_value(
+                coerce_optional_non_empty_string(timeline_id, owner="ResourceTrace", field="timeline_id"),
+                samples_tuple,
+                "timeline_id",
+            ),
         )
         object.__setattr__(
             self,
             "clock_name",
-            coerce_optional_non_empty_string(clock_name, owner="ResourceTrace", field="clock_name"),
+            self._coerce_samples_value(
+                coerce_optional_non_empty_string(clock_name, owner="ResourceTrace", field="clock_name"),
+                samples_tuple,
+                "clock_name",
+            ),
         )
         object.__setattr__(
             self,
             "clock_origin",
-            coerce_optional_non_empty_string(clock_origin, owner="ResourceTrace", field="clock_origin"),
+            self._coerce_samples_value(
+                coerce_optional_non_empty_string(clock_origin, owner="ResourceTrace", field="clock_origin"),
+                samples_tuple,
+                "clock_origin",
+            ),
         )
         object.__setattr__(
             self,
             "process_id",
-            _coerce_optional_non_negative_int(process_id, owner="ResourceTrace", field="process_id"),
+            self._coerce_samples_value(
+                _coerce_optional_non_negative_int(process_id, owner="ResourceTrace", field="process_id"),
+                samples_tuple,
+                "process_id",
+            ),
         )
         object.__setattr__(
             self,
             "node_id",
-            coerce_optional_non_empty_string(node_id, owner="ResourceTrace", field="node_id"),
+            self._coerce_samples_value(
+                coerce_optional_non_empty_string(node_id, owner="ResourceTrace", field="node_id"),
+                samples_tuple,
+                "node_id",
+            ),
         )
         object.__setattr__(
             self,
             "local_rank",
-            _coerce_optional_non_negative_int(local_rank, owner="ResourceTrace", field="local_rank"),
+            self._coerce_samples_value(
+                _coerce_optional_non_negative_int(local_rank, owner="ResourceTrace", field="local_rank"),
+                samples_tuple,
+                "local_rank",
+            ),
         )
         object.__setattr__(
             self,
             "global_rank",
-            _coerce_optional_non_negative_int(global_rank, owner="ResourceTrace", field="global_rank"),
+            self._coerce_samples_value(
+                _coerce_optional_non_negative_int(global_rank, owner="ResourceTrace", field="global_rank"),
+                samples_tuple,
+                "global_rank",
+            ),
         )
         object.__setattr__(
             self,
             "device_id",
-            coerce_optional_non_empty_string(device_id, owner="ResourceTrace", field="device_id"),
+            self._coerce_samples_value(
+                coerce_optional_non_empty_string(device_id, owner="ResourceTrace", field="device_id"),
+                samples_tuple,
+                "device_id",
+            ),
         )
         object.__setattr__(
             self,
             "resource_id",
-            coerce_optional_non_empty_string(resource_id, owner="ResourceTrace", field="resource_id"),
+            self._coerce_samples_value(
+                coerce_optional_non_empty_string(resource_id, owner="ResourceTrace", field="resource_id"),
+                samples_tuple,
+                "resource_id",
+            ),
         )
         object.__setattr__(
             self,
@@ -1166,20 +1215,32 @@ class ResourceTrace:
         )
 
     @staticmethod
-    def _coerce_samples_value(samples: tuple[ResourceSample, ...], field: str) -> str | None:
+    def _coerce_samples_value(
+        explicit: object | None,
+        samples: tuple[ResourceSample, ...],
+        field: str,
+    ) -> object | None:
         if not samples:
-            return None
-        values = {getattr(sample, field) for sample in samples}
-        if len(values) == 1:
-            return next(iter(values))
-        if all(value is not None for value in values):
+            return explicit
+        values = tuple(dict.fromkeys(getattr(sample, field) for sample in samples if getattr(sample, field) is not None))
+        if len(values) > 1:
             raise RemotePhysTrainingError(
                 "ResourceTrace samples must share one trace-level attribution value.",
                 owner="ResourceTrace",
                 field=field,
                 expected="single value",
+                actual=values,
             )
-        return None
+        inferred = values[0] if values else None
+        if explicit is not None and inferred is not None and explicit != inferred:
+            raise RemotePhysTrainingError(
+                "ResourceTrace explicit attribution must match sample attribution.",
+                owner="ResourceTrace",
+                field=field,
+                expected=explicit,
+                actual=inferred,
+            )
+        return explicit if explicit is not None else inferred
 
     def _validate_samples(self, samples: tuple[ResourceSample, ...]) -> None:
         previous: ResourceSample | None = None
@@ -2208,6 +2269,7 @@ class AsyncTrainingProfileWriter:
         )
         self._sequence_id = 0
         self._flush_sequence_id = 0
+        self._reported_dropped_count = 0
         self._flush_results: tuple[ProfileWriterFlushResult, ...] = ()
         self._append_results: tuple[ProfileWriterAppendResult, ...] = ()
         if flush_cadence_seconds is not None:
@@ -2299,18 +2361,21 @@ class AsyncTrainingProfileWriter:
         sequence_id = self._flush_sequence_id
         self._flush_sequence_id += 1
         timestamp = self._next_timestamp()
+        dropped_count = self._dropped_since_last_flush_result()
         if not self._enabled or self._backend is None:
-            return ProfileWriterFlushResult(
+            result = ProfileWriterFlushResult(
                 scope,
                 ProfileWriterResultStatus.DISABLED,
                 sequence_id=sequence_id,
                 timestamp=timestamp,
                 requested_count=0,
                 written_count=0,
-                dropped_count=0,
+                dropped_count=dropped_count,
                 remaining_count=self._buffer.queue_depth,
                 failure_reason="writer_disabled",
             )
+            self._reported_dropped_count = self._buffer.dropped_count
+            return result
 
         requested = self._buffer.queue_depth
         if requested == 0:
@@ -2321,65 +2386,77 @@ class AsyncTrainingProfileWriter:
                 timestamp=timestamp,
                 requested_count=0,
                 written_count=0,
-                dropped_count=0,
+                dropped_count=dropped_count,
                 remaining_count=0,
             )
+            self._reported_dropped_count = self._buffer.dropped_count
             return result
 
         pending = self._buffer.items()
         try:
             written = self._backend.write(pending, scope=scope, sequence_id=sequence_id)
         except Exception as exc:
-            return ProfileWriterFlushResult(
+            result = ProfileWriterFlushResult(
                 scope,
                 ProfileWriterResultStatus.FAILED,
                 sequence_id=sequence_id,
                 timestamp=timestamp,
                 requested_count=requested,
                 written_count=0,
-                dropped_count=0,
+                dropped_count=dropped_count,
                 remaining_count=requested,
                 failure_reason=_exception_reason(exc),
                 retry_requested=self._enable_retry,
             )
+            self._reported_dropped_count = self._buffer.dropped_count
+            return result
 
         if isinstance(written, bool) or not isinstance(written, int) or written < 0:
-            return ProfileWriterFlushResult(
+            result = ProfileWriterFlushResult(
                 scope,
                 ProfileWriterResultStatus.FAILED,
                 sequence_id=sequence_id,
                 timestamp=timestamp,
                 requested_count=requested,
                 written_count=0,
-                dropped_count=0,
+                dropped_count=dropped_count,
                 remaining_count=requested,
                 failure_reason="invalid_write_count",
             )
+            self._reported_dropped_count = self._buffer.dropped_count
+            return result
 
         if written != requested:
-            return ProfileWriterFlushResult(
+            result = ProfileWriterFlushResult(
                 scope,
                 ProfileWriterResultStatus.FAILED,
                 sequence_id=sequence_id,
                 timestamp=timestamp,
                 requested_count=requested,
                 written_count=written,
-                dropped_count=0,
+                dropped_count=dropped_count,
                 remaining_count=requested,
                 failure_reason="partial_or_non_monotonic_write_count",
             )
+            self._reported_dropped_count = self._buffer.dropped_count
+            return result
 
         self._buffer.clear()
-        return ProfileWriterFlushResult(
+        result = ProfileWriterFlushResult(
             scope,
             ProfileWriterResultStatus.COMPLETED,
             sequence_id=sequence_id,
             timestamp=timestamp,
             requested_count=requested,
             written_count=written,
-            dropped_count=0,
+            dropped_count=dropped_count,
             remaining_count=0,
         )
+        self._reported_dropped_count = self._buffer.dropped_count
+        return result
+
+    def _dropped_since_last_flush_result(self) -> int:
+        return max(0, self._buffer.dropped_count - self._reported_dropped_count)
 
     def _next_timestamp(self) -> float:
         try:
@@ -2404,7 +2481,7 @@ class TrainingProfile:
     unavailable_spans: tuple[UnavailableProfileProbe, ...]
     resource_traces: tuple[ResourceTrace, ...]
     monitor_lifecycle_records: tuple[ResourceMonitorLifecycleRecord, ...]
-    writer_results: tuple[ProfileWriterFlushResult, ...]
+    writer_results: tuple[ProfileWriterAppendResult | ProfileWriterFlushResult, ...]
     decisions: tuple[str, ...]
 
     def __init__(
@@ -2415,7 +2492,7 @@ class TrainingProfile:
         unavailable_spans: Iterable[UnavailableProfileProbe] = (),
         resource_traces: Iterable[ResourceTrace] = (),
         monitor_lifecycle_records: Iterable[ResourceMonitorLifecycleRecord] = (),
-        writer_results: Iterable[ProfileWriterFlushResult] = (),
+        writer_results: Iterable[ProfileWriterAppendResult | ProfileWriterFlushResult] = (),
         decisions: Iterable[str] = (),
     ) -> None:
         object.__setattr__(
@@ -2466,9 +2543,9 @@ class TrainingProfile:
         object.__setattr__(
             self,
             "writer_results",
-            _coerce_records(
+            _coerce_records_of_types(
                 writer_results,
-                ProfileWriterFlushResult,
+                (ProfileWriterAppendResult, ProfileWriterFlushResult),
                 owner="TrainingProfile",
                 field="writer_results",
             ),
@@ -2560,7 +2637,7 @@ class TrainingProfileRecorder:
         self._unavailable_spans: tuple[UnavailableProfileProbe, ...] = ()
         self._resource_traces: tuple[ResourceTrace, ...] = ()
         self._monitor_lifecycle_records: tuple[ResourceMonitorLifecycleRecord, ...] = ()
-        self._writer_results: tuple[ProfileWriterFlushResult, ...] = ()
+        self._writer_results: tuple[ProfileWriterAppendResult | ProfileWriterFlushResult, ...] = ()
         self._decisions: tuple[str, ...] = ()
 
     def record_event(self, event: TrainingEvent) -> None:
@@ -2677,13 +2754,13 @@ class TrainingProfileRecorder:
             )
         self._monitor_lifecycle_records += (record,)
 
-    def record_writer_result(self, result: ProfileWriterFlushResult) -> None:
-        if not isinstance(result, ProfileWriterFlushResult):
+    def record_writer_result(self, result: ProfileWriterAppendResult | ProfileWriterFlushResult) -> None:
+        if not isinstance(result, (ProfileWriterAppendResult, ProfileWriterFlushResult)):
             raise RemotePhysTrainingError(
-                "TrainingProfileRecorder.record_writer_result expects a ProfileWriterFlushResult.",
+                "TrainingProfileRecorder.record_writer_result expects a profile writer result.",
                 owner="TrainingProfileRecorder",
                 field="result",
-                expected="ProfileWriterFlushResult",
+                expected="ProfileWriterAppendResult | ProfileWriterFlushResult",
                 actual=type(result).__name__,
             )
         self._writer_results += (result,)
@@ -2716,17 +2793,37 @@ class TrainingProfileRecorder:
         if isinstance(sample_or_trace, ResourceTrace):
             return (
                 sample_or_trace.metric_kind,
+                sample_or_trace.metric_name,
+                sample_or_trace.unit,
                 sample_or_trace.source_probe_id,
                 sample_or_trace.series_key,
                 sample_or_trace.run_id,
                 sample_or_trace.timeline_id,
+                sample_or_trace.clock_name,
+                sample_or_trace.clock_origin,
+                sample_or_trace.process_id,
+                sample_or_trace.node_id,
+                sample_or_trace.local_rank,
+                sample_or_trace.global_rank,
+                sample_or_trace.device_id,
+                sample_or_trace.resource_id,
             )
         return (
             sample_or_trace.metric_kind,
+            sample_or_trace.metric_name,
+            sample_or_trace.unit,
             sample_or_trace.source_probe_id,
             sample_or_trace.series_key,
             sample_or_trace.run_id,
             sample_or_trace.timeline_id,
+            sample_or_trace.clock_name,
+            sample_or_trace.clock_origin,
+            sample_or_trace.process_id,
+            sample_or_trace.node_id,
+            sample_or_trace.local_rank,
+            sample_or_trace.global_rank,
+            sample_or_trace.device_id,
+            sample_or_trace.resource_id,
         )
 
     def _with_event_log_evidence(
@@ -2980,18 +3077,6 @@ def _coerce_optional_non_negative_int(
     return coerce_non_negative_int(value, owner=owner, field=field)
 
 
-def _coerce_resource_scope_string(
-    explicit: str | None,
-    inferred: str | None,
-    *,
-    owner: str,
-    field: str,
-) -> str | None:
-    if explicit is not None:
-        return _coerce_name(explicit, owner=owner, field=field)
-    return inferred
-
-
 def _coerce_records(
     values: Iterable[object],
     expected_type: type,
@@ -3017,6 +3102,39 @@ def _coerce_records(
                 owner=owner,
                 field=field,
                 expected=expected_type.__name__,
+                index=index,
+                actual=type(record).__name__,
+            )
+    return records
+
+
+def _coerce_records_of_types(
+    values: Iterable[object],
+    expected_types: tuple[type, ...],
+    *,
+    owner: str,
+    field: str,
+) -> tuple[object, ...]:
+    try:
+        records = tuple(values)
+    except TypeError as exc:
+        expected = " | ".join(expected_type.__name__ for expected_type in expected_types)
+        raise RemotePhysTrainingError(
+            f"{owner} {field} must be iterable.",
+            owner=owner,
+            field=field,
+            expected=f"iterable of {expected}",
+            actual=type(values).__name__,
+        ) from exc
+
+    expected = " | ".join(expected_type.__name__ for expected_type in expected_types)
+    for index, record in enumerate(records):
+        if not isinstance(record, expected_types):
+            raise RemotePhysTrainingError(
+                f"{owner} {field} contains an invalid record.",
+                owner=owner,
+                field=field,
+                expected=expected,
                 index=index,
                 actual=type(record).__name__,
             )
