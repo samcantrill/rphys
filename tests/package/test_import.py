@@ -328,6 +328,11 @@ STAGE_12_TRAINING_EXPORTS = [
     "TrainingPipelineStage",
     "TrainingProbe",
     "UnavailableProbeEvidence",
+    "ExperimentTierName",
+    "ExperimentTierSpec",
+    "RestartCompatibilityStatus",
+    "RestartState",
+    "default_experiment_tiers",
     "emit_training_event",
     "run_train",
 ]
@@ -408,6 +413,13 @@ STAGE_12_TRAINING_MODULES = {
         "TrainingResult",
         "TrainingStatus",
         "TrainingStepSummary",
+    ],
+    "rphys.training.tiers": [
+        "ExperimentTierName",
+        "ExperimentTierSpec",
+        "RestartCompatibilityStatus",
+        "RestartState",
+        "default_experiment_tiers",
     ],
     "rphys.training.checkpoint": [
         "CheckpointCatalog",

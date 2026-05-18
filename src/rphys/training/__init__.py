@@ -98,6 +98,13 @@ from .results import (
     TrainingStatus,
     TrainingStepSummary,
 )
+from .tiers import (
+    ExperimentTierName,
+    ExperimentTierSpec,
+    RestartCompatibilityStatus,
+    RestartState,
+    default_experiment_tiers,
+)
 
 __all__ = [
     "ProfileSummary",
@@ -191,6 +198,11 @@ __all__ = [
     "TrainingPipelineStage",
     "TrainingProbe",
     "UnavailableProbeEvidence",
+    "ExperimentTierName",
+    "ExperimentTierSpec",
+    "RestartCompatibilityStatus",
+    "RestartState",
+    "default_experiment_tiers",
     "emit_training_event",
     "run_train",
 ]

@@ -96,6 +96,7 @@ LIGHTWEIGHT_IMPORTS = [
     "rphys.training.plan",
     "rphys.training.profiling",
     "rphys.training.results",
+    "rphys.training.tiers",
 ]
 
 STAGE_12_LEARNING_IMPORTS = [
@@ -120,6 +121,7 @@ STAGE_12_TRAINING_IMPORTS = [
     "rphys.training.policies",
     "rphys.training.probes",
     "rphys.training.results",
+    "rphys.training.tiers",
 ]
 
 STAGE_13_SCAFFOLD_IMPORTS = [
