@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
+from math import isfinite
 from typing import Protocol, runtime_checkable
 
 from rphys.errors import RemotePhysTrainingError
@@ -21,6 +22,7 @@ __all__ = [
     "TrainingCallback",
     "TrainingEvent",
     "TrainingEventPhase",
+    "TrainingEventLog",
     "TrainingEventSink",
     "emit_training_event",
 ]
@@ -35,6 +37,14 @@ class TrainingEventPhase(StrEnum):
     LOOP_COMPLETED = "loop_completed"
     LOOP_FAILED = "loop_failed"
     EXTERNAL_SUMMARY = "external_summary"
+    SETUP = "setup"
+    TEARDOWN = "teardown"
+    DATA_WAIT = "data_wait"
+    DEVICE_TRANSFER = "device_transfer"
+    VALIDATION = "validation"
+    CHECKPOINT = "checkpoint"
+    PROFILING_SUMMARY = "profiling_summary"
+    STAGE = "stage"
 
     @classmethod
     def coerce(cls, value: "TrainingEventPhase | str") -> "TrainingEventPhase":
@@ -78,6 +88,17 @@ class TrainingEvent:
     split: str | None
     metadata: PrimitiveMapping
     provenance: PrimitiveMapping
+    run_id: str | None
+    timeline_id: str | None
+    sequence_id: int | None
+    timestamp: float | None
+    clock_name: str | None
+    clock_origin: str | None
+    process_id: int | None
+    node_id: str | None
+    local_rank: int | None
+    global_rank: int | None
+    device_id: str | None
 
     def __init__(
         self,
@@ -89,6 +110,17 @@ class TrainingEvent:
         step_index: int | None = None,
         batch_index: int | None = None,
         split: str | None = None,
+        run_id: str | None = None,
+        timeline_id: str | None = None,
+        sequence_id: int | None = None,
+        timestamp: float | int | None = None,
+        clock_name: str | None = None,
+        clock_origin: str | None = None,
+        process_id: int | None = None,
+        node_id: str | None = None,
+        local_rank: int | None = None,
+        global_rank: int | None = None,
+        device_id: str | None = None,
         metadata: Mapping[object, object] | None = None,
         provenance: Mapping[object, object] | None = None,
     ) -> None:
@@ -125,6 +157,105 @@ class TrainingEvent:
         )
         object.__setattr__(
             self,
+            "run_id",
+            coerce_optional_non_empty_string(
+                run_id,
+                owner="TrainingEvent",
+                field="run_id",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "timeline_id",
+            coerce_optional_non_empty_string(
+                timeline_id,
+                owner="TrainingEvent",
+                field="timeline_id",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "sequence_id",
+            _coerce_optional_non_negative_int(
+                sequence_id,
+                owner="TrainingEvent",
+                field="sequence_id",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "timestamp",
+            _coerce_optional_timestamp(
+                timestamp,
+                owner="TrainingEvent",
+                field="timestamp",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "clock_name",
+            coerce_optional_non_empty_string(
+                clock_name,
+                owner="TrainingEvent",
+                field="clock_name",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "clock_origin",
+            coerce_optional_non_empty_string(
+                clock_origin,
+                owner="TrainingEvent",
+                field="clock_origin",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "process_id",
+            _coerce_optional_non_negative_int(
+                process_id,
+                owner="TrainingEvent",
+                field="process_id",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "node_id",
+            coerce_optional_non_empty_string(
+                node_id,
+                owner="TrainingEvent",
+                field="node_id",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "local_rank",
+            _coerce_optional_non_negative_int(
+                local_rank,
+                owner="TrainingEvent",
+                field="local_rank",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "global_rank",
+            _coerce_optional_non_negative_int(
+                global_rank,
+                owner="TrainingEvent",
+                field="global_rank",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "device_id",
+            coerce_optional_non_empty_string(
+                device_id,
+                owner="TrainingEvent",
+                field="device_id",
+            ),
+        )
+        object.__setattr__(
+            self,
             "metadata",
             freeze_primitive_mapping(
                 metadata,
@@ -141,6 +272,88 @@ class TrainingEvent:
                 field="provenance",
             ),
         )
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class TrainingEventLog:
+    """Append-only collection of timeline-scoped primitive events."""
+
+    timeline_id: str
+    run_id: str | None
+    events: tuple[TrainingEvent, ...]
+
+    def __init__(
+        self,
+        timeline_id: str,
+        *,
+        run_id: str | None = None,
+        events: Iterable[TrainingEvent] = (),
+    ) -> None:
+        object.__setattr__(
+            self,
+            "timeline_id",
+            _coerce_name(
+                timeline_id,
+                owner="TrainingEventLog",
+                field="timeline_id",
+            ),
+        )
+        object.__setattr__(self, "run_id", coerce_optional_non_empty_string(run_id, owner="TrainingEventLog", field="run_id"))
+        event_list = _coerce_event_records(
+            events,
+            timeline_id=self.timeline_id,
+            run_id=self.run_id,
+            owner="TrainingEventLog",
+            field="events",
+        )
+        object.__setattr__(self, "events", event_list)
+        if self.run_id is None:
+            run_ids = {event.run_id for event in event_list if event.run_id is not None}
+            if len(run_ids) > 1:
+                raise RemotePhysTrainingError(
+                    "TrainingEventLog run ids must be consistent.",
+                    owner="TrainingEventLog",
+                    field="events",
+                )
+            object.__setattr__(self, "run_id", next(iter(run_ids), None))
+
+    def append(self, event: TrainingEvent) -> "TrainingEventLog":
+        if not isinstance(event, TrainingEvent):
+            raise RemotePhysTrainingError(
+                "TrainingEventLog.append expects a TrainingEvent.",
+                owner="TrainingEventLog",
+                field="event",
+                expected="TrainingEvent",
+                actual=type(event).__name__,
+            )
+        if event.timeline_id is not None and event.timeline_id != self.timeline_id:
+            raise RemotePhysTrainingError(
+                "TrainingEventLog timeline_id must match appended event timeline_id when provided.",
+                owner="TrainingEventLog",
+                field="event",
+                timeline_id=self.timeline_id,
+                event_timeline_id=event.timeline_id,
+            )
+        if self.run_id is None:
+            run_id = event.run_id
+        else:
+            if event.run_id is not None and event.run_id != self.run_id:
+                raise RemotePhysTrainingError(
+                    "TrainingEventLog run_id does not match appended event run_id.",
+                    owner="TrainingEventLog",
+                    field="event",
+                    run_id=self.run_id,
+                    event_run_id=event.run_id,
+                )
+            run_id = self.run_id
+        return TrainingEventLog(
+            self.timeline_id,
+            run_id=run_id,
+            events=self.events + (event,),
+        )
+
+    def events_for_timeline(self) -> tuple[TrainingEvent, ...]:
+        return self.events
 
 
 @runtime_checkable
@@ -173,6 +386,18 @@ def emit_training_event(
         _require_callback(callback).on_event(event)
 
 
+def _coerce_name(value: object, *, owner: str, field: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise RemotePhysTrainingError(
+            f"{owner} {field} must be a non-empty string.",
+            owner=owner,
+            field=field,
+            expected="non-empty string",
+            actual=type(value).__name__,
+        )
+    return value
+
+
 def _coerce_status(value: object) -> str:
     if not isinstance(value, str) or not value:
         raise RemotePhysTrainingError(
@@ -189,6 +414,112 @@ def _coerce_optional_index(value: int | None, *, field: str) -> int | None:
     if value is None:
         return None
     return coerce_non_negative_int(value, owner="TrainingEvent", field=field)
+
+
+def _coerce_optional_non_negative_int(
+    value: int | None,
+    *,
+    owner: str,
+    field: str,
+) -> int | None:
+    if value is None:
+        return None
+    return coerce_non_negative_int(value, owner=owner, field=field)
+
+
+def _coerce_optional_timestamp(
+    value: float | int | None,
+    *,
+    owner: str,
+    field: str,
+) -> float | None:
+    if value is None:
+        return None
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or value < 0
+        or not isfinite(value)
+    ):
+        raise RemotePhysTrainingError(
+            f"{owner} {field} must be a non-negative number when provided.",
+            owner=owner,
+            field=field,
+            expected="non-negative number | None",
+            actual=type(value).__name__,
+        )
+    return float(value)
+
+
+def _coerce_event_records(
+    values: Iterable[TrainingEvent],
+    *,
+    timeline_id: str,
+    run_id: str | None,
+    owner: str,
+    field: str,
+) -> tuple[TrainingEvent, ...]:
+    try:
+        events = tuple(values)
+    except TypeError as exc:
+        raise RemotePhysTrainingError(
+            f"{owner} {field} must be iterable.",
+            owner=owner,
+            field=field,
+            expected="iterable of TrainingEvent",
+            actual=type(values).__name__,
+        ) from exc
+
+    last_sequence: int | None = None
+    for index, event in enumerate(events):
+        if not isinstance(event, TrainingEvent):
+            raise RemotePhysTrainingError(
+                f"{owner} {field} must contain TrainingEvent records.",
+                owner=owner,
+                field=field,
+                expected="TrainingEvent",
+                index=index,
+                actual=type(event).__name__,
+            )
+        if event.timeline_id is not None and event.timeline_id != timeline_id:
+            raise RemotePhysTrainingError(
+                f"{owner} {field} contains mismatched timeline evidence.",
+                owner=owner,
+                field=field,
+                timeline_id=timeline_id,
+                event_timeline_id=event.timeline_id,
+                index=index,
+            )
+        if run_id is not None and event.run_id is not None and event.run_id != run_id:
+            raise RemotePhysTrainingError(
+                f"{owner} {field} contains mismatched run_id.",
+                owner=owner,
+                field=field,
+                run_id=run_id,
+                event_run_id=event.run_id,
+                index=index,
+            )
+        if event.sequence_id is None:
+            raise RemotePhysTrainingError(
+                f"{owner} {field} entries must include sequence_id.",
+                owner=owner,
+                field="sequence_id",
+                expected="non-negative integer",
+                index=index,
+            )
+        if last_sequence is not None and event.sequence_id <= last_sequence:
+            raise RemotePhysTrainingError(
+                f"{owner} {field} sequence ids must be strictly increasing.",
+                owner=owner,
+                field="sequence_id",
+                expected="strictly increasing non-negative integer",
+                index=index,
+                sequence_id=event.sequence_id,
+                previous_sequence_id=last_sequence,
+            )
+        last_sequence = event.sequence_id
+
+    return events
 
 
 def _require_sink(sink: object) -> TrainingEventSink:
@@ -218,3 +549,4 @@ def _require_callback(callback: object) -> TrainingCallback:
 
 
 TrainingEvent.__hash__ = None  # type: ignore[assignment]
+TrainingEventLog.__hash__ = None  # type: ignore[assignment]

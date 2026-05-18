@@ -5,6 +5,7 @@ from .core import Trainer, TrainingEngine
 from .events import (
     TrainingCallback,
     TrainingEvent,
+    TrainingEventLog,
     TrainingEventPhase,
     TrainingEventSink,
     emit_training_event,
@@ -13,6 +14,8 @@ from .experimental import run_train
 from .plan import TrainingOutputSpec, TrainingPlan
 from .profiling import (
     ProfileSpanSummary,
+    TrainingProfile,
+    TrainingProfileRecorder,
     TrainingProfiler,
     UnavailableProfileProbe,
 )
@@ -28,6 +31,7 @@ from .results import (
 __all__ = [
     "ProfileSummary",
     "ProfileSpanSummary",
+    "TrainingEventLog",
     "NativeTrainingEngine",
     "Trainer",
     "TrainingCallback",
@@ -40,6 +44,8 @@ __all__ = [
     "TrainingOutputSpec",
     "TrainingPlan",
     "TrainingProfiler",
+    "TrainingProfile",
+    "TrainingProfileRecorder",
     "TrainingResult",
     "TrainingStatus",
     "TrainingStepSummary",

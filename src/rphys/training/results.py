@@ -5,12 +5,13 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
-from types import MappingProxyType
 
 from rphys.errors import RemotePhysTrainingError
 from rphys.learning import LoopMode
 
+from .profiling import TrainingProfile
 from ._validation import (
+    FrozenMapping,
     PrimitiveMapping,
     PrimitiveValue,
     coerce_non_negative_int,
@@ -349,6 +350,7 @@ class TrainingResult:
     last_step: TrainingStepSummary | None
     events: tuple[TrainingEventSummary, ...]
     profiles: tuple[ProfileSummary, ...]
+    training_profile: TrainingProfile | None
     monitored_metric: str | None
     checkpoint_id: str | None
     metadata: PrimitiveMapping
@@ -366,9 +368,10 @@ class TrainingResult:
         metrics: Iterable[TrainingMetricSummary] = (),
         last_step: TrainingStepSummary | None = None,
         events: Iterable[TrainingEventSummary] = (),
-        profiles: Iterable[ProfileSummary] = (),
+        profiles: Iterable[ProfileSummary] | None = None,
         monitored_metric: str | None = None,
         checkpoint_id: str | None = None,
+        training_profile: TrainingProfile | None = None,
         metadata: Mapping[object, object] | None = None,
         provenance: Mapping[object, object] | None = None,
     ) -> None:
@@ -413,11 +416,36 @@ class TrainingResult:
             "events",
             _coerce_records(events, TrainingEventSummary, field="events"),
         )
+        if training_profile is not None and not isinstance(training_profile, TrainingProfile):
+            raise RemotePhysTrainingError(
+                "TrainingResult training_profile must be a TrainingProfile or None.",
+                owner="TrainingResult",
+                field="training_profile",
+                expected="TrainingProfile | None",
+                actual=type(training_profile).__name__,
+            )
         object.__setattr__(
             self,
-            "profiles",
-            _coerce_records(profiles, ProfileSummary, field="profiles"),
+            "training_profile",
+            training_profile,
         )
+        if profiles is None:
+            derived_profiles = _coerce_profile_summaries(training_profile) if training_profile is not None else ()
+            object.__setattr__(
+                self,
+                "profiles",
+                derived_profiles,
+            )
+        else:
+            object.__setattr__(
+                self,
+                "profiles",
+                _coerce_records(
+                    profiles,
+                    ProfileSummary,
+                    field="profiles",
+                ),
+            )
         object.__setattr__(
             self,
             "monitored_metric",
@@ -517,7 +545,7 @@ def _coerce_metric_summaries(
                 name=summary.name,
             )
         by_name[summary.name] = summary
-    return MappingProxyType(by_name)
+    return FrozenMapping(by_name)
 
 
 def _coerce_records(
@@ -547,6 +575,21 @@ def _coerce_records(
                 actual=type(record).__name__,
             )
     return records
+
+
+def _coerce_profile_summaries(training_profile: TrainingProfile) -> tuple[ProfileSummary, ...]:
+    summaries: list[ProfileSummary] = []
+    for span in training_profile.as_profile_summaries():
+        summaries.append(
+            ProfileSummary(
+                span.name,
+                status=span.status,
+                duration_seconds=span.duration_seconds,
+                metadata=span.metadata,
+                provenance=span.provenance,
+            )
+        )
+    return tuple(summaries)
 
 
 TrainingMetricSummary.__hash__ = None  # type: ignore[assignment]
