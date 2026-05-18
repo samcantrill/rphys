@@ -1,11 +1,11 @@
 # Roadmap Stage 15 Implementation Plan
 
-Status: in implementation; Phase 1, Phase 2, Phase 3, Phase 4, Phase 5, and Phase 6 merged.
+Status: in implementation; Phase 1, Phase 2, Phase 3, Phase 4, Phase 5, Phase 6, and Phase 7 merged.
 Roadmap version: `v15`
 Planning document: `docs/roadmap/stage-15/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 7 pending
+Current phase: Phase 8 pending
 Blockers: none for implementation-plan approval. Before Lightning and
 fixture-dependent code work, refresh Lightning public API/security evidence and
 verify whether Stage 14 synthetic fixtures are available in the target branch.
@@ -200,7 +200,7 @@ The implementation plan is reshaped into eight phases below.
 | 4 | `native-engine-observability-checkpoints` | merged | `agent/stage-15-training-profiling-p4-native-engine-observability-checkpoints` | [#98](https://github.com/samcantrill/rphys/pull/98) | `src/rphys/training/backend.py`, `plan.py`, `checkpoint.py`, native integration tests | Wire Native setup/teardown, spans, event logs, probes, checkpoint save/restore/prune, restart selectors, async writer, and failure evidence. | Native unit/integration tests, checkpoint retention/catalog tests, fake probe tests. | Native whole-path profile, keep-last checkpoints, rewind two epochs, model/data probes. |
 | 5 | `datapath-pipeline-probes-batch-evidence` | merged | `agent/stage-15-training-profiling-p5-datapath-pipeline-probes-batch-evidence` | [#99](https://github.com/samcantrill/rphys/pull/99) | `src/rphys/datasources/datapath.py`, Stage 9 source/cache/prepared helpers, `src/rphys/ops/batch.py` tests/docs as needed | Add Stage 9 aligned pipeline-stage probe contexts, data-path benchmark/profile producers, data-quality probes, and BatchOperation equivalence evidence. | Data-path contract/integration tests, dataset-stage hook tests, BatchOperation tests, package import checks. | Process-cache-augment-process, cache/prepared-load-augment-process, queue starvation, batch NaNs. |
 | 6 | `lightning-api-policy-foundation` | merged | `agent/stage-15-training-profiling-p6-lightning-api-policy-foundation` | [#100](https://github.com/samcantrill/rphys/pull/100) | `src/rphys/training/lightning.py`, policy mapping tests, import/security tests | Add optional first-class Lightning public API, lazy import/security preflight, shared `TrainingEngine` path, Lightning-native entrypoints, and precision/compile/kernel policy mapping. | Fake-Lightning API tests, policy tests, package import checks, optional installed-Lightning smoke when safe. | `Trainer(engine=LightningTrainingEngine)`, LightningModule/DataModule entrypoint, precision policy mapping. |
-| 7 | `lightning-observability-checkpoint-bridges` | pending | `agent/stage-15-training-profiling-p7-lightning-observability-checkpoint-bridges` | pending | Lightning callback/profiler/checkpoint/probe bridges, fake-Lightning integration tests | Normalize Lightning callbacks, profiler hooks, ranks, checkpoints, retention, restart selectors, model/data probes, resource monitors, and async writer evidence into shared records. | Fake-Lightning bridge tests, checkpoint pruning/restart tests, model/data probe bridge tests, optional acceptance. | Lightning DDP-style rank attribution, best-k and keep-last retention, custom rphys probes under Lightning. |
+| 7 | `lightning-observability-checkpoint-bridges` | merged | `agent/stage-15-training-profiling-p7-lightning-observability-checkpoint-bridges` | [#101](https://github.com/samcantrill/rphys/pull/101) | Lightning callback/profiler/checkpoint/probe bridges, fake-Lightning integration tests | Normalize Lightning callbacks, profiler hooks, ranks, checkpoints, retention, restart selectors, model/data probes, resource monitors, and async writer evidence into shared records. | Fake-Lightning bridge tests, checkpoint pruning/restart tests, model/data probe bridge tests, optional acceptance. | Lightning DDP-style rank attribution, best-k and keep-last retention, custom rphys probes under Lightning. |
 | 8 | `tiers-docs-final-hardening` | pending | `agent/stage-15-training-profiling-p8-tiers-docs-final-hardening` | pending | tier/restart/docs/examples, package exports, final validation evidence | Add descriptive tiers/restart snapshots if not already complete, finalize docs/examples, and run broad validation. | Focused tests plus package/contract/integration/summary/lock/PR checks where feasible. | Debug/smoke/signal/comparison/full tiers, complete Native/Lightning/data-path examples. |
 
 ## Implementation Readiness Blockers
@@ -705,11 +705,11 @@ Workflow path: expanded path
 
 ## Phase 7: Lightning Observability, Checkpoint, And Probe Bridges
 
-Status: pending
+Status: merged
 Slug: `lightning-observability-checkpoint-bridges`
 Branch: `agent/stage-15-training-profiling-p7-lightning-observability-checkpoint-bridges`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-15-training-profiling-p7-lightning-observability-checkpoint-bridges`
-PR: pending
+PR: [#101](https://github.com/samcantrill/rphys/pull/101)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -752,6 +752,16 @@ Workflow path: expanded path
 - Example/demo evidence: fake examples cover rank attribution, recency pruning, `ckpt_path`, probes, resource monitors, and async writer flush.
 - Documentation evidence: docs explain supported public hooks and unsupported private/distributed boundaries.
 - Scientific contract evidence: no raw Lightning timelines, trainer internals, tensors, or checkpoint payloads enter public records.
+- Merge evidence: PR #101 squash-merged to `develop` on 2026-05-18 at
+  `aca3ce955824aaebd6554611f5633fc8c3d2f211`.
+- Validation evidence: focused Phase 7 suite passed (15 tests), optional
+  installed-Lightning preflight reported `absent` so real installed-Lightning
+  acceptance was skipped without importing Lightning, `make test-package`
+  passed (72 tests), `make test-unit` passed (804 tests),
+  `make test-contract` passed (192 tests), `make test-integration` passed
+  (32 tests), `make test-summary` passed (package 72, unit 804, contract 192,
+  integration 32; e2e/acceptance not present), `make validate-pr` passed,
+  `uv lock --check` passed, and `git diff --check` passed.
 
 ## Phase 8: Tiers, Documentation, And Final Hardening
 
