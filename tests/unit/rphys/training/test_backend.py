@@ -16,6 +16,7 @@ from rphys.training import (
     ModelProbeSummary,
     NativeTrainingEngine,
     ProbeCadence,
+    ProbeFailurePolicy,
     ProbeHookPoint,
     ProbeSelector,
     ProbeSelectorMode,
@@ -157,7 +158,7 @@ def test_native_engine_emits_observer_events_and_unavailable_profiles() -> None:
 
 
 def test_native_engine_attaches_stage15_profile_monitors_writers_probes_and_checkpoints() -> None:
-    clock_values = [1.0 + index * 0.1 for index in range(40)]
+    clock_values = [1.0 + index * 0.1 for index in range(120)]
 
     def clock() -> float:
         return clock_values.pop(0)
@@ -298,6 +299,84 @@ def test_native_engine_records_failure_profile_and_teardown_after_observer_failu
     assert "loop_failed" in phases
     assert "teardown" in phases
     assert "RuntimeError" in (result.failure or "")
+
+
+def test_native_engine_marks_successful_run_failed_when_teardown_observer_fails() -> None:
+    class FailingTeardownSink:
+        def record(self, event: TrainingEvent) -> None:
+            if event.phase is TrainingEventPhase.TEARDOWN and event.status == "started":
+                raise RuntimeError("teardown sink failed")
+
+    plan = TrainingPlan(
+        train_batches=(Batch(),),
+        event_sinks=(FailingTeardownSink(),),
+        output_spec=TrainingOutputSpec(objective="objectives/custom.training.total"),
+    )
+
+    result = NativeTrainingEngine().fit(plan, RecordingLearner([]))
+
+    assert result.status is TrainingStatus.FAILED
+    assert "teardown sink failed" in (result.failure or "")
+    assert result.training_profile is not None
+    assert "native_teardown_failed:RuntimeError" in result.training_profile.decisions
+    assert any(event.phase is TrainingEventPhase.LOOP_FAILED for event in result.training_profile.events())
+
+
+def test_native_engine_records_probe_failure_policy_without_failing_run() -> None:
+    class FailingProbe:
+        probe_id = "recording-probe"
+        failure_policy = ProbeFailurePolicy.RECORD_AND_CONTINUE
+        selector = ProbeSelector(ProbeSelectorMode.ALL)
+
+        def collect(self, context: dict[object, object]) -> tuple[object, ...]:
+            raise RuntimeError("probe unavailable")
+
+    plan = TrainingPlan(
+        train_batches=(Batch(),),
+        training_probes=(FailingProbe(),),
+        output_spec=TrainingOutputSpec(objective="objectives/custom.training.total"),
+    )
+
+    result = NativeTrainingEngine().fit(plan, RecordingLearner([]))
+
+    assert result.status is TrainingStatus.COMPLETED
+    assert result.training_profile is not None
+    unavailable = result.training_profile.probe_results_for(probe_id="recording-probe")
+    assert unavailable
+    assert all(item.failure_policy is ProbeFailurePolicy.RECORD_AND_CONTINUE for item in unavailable)
+    assert all(item.reason == "probe_failed" for item in unavailable)
+
+
+def test_native_engine_records_metric_checkpoint_unavailable_evidence() -> None:
+    plan = TrainingPlan(
+        train_batches=(Batch(),),
+        output_spec=TrainingOutputSpec(
+            objective="objectives/custom.training.total",
+            metrics=("metrics/custom.training.mae",),
+        ),
+        checkpoint_save_policy=CheckpointSavePolicy(
+            on_metric=True,
+            metric_name="metrics/custom.training.missing",
+            metric_direction="min",
+            metric_threshold=0.4,
+        ),
+    )
+
+    result = NativeTrainingEngine().fit(plan, RecordingLearner([]))
+
+    assert result.status is TrainingStatus.COMPLETED
+    assert result.training_profile is not None
+    checkpoint_results = result.training_profile.checkpoint_results
+    unavailable = [
+        item
+        for item in checkpoint_results
+        if getattr(item, "reason", None) == "metric_unavailable"
+    ]
+    assert unavailable
+    assert unavailable[0].status is CheckpointResultStatus.UNAVAILABLE
+    assert unavailable[0].metadata["metric_name"] == "metrics/custom.training.missing"
+    assert unavailable[0].metadata["metric_direction"] == "min"
+    assert unavailable[0].metadata["metric_available"] is False
 
 
 def test_native_engine_respects_step_limits_and_builds_contexts() -> None:

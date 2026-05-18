@@ -23,6 +23,7 @@ from .events import TrainingEvent, TrainingEventPhase, emit_training_event
 from ._validation import PrimitiveValue
 from .plan import TrainingPlan
 from .profiling import ProfileSpanSummary, TrainingProfile, TrainingProfileRecorder
+from .probes import ProbeFailurePolicy, ProbeHookPoint, ProbeSelector, ProbeSelectorMode, UnavailableProbeEvidence
 from .results import (
     TrainingMetricSummary,
     TrainingResult,
@@ -123,7 +124,16 @@ class NativeTrainingEngine:
             )
         run.save_checkpoint_if_needed("final", LoopMode.TRAIN, state=state)
         run.emit(LoopMode.TRAIN, TrainingEventPhase.LOOP_COMPLETED, status="completed", split="train")
-        run.teardown(failed=False)
+        teardown_error = run.teardown(failed=False)
+        if teardown_error is not None:
+            _record_teardown_failure(run, LoopMode.TRAIN, state, teardown_error)
+            return state.result(
+                status=TrainingStatus.FAILED,
+                failure=f"{type(teardown_error).__name__}: {teardown_error}",
+                metadata={"validation_step_count": state.validation_step_count},
+                training_profile=run.profile,
+                checkpoint_id=run.last_checkpoint_id,
+            )
         return state.result(
             status=TrainingStatus.COMPLETED,
             metadata={"validation_step_count": state.validation_step_count},
@@ -171,7 +181,15 @@ class NativeTrainingEngine:
             )
         run.save_checkpoint_if_needed("final", mode, state=state)
         run.emit(mode, TrainingEventPhase.LOOP_COMPLETED, status="completed", split=mode.value)
-        run.teardown(failed=False)
+        teardown_error = run.teardown(failed=False)
+        if teardown_error is not None:
+            _record_teardown_failure(run, mode, state, teardown_error)
+            return state.result(
+                status=TrainingStatus.FAILED,
+                failure=f"{type(teardown_error).__name__}: {teardown_error}",
+                training_profile=run.profile,
+                checkpoint_id=run.last_checkpoint_id,
+            )
         return state.result(status=TrainingStatus.COMPLETED, training_profile=run.profile, checkpoint_id=run.last_checkpoint_id)
 
     def _run_epoch(
@@ -319,7 +337,7 @@ class _NativeRun:
         self.collect_monitors()
         self.emit(self.mode, TrainingEventPhase.SETUP, status="completed", split=self.mode.value)
 
-    def teardown(self, *, failed: bool) -> None:
+    def teardown(self, *, failed: bool) -> Exception | None:
         status = "failed" if failed else "completed"
         try:
             self.record_span("native.teardown", mode=self.mode, stage_name="teardown", status=status)
@@ -357,6 +375,8 @@ class _NativeRun:
             )
         except Exception as exc:  # noqa: BLE001 - teardown must not erase prior evidence
             self.recorder.record_decision(f"native_teardown_failed:{type(exc).__name__}")
+            return exc
+        return None
 
     def emit(
         self,
@@ -525,7 +545,35 @@ class _NativeRun:
                 results = tuple(probe.collect(probe_context))
             except Exception as exc:  # noqa: BLE001 - probe policy is represented by returned records
                 self.recorder.record_decision(f"native_probe_failed:{type(exc).__name__}")
-                raise
+                policy = _probe_failure_policy(probe)
+                if policy is ProbeFailurePolicy.FAIL:
+                    raise
+                self.recorder.record_probe_result(
+                    UnavailableProbeEvidence(
+                        _probe_id(probe),
+                        reason="probe_failed",
+                        hook_point=ProbeHookPoint.coerce(hook_point),
+                        selector=_probe_selector(probe),
+                        failure_policy=policy,
+                        run_id=self.run_id,
+                        timeline_id=self.timeline_id,
+                        local_rank=self.plan.local_rank,
+                        global_rank=self.plan.global_rank,
+                        process_id=self.plan.process_id,
+                        node_id=self.plan.node_id,
+                        device_id=self.plan.device_id,
+                        metadata={
+                            "failure_type": type(exc).__name__,
+                            "failure_message": str(exc),
+                            "split": split,
+                            "epoch_index": epoch_index,
+                            "step_index": step_index,
+                            "batch_index": batch_index,
+                        },
+                        provenance={"engine": "NativeTrainingEngine"},
+                    )
+                )
+                continue
             for result in results:
                 self.recorder.record_probe_result(result)
 
@@ -595,7 +643,16 @@ class _NativeRun:
             return
         reason = self._checkpoint_save_reason(policy=policy, boundary=boundary, state=state, context=context, epoch_index=epoch_index, failure=failure)
         if reason is None:
+            self.record_metric_checkpoint_skip(
+                policy=policy,
+                boundary=boundary,
+                mode=mode,
+                state=state,
+                context=context,
+                epoch_index=epoch_index,
+            )
             return
+        metadata = self._checkpoint_save_metadata(policy=policy, reason=reason, boundary=boundary, state=state)
         self.emit(
             mode,
             TrainingEventPhase.CHECKPOINT,
@@ -604,16 +661,16 @@ class _NativeRun:
             step_index=None if context is None else context.step_index,
             batch_index=None if context is None else context.batch_index,
             split=mode.value if context is None else context.split,
-            metadata={"reason": reason},
+            metadata=metadata,
         )
-        self.record_span("native.checkpoint_save", mode=mode, stage_name="checkpoint", metadata={"reason": reason})
+        self.record_span("native.checkpoint_save", mode=mode, stage_name="checkpoint", metadata=metadata)
         if self.plan.checkpoint_save_hook is None:
             result = CheckpointSaveResult(
                 status=CheckpointResultStatus.UNSUPPORTED,
                 reason="checkpoint_save_hook_not_configured",
                 run_id=self.run_id,
                 timeline_id=self.timeline_id,
-                metadata={"reason": reason},
+                metadata=metadata,
                 provenance={"engine": "NativeTrainingEngine"},
             )
             self.recorder.record_checkpoint_result(result)
@@ -627,6 +684,10 @@ class _NativeRun:
                 "epoch_index": epoch_index if context is None else context.epoch_index,
                 "step_index": None if context is None else context.step_index,
                 "metrics": {name: summary.value for name, summary in state.metrics.items()},
+                "metric_name": metadata.get("metric_name"),
+                "metric_direction": metadata.get("metric_direction"),
+                "metric_value": metadata.get("metric_value"),
+                "metric_threshold": metadata.get("metric_threshold"),
                 "failure_type": None if failure is None else type(failure).__name__,
             }
         )
@@ -638,7 +699,7 @@ class _NativeRun:
                 ref_id=hook_result.ref_id,
                 run_id=self.run_id,
                 timeline_id=self.timeline_id,
-                metadata={"reason": reason},
+                metadata=metadata,
                 provenance={"engine": "NativeTrainingEngine"},
             )
             self.recorder.record_checkpoint_result(save_result)
@@ -679,7 +740,7 @@ class _NativeRun:
                 return "step"
         if policy.on_metric and policy.metric_name is not None:
             summary = state.metrics.get(policy.metric_name)
-            if summary is None or not isinstance(summary.value, (int, float)):
+            if summary is None or not _is_numeric_metric(summary.value):
                 return None
             if policy.metric_threshold is None:
                 return "metric"
@@ -687,6 +748,80 @@ class _NativeRun:
                 return "metric" if summary.value <= policy.metric_threshold else None
             return "metric" if summary.value >= policy.metric_threshold else None
         return None
+
+    def _checkpoint_save_metadata(
+        self,
+        *,
+        policy: object,
+        reason: str,
+        boundary: str,
+        state: _LoopState,
+    ) -> dict[str, PrimitiveValue]:
+        metadata: dict[str, PrimitiveValue] = {"reason": reason, "boundary": boundary}
+        if not policy.on_metric or policy.metric_name is None:
+            return metadata
+        metadata["metric_name"] = policy.metric_name
+        if policy.metric_direction is not None:
+            metadata["metric_direction"] = policy.metric_direction.value
+        if policy.metric_threshold is not None:
+            metadata["metric_threshold"] = policy.metric_threshold
+        summary = state.metrics.get(policy.metric_name)
+        if summary is not None:
+            metadata["metric_value"] = summary.value
+        return metadata
+
+    def record_metric_checkpoint_skip(
+        self,
+        *,
+        policy: object,
+        boundary: str,
+        mode: LoopMode,
+        state: _LoopState,
+        context: LoopContext | None,
+        epoch_index: int | None,
+    ) -> None:
+        if not policy.on_metric or policy.metric_name is None:
+            return
+        metadata = self._checkpoint_save_metadata(
+            policy=policy,
+            reason="metric_checkpoint_skipped",
+            boundary=boundary,
+            state=state,
+        )
+        summary = state.metrics.get(policy.metric_name)
+        if summary is None:
+            status = CheckpointResultStatus.UNAVAILABLE
+            reason = "metric_unavailable"
+            metadata["metric_available"] = False
+        elif not _is_numeric_metric(summary.value):
+            status = CheckpointResultStatus.UNAVAILABLE
+            reason = "metric_not_numeric"
+            metadata["metric_available"] = True
+        else:
+            status = CheckpointResultStatus.SKIPPED
+            reason = "metric_threshold_not_met"
+            metadata["metric_available"] = True
+        metadata["reason"] = reason
+        self.emit(
+            mode,
+            TrainingEventPhase.CHECKPOINT,
+            status=status.value,
+            epoch_index=epoch_index if context is None else context.epoch_index,
+            step_index=None if context is None else context.step_index,
+            batch_index=None if context is None else context.batch_index,
+            split=mode.value if context is None else context.split,
+            metadata=metadata,
+        )
+        self.recorder.record_checkpoint_result(
+            CheckpointSaveResult(
+                status=status,
+                reason=reason,
+                run_id=self.run_id,
+                timeline_id=self.timeline_id,
+                metadata=metadata,
+                provenance={"engine": "NativeTrainingEngine"},
+            )
+        )
 
     def prune_checkpoints(self) -> None:
         policy = self.plan.checkpoint_prune_policy
@@ -737,6 +872,42 @@ class _NativeRun:
             self.invoke_probes("failure", mode, split=mode.value)
         except Exception:
             pass
+
+
+def _probe_failure_policy(probe: object) -> ProbeFailurePolicy:
+    policy = getattr(probe, "failure_policy", ProbeFailurePolicy.FAIL)
+    return ProbeFailurePolicy.coerce(policy)
+
+
+def _probe_id(probe: object) -> str:
+    probe_id = getattr(probe, "probe_id", None)
+    if isinstance(probe_id, str) and probe_id:
+        return probe_id
+    return type(probe).__name__
+
+
+def _probe_selector(probe: object) -> ProbeSelector:
+    selector = getattr(probe, "selector", None)
+    if isinstance(selector, ProbeSelector):
+        return selector
+    return ProbeSelector(ProbeSelectorMode.ALL)
+
+
+def _is_numeric_metric(value: object) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _record_teardown_failure(
+    run: _NativeRun,
+    mode: LoopMode,
+    state: _LoopState,
+    error: Exception,
+) -> None:
+    try:
+        run.record_failure(mode, error)
+        run.save_checkpoint_if_needed("failure", mode, state=state, failure=error)
+    except Exception as exc:  # noqa: BLE001 - preserve the original teardown failure result
+        run.recorder.record_decision(f"native_teardown_failure_recording_failed:{type(exc).__name__}")
 
 
 def _require_plan(plan: object) -> None:
