@@ -7,8 +7,8 @@ plan-quality readiness are recorded on 2026-05-18, with additional maintainer
 profiling refinements recorded for timestamped events, resource time-series
 traces, and metric blind-spot coverage. The expanded eight-phase
 implementation plan is approved for implementation after the startup
-quality-gate review/refinement/confirmation sequence. Phase 1 and Phase 2 have
-merged to `develop`; Phase 3 is the next pending phase.
+quality-gate review/refinement/confirmation sequence. Phase 1, Phase 2, and
+Phase 3 have merged to `develop`; Phase 4 is the next pending phase.
 Roadmap version: `v15`
 Stage directory: `docs/roadmap/stage-15/`
 Implementation plan: `docs/roadmap/stage-15/implementation-plan.md`
