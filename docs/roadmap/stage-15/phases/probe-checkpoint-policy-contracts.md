@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: final phase execution plan; expanded-path detail completed; ready
+- Status: final phase execution plan; expanded-path refinement completed; ready
   for implementation
 - Roadmap stage: `v15`
 - Feature focus: training performance profiling and data-path optimization
@@ -23,11 +23,12 @@
   `develop`; local-only completion is not allowed
 - Plan quality gate: implementation plan approved; expanded-path detail covers
   public provisional probe/checkpoint/restart/policy schema, primitive
-  serialization, import boundaries, and future native, Lightning, resource, and
-  data-path compatibility
+  serialization and dataclass inspection, Stage 15 Phase 1 compatibility,
+  import boundaries, checkpoint catalog and restart selector semantics,
+  pipeline-stage naming over Stage 9, precision/compile/kernel fallback
+  evidence, and explicit future-phase exclusions
 - Draft pass: complete
-- Refine pass: not needed; expanded-path risk analysis is captured in this
-  artifact
+- Refine pass: complete; limited to the assigned expanded-path triggers
 - Setup limitations: existing manager-created worktree was verified instead of
   creating a new branch/worktree; no fetch, push, or PR action was performed in
   this planning pass
@@ -39,9 +40,9 @@ Define dependency-light, engine-neutral contracts for training probes,
 checkpoint catalogs and restart selection, pipeline-stage hook names, and
 precision/compile/kernel policies before any engine, Lightning, resource
 sampler, checkpoint writer, or data-path producer is wired. The phase should
-produce public provisional records that are primitive-inspection-friendly,
-validated, import-light, and specific enough for later phases to invoke without
-redesign.
+produce public provisional records that are primitive- and
+dataclass-inspection-friendly, validated, import-light, and specific enough for
+later phases to invoke without redesign.
 
 ## Full-Plan Context
 
@@ -60,6 +61,13 @@ it must not perform tensor inspection, checkpoint IO, native loop integration,
 Lightning integration, resource sampling, profile persistence, data-path
 benchmark production, or datasource runtime changes.
 
+The Phase 2 records should reference Phase 1 run/timeline/event/profile
+identifiers by value only. They must preserve the Phase 1 `TrainingEvent`,
+`TrainingEventLog`, `TrainingProfile`, and `TrainingResult.training_profile`
+contracts and must not add Phase 3 resource-trace/profile-persistence
+containers, Native execution hooks, Lightning adapter behavior, or Stage 9
+datasource imports to those core records.
+
 ## Source Phase Summary
 
 - Goal: define engine-neutral contracts for probes, checkpoint
@@ -76,7 +84,8 @@ benchmark production, or datasource runtime changes.
 - Acceptance criteria: generic probes, checkpoint selectors, data-pipeline
   stages, and optimization policies validate independently of Native,
   Lightning, real checkpoint writers, real tensor inspection, resource sampler
-  processes, or data-path producers; records remain primitive and import-light.
+  processes, or data-path producers; records remain primitive,
+  dataclass-inspectable, Phase 1 compatible, and import-light.
 
 ## Current Source And Harness Findings
 
@@ -92,6 +101,11 @@ benchmark production, or datasource runtime changes.
   compatibility field only. Phase 2 should not replace it, make it a storage
   contract, or require `TrainingResult` changes unless a narrowly scoped
   additive compatibility helper is unavoidable.
+- Existing Phase 1 inspection behavior: Stage 15 profile/event/result records
+  are frozen dataclasses that are inspected with `dataclasses.asdict` in unit
+  and contract tests. Phase 2 public records should follow that pattern or
+  provide equally simple dataclass inspection; they must not require a custom
+  serializer to expose primitive evidence.
 - Existing data-path constraints: Stage 9 owns `SampleSource`,
   `IndexSampleSource`, `CachedSampleSource`, `PreparedSampleSource`,
   `StreamingReadPlan`, `DataLoaderState`, `DataPathProfile`, and
@@ -177,28 +191,31 @@ benchmark production, or datasource runtime changes.
 - Update selected package exports in `src/rphys/training/__init__.py` and
   package tests for only code-backed public names introduced by this phase.
 - Add focused unit, contract, and package tests for validation, primitive
-  serialization or primitive inspection, deterministic selector behavior,
-  public exports, and import boundaries.
+  serialization, dataclass inspection, deterministic selector behavior, public
+  exports, Phase 1 compatibility, and import boundaries.
 
 ## Out-of-Scope Work
 
 - Native loop wiring, probe invocation in `NativeTrainingEngine`, checkpoint
   save/restore/prune hooks, restart execution, callback ordering changes, or
-  changes to learner semantics.
+  changes to learner semantics. Those are Phase 4 concerns.
 - Optional Lightning module work, Lightning public API foundation, callback or
   profiler bridge implementation, Lightning checkpoint callback mapping,
-  `ckpt_path` handling, or installed-Lightning validation.
+  `ckpt_path` handling, or installed-Lightning validation. Those are Phase 6
+  and Phase 7 concerns.
 - Real checkpoint writers/readers/deleters, artifact stores, storage backends,
   generic workflow resume engines, file locks, cloud/object-store behavior, or
-  opaque pickle/state serialization.
+  opaque pickle/state serialization. Phase 2 records selectors and evidence
+  only.
 - Real tensor, module, optimizer, dataloader, `Sample`, `Batch`, or dataset
-  inspection. Phase 2 defines records that later bridges can populate.
+  inspection. Phase 2 defines records that later bridges can populate, not
+  inspectors.
 - Resource trace records, resource sampler processes, GPU/CPU/disk/network
   probes, background threads/processes, async profile writers, dropped-sample
-  queues, or profile persistence.
+  queues, or profile persistence. Those are Phase 3 concerns.
 - Data-path benchmark/profile producers, Stage 9 source/cache/prepared runtime
   changes, BatchOperation equivalence additions, raw data fixtures, or
-  datasource imports from training core.
+  datasource imports from training core. Those are Phase 5 concerns.
 - Performance thresholds, hardware-specific checks, dashboards, schedulers,
   automatic tuning, or project/workflow orchestration.
 
@@ -213,6 +230,11 @@ benchmark production, or datasource runtime changes.
   through nested primitive values, primitive mappings, strings, numbers,
   booleans, `None`, and tuples/lists. It does not mean adding a profile writer,
   artifact schema, checkpoint file format, or JSON persistence backend.
+- Dataclass inspection means public record fields are discoverable through
+  standard dataclass tools such as `dataclasses.fields` or
+  `dataclasses.asdict`, with primitive or nested dataclass leaves. Avoid
+  properties-only records, dynamic `__getattr__`, opaque payload bags, and
+  required custom serializers for basic inspection.
 - Pipeline stage alignment can be represented as stable strings in training
   contracts. Contract tests may compare these names against Stage 9 record
   behavior, but production training modules must not import datasource modules.
@@ -231,6 +253,9 @@ Public behavior:
 - Every exported Phase 2 name is provisional public API. It must be listed
   intentionally, tested, and documented with enough shape and failure behavior
   for downstream experiments to inspect it.
+- Public provisional schema must be code-backed. Do not export placeholder
+  names, aliases reserved for later phases, or records whose fields are not
+  covered by validation and primitive/dataclass inspection tests.
 - Probe contracts describe when and what to inspect; they do not inspect real
   tensors or batches in this phase. A probe implementation may be represented
   by an importable object/protocol, but execution is owned by later engine or
@@ -246,6 +271,13 @@ Public behavior:
 - Hook-point and pipeline-stage vocabularies are stable strings for Stage 15
   integration. Adding names is allowed later, but renaming or repurposing the
   Phase 2 names should require a contract test change and migration note.
+- Pipeline-stage names describe Stage 9 concepts by string and primitive
+  fingerprints only. Training-core records may name source/cache/prepared,
+  request, materialization, operation, split, worker, and rank evidence, but
+  production `rphys.training` modules must not import `rphys.datasources` or
+  hold `SampleSource`, `CachedSampleSource`, `PreparedSampleSource`,
+  `StreamingReadPlan`, `DataLoaderState`, `DataPathProfile`, or
+  `DataPathBenchmark` objects.
 - Model probe records represent diagnostic summaries. Required attribution
   includes probe id/name, hook point, selector, statistic kind, aggregation,
   run/timeline/process/rank/device where known, and primitive provenance.
@@ -266,6 +298,17 @@ Public behavior:
 - Restart selectors are records, not imperative commands. Resolving a selector
   against a catalog returns a selection/evidence record with the selected ref
   or explicit unavailable/unsupported/no-match reason.
+- Catalog selectors must document their eligibility filters and ordering.
+  Required examples are latest completed, best by metric, N epochs back, N
+  steps back, before/after timestamp, failure checkpoint, final checkpoint, and
+  explicit ref. Missing metrics, non-finite metric values, incomplete refs,
+  ambiguous stream ids, empty catalogs, and ties must yield deterministic
+  selection or explicit no-match/unsupported evidence.
+- Restart selectors must record selector kind, requested anchor or metric,
+  stream constraint where applicable, inclusive/exclusive timestamp or
+  epoch/step behavior, selected checkpoint ref when available, and the
+  no-match/fallback reason when unavailable. They must not execute a restart or
+  pass engine-specific `ckpt_path`/restore arguments in this phase.
 - Save, restore, and prune result records must distinguish attempted,
   completed, skipped, failed, unsupported, and unavailable outcomes with
   retention reason, failure message where relevant, and rank/process evidence.
@@ -297,6 +340,10 @@ Data shapes:
 
 - Records should use frozen dataclass-like or immutable tuple-backed shapes
   consistent with existing training records.
+- New public records should be dataclass-inspectable in the same style as
+  Phase 1 records, so tests can use `dataclasses.is_dataclass`,
+  `dataclasses.fields`, or `dataclasses.asdict` without depending on private
+  serializers.
 - Primitive mappings must use non-empty string keys and primitive values.
   Nested payload summaries must be represented by explicit record fields or
   documented primitive containers, not arbitrary objects.
@@ -312,6 +359,10 @@ Data shapes:
   dtype/device objects.
 - Metric direction for best-checkpoint selection must be explicit (`min` or
   `max`) and tie-breaking must be deterministic.
+- Checkpoint catalog selection should define a stable tie-break order such as
+  metric value, completion status, timestamp, epoch, step, sequence id, stream
+  id, and ref id where those fields are available. The chosen order must be
+  documented and tested rather than inferred from input list order alone.
 
 Error behavior and edge cases:
 
@@ -340,6 +391,11 @@ Error behavior and edge cases:
   reference Phase 1 run ids, timeline ids, timestamps, sequence ids, process
   ids, ranks, and devices. They must not claim global clock synchronization or
   resource alignment beyond the primitive evidence recorded.
+- Phase 1 compatibility: Phase 2 may add records that carry Phase 1
+  identifiers and may add intentional package exports, but it must not rename
+  Phase 1 event phases, alter `TrainingProfile` span/event inspection, require
+  resource traces in `TrainingProfile`, or change `TrainingResult.profiles`
+  compatibility behavior.
 - Field roles, locators, schemas, and provenance: data probe records may carry
   field/role/locator strings, split, source, cache, prepared/materialized,
   request, operation, worker, and rank fingerprints. They must not introduce a
@@ -393,6 +449,12 @@ Error behavior and edge cases:
   profiler events into the same records without exposing raw Lightning state.
 - Future engines can implement their own hook contexts and checkpointers as
   long as they produce these primitive rphys records.
+- Future-phase exclusions are intentional review gates: Phase 3 owns resource
+  traces and profile persistence; Phase 4 owns Native wiring and real
+  checkpoint hook execution; Phase 5 owns data-path producers and Stage 9
+  runtime integration; Phase 6 and Phase 7 own Lightning API and bridge
+  behavior. Phase 2 should only leave primitive, provisional contracts for
+  those phases to consume.
 
 ## Alternatives Rejected
 
@@ -445,10 +507,11 @@ Error behavior and edge cases:
 4. Update package exports and package/import-boundary tests for only the
    implemented names and modules.
 5. Add focused unit tests for validation, immutability, edge cases, selector
-   ordering, unsupported/unavailable evidence, and primitive record shape.
+   ordering, unsupported/unavailable evidence, primitive record shape, and
+   dataclass inspection.
 6. Add contract tests for stable hook/stage names, primitive serialization or
-   inspection, checkpoint selection examples, and future-engine/data-path
-   compatibility boundaries.
+   dataclass inspection, checkpoint selection examples, Phase 1 compatibility,
+   and future-engine/data-path compatibility boundaries.
 
 ## Test Plan
 
@@ -462,7 +525,8 @@ Error behavior and edge cases:
   `rphys.training.checkpoint`, and `rphys.training.policies` import directly;
   lightweight imports do not load `rphys.datasources`, Lightning, torch, JAX,
   CUDA/NVML, numpy, pandas, scipy, plotting/video libraries, logging backends,
-  or `tests.support`.
+  or `tests.support`; adding Phase 2 modules does not force Stage 9
+  datasource imports through `rphys.training`.
 
 ### Unit Suite
 
@@ -474,7 +538,8 @@ Error behavior and edge cases:
   immutability, primitive mappings, invalid inputs, non-finite values, disabled
   and unavailable states, model/data record summaries, pipeline-stage values,
   checkpoint retention/selection ordering, restart selectors,
-  save/restore/prune result states, and policy fallback/unsupported behavior.
+  save/restore/prune result states, dataclass inspection, and policy
+  fallback/unsupported behavior.
 
 ### Contract Suite
 
@@ -484,8 +549,9 @@ Error behavior and edge cases:
   needed updates to `tests/contracts/test_stage15_training_profile_contract.py`
   or Stage 12 compatibility contracts if public exports interact with them.
 - Required assertions or deferral reason: stable hook and pipeline-stage names;
-  primitive serialization or primitive-inspection shape; examples for gradient
-  norm records, batch NaN records, pre-cache/post-cache stage records,
+  primitive serialization and dataclass-inspection shape; Phase 1
+  profile/event/result compatibility; examples for gradient norm records,
+  batch NaN records, pre-cache/post-cache stage records,
   keep-last retention, best metric selection, rewind by epoch/step, explicit
   unavailable/unsupported evidence, and no artifact-store or raw-runtime
   object behavior.
@@ -567,7 +633,8 @@ git diff --check
 - Decisions the executor must not revisit: Phase 2 remains schema-only and
   engine-neutral; no raw tensor/batch capture; no checkpoint writer or artifact
   store; no datasource imports from training core; no Lightning/native/resource
-  wiring; no backend-specific public result family.
+  wiring; no profile persistence; no backend-specific public result family;
+  Phase 1 event/profile/result compatibility remains additive.
 - Conditions that require stopping for the manager: implementing the records
   requires raw runtime objects, a concrete checkpoint serialization format,
   file/storage IO, a registry, framework-specific policy fields, datasource
@@ -576,7 +643,8 @@ git diff --check
 
 ## Refinement And Review Budget Status
 
-- Phase execution plan refinement: unused / not needed
+- Phase execution plan refinement: complete; unused implementation,
+  refinement, review, and blocker budgets remain
 - Phase implementation refinement: unused
 - PR review: unused
 - Blocker resolution: 0/3 used
@@ -584,10 +652,15 @@ git diff --check
 ## Completion Notes
 
 - Draft plan: complete in this file
-- Final phase execution plan: complete in this file
+- Final phase execution plan: complete in this file after expanded-path
+  refinement
 - Implementation summary: pending
 - Implementation validation: pending
-- Refinement summary: not needed for the planning pass
+- Refinement summary: completed for public provisional schema, primitive
+  serialization/dataclass inspection, Phase 1 compatibility, import
+  boundaries, checkpoint catalog/restart selector semantics, Stage 9
+  pipeline-stage naming, precision/compile/kernel fallback evidence, and
+  explicit future-phase exclusions
 - Pre-submit blocker gate: pending implementation
 - PR preparation: pending implementation
 - Automated review: pending implementation
