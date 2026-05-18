@@ -1,6 +1,7 @@
 # Roadmap Stage 14 Implementation Plan
 
-Status: approved by maintainer; Phase 4 prerequisite-gated
+Status: design-reviewed and approved for implementation; Stage 13 dependency
+satisfied by plan
 Roadmap version: `v14`
 Planning document: `docs/roadmap/stage-14/planning.md`
 Functionality/design explainer:
@@ -8,15 +9,14 @@ Functionality/design explainer:
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
 Current phase: Phase 1 pending execution
-Blockers: Phase 4 is blocked in this checkout until the revised Stage 13
-Sample/Batch-native artifact, collection/metric, visualization/report, and
-recipe behavior is code-backed and approved.
+Blockers: none for Stage 14 planning. Phase 4 must run on a branch that
+contains the completed Stage 13 implementation outputs from PRs #85-#90.
 
 ## Summary
 
 - Goal: harden the public object model with private deterministic synthetic fixtures, contract helpers, integration smoke flows, tier conventions, and package/import checks.
 - Source functionality-agreement gate: passed; FQ-14-1 through FQ-14-7 locked.
-- Approved behavior: helpers remain private under `tests/support`; fixtures are generated, deterministic, CPU-only, and license-safe; narrow goldens are allowed only for public durable artifact contracts; the full scan-to-report smoke tail is prerequisite-gated on real Stage 13 public APIs and the revised Stage 13 Sample/Batch-native design.
+- Approved behavior: helpers remain private under `tests/support`; fixtures are generated, deterministic, CPU-only, and license-safe; narrow goldens are allowed only for public durable artifact contracts; the full scan-to-report smoke tail consumes the completed Stage 13 Sample/Batch-native design.
 - Source behavior confirmation: passed and locked.
 - Key design constraints: no public testing-helper package; no production fixture APIs; no hidden support runner; no fake Stage 13 tail; no real data, network, GPU, workflow runtime, heavy optional dependency, or profiling requirement in default Stage 14 validation.
 - Source design-agreement gate: passed; DQ-14-1 through DQ-14-8 locked.
@@ -24,16 +24,18 @@ recipe behavior is code-backed and approved.
 - Source design-agreement queue: DQ-14-1 through DQ-14-8 locked in `docs/roadmap/stage-14/planning.md`.
 - Source future-roadmap/reuse safety review: reviewed; Stage 13 Sample/Batch-native alignment, Stage 15, public helper package, real datasource, golden-manifest, and operation/collection reuse findings resolved or deferred with revisit triggers.
 - Examples covered: positive fixture catalog, edge-case fixtures, contract assertions, import-boundary checks, narrow golden manifests, upstream smoke slice, and Stage 13-gated scan-to-report tail.
-- Source phase shaping: four phases from planning, with Phase 4 prerequisite-gated.
-- Source plan quality gate: passed with prerequisite gate; no unresolved or reopened queues.
+- Source phase shaping: four phases from planning; Phase 4 is now pending after the Stage 13 implementation plan was marked complete with all phases merged.
+- Source plan quality gate: passed with the Stage 13 dependency satisfied by `docs/roadmap/stage-13/implementation-plan.md`; no unresolved or reopened queues.
 - Out of scope: public `rphys.testing`, `rphys.fixtures`, or `rphys.datasets`; production placeholder modules; fake Stage 13 behavior; rejected Stage 13 runner/record surfaces; raw datasets; acceptance datasets; workflow runtime; dashboards or plotting backends; performance profiling; broad golden snapshots; Stage 15 optimization.
 
 ## Implementation Workflow State
 
-- Implementation-plan quality gate: passed with Phase 4 prerequisite gate
+- Implementation-plan quality gate: passed; Stage 13 dependency refreshed
+  against the complete Stage 13 implementation plan
 - Review pass: completed by managing agent on 2026-05-17
-- Refinement pass: Stage 13 alignment documentation revision completed on
-  2026-05-18
+- Refinement pass: Stage 13 alignment and implementation-plan recheck completed
+  on 2026-05-18
+- Design review: passed by managing agent on 2026-05-18
 - Confirmation review: completed by maintainer approval on 2026-05-17
 - Automatic merge mode: enabled
 - Worktree root: `/home/samcantrill/work/rphys-worktrees`
@@ -46,35 +48,31 @@ recipe behavior is code-backed and approved.
 | 1 | `private-synthetic-catalog-governance` | pending | `agent/stage-14-synthetic-smoke-hardening-p1-private-synthetic-catalog-governance` | pending | `tests/support`, first consuming tests, concise support governance docs | Establish private fixture catalog, edge variants, deterministic payload evidence, URI refs, optional fields, and helper privacy governance. | Focused support-consuming tests, `make test-package`, `git diff --check` | Positive catalog and edge fixture examples |
 | 2 | `contract-boundaries-goldens` | pending | `agent/stage-14-synthetic-smoke-hardening-p2-contract-boundaries-goldens` | pending | `tests/support` assertion helpers, `tests/contracts`, `tests/package`, targeted integration/golden tests | Turn fixtures into reusable public-object invariants, package/import guardrails, and narrow durable-manifest goldens. | `make test-contract`, `make test-package`, targeted integration checks, `git diff --check` | Contract assertion, import-boundary, and golden manifest examples |
 | 3 | `upstream-smoke-validation-tiers` | pending | `agent/stage-14-synthetic-smoke-hardening-p3-upstream-smoke-validation-tiers` | pending | Integration/e2e smoke slice, tier docs/markers, existing Stage 5-12 flow composition | Compose code-backed Stage 5-12 surfaces through one public loader/materialization path and record debug/smoke/signal tier semantics. | `make test-integration`, `make test` if default smoke remains cheap, `make test-e2e` if introduced, `git diff --check` | Upstream root-smoke slice before Stage 13 tail |
-| 4 | `stage13-scan-to-report-tail` | blocked in this checkout | `agent/stage-14-synthetic-smoke-hardening-p4-stage13-scan-to-report-tail` | pending | Stage 13-dependent smoke tail, package checks for code-backed Stage 13 exports, final validation evidence | Complete scan-to-report smoke only after revised Stage 13 Sample/Batch-native behavior is code-backed and approved. | `make test-package`, `make test-contract`, `make test-integration`, `make test-e2e` if present, `make test-summary`, `make validate-pr`, `uv lock --check`, `git diff --check` | Full scan-to-report smoke through returned `Batch` fields, uncollation, sample artifact reload, collection/metric operations, and report records/fields |
+| 4 | `stage13-scan-to-report-tail` | pending after Phases 1-3 | `agent/stage-14-synthetic-smoke-hardening-p4-stage13-scan-to-report-tail` | pending | Stage 13-dependent smoke tail, package checks for code-backed Stage 13 exports, final validation evidence | Complete scan-to-report smoke over the completed Stage 13 Sample/Batch-native behavior. | `make test-package`, `make test-contract`, `make test-integration`, `make test-e2e` if present, `make test-summary`, `make validate-pr`, `uv lock --check`, `git diff --check` | Full scan-to-report smoke through returned `Batch` fields, uncollation, sample artifact reload, collection/metric operations, and report records/fields |
 
 ## Implementation Readiness Blockers
 
 | Blocker | Source | Required resolution | Status |
 | --- | --- | --- | --- |
-| None for implementation-plan drafting. | Plan quality gate passed with prerequisite gate and was revised on 2026-05-18 for Stage 13 Sample/Batch-native alignment. | Keep the Stage 13-dependent smoke tail as a blocked/prerequisite-gated Phase 4 in checkouts where revised Stage 13 behavior is not code-backed; do not fake Sample/Batch-native artifact, collection/metric, visualization/report, or recipe behavior. | resolved for planning |
-| Full scan-to-report tail cannot be implemented in this checkout yet. | FQ-14-3, DD-14-5, plan quality gate, current empty `rphys.prediction`, `rphys.evaluation`, and `rphys.analysis` public exports. | Revised Stage 13 behavior must land, be code-backed, and be approved in the active checkout before Phase 4 starts. | blocked for Phase 4 in this checkout |
+| None for implementation-plan drafting. | Plan quality gate passed and was revised on 2026-05-18 against the complete Stage 13 implementation plan. | Treat Stage 13 as complete for roadmap planning; require normal implementation preflight to ensure the Phase 4 branch contains the merged Stage 13 outputs. | resolved |
 
-## Stage 13 Code-Backed Recheck
+## Stage 13 Implementation-Plan Recheck
 
-Rechecked on 2026-05-18 against the active checkout. The Stage 13 planning
-artifacts are present and revised toward Sample/Batch-native behavior, but the
-source tree is not yet code-backed enough to unblock Stage 14 Phase 4.
+Rechecked on 2026-05-18 against `docs/roadmap/stage-13/implementation-plan.md`.
+The Stage 13 implementation plan is the authoritative roadmap artifact for
+Stage 14 sequencing. It is marked `Status: complete`, `Current phase: complete
+- all phases merged`, and `Blockers: none`. All six Stage 13 phase PRs are
+recorded as merged.
 
-| Area | Recheck evidence | Phase 4 impact |
+| Area | Stage 13 implementation-plan evidence | Phase 4 impact |
 | --- | --- | --- |
-| Prediction/evaluation/analysis package homes | `src/rphys/prediction/__init__.py`, `src/rphys/evaluation/__init__.py`, and `src/rphys/analysis/__init__.py` still export empty `__all__` lists. | No Phase 4 smoke tail may claim public Stage 13 prediction, evaluation, analysis, visualization, or report coverage from these package homes yet. |
-| Method prediction output | `rphys.methods` still exports `MethodOutput`, `MethodOutputSpec`, `MethodOutputAdapter`, and `apply_method_output`; `Method.predict` still returns `MethodOutput`. | Stage 13 Phase 2 has not landed in this checkout. Phase 4 cannot exercise returned-`Batch` prediction fields until this is refactored and package tests are updated. |
-| Learner output | `rphys.learning` still exports `StepOutput` and `StepPrediction`; learner tests still consume `StepOutput`. | Stage 13 returned-`Batch` learner behavior and plan-owned training-output validation are not code-backed yet. |
-| Uncollation substrate | `rphys.data.collation.uncollate_batch` is code-backed and tested for LIST-collated batches. | This is a usable prerequisite piece, but Phase 4 still needs Stage 13's explicit artifact handoff policy around predicted/test/evaluation fields. |
-| Sample collections | `rphys.data.collections` exports `SampleCollection`, `SampleCollector`, `SampleCollectionViewPlan`, and `PlannedSampleCollectionView`. | Collection snapshots/views are usable substrates, but Stage 13 runtime collection/metric operation adapters are not complete by themselves. |
-| Metrics | `rphys.metrics` still publicly exports `MetricObservation`, `MetricObservationCollection`, `MetricObservationView`, `MetricObservationViewPlan`, `MetricResult`, and `PlannedMetricObservationView`. | Stage 13 Phase 4 has not removed or privatized the old metric-observation surfaces. Phase 4 must not build the smoke tail on those rejected public shapes. |
-| Reports and visualization | `src/rphys/analysis` has no code-backed report, visualization, diagnostic renderer, or report-field exports in this checkout. | Stage 13 Phase 5 has not landed, so Phase 4 cannot complete report evidence. |
-| Package tests | `tests/package/test_import.py` still asserts Stage 10/11/12 exports, including old method, learner, and metric observation surfaces. | Phase 4 prerequisite review must include package-test updates proving only revised code-backed Stage 13 exports are public. |
-
-Phase 4 therefore remains blocked in this checkout. Earlier Stage 14 phases may
-still proceed, and Phase 3 may use the code-backed Stage 5-12 upstream slice,
-but it must stop before claiming revised Stage 13 coverage.
+| Overall status | Stage 13 `Status: complete`; all phases merged; no blockers. | Phase 4 is ordered after Stage 14 Phases 1-3 and starts with a merge/preflight check. |
+| Phase 2 | PR #86 merged; removes `MethodOutput`/method-output adapters and `StepOutput`; `Method.predict` and `Learner.step` return `Batch`; training uses plan-owned `TrainingOutputSpec` or equivalent. | Phase 4 should exercise returned-`Batch` fields and must not reintroduce method-output or step-output compatibility surfaces. |
+| Phase 3 | PR #87 merged; implements explicit returned-batch uncollation, per-sample artifact export/reload, source `RecordRef`/descriptor evidence, and a narrow multi-record export helper over existing export/save. | Phase 4 should include sample artifact export/reload through normal datasource/index/sample-source behavior. |
+| Phase 4 | PR #88 merged; implements runtime sample-collection grouping/sorting/stitching and metric-as-sample/collection operation adapters; public metric observation/result surfaces are removed or made private migration details. | Phase 4 should use field-native metric operation outputs, not `MetricObservation*` or public evaluator-runner surfaces. |
+| Phase 5 | PR #89 merged; implements dependency-light visualization/report operation-compatible builders, in-memory report/table/diagnostic renderer records, and report fields/records without public analysis operation/result families. | Phase 4 can complete report evidence through report records/fields while keeping report writers and plotting/dataframe dependencies out of scope. |
+| Phase 6 | PR #90 merged; final synthetic examples, docs, package export review, and validation completed. | Phase 4 should harden the Stage 13 synthetic composition rather than expand Stage 13 core behavior. |
+| Implementation preflight | Stage 13 plan records merge commits for PRs #85-#90. | Before executing Phase 4, ensure the phase worktree is based on the `develop` state that contains those merged outputs; if the local checkout is stale, sync before opening the phase. |
 
 ## Phase 1: Private Synthetic Catalog And Governance
 
@@ -208,7 +206,7 @@ Workflow path: expanded path
 
 ### Risks And Stop Conditions
 
-- Risks: overfreezing public artifacts, asserting private details, growing assertion helpers into a framework, or freezing Stage 13 names before code exists.
+- Risks: overfreezing public artifacts, asserting private details, growing assertion helpers into a framework, or freezing names that are not present in the real public package surface.
 - Stop conditions: validation requires broad production refactor, public helper API, or fake Stage 13 contracts.
 - Assumptions: current public contracts can be hardened through tests and private helpers without new production surfaces.
 
@@ -236,7 +234,7 @@ Workflow path: expanded path
 - Goal: compose code-backed Stage 5-12 surfaces through a root-smoke upstream slice using one public loader/materialization path.
 - Files/modules owned: integration or e2e smoke tests, already-proven private smoke assembly helpers, validation-tier docs/markers/target notes where needed, and existing Stage 5/8/9/10/12 integration-flow consumers.
 - Behavior implemented: synthetic scan, filter/group/split, index manifest, lazy `SampleBuilder`, `SampleOperationPipeline`, `BatchCollater`, trivial public `Method` or learner slice, and export/reload where code-backed before the Stage 13 tail.
-- Decisions applied: DD-14-5 and DD-14-6, excluding the Stage 13 tail until its prerequisite is met.
+- Decisions applied: DD-14-5 and DD-14-6, with the Stage 13 tail reserved for Phase 4.
 - Future-roadmap/reuse constraints: Stage 15 may profile this shape later but must not change semantics; tiers are validation groupings only; no workflow runtime ownership.
 - Examples or demos covered: upstream root-smoke slice and debug/smoke/signal tier semantics.
 - Out of scope: claiming scan-to-report completion, fake Stage 13 tail, alternate smoke loader, workflow tooling, network/GPU/real-data requirements, performance profiling.
@@ -282,7 +280,9 @@ Workflow path: expanded path
 ### Risks And Stop Conditions
 
 - Risks: smoke grows too broad, brittle, slow, or accidentally claims full scan-to-report completion.
-- Stop conditions: completing the flow requires revised Stage 13 Sample/Batch-native artifact, collection/metric, visualization/report, or recipe contracts that are not code-backed in the active checkout; real data; heavy dependencies; or workflow tooling.
+- Stop conditions: completing the upstream slice would require implementing the
+  Stage 13 tail inside Phase 3, real data, heavy dependencies, or workflow
+  tooling.
 - Assumptions: Stage 5-12 code-backed public surfaces are sufficient for an upstream smoke slice.
 
 ### Completion Summary
@@ -295,7 +295,7 @@ Workflow path: expanded path
 
 ## Phase 4: Stage 13-Gated Scan-To-Report Tail And Final Validation
 
-Status: blocked in this checkout
+Status: pending after Phases 1-3
 Slug: `stage13-scan-to-report-tail`
 Branch: `agent/stage-14-synthetic-smoke-hardening-p4-stage13-scan-to-report-tail`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-14-synthetic-smoke-hardening-p4-stage13-scan-to-report-tail`
@@ -306,41 +306,37 @@ Workflow path: expanded path
 
 ### Scope
 
-- Goal: complete the roadmap root smoke only when revised Stage 13 behavior is code-backed and approved.
+- Goal: complete the roadmap root smoke over the completed Stage 13
+  Sample/Batch-native behavior.
 - Files/modules owned: Stage 13-dependent integration/e2e smoke tail, package checks for code-backed Stage 13 public exports, final validation summary artifacts, and any scoped tests/docs required by real public-contract gaps.
 - Behavior implemented: real Stage 13 returned-`Batch` field semantics, explicit uncollation, sample artifact export/reload, runtime sample-collection grouping/sorting/stitching, metric-as-operation fields, visualization/report records or report fields, and final scan-to-report smoke evidence.
-- Decisions applied: DD-14-5, DD-14-6, DD-14-7, and the prerequisite gate in FQ-14-3.
+- Decisions applied: DD-14-5, DD-14-6, DD-14-7, and the Stage 13
+  merge/preflight check in FQ-14-3.
 - Future-roadmap/reuse constraints: Stage 13 owns Sample/Batch-native artifact, collection/metric, visualization/report, and recipe behavior; Stage 14 consumes only public Stage 13 APIs; Stage 15 profiling stays separate.
 - Examples or demos covered: full scan-to-report smoke through returned `Batch` fields, uncollation, sample artifact reload, collection/metric operations, and report records/fields.
 - Out of scope: private Stage 13 stand-ins, skipped fake tail treated as success, placeholder production modules, broad production refactors, real/acceptance datasets, or rejected Stage 13 public runner/record surfaces.
-- Dependencies: Phases 1-3 plus approved, code-backed revised Stage 13 behavior.
-  In this checkout, the 2026-05-18 recheck shows only partial substrates
-  (`uncollate_batch`, sample collections, export/save/derived datasource
-  pieces) and not the revised Stage 13 contract. Phase 4 must not start here
-  until the active tree includes returned-`Batch` method/learner behavior,
-  explicit sample artifact handoff, metric-as-operation fields, report records
-  or fields, and package tests for revised code-backed exports.
+- Dependencies: Phases 1-3 plus the completed Stage 13 implementation plan.
+  Phase 4 execution must use a worktree based on the `develop` state containing
+  Stage 13 PRs #85-#90, because the smoke tail consumes those merged public
+  contracts rather than recreating them.
 
 ### Tasks
 
-- Recheck Stage 13 implementation and approval status before opening the phase.
-- Verify revised Stage 13 Sample/Batch-native behavior is code-backed; if not, keep the phase blocked in that checkout.
-- Confirm `Method.predict` and learner step behavior return/consume ordinary
-  `Batch` values or an approved equivalent, and that old `MethodOutput*`,
-  `apply_method_output`, `StepOutput`, and `StepPrediction` public surfaces are
-  removed, made private, or explicitly retained by a later approved Stage 13
-  revision.
-- Confirm sample artifact handoff is code-backed: predicted/test/evaluation
-  fields are explicitly uncollated to per-sample artifacts, exported through
-  existing export/save and derived datasource behavior, and reload through
-  generic datasource/sample paths.
-- Confirm metric/evaluation-like behavior is expressed through ordinary fields
-  and collection/metric operations rather than public `MetricObservation*`,
-  `MetricResult`, or evaluator-runner surfaces, unless a later Stage 13
-  approval reopens those names.
-- Confirm analysis/report behavior is code-backed as dependency-light report
-  records, report fields, visualization descriptors, or recipe examples, with
-  no plotting/dataframe/file-writer dependency in core imports.
+- Before opening the phase, verify the worktree includes the merged Stage 13
+  outputs recorded in `docs/roadmap/stage-13/implementation-plan.md`, especially
+  PRs #85-#90.
+- Exercise `Method.predict` and learner step behavior as ordinary returned
+  `Batch` values, with no method-output or step-output compatibility shims.
+- Exercise sample artifact handoff: predicted/test/evaluation fields are
+  explicitly uncollated to per-sample artifacts, exported through existing
+  export/save and derived datasource behavior, and reloaded through generic
+  datasource/sample paths.
+- Exercise metric/evaluation-like behavior through ordinary fields and
+  collection/metric operations rather than public `MetricObservation*`,
+  `MetricResult`, or evaluator-runner surfaces.
+- Exercise analysis/report behavior through dependency-light report records,
+  report fields, visualization descriptors, or recipe examples, with no
+  plotting/dataframe/file-writer dependency in core imports.
 - Extend the upstream smoke through real Stage 13 public APIs only.
 - Refresh package/import checks for code-backed Stage 13 exports without freezing placeholders.
 - Capture final validation summaries and residual risks.
@@ -350,8 +346,8 @@ Workflow path: expanded path
 
 | Command/check | Purpose | Required before phase complete |
 | --- | --- | --- |
-| Stage 13 public-contract prerequisite check | Confirm revised Stage 13 behavior is code-backed and approved in the active checkout, including returned-`Batch` field semantics, uncollation, sample artifact export/reload, collection/metric operations, and report records/fields where exported. | yes |
-| Legacy-surface absence or approval check | Confirm old public `MethodOutput*`, `apply_method_output`, `StepOutput`, `StepPrediction`, `MetricObservation*`, `MetricResult`, and evaluator/runner-style names are absent from public exports or explicitly retained by an approved Stage 13 revision. | yes |
+| Stage 13 merge/preflight check | Confirm the Phase 4 worktree includes the completed Stage 13 outputs recorded in `docs/roadmap/stage-13/implementation-plan.md`, including PRs #85-#90. | yes |
+| Legacy-surface absence check | Confirm old public `MethodOutput*`, `apply_method_output`, `StepOutput`, `StepPrediction`, `MetricObservation*`, `MetricResult`, and evaluator/runner-style names remain absent from public exports. | yes |
 | `make test-package` | Validate code-backed imports and forbidden package/import absences. | yes |
 | `make test-contract` | Validate Stage 14 contract hardening plus Stage 13 public-contract consumers. | yes |
 | `make test-integration` | Validate scan-to-report smoke or its integration placement. | yes |
@@ -368,36 +364,36 @@ Workflow path: expanded path
   stand-ins, or unapproved legacy public surfaces are present.
 - Future-roadmap/reuse evidence: Stage 13 remains the contract owner and Stage 15 profiling remains deferred.
 - Example/demo evidence: full root synthetic smoke example is executable and validated.
-- Documentation evidence: final validation notes record prerequisite satisfaction and accepted risks.
+- Documentation evidence: final validation notes record Stage 13 merge/preflight evidence and accepted risks.
 - Scientific contract evidence: returned prediction fields, uncollation policy, sample artifact reload, collection/metric operations, visualization/report records or fields, provenance, and failure semantics are preserved.
 
 ### Phase Workflow State
 
-- Phase execution plan: pending until prerequisite clears in the active checkout
-- Planning/refinement budget: hold until revised Stage 13 behavior lands, then 1 planner/reviewer cycle
-- Implementation/refinement budget: 1 implementation pass plus scoped prerequisite refinements
+- Phase execution plan: pending
+- Planning/refinement budget: 1 planner/reviewer cycle
+- Implementation/refinement budget: 1 implementation pass plus scoped preflight refinements
 - PR review budget: full smoke-tail and package-boundary review
-- Blocker-resolution budget: prerequisite only; no fake substitute
-- Pre-submit blocker gate: revised Stage 13 public behavior must be code-backed and approved
+- Blocker-resolution budget: sync/stale-branch issues only; no fake substitute
+- Pre-submit blocker gate: worktree includes completed Stage 13 outputs and
+  keeps rejected Stage 13 surfaces absent
 - Merge record: pending
 
 ### Risks And Stop Conditions
 
-- Risks: accidental fake completion, freezing placeholder Stage 13 exports,
-  building on old public method/learner/metric observation surfaces, or broad
-  production refactors under a test-hardening phase.
-- Stop conditions: revised Stage 13 behavior remains absent, unapproved, or
-  ambiguous in the active checkout; full tail requires private stand-ins;
-  implementation relies on `MethodOutput*`, `StepOutput`,
-  `MetricObservation*`, `MetricResult`, or evaluator/runner surfaces without a
-  later approved Stage 13 revision; implementation requires real datasets or
-  heavy optional dependencies.
+- Risks: accidental fake completion, stale phase worktree missing Stage 13
+  merges, building on old public method/learner/metric observation surfaces, or
+  broad production refactors under a test-hardening phase.
+- Stop conditions: the phase worktree does not contain the completed Stage 13
+  outputs; full tail requires private stand-ins; implementation relies on
+  `MethodOutput*`, `StepOutput`, `MetricObservation*`, `MetricResult`, or
+  evaluator/runner surfaces; implementation requires real datasets or heavy
+  optional dependencies.
 - Assumptions: Stage 13 defines the Sample/Batch-native artifact, collection/metric, visualization/report, and recipe behavior consumed by the final tail.
 
 ### Completion Summary
 
-- Implementation: blocked in this checkout pending revised Stage 13 code-backed behavior
-- Validation: blocked in this checkout pending revised Stage 13 code-backed behavior
+- Implementation: pending
+- Validation: pending
 - PR: pending
 - Merge: pending
 - Follow-up: pending
@@ -405,29 +401,80 @@ Workflow path: expanded path
 ## Cross-Phase Validation
 
 - Full relevant test command: `make test-package`, `make test-contract`, `make test-integration`, `make test-summary`, `make validate-pr`, `uv lock --check`, and `git diff --check`; add `make test` and `make test-e2e` when the touched surface enters those suites.
-- Docs/template checks: update `tests/README.md`, support docstrings, and phase validation summaries only when implementation touches support behavior, tier semantics, or prerequisite state.
+- Docs/template checks: update `tests/README.md`, support docstrings, and phase validation summaries only when implementation touches support behavior, tier semantics, or Stage 13 dependency state.
 - Scientific/workflow contract checks: verify deterministic fixture provenance, field roles, sample rates, timestamps, alignment evidence, fail-loud edge behavior, public loader/materialization use, and absence of real-data/network/GPU/heavy-dependency/workflow requirements.
-- Example/demo checks: positive catalog, edge variants, contract assertions, import-boundary checks, golden manifests, upstream smoke slice, and final Stage 13-aligned scan-to-report tail when unblocked.
+- Example/demo checks: positive catalog, edge variants, contract assertions, import-boundary checks, golden manifests, upstream smoke slice, and final Stage 13-aligned scan-to-report tail.
 - Manual review focus: support privacy, no public helper package, no fake Stage 13 behavior, no support-level runner, no broad goldens, no unplanned production changes.
+- Continuous behavior-validation checks: every concrete fixture, datasource,
+  public object, operation, metric/report example, or smoke segment added during
+  a phase should include deterministic expected facts, failure behavior,
+  provenance evidence, and suite placement. Do not rely on the final smoke path
+  as the only proof for a newly introduced example.
+
+| Surface | Required behavior evidence | Typical suite |
+| --- | --- | --- |
+| Data objects and fields | Identity, field roles, metadata, temporal slices, sample rate, timestamps, alignment, dtype/shape, optional masks/quality fields, serialization boundaries. | `tests/contracts`, targeted unit tests |
+| Datasources, refs, indexes, and manifests | Scan output, record/sample refs, URI refs, lazy materialization, no loaded arrays/open handles in durable metadata, cache keys, derived datasource reload, invalid descriptor failures. | `tests/contracts`, `tests/integration` |
+| Sample builders and materialization | Probe/build subset behavior, field selection, missing-field diagnostics, temporal slice handling, provenance, cache determinism. | `tests/contracts`, `tests/integration` |
+| Operations and pipelines | Input/output field contracts, deterministic replay, stochastic replay evidence where applicable, parameter provenance, dtype/shape behavior, failure diagnostics, pipeline composition. | `tests/contracts`, `tests/integration` |
+| Methods, learners, losses, objectives, and metrics | Public boundary behavior, returned `Batch` fields where applicable, target exclusion/pass-through policy, metric field outputs, invalid input diagnostics. | `tests/contracts`, `tests/unit`, `tests/integration` |
+| Export, save, artifact reload, and reports | Manifest/fingerprint stability where public, explicit uncollation, sample-granular artifacts, derived datasource reload, report records/fields, no plotting/dataframe/file-writer dependency in core paths. | `tests/contracts`, `tests/integration`, optional `tests/e2e` |
+
+## Design Review Approval
+
+Reviewed on 2026-05-18 against `docs/roadmap.md` Milestone 14,
+`docs/roadmap/stage-14/planning.md`,
+`docs/roadmap/stage-14/functionality-behavior-design.md`, and the complete
+Stage 13 implementation plan.
+
+| Check | Result | Evidence | Approval note |
+| --- | --- | --- | --- |
+| Roadmap scope | pass | Phases cover private synthetic fixtures, contract helpers, integration/smoke flow, validation tiers, and public API/import checks. | No production fixture package, real datasource work, profiling, workflow runtime, or broad golden snapshot scope is introduced. |
+| Stage 13 dependency handling | pass | Phase 4 consumes completed Stage 13 PRs #85-#90 through a merge/preflight check. | The plan does not recreate Stage 13 behavior in tests or depend on rejected runner/record surfaces. |
+| Public API and import boundaries | pass | Package checks are required in Phases 1, 2, and 4; `rphys.testing`, `rphys.fixtures`, placeholder exports, root convenience exports, and heavy optional imports stay forbidden. | Public surface hardening is tied to code-backed names only. |
+| Private support design | pass | Helpers remain under `tests/support`, are validated through first consuming tests, and cannot become a public helper framework. | Phase 1 and Phase 2 ownership keeps helper growth reviewable. |
+| Scientific contract coverage | pass | Fixtures and validation require sample rates, timestamps, alignment, waveform evidence, edge variants, provenance, uncollation, artifact reload, metric fields, and report records. | Failure behavior remains explicit and inspectable. |
+| Phase shape and reviewability | pass | Four sequential phases separate fixture governance, contract/package/golden hardening, upstream smoke/tier semantics, and Stage 13 scan-to-report completion. | Each phase has owned files, stop conditions, acceptance evidence, and validation commands. |
+| Future-roadmap safety | pass | Stage 15 profiling, public helper extraction, real datasource smoke, acceptance datasets, and report writers remain deferred with revisit triggers. | Stage 14 hardens correctness without pulling later roadmap work forward. |
+
+Design review findings:
+
+- Blocking findings: none.
+- Non-blocking watch items: keep Phase 1 helpers paired with consuming tests;
+  keep Phase 2 goldens limited to durable public manifests/fingerprints; require
+  Phase 4 preflight and legacy-surface absence checks before claiming the full
+  scan-to-report smoke.
+- Approval decision: approved for implementation workflow execution, starting
+  with Phase 1.
 
 ## Implementation Plan Review
 
 | Finding | Severity | Resolution | Status |
 | --- | --- | --- | --- |
-| Phase 4 is blocked in this checkout until revised Stage 13 behavior is code-backed and approved. | blocker for Phase 4 only | Keep Phase 4 blocked and prerequisite-gated in checkouts where Stage 13 has not landed; earlier phases may proceed without pretending the report tail is complete. | accepted |
+| Stage 13 dependency is satisfied by the completed Stage 13 implementation plan, but Phase 4 must run on a worktree containing those merged outputs. | preflight requirement | Require a Stage 13 merge/preflight check before Phase 4 execution; do not rebuild or fake Stage 13 behavior inside Stage 14. | accepted |
 | Stage 14 production changes are not planned. | concern | If tests expose a real public-contract gap, route it as a scoped fix with tests/docs or a follow-up decision. | accepted |
 | Private helpers could grow into a hidden framework. | concern | Review support helpers with first consuming tests and reject unused runners/registries. | accepted |
 
 Gate result:
 
-- Status: approved by maintainer with Phase 4 blocked in this checkout.
-- Review evidence: this plan is derived from the passed Stage 14 plan quality gate, preserves the Stage 13 prerequisite gate, and uses roadmap-compliant branch/worktree slugs.
-- Accepted risks: Stage 14 can start test-support and upstream smoke hardening before the Stage 13 tail is code-backed in a checkout, provided Phase 4 remains blocked there.
-- Revisit triggers: Stage 13 implementation lands; `docs/roadmap.md` changes Stage 14 or Stage 13 scope; public testing-helper package is requested; smoke requires real data/heavy dependencies/workflow tooling; tests expose a real public-contract ambiguity.
+- Status: approved by maintainer and passed design review, with Stage 13
+  dependency refreshed as satisfied by the completed Stage 13 implementation
+  plan.
+- Review evidence: this plan is derived from the passed Stage 14 plan quality
+  gate, the complete Stage 13 implementation plan, and roadmap-compliant
+  branch/worktree slugs.
+- Accepted risks: Phase 4 still needs a branch/preflight check to ensure the
+  phase worktree contains the Stage 13 PR #85-#90 outputs.
+- Revisit triggers: `docs/roadmap.md` changes Stage 14 or Stage 13 scope; public testing-helper package is requested; smoke requires real data/heavy dependencies/workflow tooling; tests expose a real public-contract ambiguity; the Phase 4 worktree does not contain the completed Stage 13 outputs.
 
 ## Final Approval
 
-- Approval status: approved by maintainer on 2026-05-17.
-- Approved scope: Phases 1-3 are approved for implementation; Phase 4 is conditionally scoped but blocked in this checkout until revised Stage 13 behavior is code-backed and approved.
-- Accepted risks: Phase 4 prerequisite gating is accepted.
-- Deferred items: public testing-helper package, real datasource smoke, acceptance dataset checks, Stage 15 profiling/data-path optimization, broad golden snapshots, and the Stage 13-dependent smoke tail until revised code-backed Stage 13 behavior exists in the active checkout.
+- Approval status: approved by maintainer on 2026-05-17 and approved by
+  managing-agent design review on 2026-05-18.
+- Approved scope: Phases 1-4 are scoped for implementation in order; Phase 4
+  consumes the completed Stage 13 outputs after Phases 1-3 and branch preflight.
+- Accepted risks: Phase 4 depends on the Stage 13 merged outputs and must fail
+  preflight on a stale worktree.
+- Deferred items: public testing-helper package, real datasource smoke,
+  acceptance dataset checks, Stage 15 profiling/data-path optimization, and
+  broad golden snapshots.

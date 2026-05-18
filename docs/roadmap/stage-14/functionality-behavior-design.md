@@ -168,14 +168,14 @@ Stage 14 originally planned the final smoke tail in generic
 prediction/evaluation/analysis/report terms. Stage 13 has since been revised to
 a Sample/Batch-native design, so Stage 14 consumes that shape.
 
-Code-backed recheck on 2026-05-18 found that this checkout has useful
-substrates, but not the complete revised Stage 13 contract. `uncollate_batch`,
-`SampleCollection`, export/save, and derived datasource pieces exist. However,
-`rphys.methods` still exports `MethodOutput*` and `apply_method_output`,
-`rphys.learning` still exports `StepOutput` and `StepPrediction`,
-`rphys.metrics` still exports `MetricObservation*` and `MetricResult`, and
-`rphys.prediction`, `rphys.evaluation`, and `rphys.analysis` have empty public
-exports. Therefore Phase 4 remains blocked in this checkout.
+Implementation-plan recheck on 2026-05-18 found that Stage 13 is complete in
+`docs/roadmap/stage-13/implementation-plan.md`: all six phases are marked
+merged, with PRs #85-#90 covering Batch-native method/learner output,
+uncollation and sample artifacts, runtime sample-collection and metric
+operations, visualization/report records, synthetic examples, docs, and final
+validation. Stage 14 therefore treats the Stage 13 dependency as satisfied at
+the roadmap-plan level. Phase 4 still performs a normal implementation
+preflight to ensure its worktree contains those merged Stage 13 outputs.
 
 The Stage 13-aligned smoke path is:
 
@@ -219,15 +219,12 @@ private assertion helpers, contract tests, package/import tests, and any narrow
 durable golden examples.
 
 Phase 3 composes the code-backed upstream smoke path through current public
-APIs. If Stage 13 code-backed behavior is not present in the active checkout,
-this phase stops before the Stage 13 tail and labels the smoke incomplete.
+APIs and keeps the Stage 13 tail separate so Phase 4 can review it directly.
 
-Phase 4 completes the full Stage 13-aligned smoke tail only when the revised
-Stage 13 behavior is present, code-backed, tested, and approved in the active
-checkout. In a checkout where the Stage 13 public package homes are still
-empty, Phase 4 remains prerequisite-gated. In a checkout where Stage 13 has
-landed, Phase 4 starts by rechecking the code-backed public contracts and then
-extends the smoke through the real Stage 13 APIs.
+Phase 4 completes the full Stage 13-aligned smoke tail after Phases 1-3. It
+starts by verifying that the phase worktree contains the completed Stage 13
+outputs from PRs #85-#90, then extends the smoke through the real Stage 13
+APIs.
 
 ## Validation Behavior
 
@@ -246,6 +243,65 @@ Expected checks include:
   `git diff --check` for final phase validation
 
 Acceptance and real-data checks remain deferred unless separately approved.
+
+## Continuous Behavior Validation
+
+Stage 14 should also establish the habit that every concrete roadmap surface is
+validated as behavior, not just imported or smoke-tested once. The target is a
+test-side validation matrix that grows as examples become concrete.
+
+For each public object family or example, implementation should ask:
+
+- What object is constructed?
+- What public path produces or consumes it?
+- What deterministic facts are known up front?
+- What edge cases should fail loudly?
+- What provenance, identity, timing, sampling, alignment, dtype, shape, or
+  metadata must survive?
+- What artifact or manifest evidence must round trip?
+- Which package/import boundary should stay absent or lightweight?
+
+For data objects, this means testing identities, field roles, metadata,
+temporal slices, sample rates, timestamps, masks, quality fields, materialized
+payload shape, and serialization behavior.
+
+For datasources, this means testing scan output, record identity, refs, indexes,
+manifests, lazy materialization, cache keys, derived datasource reload, missing
+resources, invalid descriptors, and no loaded arrays or open handles in durable
+metadata.
+
+For operations and pipelines, this means testing input/output field contracts,
+deterministic replay, stochastic replay evidence when randomness is used,
+provenance, parameter recording, dtype/shape behavior, failure diagnostics, and
+composition with `SampleOperationPipeline`.
+
+For methods, learners, metrics, collections, and reports, this means testing
+ordinary public containers and fields: returned `Batch` fields, explicit
+uncollation to samples, sample-collection grouping/sorting/stitching,
+metric-as-operation fields, and dependency-light report records.
+
+When a new concrete example lands, such as a specific operation, it should bring
+its own behavior tests rather than only relying on the root smoke path:
+
+```python
+scenario = make_waveform_scenario(
+    sample_rate_hz=30.0,
+    heart_rate_bpm=72.0,
+    duration_s=10.0,
+)
+
+sample = scenario.build_sample()
+output = NormalizeSignalOp(field="bvp", output_field="bvp_norm")(sample)
+
+assert output.fields["bvp_norm"].sample_rate_hz == 30.0
+assert output.metadata["operation"]["name"] == "NormalizeSignalOp"
+assert output.metadata["operation"]["input_field"] == "bvp"
+assert output.fields["bvp_norm"].shape == output.fields["bvp"].shape
+```
+
+The exact helper and operation names are illustrative. The implementation
+requirement is concrete: each example should state known inputs, expected
+outputs, failure behavior, provenance evidence, and suite placement.
 
 ## Design Boundaries
 
