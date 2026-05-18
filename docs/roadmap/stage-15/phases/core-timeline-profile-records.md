@@ -2,7 +2,8 @@
 
 ## Metadata
 
-- Status: draft phase execution plan
+- Status: final phase execution plan; expanded-path refinement completed; ready
+  for implementation
 - Roadmap stage: `v15`
 - Feature focus: training performance profiling and data-path optimization
 - Stage descriptor: Training Performance Profiling And Data-Path Optimization
@@ -20,11 +21,13 @@
 - Workflow path: expanded path
 - Phase isolation: one dedicated branch, one dedicated worktree, one PR to
   `develop`; local-only completion is not allowed
-- Plan quality gate: implementation plan approved; expanded public-schema and
-  import-boundary risks covered in this artifact
+- Plan quality gate: implementation plan approved; expanded-path refinement
+  completed for public provisional schema, primitive serialization, Stage 12
+  compatibility, import-boundary, timestamp/timeline, result compatibility, and
+  Phase 3 resource-trace boundary risks
 - Draft pass: complete
-- Refine pass: not needed unless executor discovers a public schema,
-  serialization, import-boundary, or future-phase conflict not resolved here
+- Refine pass: complete; limited to the assigned expanded-path triggers, with
+  phase implementation refinement and PR review budgets left unused
 - Setup limitations: existing manager-created worktree was verified instead of
   creating a new branch/worktree; no push or PR action was performed in this
   planning pass
@@ -72,10 +75,11 @@ implementation scope.
   `TrainingResult.training_profile`; keep `TrainingResult.profiles` summaries
   compatible.
 - Acceptance criteria: old and new events validate; profile evidence remains
-  primitive and serializable; `TrainingProfile` can expose event logs, scalar
-  spans, unavailable evidence, decisions/summaries, and compatibility summaries
-  without resource trace helpers; package imports remain lightweight and do not
-  expose concrete resource traces before Phase 3.
+  primitive and serialization-friendly without defining a durable file/JSON
+  format; `TrainingProfile` can expose event logs, scalar spans, unavailable
+  evidence, decisions/summaries, and compatibility summaries without resource
+  trace helpers; package imports remain lightweight and do not expose concrete
+  resource traces before Phase 3.
 
 ## Current Source And Harness Findings
 
@@ -132,6 +136,10 @@ implementation scope.
 - Add append-only `TrainingEventLog` or equivalent event-log record with stable
   sequence ordering, immutable read access, primitive serialization-friendly
   data, and validation for duplicate/out-of-order sequence ids.
+- Define the Phase 1 primitive serialization boundary explicitly in code and
+  tests: records must be convertible to nested Python primitives and tuples by
+  standard-library/dataclass-style inspection, but this phase must not add a
+  profile codec, persistence format, schema-versioned export format, or writer.
 - Add scalar profile span records with nonnegative timing, optional start/end
   timestamp evidence, overhead, synchronization notes, rank/process/timeline
   attribution, primitive metadata, and primitive provenance.
@@ -151,10 +159,11 @@ implementation scope.
 
 ## Out-of-Scope Work
 
-- Concrete `ResourceTrace`, `ResourceSample`, `resource_traces`, GPU/CPU/disk
-  network/framework trace schemas, fake resource samplers, background
-  processes/threads, async writers, dropped-sample queues, and persistence
-  lifecycle. Those are Phase 3.
+- Concrete `ResourceTrace`, `ResourceSample`, `resource_traces`,
+  `add_resource_trace`, empty resource-trace placeholder fields/properties,
+  GPU/CPU/disk network/framework trace schemas, fake resource samplers,
+  background processes/threads, async writers, dropped-sample queues, and
+  persistence lifecycle. Those are Phase 3.
 - Probe protocols, model/data probe records, pipeline-stage hook names,
   checkpoint policies/catalogs, restart selectors, precision/compile/kernel
   policy records, and checkpoint result/ref records. Those are Phase 2 and
@@ -178,6 +187,12 @@ implementation scope.
 - A provisional public schema is acceptable when additive, primitive,
   serializable by standard Python/dataclass inspection, and tested for invalid
   values and absent optional evidence.
+- Primitive serializable means nested strings, numbers, booleans, `None`,
+  tuples, and primitive mappings only. It does not imply a stable JSON schema,
+  file format, profile artifact, pickle contract, or automatic writer.
+- Stage 12 compatibility includes constructor call patterns, existing enum
+  values, observer/callback fanout behavior, and the existing
+  `TrainingResult.profiles` summary meaning.
 - Default tests stay CPU-only, synthetic, deterministic, and dependency-light.
 - The recorder may use standard-library timing only and must allow a fake clock
   in unit tests; it must not synchronize devices or import optional runtime
@@ -189,8 +204,13 @@ implementation scope.
 
 Public behavior:
 
+- The Phase 1 schema is public and provisional: every exported name and helper
+  must be code-backed, tested, and documented enough for downstream
+  inspection, but future growth must remain additive. Do not export placeholder
+  classes, protocols, fields, or accessors for Phase 2/3 concepts.
 - `TrainingEventPhase.coerce` must continue accepting existing Stage 12 values
-  and must reject unsupported values with `RemotePhysTrainingError` context.
+  and must reject unsupported values with `RemotePhysTrainingError` context. No
+  Stage 12 phase value may be renamed, removed, repurposed, or made invalid.
   New phase values must be additive and coarse. Required additions should cover
   setup, teardown, data wait, device transfer, validation, checkpoint,
   profiling/summary, and generic stage evidence without turning callbacks into
@@ -198,9 +218,11 @@ Public behavior:
 - `TrainingEvent` must remain an observe-only primitive record. Sinks record and
   callbacks react through the existing structural protocols; callback return
   values are ignored and observer errors remain fail-loud.
-- Timestamp and clock fields must not claim global ordering across processes.
-  Per-process ordering is represented by sequence ids and timeline ids; any
-  cross-process merge requires explicit clock-origin metadata.
+- Timestamp and clock fields must not claim global ordering across processes or
+  devices. Per-log ordering is represented by sequence ids; per-run grouping is
+  represented by run ids and timeline ids; any cross-process merge requires
+  explicit clock-origin metadata and remains descriptive evidence, not a merge
+  algorithm. Missing timestamp evidence means "not recorded", never zero.
 - Event logs are append-only evidence. Public access must not expose a mutable
   sequence that lets callers reorder or replace prior events. Appends must
   preserve sequence order and reject duplicate or decreasing sequence ids.
@@ -213,12 +235,15 @@ Public behavior:
 - `TrainingProfile` is a provisional aggregate and must expose stable
   inspection helpers for Phase 1 evidence: event logs/events, scalar spans,
   unavailable evidence, decisions, summaries, and summary projection for
-  `TrainingResult.profiles` compatibility. It must not define `resource_traces`
-  or concrete trace/sample record types in this phase.
+  `TrainingResult.profiles` compatibility. It must not define `resource_traces`,
+  resource-trace mutation helpers, or concrete trace/sample record types in
+  this phase, including empty placeholders that would imply Phase 3 schema.
 - `TrainingResult.training_profile` is optional, defaults to `None`, validates
-  type, and preserves all existing constructor call patterns. Existing
-  `profiles` summaries remain tuple-like summary evidence; if summaries are
-  derived from `training_profile`, the rule must be deterministic and tested.
+  type, and preserves all existing constructor call patterns and existing
+  `profiles=` behavior. Existing `profiles` summaries remain tuple-like
+  summary evidence; if summaries are derived from `training_profile`, the rule
+  must be deterministic, explicit, and tested without changing callers that
+  still pass summaries directly.
 
 Module boundaries:
 
@@ -232,6 +257,10 @@ Module boundaries:
   location rather than making `profiling.py` import result classes.
 - `__init__.py` re-exports only implemented, tested names from the owned
   training modules.
+- No Phase 1 module may import Phase 2/3/4/5/6 concepts to satisfy type hints
+  or convenience helpers. Keep probe, checkpoint, policy, resource monitoring,
+  native backend, Lightning, datasource, and optional framework imports out of
+  the Phase 1 core modules.
 
 Data shapes:
 
@@ -239,6 +268,9 @@ Data shapes:
   immutable/frozen read behavior consistent with current Stage 12 records.
 - Metadata/provenance must remain primitive mappings using the existing
   validation policy: non-empty string keys and primitive values only.
+- Serialization-friendly coverage must prove records do not contain live
+  clocks, callbacks, profiler objects, framework/backend objects, raw tensors,
+  open handles, mutable metadata mappings, or datasource/data-path objects.
 - Indexes, sequence ids, process ids, ranks, counts, and durations must reject
   booleans and negative values.
 - Optional identifiers such as `run_id`, `timeline_id`, `node_id`,
@@ -263,8 +295,10 @@ Error behavior and edge cases:
 
 - Sampling and temporal alignment: Phase 1 records timestamp and clock-origin
   evidence only. It must distinguish monotonic/per-process ordering from
-  wall-clock or cross-process ordering and avoid claims that ranks or devices
-  are globally synchronized.
+  wall-clock or cross-process ordering and avoid claims that ranks, nodes, or
+  devices are globally synchronized. Sequence ids order events only within the
+  owning log/timeline unless a later phase records stronger clock-alignment
+  evidence.
 - Field roles, locators, schemas, and provenance: training profile fields are
   diagnostic evidence, not data-field locators or dataset schemas. Provenance
   should identify run, engine/backend, process/rank/device, clock origin, and
@@ -299,7 +333,9 @@ Error behavior and edge cases:
 ## Future Compatibility
 
 - Phase 3 must be able to add resource trace records and resource trace
-  inspection helpers without changing Phase 1 event/span/result semantics.
+  inspection helpers without changing Phase 1 event/span/result semantics. It
+  must add those names as new public surface rather than filling Phase 1
+  placeholders.
 - Native and Lightning engines must be able to populate the same event log and
   profile aggregate without exposing backend-private callback/profiler state.
 - Downstream consumers should find detailed evidence through
@@ -344,7 +380,10 @@ Error behavior and edge cases:
 - Scope-control checks: `git diff --stat` should not show edits to
   `backend.py`, `plan.py`, datasource modules, ops modules, Lightning modules,
   checkpoint/policy/probe modules, docs outside necessary API references, or
-  dependency/lock files.
+  dependency/lock files. Public export diffs should show Phase 1 event/log,
+  scalar-span, unavailable-evidence, profile, recorder, and result attachment
+  names only, with no `ResourceTrace`, `ResourceSample`, `resource_traces`,
+  probe, checkpoint, policy, Lightning, or datasource entrypoints.
 
 ## Implementation Steps
 
@@ -412,8 +451,9 @@ Error behavior and edge cases:
 - Required assertions or deferral reason: Stage 12 observers and result
   contracts remain valid; Stage 15 profile/event records are primitive,
   engine-neutral, timestamp-aware, serialization-friendly, explicit about
-  unavailable evidence, free of raw backend/framework objects, and contain no
-  resource trace/checkpoint/probe/policy public schema before later phases.
+  unavailable evidence, free of raw backend/framework objects, preserve direct
+  `profiles=` summary compatibility, and contain no resource
+  trace/checkpoint/probe/policy public schema before later phases.
 
 ### Integration Suite
 
@@ -449,6 +489,9 @@ Error behavior and edge cases:
 - Public provisional schema could become too broad before native and Lightning
   pressure-test it; keep additions primitive, additive, and clearly documented
   as provisional.
+- Primitive serialization coverage could be overread as a persistence promise;
+  keep tests focused on primitive record contents and explicitly defer codecs,
+  schema versions, writers, and profile artifacts.
 - Timestamp fields could imply impossible global ordering; tests and docstrings
   must distinguish per-timeline sequence order from cross-process clock
   alignment.
@@ -495,17 +538,18 @@ git diff --check
   keep callbacks observe-only and fail-loud; attach at most one optional rich
   aggregate as `TrainingResult.training_profile`; preserve `profiles`
   summaries; keep raw backend timelines and heavy imports out of training core;
-  do not expose resource trace helpers in Phase 1.
+  do not expose resource trace helpers or placeholders in Phase 1.
 - Conditions that require stopping for the manager: inability to express Phase
-  1 profile compatibility without concrete resource trace types; need to change
-  native backend behavior; need to add checkpoint/probe/policy/Lightning or
-  datasource imports; import cycle that requires moving records outside the
-  owned modules; or any schema decision that would break existing Stage 12
-  callers.
+  1 profile compatibility without concrete resource trace types or placeholders;
+  need to change native backend behavior; need to add checkpoint, probe, policy,
+  Lightning, or datasource imports; import cycle that requires moving records
+  outside the owned modules; or any schema decision that would break existing
+  Stage 12 callers.
 
 ## Refinement And Review Budget Status
 
-- Phase execution plan refinement: unused / not needed
+- Phase execution plan refinement: completed on 2026-05-18 for the assigned
+  expanded-path triggers
 - Phase implementation refinement: unused
 - PR review: unused
 - Blocker resolution: 0/3 used
@@ -513,11 +557,15 @@ git diff --check
 ## Completion Notes
 
 - Draft plan: created in the verified dedicated Phase 1 worktree.
-- Final phase execution plan: this artifact.
+- Final phase execution plan: completed after expanded-path refinement on
+  2026-05-18.
 - Implementation summary: pending implementation phase.
 - Implementation validation: pending implementation phase.
-- Refinement summary: expanded-path schema/import risks handled inline; no
-  separate refinement pass requested.
+- Refinement summary: clarified the public provisional schema, primitive
+  serialization boundary, Stage 12 compatibility obligations, import
+  boundaries, timestamp/timeline semantics, result compatibility, and explicit
+  Phase 3 ownership of concrete resource trace records and `resource_traces`
+  helpers without changing scope.
 - Pre-submit blocker gate: pending implementation phase.
 - PR preparation: pending implementation phase.
 - Automated review: pending implementation phase.
