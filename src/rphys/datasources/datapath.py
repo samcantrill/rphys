@@ -1,8 +1,10 @@
-"""Descriptor-only data-path evidence records for Stage 9.
+"""Descriptor-only data-path evidence records for Stage 9 and Stage 15.
 
 These public provisional records make loader/cache/prepared/materialization
-evidence inspectable without implementing streaming, profiling, benchmarking,
-trainer, device, model-formatting, or distributed runtime behavior.
+evidence inspectable. Stage 15 helpers assemble primitive profile, benchmark,
+pipeline-stage, and fake data-quality evidence without implementing streaming,
+trainer, device, model-formatting, storage-backend, or distributed runtime
+behavior.
 """
 
 from __future__ import annotations
@@ -10,8 +12,10 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from enum import StrEnum
 from types import MappingProxyType
 
 from rphys.errors import FieldTypeError, RemotePhysDataSourceError
@@ -22,7 +26,79 @@ __all__ = [
     "DataLoaderState",
     "DataPathProfile",
     "DataPathBenchmark",
+    "DATA_PATH_MEASUREMENT_UNITS",
+    "DataPipelineStage",
+    "DataPipelineStageContext",
+    "DataQualityIssueKind",
+    "DataQualityProbeResult",
+    "FakeDataQualityProbe",
+    "build_data_path_benchmark",
+    "build_data_path_profile",
+    "build_data_pipeline_stage_context",
 ]
+
+
+DATA_PATH_MEASUREMENT_UNITS = MappingProxyType(
+    {
+        "duration.decode.ms": "ms",
+        "duration.collate.ms": "ms",
+        "duration.queue_wait.ms": "ms",
+        "duration.worker_wait.ms": "ms",
+        "duration.disk_read.ms": "ms",
+        "duration.network_read.ms": "ms",
+        "duration.device_transfer.ms": "ms",
+        "duration.synchronization.ms": "ms",
+        "bytes.read": "bytes",
+        "bytes.written": "bytes",
+        "throughput.samples_per_second": "samples/s",
+        "throughput.bytes_per_second": "bytes/s",
+        "cache.hit.count": "count",
+        "cache.miss.count": "count",
+        "prepared.read.count": "count",
+        "unavailable.count": "count",
+    }
+)
+
+
+class DataPipelineStage(StrEnum):
+    """Stage-9-aligned data-path stages for profiling and probe evidence."""
+
+    INDEXED = "indexed"
+    PRE_CACHE_PROCESSING = "pre_cache_processing"
+    CACHE_LOOKUP = "cache_lookup"
+    CACHE_HIT_LOAD = "cache_hit_load"
+    CACHE_MISS_SOURCE_READ = "cache_miss_source_read"
+    CACHE_WRITE = "cache_write"
+    PREPARED_READ = "prepared_read"
+    PRE_AUGMENTATION = "pre_augmentation"
+    POST_AUGMENTATION = "post_augmentation"
+    POST_PROCESSING = "post_processing"
+    COLLATE = "collate"
+    PRE_DEVICE_TRANSFER = "pre_device_transfer"
+    POST_DEVICE_TRANSFER = "post_device_transfer"
+    LEARNER_OUTPUT_VALIDATION = "learner_output_validation"
+    QUEUE_WAIT = "queue_wait"
+
+    @classmethod
+    def coerce(cls, value: "DataPipelineStage | str") -> "DataPipelineStage":
+        if isinstance(value, cls):
+            return value
+        if isinstance(value, str):
+            try:
+                return cls(value)
+            except ValueError as exc:
+                raise FieldTypeError(
+                    "Unsupported data-pipeline stage.",
+                    field="stage",
+                    expected=tuple(stage.value for stage in cls),
+                    actual=value,
+                ) from exc
+        raise FieldTypeError(
+            "DataPipelineStage must be a DataPipelineStage or string.",
+            field="stage",
+            expected="DataPipelineStage | str",
+            actual=type(value).__name__,
+        )
 
 
 @dataclass(frozen=True, init=False, slots=True)
@@ -608,6 +684,900 @@ class DataPathBenchmark:
 
 
 DataPathBenchmark.__hash__ = None  # type: ignore[assignment]
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class DataPipelineStageContext:
+    """Primitive evidence tying one observation to a Stage 9 data-path stage."""
+
+    stage: DataPipelineStage
+    status: str
+    source_kind: str
+    request_fingerprint: str | None
+    runtime_context_fingerprint: str | None
+    streaming_plan_fingerprint: str | None
+    loader_state_fingerprint: str | None
+    cache_key_digest: str | None
+    cache_status: str | None
+    prepared_manifest_fingerprint: str | None
+    materialization_fingerprint: str | None
+    operation_fingerprint: FrozenPrimitive | None
+    batch_operation_name: str | None
+    batch_operation_index: int | None
+    sample_position: int | None
+    batch_index: int | None
+    worker_id: int | None
+    rank: int | None
+    split: str | None
+    measurements: Mapping[str, FrozenPrimitive]
+    metadata: Mapping[str, FrozenPrimitive]
+    provenance: Mapping[str, FrozenPrimitive]
+    fingerprint: str
+
+    def __init__(
+        self,
+        stage: DataPipelineStage | str,
+        *,
+        status: str = "observed",
+        source_kind: str = "unknown",
+        request_fingerprint: str | None = None,
+        runtime_context_fingerprint: str | None = None,
+        streaming_plan_fingerprint: str | None = None,
+        loader_state_fingerprint: str | None = None,
+        cache_key_digest: str | None = None,
+        cache_status: str | None = None,
+        prepared_manifest_fingerprint: str | None = None,
+        materialization_fingerprint: str | None = None,
+        operation_fingerprint: object | None = None,
+        batch_operation_name: str | None = None,
+        batch_operation_index: int | None = None,
+        sample_position: int | None = None,
+        batch_index: int | None = None,
+        worker_id: int | None = None,
+        rank: int | None = None,
+        split: str | None = None,
+        measurements: Mapping[str, object] | None = None,
+        metadata: Mapping[str, object] | None = None,
+        provenance: Mapping[str, object] | None = None,
+        fingerprint: str | None = None,
+    ) -> None:
+        object.__setattr__(self, "stage", DataPipelineStage.coerce(stage))
+        object.__setattr__(
+            self,
+            "status",
+            _coerce_choice(
+                status,
+                owner="DataPipelineStageContext",
+                field="status",
+                choices={"observed", "skipped", "unavailable", "unsupported", "failed"},
+            ),
+        )
+        object.__setattr__(
+            self,
+            "source_kind",
+            _coerce_choice(
+                source_kind,
+                owner="DataPipelineStageContext",
+                field="source_kind",
+                choices={
+                    "source",
+                    "cache",
+                    "prepared",
+                    "materialized",
+                    "augmentation",
+                    "collate",
+                    "device_transfer",
+                    "loader",
+                    "unknown",
+                },
+            ),
+        )
+        for field, value in {
+            "request_fingerprint": request_fingerprint,
+            "runtime_context_fingerprint": runtime_context_fingerprint,
+            "streaming_plan_fingerprint": streaming_plan_fingerprint,
+            "loader_state_fingerprint": loader_state_fingerprint,
+            "cache_key_digest": cache_key_digest,
+            "prepared_manifest_fingerprint": prepared_manifest_fingerprint,
+            "materialization_fingerprint": materialization_fingerprint,
+        }.items():
+            _set_optional_fingerprint(self, field, value, owner="DataPipelineStageContext")
+        object.__setattr__(
+            self,
+            "cache_status",
+            _coerce_optional_non_empty_string(
+                cache_status,
+                owner="DataPipelineStageContext",
+                field="cache_status",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "operation_fingerprint",
+            _coerce_optional_primitive(
+                operation_fingerprint,
+                owner="DataPipelineStageContext",
+                field="operation_fingerprint",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "batch_operation_name",
+            _coerce_optional_non_empty_string(
+                batch_operation_name,
+                owner="DataPipelineStageContext",
+                field="batch_operation_name",
+            ),
+        )
+        for field, value in {
+            "batch_operation_index": batch_operation_index,
+            "sample_position": sample_position,
+            "batch_index": batch_index,
+            "worker_id": worker_id,
+            "rank": rank,
+        }.items():
+            _set_optional_non_negative_int(self, field, value, owner="DataPipelineStageContext")
+        object.__setattr__(
+            self,
+            "split",
+            _coerce_optional_non_empty_string(split, owner="DataPipelineStageContext", field="split"),
+        )
+        _set_primitive_mapping(self, "measurements", measurements, owner="DataPipelineStageContext")
+        _validate_measurement_units(self.measurements, owner="DataPipelineStageContext")
+        _set_primitive_mapping(self, "metadata", metadata, owner="DataPipelineStageContext")
+        _set_primitive_mapping(self, "provenance", provenance, owner="DataPipelineStageContext")
+        _set_fingerprint(self, fingerprint, owner="DataPipelineStageContext")
+
+    def to_dict(self, *, include_fingerprint: bool = True) -> dict[str, object]:
+        return _record_dict(
+            {
+                "stage": self.stage.value,
+                "status": self.status,
+                "source_kind": self.source_kind,
+                "request_fingerprint": self.request_fingerprint,
+                "runtime_context_fingerprint": self.runtime_context_fingerprint,
+                "streaming_plan_fingerprint": self.streaming_plan_fingerprint,
+                "loader_state_fingerprint": self.loader_state_fingerprint,
+                "cache_key_digest": self.cache_key_digest,
+                "cache_status": self.cache_status,
+                "prepared_manifest_fingerprint": self.prepared_manifest_fingerprint,
+                "materialization_fingerprint": self.materialization_fingerprint,
+                "operation_fingerprint": self.operation_fingerprint,
+                "batch_operation_name": self.batch_operation_name,
+                "batch_operation_index": self.batch_operation_index,
+                "sample_position": self.sample_position,
+                "batch_index": self.batch_index,
+                "worker_id": self.worker_id,
+                "rank": self.rank,
+                "split": self.split,
+                "measurements": dict(self.measurements),
+                "metadata": dict(self.metadata),
+                "provenance": dict(self.provenance),
+            },
+            self,
+            include_fingerprint=include_fingerprint,
+        )
+
+    @classmethod
+    def from_dict(cls, value: object) -> "DataPipelineStageContext":
+        data = _require_record(
+            value,
+            {
+                "stage",
+                "status",
+                "source_kind",
+                "request_fingerprint",
+                "runtime_context_fingerprint",
+                "streaming_plan_fingerprint",
+                "loader_state_fingerprint",
+                "cache_key_digest",
+                "cache_status",
+                "prepared_manifest_fingerprint",
+                "materialization_fingerprint",
+                "operation_fingerprint",
+                "batch_operation_name",
+                "batch_operation_index",
+                "sample_position",
+                "batch_index",
+                "worker_id",
+                "rank",
+                "split",
+                "measurements",
+                "metadata",
+                "provenance",
+                "fingerprint",
+            },
+            descriptor="DataPipelineStageContext",
+        )
+        return cls(
+            data["stage"],  # type: ignore[arg-type]
+            status=data["status"],  # type: ignore[arg-type]
+            source_kind=data["source_kind"],  # type: ignore[arg-type]
+            request_fingerprint=data["request_fingerprint"],  # type: ignore[arg-type]
+            runtime_context_fingerprint=data["runtime_context_fingerprint"],  # type: ignore[arg-type]
+            streaming_plan_fingerprint=data["streaming_plan_fingerprint"],  # type: ignore[arg-type]
+            loader_state_fingerprint=data["loader_state_fingerprint"],  # type: ignore[arg-type]
+            cache_key_digest=data["cache_key_digest"],  # type: ignore[arg-type]
+            cache_status=data["cache_status"],  # type: ignore[arg-type]
+            prepared_manifest_fingerprint=data["prepared_manifest_fingerprint"],  # type: ignore[arg-type]
+            materialization_fingerprint=data["materialization_fingerprint"],  # type: ignore[arg-type]
+            operation_fingerprint=data["operation_fingerprint"],
+            batch_operation_name=data["batch_operation_name"],  # type: ignore[arg-type]
+            batch_operation_index=data["batch_operation_index"],  # type: ignore[arg-type]
+            sample_position=data["sample_position"],  # type: ignore[arg-type]
+            batch_index=data["batch_index"],  # type: ignore[arg-type]
+            worker_id=data["worker_id"],  # type: ignore[arg-type]
+            rank=data["rank"],  # type: ignore[arg-type]
+            split=data["split"],  # type: ignore[arg-type]
+            measurements=data["measurements"],  # type: ignore[arg-type]
+            metadata=data["metadata"],  # type: ignore[arg-type]
+            provenance=data["provenance"],  # type: ignore[arg-type]
+            fingerprint=data["fingerprint"],  # type: ignore[arg-type]
+        )
+
+
+DataPipelineStageContext.__hash__ = None  # type: ignore[assignment]
+
+
+class DataQualityIssueKind(StrEnum):
+    """Data-quality issue vocabulary emitted by fake data-path probes."""
+
+    NAN = "nan"
+    INF = "inf"
+    MISSING_FIELD = "missing_field"
+    INVALID_MASK = "invalid_mask"
+    LABEL_DISTRIBUTION = "label_distribution"
+    SHAPE_DRIFT = "shape_drift"
+    DTYPE_DRIFT = "dtype_drift"
+    DEVICE_DRIFT = "device_drift"
+    PROVENANCE_ANOMALY = "provenance_anomaly"
+
+    @classmethod
+    def coerce(cls, value: "DataQualityIssueKind | str") -> "DataQualityIssueKind":
+        if isinstance(value, cls):
+            return value
+        if isinstance(value, str):
+            try:
+                return cls(value)
+            except ValueError as exc:
+                raise FieldTypeError(
+                    "Unsupported data-quality issue kind.",
+                    field="issue_kind",
+                    expected=tuple(kind.value for kind in cls),
+                    actual=value,
+                ) from exc
+        raise FieldTypeError(
+            "DataQualityIssueKind must be a DataQualityIssueKind or string.",
+            field="issue_kind",
+            actual=type(value).__name__,
+        )
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class DataQualityProbeResult:
+    """Primitive fake-probe evidence for data-path quality diagnostics."""
+
+    probe_id: str
+    issue_kind: DataQualityIssueKind
+    status: str
+    stage: DataPipelineStage
+    field: str | None
+    count: int
+    sample_count: int | None
+    observed: FrozenPrimitive | None
+    expected: FrozenPrimitive | None
+    metadata: Mapping[str, FrozenPrimitive]
+    provenance: Mapping[str, FrozenPrimitive]
+    fingerprint: str
+
+    def __init__(
+        self,
+        probe_id: str,
+        issue_kind: DataQualityIssueKind | str,
+        *,
+        status: str = "observed",
+        stage: DataPipelineStage | str,
+        field: str | None = None,
+        count: int = 0,
+        sample_count: int | None = None,
+        observed: object | None = None,
+        expected: object | None = None,
+        metadata: Mapping[str, object] | None = None,
+        provenance: Mapping[str, object] | None = None,
+        fingerprint: str | None = None,
+    ) -> None:
+        _set_string(self, "probe_id", probe_id, owner="DataQualityProbeResult")
+        object.__setattr__(self, "issue_kind", DataQualityIssueKind.coerce(issue_kind))
+        object.__setattr__(
+            self,
+            "status",
+            _coerce_choice(
+                status,
+                owner="DataQualityProbeResult",
+                field="status",
+                choices={"observed", "passed", "failed", "unavailable"},
+            ),
+        )
+        object.__setattr__(self, "stage", DataPipelineStage.coerce(stage))
+        object.__setattr__(
+            self,
+            "field",
+            _coerce_optional_non_empty_string(field, owner="DataQualityProbeResult", field="field"),
+        )
+        _set_non_negative_int(self, "count", count, owner="DataQualityProbeResult")
+        _set_optional_non_negative_int(self, "sample_count", sample_count, owner="DataQualityProbeResult")
+        object.__setattr__(
+            self,
+            "observed",
+            _coerce_optional_primitive(observed, owner="DataQualityProbeResult", field="observed"),
+        )
+        object.__setattr__(
+            self,
+            "expected",
+            _coerce_optional_primitive(expected, owner="DataQualityProbeResult", field="expected"),
+        )
+        _set_primitive_mapping(self, "metadata", metadata, owner="DataQualityProbeResult")
+        _set_primitive_mapping(self, "provenance", provenance, owner="DataQualityProbeResult")
+        _set_fingerprint(self, fingerprint, owner="DataQualityProbeResult")
+
+    def to_dict(self, *, include_fingerprint: bool = True) -> dict[str, object]:
+        return _record_dict(
+            {
+                "probe_id": self.probe_id,
+                "issue_kind": self.issue_kind.value,
+                "status": self.status,
+                "stage": self.stage.value,
+                "field": self.field,
+                "count": self.count,
+                "sample_count": self.sample_count,
+                "observed": self.observed,
+                "expected": self.expected,
+                "metadata": dict(self.metadata),
+                "provenance": dict(self.provenance),
+            },
+            self,
+            include_fingerprint=include_fingerprint,
+        )
+
+    @classmethod
+    def from_dict(cls, value: object) -> "DataQualityProbeResult":
+        data = _require_record(
+            value,
+            {
+                "probe_id",
+                "issue_kind",
+                "status",
+                "stage",
+                "field",
+                "count",
+                "sample_count",
+                "observed",
+                "expected",
+                "metadata",
+                "provenance",
+                "fingerprint",
+            },
+            descriptor="DataQualityProbeResult",
+        )
+        return cls(
+            data["probe_id"],  # type: ignore[arg-type]
+            data["issue_kind"],  # type: ignore[arg-type]
+            status=data["status"],  # type: ignore[arg-type]
+            stage=data["stage"],  # type: ignore[arg-type]
+            field=data["field"],  # type: ignore[arg-type]
+            count=data["count"],  # type: ignore[arg-type]
+            sample_count=data["sample_count"],  # type: ignore[arg-type]
+            observed=data["observed"],
+            expected=data["expected"],
+            metadata=data["metadata"],  # type: ignore[arg-type]
+            provenance=data["provenance"],  # type: ignore[arg-type]
+            fingerprint=data["fingerprint"],  # type: ignore[arg-type]
+        )
+
+
+DataQualityProbeResult.__hash__ = None  # type: ignore[assignment]
+
+
+class FakeDataQualityProbe:
+    """Deterministic data-quality probe over primitive field mappings.
+
+    This fake probe is intentionally dependency-light. It inspects Python
+    scalars/sequences and optional primitive field metadata; it does not import
+    array, tensor, dataframe, dataset, or video stacks.
+    """
+
+    def __init__(
+        self,
+        probe_id: str,
+        *,
+        expected_fields: Sequence[str] = (),
+        mask_fields: Sequence[str] = (),
+        expected_shapes: Mapping[str, object] | None = None,
+        expected_dtypes: Mapping[str, object] | None = None,
+        expected_devices: Mapping[str, object] | None = None,
+        label_field: str | None = None,
+        required_provenance: Sequence[str] = (),
+    ) -> None:
+        self.probe_id = _coerce_non_empty_string(probe_id, owner="FakeDataQualityProbe", field="probe_id")
+        self.expected_fields = _coerce_string_tuple(expected_fields, owner="FakeDataQualityProbe", field="expected_fields")
+        self.mask_fields = _coerce_string_tuple(mask_fields, owner="FakeDataQualityProbe", field="mask_fields")
+        self.expected_shapes = _coerce_primitive_mapping(expected_shapes, owner="FakeDataQualityProbe", field="expected_shapes")
+        self.expected_dtypes = _coerce_primitive_mapping(expected_dtypes, owner="FakeDataQualityProbe", field="expected_dtypes")
+        self.expected_devices = _coerce_primitive_mapping(expected_devices, owner="FakeDataQualityProbe", field="expected_devices")
+        self.label_field = _coerce_optional_non_empty_string(label_field, owner="FakeDataQualityProbe", field="label_field")
+        self.required_provenance = _coerce_string_tuple(required_provenance, owner="FakeDataQualityProbe", field="required_provenance")
+
+    def inspect(
+        self,
+        fields: Mapping[object, object],
+        *,
+        stage: DataPipelineStage | str,
+        field_metadata: Mapping[str, Mapping[str, object]] | None = None,
+        provenance: Mapping[str, object] | None = None,
+    ) -> tuple[DataQualityProbeResult, ...]:
+        """Return primitive quality evidence for one synthetic data observation."""
+
+        if not isinstance(fields, Mapping):
+            raise FieldTypeError(
+                "FakeDataQualityProbe fields must be a mapping.",
+                field="fields",
+                actual=type(fields).__name__,
+            )
+        stage_value = DataPipelineStage.coerce(stage)
+        normalized = {str(key): _unwrap_payload(value) for key, value in fields.items()}
+        metadata = _coerce_nested_metadata(field_metadata)
+        provenance_mapping = _coerce_primitive_mapping(provenance, owner="FakeDataQualityProbe", field="provenance")
+        results: list[DataQualityProbeResult] = []
+
+        for field in self.expected_fields:
+            if field not in normalized:
+                results.append(
+                    self._result(
+                        DataQualityIssueKind.MISSING_FIELD,
+                        stage=stage_value,
+                        field=field,
+                        count=1,
+                        expected="present",
+                        provenance=provenance_mapping,
+                    )
+                )
+
+        for field, value in normalized.items():
+            nan_count, inf_count = _count_nan_inf(value)
+            if nan_count:
+                results.append(
+                    self._result(DataQualityIssueKind.NAN, stage=stage_value, field=field, count=nan_count, provenance=provenance_mapping)
+                )
+            if inf_count:
+                results.append(
+                    self._result(DataQualityIssueKind.INF, stage=stage_value, field=field, count=inf_count, provenance=provenance_mapping)
+                )
+
+        for field in self.mask_fields:
+            value = normalized.get(field)
+            if value is None or not _is_valid_mask(value):
+                results.append(
+                    self._result(
+                        DataQualityIssueKind.INVALID_MASK,
+                        stage=stage_value,
+                        field=field,
+                        count=1,
+                        observed=value,
+                        expected="boolean mask",
+                        provenance=provenance_mapping,
+                    )
+                )
+
+        if self.label_field is not None and self.label_field in normalized:
+            distribution = dict(sorted(Counter(_iter_labels(normalized[self.label_field])).items()))
+            results.append(
+                self._result(
+                    DataQualityIssueKind.LABEL_DISTRIBUTION,
+                    status="observed",
+                    stage=stage_value,
+                    field=self.label_field,
+                    count=len(distribution),
+                    sample_count=sum(distribution.values()),
+                    observed=distribution,
+                    provenance=provenance_mapping,
+                )
+            )
+
+        for field, expected in self.expected_shapes.items():
+            observed = _field_metadata_value(field, "shape", normalized, metadata)
+            if observed != expected:
+                results.append(self._result(DataQualityIssueKind.SHAPE_DRIFT, stage=stage_value, field=field, count=1, observed=observed, expected=expected, provenance=provenance_mapping))
+        for field, expected in self.expected_dtypes.items():
+            observed = _field_metadata_value(field, "dtype", normalized, metadata)
+            if observed != expected:
+                results.append(self._result(DataQualityIssueKind.DTYPE_DRIFT, stage=stage_value, field=field, count=1, observed=observed, expected=expected, provenance=provenance_mapping))
+        for field, expected in self.expected_devices.items():
+            observed = _field_metadata_value(field, "device", normalized, metadata)
+            if observed != expected:
+                results.append(self._result(DataQualityIssueKind.DEVICE_DRIFT, stage=stage_value, field=field, count=1, observed=observed, expected=expected, provenance=provenance_mapping))
+
+        missing_provenance = [key for key in self.required_provenance if key not in provenance_mapping]
+        if missing_provenance:
+            results.append(
+                self._result(
+                    DataQualityIssueKind.PROVENANCE_ANOMALY,
+                    stage=stage_value,
+                    count=len(missing_provenance),
+                    observed={"missing": missing_provenance},
+                    expected="required provenance keys",
+                    provenance=provenance_mapping,
+                )
+            )
+
+        return tuple(results)
+
+    def _result(
+        self,
+        issue_kind: DataQualityIssueKind,
+        *,
+        stage: DataPipelineStage,
+        status: str = "failed",
+        field: str | None = None,
+        count: int = 0,
+        sample_count: int | None = None,
+        observed: object | None = None,
+        expected: object | None = None,
+        provenance: Mapping[str, object] | None = None,
+    ) -> DataQualityProbeResult:
+        return DataQualityProbeResult(
+            self.probe_id,
+            issue_kind,
+            status=status,
+            stage=stage,
+            field=field,
+            count=count,
+            sample_count=sample_count,
+            observed=_thaw_for_probe_record(observed),
+            expected=_thaw_for_probe_record(expected),
+            provenance=provenance,
+            metadata={"fake_probe": True},
+        )
+
+
+def build_data_pipeline_stage_context(
+    stage: DataPipelineStage | str,
+    *,
+    source_kind: str = "unknown",
+    request: object | None = None,
+    runtime_context: object | None = None,
+    streaming_plan: object | None = None,
+    loader_state: object | None = None,
+    cache_lookup: object | None = None,
+    prepared_manifest: object | None = None,
+    materialization: object | None = None,
+    measurements: Mapping[str, object] | None = None,
+    metadata: Mapping[str, object] | None = None,
+    provenance: Mapping[str, object] | None = None,
+    **overrides: object,
+) -> DataPipelineStageContext:
+    """Build a stage context from Stage 9 records without owning their runtime."""
+
+    cache_key = getattr(cache_lookup, "key", None)
+    context_kwargs: dict[str, object] = {
+        "source_kind": source_kind,
+        "request_fingerprint": _fingerprint_attr(request),
+        "runtime_context_fingerprint": _fingerprint_attr(runtime_context),
+        "streaming_plan_fingerprint": _fingerprint_attr(streaming_plan),
+        "loader_state_fingerprint": _fingerprint_attr(loader_state),
+        "cache_key_digest": getattr(cache_key, "digest", None),
+        "cache_status": getattr(cache_lookup, "status", None),
+        "prepared_manifest_fingerprint": _fingerprint_attr(prepared_manifest),
+        "materialization_fingerprint": _fingerprint_attr(materialization),
+        "sample_position": getattr(runtime_context, "position", None),
+        "worker_id": getattr(runtime_context, "worker_id", None),
+        "rank": getattr(runtime_context, "rank", None),
+        "split": getattr(runtime_context, "split", None),
+        "measurements": measurements,
+        "metadata": metadata,
+        "provenance": provenance,
+    }
+    context_kwargs.update(overrides)
+    return DataPipelineStageContext(stage, **context_kwargs)
+
+
+def build_data_path_profile(
+    profile_id: str,
+    *,
+    loader_state: DataLoaderState | None = None,
+    streaming_plan: StreamingReadPlan | None = None,
+    stage_contexts: Sequence[DataPipelineStageContext] = (),
+    measurements: Mapping[str, object] | None = None,
+    summaries: Mapping[str, object] | None = None,
+    metadata: Mapping[str, object] | None = None,
+    total_duration_ms: float | int | None = None,
+    dataloader_wait_ms: float | int | None = None,
+    cache_wait_ms: float | int | None = None,
+    materialization_wait_ms: float | int | None = None,
+    throughput_samples_per_second: float | int | None = None,
+) -> DataPathProfile:
+    """Create `DataPathProfile` evidence from Stage 9 state plus stage contexts."""
+
+    contexts = _coerce_stage_contexts(stage_contexts)
+    measurement_map = _coerce_primitive_mapping(measurements, owner="build_data_path_profile", field="measurements")
+    _validate_measurement_units(measurement_map, owner="build_data_path_profile")
+    summary_map: dict[str, object] = {} if summaries is None else dict(summaries)
+    if contexts:
+        summary_map.setdefault("pipeline_stages", [context.stage.value for context in contexts])
+        summary_map.setdefault("stage_context_fingerprints", [context.fingerprint for context in contexts])
+        summary_map.setdefault("source_kinds", sorted({context.source_kind for context in contexts}))
+    if measurement_map:
+        summary_map.setdefault("measurements", dict(measurement_map))
+        summary_map.setdefault("measurement_units", dict(DATA_PATH_MEASUREMENT_UNITS))
+    metadata_map: dict[str, object] = {} if metadata is None else dict(metadata)
+    metadata_map.setdefault("stage15_profile_builder", True)
+    return DataPathProfile(
+        profile_id,
+        loader_state_fingerprint=None if loader_state is None else loader_state.fingerprint,
+        streaming_plan_fingerprint=None if streaming_plan is None else streaming_plan.fingerprint,
+        sample_count=0 if loader_state is None else loader_state.positions_seen,
+        batch_count=0 if loader_state is None else loader_state.batch_count,
+        cache_hits=0 if loader_state is None else loader_state.cache_hits,
+        cache_misses=0 if loader_state is None else loader_state.cache_misses,
+        rereads=0 if loader_state is None else loader_state.rereads,
+        prepared_reads=0 if loader_state is None else loader_state.prepared_reads,
+        materialized_reads=0 if loader_state is None else loader_state.materialized_reads,
+        total_duration_ms=total_duration_ms,
+        dataloader_wait_ms=dataloader_wait_ms,
+        cache_wait_ms=cache_wait_ms,
+        materialization_wait_ms=materialization_wait_ms,
+        throughput_samples_per_second=throughput_samples_per_second,
+        summaries=summary_map,
+        metadata=metadata_map,
+    )
+
+
+def build_data_path_benchmark(
+    benchmark_id: str,
+    *,
+    profiles: Sequence[DataPathProfile],
+    metric: str = "throughput.samples_per_second",
+    value: float | int | None = None,
+    unit: str | None = None,
+    repetitions: int = 1,
+    measurements: Mapping[str, object] | None = None,
+    environment: Mapping[str, object] | None = None,
+    limitations: Mapping[str, object] | None = None,
+    metadata: Mapping[str, object] | None = None,
+) -> DataPathBenchmark:
+    """Create threshold-free benchmark evidence over existing profiles."""
+
+    if isinstance(profiles, (str, bytes)) or not profiles:
+        raise FieldTypeError(
+            "build_data_path_benchmark profiles must be a non-empty sequence.",
+            field="profiles",
+            actual=type(profiles).__name__,
+        )
+    for profile in profiles:
+        if not isinstance(profile, DataPathProfile):
+            raise FieldTypeError(
+                "build_data_path_benchmark profiles must contain DataPathProfile records.",
+                field="profiles",
+                actual=type(profile).__name__,
+            )
+    measurement_map = _coerce_primitive_mapping(measurements, owner="build_data_path_benchmark", field="measurements")
+    _validate_measurement_units(measurement_map, owner="build_data_path_benchmark")
+    resolved_value = value
+    if resolved_value is None:
+        if metric in measurement_map and isinstance(measurement_map[metric], (int, float)):
+            resolved_value = measurement_map[metric]
+        elif metric == "throughput.samples_per_second" and profiles[0].throughput_samples_per_second is not None:
+            resolved_value = profiles[0].throughput_samples_per_second
+        else:
+            raise FieldTypeError(
+                "build_data_path_benchmark value is required when it cannot be derived from measurements or profiles.",
+                field="value",
+                metric=metric,
+            )
+    metadata_map: dict[str, object] = {} if metadata is None else dict(metadata)
+    metadata_map.setdefault("stage15_benchmark_builder", True)
+    limitation_map: dict[str, object] = {"thresholds_claimed": False}
+    if limitations is not None:
+        limitation_map.update(limitations)
+    return DataPathBenchmark(
+        benchmark_id,
+        profile_fingerprints=[profile.fingerprint for profile in profiles],
+        metric=metric,
+        value=resolved_value,
+        unit=unit or DATA_PATH_MEASUREMENT_UNITS.get(metric, "unknown"),
+        repetitions=repetitions,
+        measurements=measurement_map,
+        environment=environment,
+        limitations=limitation_map,
+        metadata=metadata_map,
+    )
+
+
+def _validate_measurement_units(measurements: Mapping[str, object], *, owner: str) -> None:
+    for key, value in measurements.items():
+        if key not in DATA_PATH_MEASUREMENT_UNITS:
+            continue
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise FieldTypeError(
+                f"{owner} reserved measurement values must be numeric.",
+                owner=owner,
+                field=key,
+                expected="non-negative finite number",
+                actual=type(value).__name__,
+            )
+        _coerce_non_negative_float(value, owner=owner, field=key)
+
+
+def _coerce_stage_contexts(values: Sequence[DataPipelineStageContext]) -> tuple[DataPipelineStageContext, ...]:
+    if isinstance(values, (str, bytes)):
+        raise FieldTypeError(
+            "stage_contexts must be a sequence of DataPipelineStageContext records.",
+            field="stage_contexts",
+            actual=type(values).__name__,
+        )
+    try:
+        contexts = tuple(values)
+    except TypeError as exc:
+        raise FieldTypeError(
+            "stage_contexts must be a sequence of DataPipelineStageContext records.",
+            field="stage_contexts",
+            actual=type(values).__name__,
+        ) from exc
+    for context in contexts:
+        if not isinstance(context, DataPipelineStageContext):
+            raise FieldTypeError(
+                "stage_contexts must contain DataPipelineStageContext records.",
+                field="stage_contexts",
+                actual=type(context).__name__,
+            )
+    return contexts
+
+
+def _fingerprint_attr(value: object | None) -> str | None:
+    if value is None:
+        return None
+    fingerprint = getattr(value, "fingerprint", None)
+    if fingerprint is None:
+        return None
+    return _coerce_fingerprint(fingerprint, owner=type(value).__name__, field="fingerprint")
+
+
+def _coerce_optional_non_empty_string(
+    value: object | None,
+    *,
+    owner: str,
+    field: str,
+) -> str | None:
+    if value is None:
+        return None
+    return _coerce_non_empty_string(value, owner=owner, field=field)
+
+
+def _coerce_string_tuple(values: Sequence[str], *, owner: str, field: str) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)):
+        raise FieldTypeError(
+            f"{owner} {field} must be a sequence of strings.",
+            owner=owner,
+            field=field,
+            actual=type(values).__name__,
+        )
+    try:
+        items = tuple(values)
+    except TypeError as exc:
+        raise FieldTypeError(
+            f"{owner} {field} must be a sequence of strings.",
+            owner=owner,
+            field=field,
+            actual=type(values).__name__,
+        ) from exc
+    return tuple(_coerce_non_empty_string(item, owner=owner, field=field) for item in items)
+
+
+def _coerce_nested_metadata(
+    value: Mapping[str, Mapping[str, object]] | None,
+) -> dict[str, dict[str, FrozenPrimitive]]:
+    if value is None:
+        return {}
+    if not isinstance(value, Mapping):
+        raise FieldTypeError(
+            "FakeDataQualityProbe field_metadata must be a mapping.",
+            field="field_metadata",
+            actual=type(value).__name__,
+        )
+    output: dict[str, dict[str, FrozenPrimitive]] = {}
+    for field, metadata in value.items():
+        field_name = _coerce_non_empty_string(field, owner="FakeDataQualityProbe", field="field_metadata key")
+        if not isinstance(metadata, Mapping):
+            raise FieldTypeError(
+                "FakeDataQualityProbe field metadata values must be mappings.",
+                field=field_name,
+                actual=type(metadata).__name__,
+            )
+        output[field_name] = _coerce_primitive_mapping(
+            metadata,
+            owner="FakeDataQualityProbe",
+            field=f"field_metadata[{field_name}]",
+        )
+    return output
+
+
+def _unwrap_payload(value: object) -> object:
+    return getattr(value, "payload", value)
+
+
+def _count_nan_inf(value: object) -> tuple[int, int]:
+    nan_count = 0
+    inf_count = 0
+    for item in _walk_values(value):
+        if isinstance(item, bool) or not isinstance(item, (int, float)):
+            continue
+        if math.isnan(float(item)):
+            nan_count += 1
+        elif math.isinf(float(item)):
+            inf_count += 1
+    return nan_count, inf_count
+
+
+def _walk_values(value: object) -> Iterable[object]:
+    if isinstance(value, Mapping):
+        for item in value.values():
+            yield from _walk_values(item)
+        return
+    if isinstance(value, (list, tuple)):
+        for item in value:
+            yield from _walk_values(item)
+        return
+    yield value
+
+
+def _is_valid_mask(value: object) -> bool:
+    items = tuple(_walk_values(value))
+    return bool(items) and all(type(item) is bool for item in items)
+
+
+def _iter_labels(value: object) -> Iterable[str]:
+    if isinstance(value, (list, tuple)):
+        for item in value:
+            yield str(item)
+        return
+    yield str(value)
+
+
+def _field_metadata_value(
+    field: str,
+    key: str,
+    values: Mapping[str, object],
+    metadata: Mapping[str, Mapping[str, object]],
+) -> object | None:
+    if field in metadata and key in metadata[field]:
+        return metadata[field][key]
+    value = values.get(field)
+    if value is None:
+        return None
+    if key == "shape":
+        shape = getattr(value, "shape", None)
+        if shape is not None:
+            try:
+                return list(shape)
+            except TypeError:
+                return str(shape)
+        if isinstance(value, (list, tuple)):
+            return [len(value)]
+    attr = getattr(value, key, None)
+    if attr is not None:
+        return str(attr)
+    if key == "dtype":
+        return type(value).__name__
+    return None
+
+
+def _thaw_for_probe_record(value: object) -> object:
+    if isinstance(value, Mapping):
+        return {str(key): _thaw_for_probe_record(item) for key, item in value.items()}
+    if isinstance(value, tuple):
+        return [_thaw_for_probe_record(item) for item in value]
+    if isinstance(value, list):
+        return [_thaw_for_probe_record(item) for item in value]
+    return value
 
 
 def _record_dict(
