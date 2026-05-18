@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from rphys.data import Batch
-from rphys.learning import LoopContext, StepOutput
-from rphys.training import NativeTrainingEngine, Trainer, TrainingEngine, TrainingPlan, TrainingResult
+from rphys.learning import LoopContext
+from rphys.training import NativeTrainingEngine, Trainer, TrainingEngine, TrainingOutputSpec, TrainingPlan, TrainingResult
 
 
 class ContractLearner:
-    def step(self, batch: Batch, context: LoopContext) -> StepOutput:
-        return StepOutput(metadata={"mode": context.mode.value})
+    def step(self, batch: Batch, context: LoopContext) -> Batch:
+        return batch
 
 
 class RecordingEngine:
@@ -31,7 +31,11 @@ class RecordingEngine:
 def test_training_engine_is_structural_and_receives_plan_and_learner_separately() -> None:
     engine = RecordingEngine()
     trainer = Trainer(engine=engine)
-    plan = TrainingPlan(train_batches=(Batch(),), metadata={"source": "contract"})
+    plan = TrainingPlan(
+        train_batches=(Batch(),),
+        output_spec=TrainingOutputSpec(objective="objectives/custom.training.total"),
+        metadata={"source": "contract"},
+    )
     learner = ContractLearner()
 
     result = trainer.fit(plan, learner)

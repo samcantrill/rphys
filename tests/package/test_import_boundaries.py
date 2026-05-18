@@ -22,6 +22,8 @@ HEAVY_OPTIONAL_MODULES = [
 LIGHTWEIGHT_IMPORTS = [
     "rphys",
     "rphys.analysis",
+    "rphys.analysis.reports",
+    "rphys.analysis.visualization",
     "rphys.collections",
     "rphys.data",
     "rphys.data.collation",
@@ -33,11 +35,13 @@ LIGHTWEIGHT_IMPORTS = [
     "rphys.data.locators",
     "rphys.data.metadata",
     "rphys.data.objects",
+    "rphys.data.output",
     "rphys.data.sample_builders",
     "rphys.data.sample_fields",
     "rphys.data.schemas",
     "rphys.data.splits",
     "rphys.data.types",
+    "rphys.data.uncollation",
     "rphys.datasources",
     "rphys.datasources.adapters",
     "rphys.datasources.cache",
@@ -109,6 +113,12 @@ STAGE_12_TRAINING_IMPORTS = [
     "rphys.training.plan",
     "rphys.training.profiling",
     "rphys.training.results",
+]
+
+STAGE_13_SCAFFOLD_IMPORTS = [
+    "rphys.prediction",
+    "rphys.evaluation",
+    "rphys.analysis",
 ]
 
 STAGE_11_IMPORTS = [
@@ -295,6 +305,68 @@ def test_stage_12_training_imports_do_not_load_frameworks_or_datasources() -> No
     imports = ", ".join(repr(module_name) for module_name in STAGE_12_TRAINING_IMPORTS)
     forbidden_modules = [
         "rphys.datasources",
+        "lightning",
+        "pytorch_lightning",
+        "jax",
+        "torch",
+        "torchmetrics",
+        "wandb",
+        "tensorboard",
+        "av",
+        "cv2",
+        "matplotlib",
+        "numpy",
+        "pandas",
+        "scipy",
+        "tests.support",
+    ]
+    forbidden = ", ".join(repr(module_name) for module_name in forbidden_modules)
+    script = textwrap.dedent(
+        f"""
+        import importlib
+        import sys
+
+        for module_name in [{imports}]:
+            importlib.import_module(module_name)
+
+        forbidden = sorted(
+            name for name in [{forbidden}]
+            if name in sys.modules
+        )
+        if forbidden:
+            raise SystemExit("forbidden modules loaded: " + ", ".join(forbidden))
+        """
+    )
+    env = os.environ.copy()
+    existing_pythonpath = env.get("PYTHONPATH")
+    pythonpath_parts = [str(REPO_ROOT / "src"), str(REPO_ROOT)]
+    if existing_pythonpath:
+        pythonpath_parts.append(existing_pythonpath)
+    env["PYTHONPATH"] = os.pathsep.join(pythonpath_parts)
+
+    completed = subprocess.run(
+        [sys.executable, "-c", script],
+        check=False,
+        cwd=REPO_ROOT,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+
+    assert completed.returncode == 0, completed.stdout
+
+
+def test_stage_13_scaffold_imports_do_not_load_backend_workflow_or_export_dependencies() -> None:
+    imports = ", ".join(repr(module_name) for module_name in STAGE_13_SCAFFOLD_IMPORTS)
+    forbidden_modules = [
+        "rphys.datasources",
+        "rphys.datasources.sources",
+        "rphys.io.codecs",
+        "rphys.methods",
+        "rphys.ops.export",
+        "rphys.training",
+        "loom",
         "lightning",
         "pytorch_lightning",
         "jax",

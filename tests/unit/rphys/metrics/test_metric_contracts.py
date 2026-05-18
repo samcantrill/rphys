@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 import pytest
 
+from rphys.collections import CollectionItem
 from rphys.data import FieldValue, Sample
 from rphys.data.collections import SampleCollection
 from rphys.errors import (
@@ -14,14 +15,15 @@ from rphys.errors import (
 from rphys.metrics import (
     GroupBySpec,
     Metric,
+    MetricCollectionOperation,
     MetricContext,
     MetricContract,
     MetricInputSpec,
-    MetricObservation,
-    MetricObservationCollection,
-    MetricResult,
+    MetricSampleOperation,
     MetricValue,
+    collect_metric_fields,
 )
+from rphys.ops import OperationContext, SampleOperationContext
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,32 +34,38 @@ class FakeScalar:
 class FakeMetric:
     contract = MetricContract(
         "pulse-mae",
-        (MetricInputSpec("predictions/signal.pulse", role="prediction"),),
+        (
+            MetricInputSpec("predictions/signal.pulse", role="prediction"),
+            MetricInputSpec("targets/signal.pulse", role="target"),
+        ),
         level="sample",
-        writes=("metrics/custom.stage11.pulse_mae",),
+        writes=("metrics/custom.stage13.pulse_mae",),
     )
 
-    def __call__(self, context: MetricContext) -> MetricResult:
-        observation = MetricObservation(
-            "pulse-mae",
-            MetricValue(FakeScalar(1.5), backend="fake", unit="bpm"),
-            level=context.contract.level,
-            groups={"subject_id": "s1", "record_id": "r1", "split": "test"},
-        )
-        return MetricResult(
-            MetricObservationCollection((observation,)),
-            fields={"metrics/custom.stage11.pulse_mae": FieldValue(FakeScalar(1.5))},
-            contract=context.contract,
+    def __call__(self, context: MetricContext) -> MetricValue:
+        prediction = context.fields.require("predictions/signal.pulse")  # type: ignore[union-attr]
+        target = context.fields.require("targets/signal.pulse")  # type: ignore[union-attr]
+        return MetricValue(
+            FakeScalar(abs(prediction - target)),
+            backend="fake",
+            unit="bpm",
+            metadata={"split": context.metadata.get("split")},
         )
 
 
 def test_metric_specs_validate_locators_levels_and_grouping() -> None:
     input_spec = MetricInputSpec("predictions/signal.pulse", role="prediction")
-    contract = MetricContract("mae", (input_spec,), level="sample")
+    contract = MetricContract(
+        "mae",
+        (input_spec,),
+        level="sample",
+        writes=("metrics/custom.stage13.mae",),
+    )
     grouping = GroupBySpec(("subject_id", "record_id"), level="group")
 
     assert str(input_spec.locator) == "predictions/signal.pulse"
     assert contract.inputs == (input_spec,)
+    assert tuple(str(locator) for locator in contract.writes) == ("metrics/custom.stage13.mae",)
     assert grouping.keys == ("subject_id", "record_id")
 
     with pytest.raises(InvalidMetricSpecError):
@@ -105,74 +113,91 @@ def test_metric_value_is_detached_and_non_differentiable() -> None:
         MetricValue(FakeScalar(0.1), differentiable=True)
 
 
-def test_metric_observation_collection_preserves_groups_and_groups_by_spec() -> None:
-    first = MetricObservation(
-        "mae",
-        MetricValue(FakeScalar(1.0)),
-        level="window",
-        groups={"subject_id": "s1", "record_id": "r1"},
-        window={"start": 0, "stop": 1},
+def test_collect_metric_fields_binds_single_value_to_declared_metric_field() -> None:
+    sample = Sample(
+        {
+            "predictions/signal.pulse": FieldValue(1.0),
+            "targets/signal.pulse": FieldValue(1.25),
+        }
     )
-    second = MetricObservation(
-        "mae",
-        MetricValue(FakeScalar(2.0)),
-        level="window",
-        groups={"subject_id": "s2", "record_id": "r2"},
-    )
-    collection = MetricObservationCollection((first, second), metadata={"scope": "window"})
-
-    grouped = collection.grouped(GroupBySpec(("subject_id",)))
-
-    assert list(collection) == [first, second]
-    assert collection.entries[0].metadata["subject_id"] == "s1"
-    assert tuple(grouped) == (("s1",), ("s2",))
-    assert list(grouped[("s1",)]) == [first]
-    with pytest.raises(TypeError):
-        collection.metadata["scope"] = "record"  # type: ignore[index]
-
-
-def test_metric_observation_collection_validates_duplicates_and_missing_groups() -> None:
-    observation = MetricObservation(
-        "mae",
-        MetricValue(FakeScalar(1.0)),
-        groups={"subject_id": "s1"},
-    )
-
-    with pytest.raises(InvalidMetricResultError):
-        MetricObservationCollection((observation, observation))
-
-    collection = MetricObservationCollection((observation,))
-    with pytest.raises(InvalidMetricResultError):
-        collection.grouped(GroupBySpec(("record_id",)))
-
-
-def test_metric_result_validates_patch_fields_and_rejects_table_names() -> None:
-    observation = MetricObservation("mae", MetricValue(FakeScalar(1.0)))
-    collection = MetricObservationCollection((observation,))
-    result = MetricResult(
-        collection,
-        fields={"metrics/custom.stage11.pulse_mae": FieldValue(FakeScalar(1.0))},
-        contract=FakeMetric.contract,
-    )
-
-    assert result.observations is collection
-    assert str(next(iter(result.fields))) == "metrics/custom.stage11.pulse_mae"
-    with pytest.raises(TypeError):
-        result.fields["metrics/custom.stage11.other"] = FieldValue(1.0)  # type: ignore[index]
-    with pytest.raises(InvalidMetricResultError):
-        MetricResult(collection, fields={"metrics/custom.stage11.pulse_mae": FieldValue(1.0)})
-    with pytest.raises(InvalidMetricResultError):
-        MetricResult(collection, fields={"metrics/custom.stage11.undeclared": FieldValue(1.0)}, contract=FakeMetric.contract)
-
-
-def test_fake_metric_satisfies_protocol_and_returns_observation_collection() -> None:
     metric = FakeMetric()
-    context = MetricContext(metric.contract)
+
+    fields = collect_metric_fields(
+        metric,
+        MetricContext(metric.contract, fields=sample, metadata={"split": "test"}),
+    )
 
     assert isinstance(metric, Metric)
-    result = metric(context)
+    assert tuple(str(locator) for locator in fields) == ("metrics/custom.stage13.pulse_mae",)
+    assert fields[next(iter(fields))].payload.value == FakeScalar(0.25)
+    assert fields[next(iter(fields))].metadata["metric.unit"] == "bpm"
 
-    assert isinstance(result, MetricResult)
-    assert len(result.observations) == 1
-    assert result.observations[0].value.value == FakeScalar(1.5)
-    assert result.observations[0].groups["subject_id"] == "s1"
+
+def test_collect_metric_fields_validates_declared_writes() -> None:
+    class MissingMetric:
+        contract = MetricContract(
+            "missing",
+            writes=("metrics/custom.stage13.first", "metrics/custom.stage13.second"),
+        )
+
+        def __call__(self, _context: MetricContext):
+            return {"metrics/custom.stage13.first": MetricValue(FakeScalar(1.0))}
+
+    class UndeclaredMetric:
+        contract = MetricContract("undeclared", writes=("metrics/custom.stage13.first",))
+
+        def __call__(self, _context: MetricContext):
+            return {"metrics/custom.stage13.other": MetricValue(FakeScalar(1.0))}
+
+    class NoWriteMetric:
+        contract = MetricContract("no-write")
+
+        def __call__(self, _context: MetricContext):
+            return MetricValue(FakeScalar(1.0))
+
+    for metric in (MissingMetric(), UndeclaredMetric(), NoWriteMetric()):
+        with pytest.raises(InvalidMetricResultError):
+            collect_metric_fields(metric, MetricContext(metric.contract))
+
+
+def test_metric_sample_operation_writes_declared_metric_fields() -> None:
+    sample = Sample(
+        {
+            "predictions/signal.pulse": FieldValue(1.0),
+            "targets/signal.pulse": FieldValue(1.5),
+        }
+    )
+    operation = MetricSampleOperation(FakeMetric())
+
+    result = operation(sample, SampleOperationContext(metadata={"split": "valid"}))
+
+    assert result.output is not sample
+    assert result.output.require("metrics/custom.stage13.pulse_mae").value == FakeScalar(0.5)
+    assert result.metadata["sample_field_effects"]["added"] == ("metrics/custom.stage13.pulse_mae",)
+    assert not sample.has("metrics/custom.stage13.pulse_mae")
+
+
+def test_metric_collection_operation_replicates_collection_level_metric_fields() -> None:
+    class CollectionMetric:
+        contract = MetricContract("window-count", level="record", writes=("metrics/custom.stage13.window_count",))
+
+        def __call__(self, context: MetricContext) -> MetricValue:
+            assert context.samples is not None
+            return MetricValue(FakeScalar(float(len(context.samples))), backend="fake")
+
+    entries = (
+        CollectionItem(Sample({"inputs/signal.bvp": FieldValue([1])}), metadata={"record_id": "r1"}),
+        CollectionItem(Sample({"inputs/signal.bvp": FieldValue([2])}), metadata={"record_id": "r1"}),
+    )
+    collection = SampleCollection(entries, metadata={"level": "window"})
+    operation = MetricCollectionOperation(CollectionMetric())
+
+    result = operation(collection, OperationContext(metadata={"split": "test"}))
+
+    assert isinstance(result.output, SampleCollection)
+    assert result.output.metadata["metric_binding"] == "replicated_collection_fields"
+    assert [sample.require("metrics/custom.stage13.window_count").value for sample in result.output] == [
+        FakeScalar(2.0),
+        FakeScalar(2.0),
+    ]
+    assert not collection[0].has("metrics/custom.stage13.window_count")

@@ -19,8 +19,10 @@ from pathlib import Path
 from types import MappingProxyType
 from urllib.parse import quote, unquote, urlparse
 
+from rphys.data.containers import Sample
 from rphys.data.fields import FieldValue
 from rphys.data.keys import DataKey
+from rphys.data.locators import FieldLocator
 from rphys.data.schemas import SchemaName
 from rphys.datasources.refs import RecordRef
 from rphys.errors import RemotePhysOperationError
@@ -58,6 +60,9 @@ __all__ = [
     "RecordExportRequest",
     "SaveOperation",
     "SelectedFieldExport",
+    "build_sample_artifact_record",
+    "export_record_requests",
+    "sample_artifact_export_request",
 ]
 
 
@@ -1218,6 +1223,151 @@ class ExportReport:
 ExportReport.__hash__ = None  # type: ignore[assignment]
 
 
+def build_sample_artifact_record(
+    *,
+    sample: Sample,
+    source_record: RecordRef,
+    locators: Sequence[FieldLocator | str],
+    field_refs: Mapping[DataKey | str, FieldRef] | None = None,
+) -> RecordRef:
+    """Return a descriptor-backed export record for one runtime ``Sample``.
+
+    Existing source fields may be reused from ``source_record``. New derived
+    fields, such as prediction fields, must be declared through ``field_refs``.
+    The returned descriptor is suitable for ``RecordExportRequest`` and does
+    not scan storage, infer target paths, or create a prediction-specific
+    datasource.
+    """
+
+    if not isinstance(sample, Sample):
+        raise RemotePhysOperationError(
+            "build_sample_artifact_record requires a Sample.",
+            field="sample",
+            actual=type(sample).__name__,
+        )
+    if not isinstance(source_record, RecordRef):
+        raise RemotePhysOperationError(
+            "build_sample_artifact_record source_record must be a RecordRef.",
+            field="source_record",
+            actual=type(source_record).__name__,
+        )
+    requested = _coerce_export_locators(locators)
+    provided_refs = _coerce_field_ref_mapping(field_refs)
+    fields = dict(source_record.fields)
+    for locator in requested:
+        if not sample.has(locator):
+            raise RemotePhysOperationError(
+                "Sample artifact export locator is missing from the sample.",
+                field="locators",
+                locator=str(locator),
+                record_id=source_record.record_id,
+            )
+        existing = fields.get(locator.key)
+        provided = provided_refs.get(locator.key)
+        if existing is None:
+            if provided is None:
+                raise RemotePhysOperationError(
+                    "Sample artifact export requires a FieldRef for fields absent from source_record.",
+                    field="field_refs",
+                    field_key=str(locator.key),
+                    locator=str(locator),
+                    record_id=source_record.record_id,
+                )
+            fields[locator.key] = provided
+        elif provided is not None and provided != existing:
+            raise RemotePhysOperationError(
+                "Sample artifact export FieldRef conflicts with source_record.fields.",
+                field="field_refs",
+                field_key=str(locator.key),
+                locator=str(locator),
+                record_id=source_record.record_id,
+            )
+    return RecordRef(
+        source_record.datasource,
+        source_record.record_id,
+        fields,
+        metadata={
+            **dict(source_record.metadata),
+            "sample_artifact.field_count": len(requested),
+        },
+    )
+
+
+def sample_artifact_export_request(
+    *,
+    sample: Sample,
+    source_record: RecordRef,
+    locators: Sequence[FieldLocator | str],
+    target: ExportTarget,
+    spec: ExportSpec | None = None,
+    field_refs: Mapping[DataKey | str, FieldRef] | None = None,
+    layout: OutputLayout | None = None,
+    policy: ExportPolicy | None = None,
+) -> RecordExportRequest:
+    """Build a ``RecordExportRequest`` for one uncollated sample artifact."""
+
+    requested = _coerce_export_locators(locators)
+    export_record = build_sample_artifact_record(
+        sample=sample,
+        source_record=source_record,
+        locators=requested,
+        field_refs=field_refs,
+    )
+    field_values = {locator.key: sample.field(locator) for locator in requested}
+    resolved_spec = spec if spec is not None else ExportSpec(tuple(field_values))
+    if not isinstance(resolved_spec, ExportSpec):
+        raise RemotePhysOperationError(
+            "sample_artifact_export_request spec must be an ExportSpec.",
+            field="spec",
+            actual=type(spec).__name__,
+        )
+    if set(resolved_spec.requested_fields) != set(field_values):
+        raise RemotePhysOperationError(
+            "sample artifact export spec must match requested sample fields.",
+            field="spec",
+            expected=sorted(str(field) for field in field_values),
+            actual=sorted(str(field) for field in resolved_spec.requested_fields),
+        )
+    return RecordExportRequest(
+        source_record=export_record,
+        field_values=field_values,
+        spec=resolved_spec,
+        target=target,
+        layout=layout,
+        policy=policy,
+    )
+
+
+def export_record_requests(
+    requests: Sequence[RecordExportRequest],
+    codec_registry: CodecRegistry,
+) -> ExportResult:
+    """Run codec selection and save for already assembled record requests.
+
+    This is a narrow multi-record iteration helper over existing export/save
+    operations. All requests must share one spec, target, layout, and policy so
+    the returned ``ExportResult`` remains the existing aggregate evidence type.
+    """
+
+    request_tuple = _coerce_record_export_requests(requests)
+    first = request_tuple[0]
+    _validate_shared_export_inputs(request_tuple)
+    selector = CodecSelectionOperation(codec_registry)
+    saver = SaveOperation(codec_registry)
+    record_results = []
+    for request in request_tuple:
+        selection = selector.run(request).output
+        record_result = saver.run(selection).output
+        record_results.append(record_result)
+    return ExportResult(
+        spec=first.spec,
+        target=first.target,
+        layout=first.layout,
+        policy=first.policy,
+        record_results=record_results,
+    )
+
+
 def _coerce_requested_fields(
     fields: Sequence[DataKey | str],
 ) -> tuple[DataKey, ...]:
@@ -1469,6 +1619,132 @@ def _coerce_record_results(
                 actual=type(result).__name__,
             )
     return coerced
+
+
+def _coerce_record_export_requests(
+    requests: Sequence[RecordExportRequest],
+) -> tuple[RecordExportRequest, ...]:
+    if isinstance(requests, (str, bytes)) or not isinstance(requests, Sequence) or not requests:
+        raise RemotePhysOperationError(
+            "export_record_requests requires a non-empty sequence.",
+            field="requests",
+            actual=type(requests).__name__,
+        )
+    coerced = tuple(requests)
+    for request in coerced:
+        if not isinstance(request, RecordExportRequest):
+            raise RemotePhysOperationError(
+                "export_record_requests entries must be RecordExportRequest values.",
+                field="requests",
+                actual=type(request).__name__,
+            )
+    return coerced
+
+
+def _validate_shared_export_inputs(requests: tuple[RecordExportRequest, ...]) -> None:
+    first = requests[0]
+    for index, request in enumerate(requests[1:], start=1):
+        if request.spec != first.spec:
+            raise RemotePhysOperationError(
+                "export_record_requests requires all requests to share one ExportSpec.",
+                field="requests",
+                index=index,
+            )
+        if request.target != first.target:
+            raise RemotePhysOperationError(
+                "export_record_requests requires all requests to share one ExportTarget.",
+                field="requests",
+                index=index,
+            )
+        if request.layout != first.layout:
+            raise RemotePhysOperationError(
+                "export_record_requests requires all requests to share one OutputLayout.",
+                field="requests",
+                index=index,
+            )
+        if request.policy != first.policy:
+            raise RemotePhysOperationError(
+                "export_record_requests requires all requests to share one ExportPolicy.",
+                field="requests",
+                index=index,
+            )
+
+
+def _coerce_export_locators(
+    locators: Sequence[FieldLocator | str],
+) -> tuple[FieldLocator, ...]:
+    if isinstance(locators, (str, bytes)) or not isinstance(locators, Sequence) or not locators:
+        raise RemotePhysOperationError(
+            "Sample artifact export locators must be a non-empty sequence.",
+            field="locators",
+            actual=type(locators).__name__,
+        )
+    resolved = tuple(
+        FieldLocator.parse(locator) if isinstance(locator, str) else locator
+        for locator in locators
+    )
+    seen_locators: set[FieldLocator] = set()
+    seen_keys: set[DataKey] = set()
+    for locator in resolved:
+        if not isinstance(locator, FieldLocator):
+            raise RemotePhysOperationError(
+                "Sample artifact export locators must contain FieldLocator values.",
+                field="locators",
+                actual=type(locator).__name__,
+            )
+        if locator.metadata_key is not None:
+            raise RemotePhysOperationError(
+                "Sample artifact export locators must address fields, not metadata selectors.",
+                field="locators",
+                locator=str(locator),
+            )
+        if locator in seen_locators:
+            raise RemotePhysOperationError(
+                "Sample artifact export locators must not contain duplicates.",
+                field="locators",
+                locator=str(locator),
+            )
+        if locator.key in seen_keys:
+            raise RemotePhysOperationError(
+                "Sample artifact export locators must not duplicate data keys.",
+                field="locators",
+                field_key=str(locator.key),
+            )
+        seen_locators.add(locator)
+        seen_keys.add(locator.key)
+    return resolved
+
+
+def _coerce_field_ref_mapping(
+    values: Mapping[DataKey | str, FieldRef] | None,
+) -> dict[DataKey, FieldRef]:
+    if values is None:
+        return {}
+    if not isinstance(values, Mapping):
+        raise RemotePhysOperationError(
+            "Sample artifact field_refs must be a mapping.",
+            field="field_refs",
+            actual=type(values).__name__,
+        )
+    refs: dict[DataKey, FieldRef] = {}
+    for raw_key, field_ref in values.items():
+        key = DataKey(raw_key)
+        if not isinstance(field_ref, FieldRef):
+            raise RemotePhysOperationError(
+                "Sample artifact field_refs must contain FieldRef values.",
+                field="field_refs",
+                field_key=str(key),
+                actual=type(field_ref).__name__,
+            )
+        if field_ref.key != key:
+            raise RemotePhysOperationError(
+                "Sample artifact field_refs keys must match FieldRef.key.",
+                field="field_refs",
+                expected=str(key),
+                actual=str(field_ref.key),
+            )
+        refs[key] = field_ref
+    return refs
 
 
 def _non_empty_token(value: object, *, field: str) -> str:

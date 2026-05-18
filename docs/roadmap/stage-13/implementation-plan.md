@@ -1,11 +1,11 @@
 # Roadmap Stage 13 Implementation Plan
 
-Status: ready for implementation workflow
+Status: complete
 Roadmap version: `v13`
 Planning document: `docs/roadmap/stage-13/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: not started
+Current phase: complete - all phases merged
 Blockers: none
 
 ## Summary
@@ -90,12 +90,12 @@ Blockers: none
 
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `scaffold-imports-errors` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p1-scaffold-imports-errors` | pending | Package homes, central errors, package/import tests | Establish scoped package scaffold, optional code-backed errors, and lightweight import boundaries. | `make test-package`; focused error tests if added; `git diff --check` | Import/API posture |
-| 2 | `batch-native-method-learner-output` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p2-batch-native-method-learner-output` | pending | `src/rphys/methods/**`, `src/rphys/learning/**`, `src/rphys/training/**`, batch-operation fakes | Remove `MethodOutput`/method-output adapters and `StepOutput`; make methods/learners return `Batch`; add generic returned-batch output spec/validation, plan-owned training-output spec/validation, field projection, target exclusion, and pass-through policy. | `make test-unit`; `make test-contract`; `make test-package`; focused integration if added | Batch-native prediction; learner Batch output; plan-owned training spec; target-free inference |
-| 3 | `uncollation-sample-artifacts` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p3-uncollation-sample-artifacts` | pending | Data uncollation policy, sample artifact datasource/export adapters, tests | Implement explicit batch-field uncollation policy/evidence and sample-granular artifact export/reload over existing export/save/datasource APIs. | `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check` | Uncollate to samples; sample artifact export/reload |
-| 4 | `sample-collection-metric-ops` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p4-sample-collection-metric-ops` | pending | `src/rphys/data/collections.py`, transitional `src/rphys/collections.py` only if still needed, `src/rphys/ops/**`, `src/rphys/metrics/**` adapters | Implement runtime grouping/collation of `Iterable[Sample]` into `Iterable[SampleCollection]`, collection sort/project/stitch/concat operations, and sample/collection metric operation adapters. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package` | Runtime grouping; stitched samples; metric-as-sample-operation |
-| 5 | `visualization-reports-recipes` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p5-visualization-reports-recipes` | pending | `src/rphys/analysis/**`, visualization/report tests, recipe docs/examples | Implement visualization/report operation-compatible builders, in-memory report/table/diagnostic renderer records, and importable recipe examples without a registry or engine. Analysis remains generic group/reduce/metric pipeline composition. | `make test-unit`; `make test-contract`; `make test-package`; docs review | Visualization fields; report building; structured report dataset handoff; recipe examples |
-| 6 | `docs-examples-final-validation` | pending | `agent/stage-13-prediction-evaluation-analysis-reports-p6-docs-examples-final-validation` | pending | Stage 13 docs/docstrings/examples, synthetic integration tests, final validation evidence | Complete synthetic composition examples, docs, package export review, and final validation. | `make test-package`; `make test-unit`; `make test-contract`; `make test-integration`; `make test-summary`; `uv lock --check`; `git diff --check`; `make validate-pr` | Full synthetic Stage 13 composition; sample-artifact handoff; dataset-formatting/evaluation recipe analogue |
+| 1 | `scaffold-imports-errors` | merged | `agent/stage-13-prediction-evaluation-analysis-reports-p1-scaffold-imports-errors` | [#85](https://github.com/samcantrill/rphys/pull/85) | Package homes, central errors, package/import tests | Establish scoped package scaffold, optional code-backed errors, and lightweight import boundaries. | `make test-package`; focused error tests if added; `git diff --check` | Import/API posture |
+| 2 | `batch-native-method-learner-output` | merged | `agent/stage-13-prediction-evaluation-analysis-reports-p2-batch-native-method-learner-output` | [#86](https://github.com/samcantrill/rphys/pull/86) | `src/rphys/methods/**`, `src/rphys/learning/**`, `src/rphys/training/**`, batch-operation fakes | Remove `MethodOutput`/method-output adapters and `StepOutput`; make methods/learners return `Batch`; add generic returned-batch output spec/validation, plan-owned training-output spec/validation, field projection, target exclusion, and pass-through policy. | `make test-unit`; `make test-contract`; `make test-package`; focused integration if added | Batch-native prediction; learner Batch output; plan-owned training spec; target-free inference |
+| 3 | `uncollation-sample-artifacts` | merged | `agent/stage-13-prediction-evaluation-analysis-reports-p3-uncollation-sample-artifacts` | [#87](https://github.com/samcantrill/rphys/pull/87) | Data uncollation policy, sample artifact datasource/export adapters, tests | Implement explicit batch-field uncollation policy/evidence and sample-granular artifact export/reload over existing export/save/datasource APIs. | `make test-unit`; `make test-contract`; `make test-integration`; `git diff --check` | Uncollate to samples; sample artifact export/reload |
+| 4 | `sample-collection-metric-ops` | merged | `agent/stage-13-prediction-evaluation-analysis-reports-p4-sample-collection-metric-ops` | [#88](https://github.com/samcantrill/rphys/pull/88) | `src/rphys/data/collections.py`, transitional `src/rphys/collections.py` only if still needed, `src/rphys/ops/**`, `src/rphys/metrics/**` adapters | Implement runtime grouping/collation of `Iterable[Sample]` into `Iterable[SampleCollection]`, collection sort/project/stitch/concat operations, and sample/collection metric operation adapters. | `make test-unit`; `make test-contract`; `make test-integration`; `make test-package` | Runtime grouping; stitched samples; metric-as-sample-operation |
+| 5 | `visualization-reports-recipes` | merged | `agent/stage-13-prediction-evaluation-analysis-reports-p5-visualization-reports-recipes` | [#89](https://github.com/samcantrill/rphys/pull/89) | `src/rphys/analysis/**`, visualization/report tests, recipe docs/examples | Implement visualization/report operation-compatible builders, in-memory report/table/diagnostic renderer records, and importable recipe examples without a registry or engine. Analysis remains generic group/reduce/metric pipeline composition. | `make test-unit`; `make test-contract`; `make test-package`; docs review | Visualization fields; report building; structured report dataset handoff; recipe examples |
+| 6 | `docs-examples-final-validation` | merged | `agent/stage-13-prediction-evaluation-analysis-reports-p6-docs-examples-final-validation` | [#90](https://github.com/samcantrill/rphys/pull/90) | Stage 13 docs/docstrings/examples, synthetic integration tests, final validation evidence | Complete synthetic composition examples, docs, package export review, and final validation. | `make test-package`; `make test-unit`; `make test-contract`; `make test-integration`; `make test-summary`; `uv lock --check`; `git diff --check`; `make validate-pr` | Full synthetic Stage 13 composition; sample-artifact handoff; dataset-formatting/evaluation recipe analogue |
 
 ## Implementation Readiness Blockers
 
@@ -251,11 +251,11 @@ sample artifact datasource(s)
 
 ## Phase 1: Scaffold, Imports, And Errors
 
-Status: pending
+Status: merged
 Slug: `scaffold-imports-errors`
 Branch: `agent/stage-13-prediction-evaluation-analysis-reports-p1-scaffold-imports-errors`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-13-prediction-evaluation-analysis-reports-p1-scaffold-imports-errors`
-PR: pending
+PR: [#85](https://github.com/samcantrill/rphys/pull/85)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -315,14 +315,14 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: complete; `docs/roadmap/stage-13/phases/scaffold-imports-errors.md`
 - Planning/refinement budget: small; one refinement pass if import/export naming becomes ambiguous.
 - Implementation/refinement budget: small.
 - PR review budget: small; focus on public import posture and minimal error taxonomy.
 - Blocker-resolution budget: stop if implementing a broad error requires a
   specific subclass tree, root exports, or new shared public helper.
 - Pre-submit blocker gate: no placeholder exports; no forbidden imports; no public generic job/diagnostic APIs.
-- Merge record: pending
+- Merge record: `docs/roadmap/stage-13/phases/scaffold-imports-errors-merge-record.md`
 
 ### Risks And Stop Conditions
 
@@ -333,20 +333,20 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
+- Implementation: complete; package-home docstrings, broad error docstrings, Stage 13 scaffold package tests, and import-boundary tests.
+- Validation: `uv run pytest tests/package/test_import.py tests/package/test_import_boundaries.py`; `make test-package`; `make test-summary`; `make validate-pr`; `git diff --check`.
+- PR: [#85](https://github.com/samcantrill/rphys/pull/85), opened against `develop` with required title.
+- Merge: merged to `develop` via PR [#85](https://github.com/samcantrill/rphys/pull/85) at `2026-05-17T12:46:19Z`; merge commit `66bb4df50e90961298dbeb4f581a8453db1a5206`.
 - Follow-up: Phase 2 replaces legacy method/learner output records with
   returned-`Batch` contracts; it should not add a public prediction record family.
 
 ## Phase 2: Batch-Native Method, Learner, And Training Output
 
-Status: pending
+Status: merged
 Slug: `batch-native-method-learner-output`
 Branch: `agent/stage-13-prediction-evaluation-analysis-reports-p2-batch-native-method-learner-output`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-13-prediction-evaluation-analysis-reports-p2-batch-native-method-learner-output`
-PR: pending
+PR: [#86](https://github.com/samcantrill/rphys/pull/86)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -468,7 +468,7 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: complete; `docs/roadmap/stage-13/phases/batch-native-method-learner-output.md`
 - Planning/refinement budget: medium; refine if field-role projection or
   training-output spec scope becomes ambiguous.
 - Implementation/refinement budget: medium.
@@ -479,7 +479,7 @@ Workflow path: fast path
 - Pre-submit blocker gate: no trainer dependency; no `TrainingResult` payload
   mining; no datasource/dataloader/checkpoint behavior; no uncollation/export
   side effects; no public prediction record family.
-- Merge record: pending
+- Merge record: `docs/roadmap/stage-13/phases/batch-native-method-learner-output-merge-record.md`
 
 ### Risks And Stop Conditions
 
@@ -494,20 +494,26 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
+- Implementation: complete; methods and learners now return ordinary `Batch`
+  values, generic returned-batch validation lives in `rphys.data`, training
+  output fields are declared by `TrainingOutputSpec`, and the native engine
+  validates returned learner batches before backward/optimizer/scheduler or
+  summary recording.
+- Validation: targeted package/data/learning/training tests; `make test-unit`;
+  `make test-contract`; `make test-package`; `make test-integration`;
+  `make test-summary`; `make validate-pr`; `git diff --check`.
+- PR: [#86](https://github.com/samcantrill/rphys/pull/86), opened against `develop` with required title.
+- Merge: merged to `develop` via PR [#86](https://github.com/samcantrill/rphys/pull/86) at `2026-05-17T13:16:04Z`; merge commit `184d85ff90d3342762ec642b61abbef585fe0546`.
 - Follow-up: Phase 3 consumes `Batch` prediction fields for explicit uncollation
   and sample artifact export/reload behavior.
 
 ## Phase 3: Uncollation And Sample Artifact Export/Reload
 
-Status: pending
+Status: merged
 Slug: `uncollation-sample-artifacts`
 Branch: `agent/stage-13-prediction-evaluation-analysis-reports-p3-uncollation-sample-artifacts`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-13-prediction-evaluation-analysis-reports-p3-uncollation-sample-artifacts`
-PR: pending
+PR: [#87](https://github.com/samcantrill/rphys/pull/87)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -616,7 +622,7 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: complete; `docs/roadmap/stage-13/phases/uncollation-sample-artifacts.md`
 - Planning/refinement budget: medium; refine if sample artifact reload requires
   generic datasource adapter decisions or export APIs need widening.
 - Implementation/refinement budget: medium.
@@ -625,7 +631,7 @@ Workflow path: fast path
 - Pre-submit blocker gate: no implicit mutation/export; no prediction-specific
   storage; no domain-specific datasource family; no new codec/manifest/output
   directory convention.
-- Merge record: pending
+- Merge record: `docs/roadmap/stage-13/phases/uncollation-sample-artifacts-merge-record.md`
 
 ### Risks And Stop Conditions
 
@@ -642,20 +648,25 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
+- Implementation: complete; explicit returned-batch uncollation plans now
+  produce one `Sample` per item, sample artifact export requests require source
+  `RecordRef`/declared derived `FieldRef` evidence, and a narrow multi-record
+  export helper iterates existing codec-selection/save operations.
+- Validation: targeted uncollation/export/sample-artifact tests; `make test-unit`;
+  `make test-contract`; `make test-package`; `make test-integration`;
+  `make test-summary`; `make validate-pr`; `git diff --check`.
+- PR: [#87](https://github.com/samcantrill/rphys/pull/87), opened against `develop` with required title.
+- Merge: merged to `develop` via PR [#87](https://github.com/samcantrill/rphys/pull/87) at `2026-05-17T13:36:25Z`; merge commit `064cbf2ab72ffe15e71129d856f3b66c33b584db`.
 - Follow-up: Phase 4 consumes sample/batch field projection and sample artifact
   reload policy in runtime sample-collection and metric operation recipes.
 
 ## Phase 4: Runtime Sample-Collection And Metric Operations
 
-Status: pending
+Status: merged
 Slug: `sample-collection-metric-ops`
 Branch: `agent/stage-13-prediction-evaluation-analysis-reports-p4-sample-collection-metric-ops`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-13-prediction-evaluation-analysis-reports-p4-sample-collection-metric-ops`
-PR: pending
+PR: [#88](https://github.com/samcantrill/rphys/pull/88)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -768,7 +779,8 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: complete in
+  `docs/roadmap/stage-13/phases/sample-collection-metric-ops.md`
 - Planning/refinement budget: medium-high; refine if grouping/stitching or metric
   operation adapter naming becomes ambiguous.
 - Implementation/refinement budget: medium-high.
@@ -780,7 +792,8 @@ Workflow path: fast path
 - Pre-submit blocker gate: no public evaluation/inference engine, protocol, plan,
   result, comparison spec, registry, or public generic job/runtime names; no
   evaluator-owned datasource/dataloader/output-directory behavior.
-- Merge record: pending
+- Merge record:
+  `docs/roadmap/stage-13/phases/sample-collection-metric-ops-merge-record.md`
 
 ### Risks And Stop Conditions
 
@@ -795,20 +808,29 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
+- Implementation: complete; runtime grouping/collation, collection sorting,
+  projection, filtering, field concatenation, sample/collection metric
+  adapters, field-native metric binding, and public metric observation/result
+  removal landed in PR [#88](https://github.com/samcantrill/rphys/pull/88).
+- Validation: complete; targeted collection/metric/package tests passed, targeted
+  learner/training/integration tests passed, `make test-unit`, `make
+  test-contract`, `make test-integration`, `make test-package`, `make
+  test-summary`, `make validate-pr`, and `git diff --check` passed.
+- PR: [#88](https://github.com/samcantrill/rphys/pull/88), opened against
+  `develop` with required title.
+- Merge: PR [#88](https://github.com/samcantrill/rphys/pull/88) merged to
+  `develop` at `2026-05-17T14:05:50Z`; merge commit
+  `150f947587463aecde6950f325b8be7a44d374c3`.
 - Follow-up: Phase 5 consumes samples, sample collections, metric fields,
   visualization fields, and report records in operation-compatible outputs.
 
 ## Phase 5: Visualization, Reports, And Diagnostics
 
-Status: pending
+Status: merged
 Slug: `visualization-reports-recipes`
 Branch: `agent/stage-13-prediction-evaluation-analysis-reports-p5-visualization-reports-recipes`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-13-prediction-evaluation-analysis-reports-p5-visualization-reports-recipes`
-PR: pending
+PR: [#89](https://github.com/samcantrill/rphys/pull/89)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path
@@ -919,13 +941,13 @@ Workflow path: fast path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: complete in `docs/roadmap/stage-13/phases/visualization-reports-recipes.md`
 - Planning/refinement budget: medium; refine if report/table schema becomes too broad.
 - Implementation/refinement budget: medium.
 - PR review budget: medium-high; focus on report schema and dependency-light side-effect boundaries.
 - Blocker-resolution budget: reopen DQ-13-5 if report records require file writers or dataframe/plotting behavior.
 - Pre-submit blocker gate: no writer/render backend imports; no report output directory schema; no checkpoint/log/training behavior.
-- Merge record: pending
+- Merge record: `docs/roadmap/stage-13/phases/visualization-reports-recipes-merge-record.md`
 
 ### Risks And Stop Conditions
 
@@ -937,19 +959,19 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
+- Implementation: complete; analysis now exposes dependency-light visualization descriptors, report/table records, report operations, and diagnostic renderer records without public analysis operation/result or writer/backend surfaces.
+- Validation: complete; targeted analysis/contract/package tests, `make test-unit`, `make test-contract`, `make test-package`, `make test-summary`, `make validate-pr`, and `git diff --check` passed.
+- PR: [#89](https://github.com/samcantrill/rphys/pull/89)
+- Merge: merged to `develop` at `2026-05-17T14:25:38Z`; merge commit `8e390b0aae8996c2825e3cf502da4b64e2338f2f`.
 - Follow-up: Phase 6 completes cross-package examples and final validation.
 
 ## Phase 6: Docs, Synthetic Examples, And Final Validation
 
-Status: pending
+Status: merged
 Slug: `docs-examples-final-validation`
 Branch: `agent/stage-13-prediction-evaluation-analysis-reports-p6-docs-examples-final-validation`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-13-prediction-evaluation-analysis-reports-p6-docs-examples-final-validation`
-PR: pending
+PR: [#90](https://github.com/samcantrill/rphys/pull/90)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: fast path unless final validation failures trigger expanded refinement
@@ -1033,13 +1055,13 @@ Workflow path: fast path unless final validation failures trigger expanded refin
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: complete in `docs/roadmap/stage-13/phases/docs-examples-final-validation.md`
 - Planning/refinement budget: medium; refine if final examples reveal cross-package inconsistencies.
 - Implementation/refinement budget: medium-high due final validation surface.
 - PR review budget: high; focus on cross-package API coherence, docs, examples, and validation evidence.
 - Blocker-resolution budget: stop and reopen the relevant queue if final examples require any forbidden runner/job/storage/report-writer/workflow behavior.
 - Pre-submit blocker gate: all final validation commands run or residual risks recorded; no forbidden public APIs; no docs/examples implying out-of-scope behavior.
-- Merge record: pending
+- Merge record: `docs/roadmap/stage-13/phases/docs-examples-final-validation-merge-record.md`
 
 ### Risks And Stop Conditions
 
@@ -1049,10 +1071,10 @@ Workflow path: fast path unless final validation failures trigger expanded refin
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
+- Implementation: complete; final synthetic examples, docs, and forbidden-surface package checks are implemented.
+- Validation: complete; focused Stage 13 integration/package tests, `make test-package`, `make test-unit`, `make test-contract`, `make test-integration`, `make test-summary`, `uv lock --check`, `git diff --check`, and `make validate-pr` passed.
+- PR: [#90](https://github.com/samcantrill/rphys/pull/90)
+- Merge: merged to `develop` at `2026-05-17T14:40:24Z`; merge commit `745e5e9dcaf30e5114c1ce8566e538e0297c8391`.
 - Follow-up: Stage 14 should harden the synthetic smoke path rather than expand Stage 13 core behavior.
 
 ## Cross-Phase Validation

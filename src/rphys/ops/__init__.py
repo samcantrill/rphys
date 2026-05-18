@@ -41,10 +41,13 @@ if TYPE_CHECKING:
         SampleOperationContext,
         SampleOperationContract,
         SampleReplayRecord,
-        SampleTransform,
         SampleCheck,
+        SampleCollectionConcatOperation,
+        SampleCollectionGroupOperation,
+        SampleCollectionViewOperation,
         SampleDecision,
         SampleRoute,
+        SampleTransform,
     )
 
 _SAMPLE_EXPORTS = {
@@ -59,6 +62,9 @@ _SAMPLE_EXPORTS = {
     "SampleCheck",
     "SampleDecision",
     "SampleRoute",
+    "SampleCollectionGroupOperation",
+    "SampleCollectionViewOperation",
+    "SampleCollectionConcatOperation",
 }
 
 _BATCH_EXPORTS = {
@@ -120,6 +126,9 @@ __all__ = [
     "SampleCheck",
     "SampleDecision",
     "SampleRoute",
+    "SampleCollectionGroupOperation",
+    "SampleCollectionViewOperation",
+    "SampleCollectionConcatOperation",
     "BatchParameterScope",
     "BatchEquivalenceClaim",
     "BatchFieldEffects",

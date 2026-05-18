@@ -9,6 +9,7 @@ from typing import Protocol, runtime_checkable
 
 from rphys.collections import CollectionItem, CollectorResult
 from rphys.data.containers import Sample
+from rphys.data.fields import FieldValue
 from rphys.data.locators import FieldLocator
 from rphys.errors import (
     InvalidCollectionContextError,
@@ -20,7 +21,16 @@ __all__ = [
     "SampleCollection",
     "SampleCollectionView",
     "SampleCollectionViewPlan",
+    "SampleCollectionConcatPlan",
+    "SampleCollectionGroupPlan",
+    "SampleCollectionSortPlan",
     "SampleCollector",
+    "PlannedSampleCollectionView",
+    "concat_sample_collection_fields",
+    "filter_sample_collection",
+    "group_sample_collections",
+    "project_sample_collection",
+    "sort_sample_collection",
 ]
 
 _MISSING_WINDOW_POLICIES = frozenset({"error", "allow"})
@@ -201,6 +211,247 @@ class SampleCollectionViewPlan:
         )
 
 
+@dataclass(frozen=True, init=False, slots=True)
+class SampleCollectionGroupPlan:
+    """Runtime grouping descriptor for ``Sample`` streams.
+
+    ``group_keys`` read item metadata from ``CollectionItem`` wrappers, while
+    ``field_group_keys`` reads payload values from member samples under explicit
+    group names. Missing metadata or fields fail unless ``missing_policy`` is
+    ``"allow"``. The grouping operation materializes tuple outputs so runtime
+    ordering and diagnostics are inspectable.
+    """
+
+    name: str
+    group_keys: tuple[str, ...]
+    field_group_keys: Mapping[str, FieldLocator]
+    missing_policy: str
+    empty_policy: str
+    metadata: Mapping[str, object]
+    provenance: Mapping[str, object]
+
+    def __init__(
+        self,
+        name: str,
+        *,
+        group_keys: Iterable[str] = (),
+        field_group_keys: Mapping[object, FieldLocator | str] | None = None,
+        missing_policy: str = "error",
+        empty_policy: str = "error",
+        metadata: Mapping[object, object] | None = None,
+        provenance: Mapping[object, object] | None = None,
+    ) -> None:
+        object.__setattr__(
+            self,
+            "name",
+            _coerce_non_empty_string(
+                name,
+                owner="SampleCollectionGroupPlan",
+                field="name",
+                error_type=InvalidCollectionViewPlanError,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "group_keys",
+            _coerce_key_tuple(group_keys, owner="SampleCollectionGroupPlan", field="group_keys"),
+        )
+        object.__setattr__(
+            self,
+            "field_group_keys",
+            _coerce_locator_mapping(
+                field_group_keys,
+                owner="SampleCollectionGroupPlan",
+                field="field_group_keys",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "missing_policy",
+            _coerce_policy(
+                missing_policy,
+                allowed=_MISSING_WINDOW_POLICIES,
+                owner="SampleCollectionGroupPlan",
+                field="missing_policy",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "empty_policy",
+            _coerce_policy(
+                empty_policy,
+                allowed=_MISSING_WINDOW_POLICIES,
+                owner="SampleCollectionGroupPlan",
+                field="empty_policy",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "metadata",
+            _coerce_string_mapping(
+                metadata,
+                owner="SampleCollectionGroupPlan",
+                field="metadata",
+                error_type=InvalidCollectionViewPlanError,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "provenance",
+            _coerce_string_mapping(
+                provenance,
+                owner="SampleCollectionGroupPlan",
+                field="provenance",
+                error_type=InvalidCollectionViewPlanError,
+            ),
+        )
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class SampleCollectionSortPlan:
+    """Sort descriptor for collection metadata and sample field payload keys."""
+
+    name: str
+    sort_keys: tuple[str, ...]
+    field_sort_keys: tuple[FieldLocator, ...]
+    missing_policy: str
+    metadata: Mapping[str, object]
+    provenance: Mapping[str, object]
+
+    def __init__(
+        self,
+        name: str,
+        *,
+        sort_keys: Iterable[str] = (),
+        field_sort_keys: Iterable[FieldLocator | str] = (),
+        missing_policy: str = "error",
+        metadata: Mapping[object, object] | None = None,
+        provenance: Mapping[object, object] | None = None,
+    ) -> None:
+        object.__setattr__(
+            self,
+            "name",
+            _coerce_non_empty_string(
+                name,
+                owner="SampleCollectionSortPlan",
+                field="name",
+                error_type=InvalidCollectionViewPlanError,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "sort_keys",
+            _coerce_key_tuple(sort_keys, owner="SampleCollectionSortPlan", field="sort_keys"),
+        )
+        object.__setattr__(
+            self,
+            "field_sort_keys",
+            _coerce_locator_tuple(field_sort_keys, owner="SampleCollectionSortPlan"),
+        )
+        object.__setattr__(
+            self,
+            "missing_policy",
+            _coerce_policy(
+                missing_policy,
+                allowed=_MISSING_WINDOW_POLICIES,
+                owner="SampleCollectionSortPlan",
+                field="missing_policy",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "metadata",
+            _coerce_string_mapping(
+                metadata,
+                owner="SampleCollectionSortPlan",
+                field="metadata",
+                error_type=InvalidCollectionViewPlanError,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "provenance",
+            _coerce_string_mapping(
+                provenance,
+                owner="SampleCollectionSortPlan",
+                field="provenance",
+                error_type=InvalidCollectionViewPlanError,
+            ),
+        )
+
+
+@dataclass(frozen=True, init=False, slots=True)
+class SampleCollectionConcatPlan:
+    """Descriptor for field-wise concatenation or stitching of a collection.
+
+    ``field_map`` maps source sample fields to output sample fields. The
+    operation gathers member payloads in collection order and calls the injected
+    ``payload_joiner`` supplied to ``concat_sample_collection_fields``; the
+    default joiner returns a tuple and makes no sampling-rate or axis claim.
+    """
+
+    name: str
+    field_map: Mapping[FieldLocator, FieldLocator]
+    empty_policy: str
+    metadata: Mapping[str, object]
+    provenance: Mapping[str, object]
+
+    def __init__(
+        self,
+        name: str,
+        *,
+        field_map: Mapping[FieldLocator | str, FieldLocator | str],
+        empty_policy: str = "error",
+        metadata: Mapping[object, object] | None = None,
+        provenance: Mapping[object, object] | None = None,
+    ) -> None:
+        object.__setattr__(
+            self,
+            "name",
+            _coerce_non_empty_string(
+                name,
+                owner="SampleCollectionConcatPlan",
+                field="name",
+                error_type=InvalidCollectionViewPlanError,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "field_map",
+            _coerce_field_map(field_map, owner="SampleCollectionConcatPlan"),
+        )
+        object.__setattr__(
+            self,
+            "empty_policy",
+            _coerce_policy(
+                empty_policy,
+                allowed=_MISSING_WINDOW_POLICIES,
+                owner="SampleCollectionConcatPlan",
+                field="empty_policy",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "metadata",
+            _coerce_string_mapping(
+                metadata,
+                owner="SampleCollectionConcatPlan",
+                field="metadata",
+                error_type=InvalidCollectionViewPlanError,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "provenance",
+            _coerce_string_mapping(
+                provenance,
+                owner="SampleCollectionConcatPlan",
+                field="provenance",
+                error_type=InvalidCollectionViewPlanError,
+            ),
+        )
+
+
 @runtime_checkable
 class SampleCollectionView(Protocol):
     """Structural behavior that maps a sample collection to a collection."""
@@ -295,6 +546,256 @@ class SampleCollector:
         )
 
 
+def group_sample_collections(
+    values: Iterable[Sample | CollectionItem[Sample]] | SampleCollection,
+    plan: SampleCollectionGroupPlan,
+) -> tuple[SampleCollection, ...]:
+    """Materialize grouped ``SampleCollection`` values from a sample stream."""
+
+    if not isinstance(plan, SampleCollectionGroupPlan):
+        raise InvalidCollectionViewPlanError(
+            "group_sample_collections requires a SampleCollectionGroupPlan.",
+            owner="group_sample_collections",
+            field="plan",
+            expected="SampleCollectionGroupPlan",
+            actual=type(plan).__name__,
+        )
+    entries = tuple(values.entries) if isinstance(values, SampleCollection) else _coerce_entries(values)
+    if not entries:
+        if plan.empty_policy == "error":
+            raise InvalidCollectionContextError(
+                "Sample grouping input must not be empty.",
+                owner="group_sample_collections",
+                field="values",
+                empty_policy=plan.empty_policy,
+            )
+        return ()
+
+    grouped: dict[tuple[object, ...], list[CollectionItem[Sample]]] = {}
+    group_metadata: dict[tuple[object, ...], Mapping[str, object]] = {}
+    for entry in entries:
+        key_metadata = _group_entry_metadata(entry, plan)
+        key = tuple(key_metadata[name] for name in (*plan.group_keys, *plan.field_group_keys.keys()))
+        _validate_hashable_group_key(key, owner="group_sample_collections")
+        grouped.setdefault(key, []).append(entry)
+        group_metadata.setdefault(key, MappingProxyType(dict(key_metadata)))
+
+    output: list[SampleCollection] = []
+    for key, group_entries in grouped.items():
+        output.append(
+            SampleCollection(
+                tuple(group_entries),
+                metadata={
+                    **plan.metadata,
+                    **group_metadata[key],
+                    "group": key,
+                    "group_by": (*plan.group_keys, *plan.field_group_keys.keys()),
+                    "group_operation": plan.name,
+                    "source_count": len(group_entries),
+                },
+                provenance={**plan.provenance, "group_operation": plan.name},
+            )
+        )
+    return tuple(output)
+
+
+def sort_sample_collection(
+    collection: SampleCollection,
+    plan: SampleCollectionSortPlan,
+) -> SampleCollection:
+    """Return a collection sorted by item metadata and explicit sample fields."""
+
+    if not isinstance(collection, SampleCollection):
+        raise InvalidCollectionContextError(
+            "sort_sample_collection requires a SampleCollection.",
+            owner="sort_sample_collection",
+            field="collection",
+            expected="SampleCollection",
+            actual=type(collection).__name__,
+        )
+    if not isinstance(plan, SampleCollectionSortPlan):
+        raise InvalidCollectionViewPlanError(
+            "sort_sample_collection requires a SampleCollectionSortPlan.",
+            owner="sort_sample_collection",
+            field="plan",
+            expected="SampleCollectionSortPlan",
+            actual=type(plan).__name__,
+        )
+    try:
+        entries = tuple(sorted(collection.entries, key=lambda entry: _sort_entry_key(entry, plan)))
+    except TypeError as exc:
+        raise InvalidCollectionContextError(
+            "Sample collection sort keys must be mutually orderable.",
+            owner="sort_sample_collection",
+            field="sort_keys",
+            sort_keys=plan.sort_keys,
+            field_sort_keys=tuple(str(locator) for locator in plan.field_sort_keys),
+        ) from exc
+    return SampleCollection(
+        entries,
+        metadata={
+            **collection.metadata,
+            **plan.metadata,
+            "sort_operation": plan.name,
+            "sort_keys": plan.sort_keys,
+            "field_sort_keys": tuple(str(locator) for locator in plan.field_sort_keys),
+        },
+        provenance={**collection.provenance, **plan.provenance, "sort_operation": plan.name},
+    )
+
+
+def project_sample_collection(
+    collection: SampleCollection,
+    selected_fields: Iterable[FieldLocator | str],
+    *,
+    name: str = "project-fields",
+) -> SampleCollection:
+    """Return a collection whose samples contain only selected fields."""
+
+    plan = SampleCollectionViewPlan(name, selected_fields=selected_fields)
+    return PlannedSampleCollectionView(plan)(collection)
+
+
+def filter_sample_collection(
+    collection: SampleCollection,
+    predicate: Callable[[CollectionItem[Sample]], bool],
+    *,
+    name: str = "filter-samples",
+    skip_policy: str | None = None,
+) -> CollectorResult[SampleCollection]:
+    """Filter collection entries with explicit skip diagnostics."""
+
+    if not isinstance(collection, SampleCollection):
+        raise InvalidCollectionContextError(
+            "filter_sample_collection requires a SampleCollection.",
+            owner="filter_sample_collection",
+            field="collection",
+            expected="SampleCollection",
+            actual=type(collection).__name__,
+        )
+    if not callable(predicate):
+        raise InvalidCollectionViewPlanError(
+            "filter_sample_collection predicate must be callable.",
+            owner="filter_sample_collection",
+            field="predicate",
+            expected="callable",
+            actual=type(predicate).__name__,
+        )
+    operation_name = _coerce_non_empty_string(
+        name,
+        owner="filter_sample_collection",
+        field="name",
+        error_type=InvalidCollectionViewPlanError,
+    )
+    accepted: list[CollectionItem[Sample]] = []
+    skipped: list[CollectionItem[object]] = []
+    for index, entry in enumerate(collection.entries):
+        keep = predicate(entry)
+        if not isinstance(keep, bool):
+            raise InvalidCollectionContextError(
+                "filter_sample_collection predicate must return bool.",
+                owner="filter_sample_collection",
+                field="predicate",
+                expected="bool",
+                actual=type(keep).__name__,
+            )
+        if keep:
+            accepted.append(entry)
+            continue
+        if skip_policy is None:
+            continue
+        skipped.append(
+            CollectionItem(
+                entry.value,
+                metadata={
+                    **entry.metadata,
+                    "index": index,
+                    "filter_operation": operation_name,
+                    "skip_policy": skip_policy,
+                },
+                provenance=entry.provenance,
+            )
+        )
+    output = SampleCollection(
+        tuple(accepted),
+        metadata={**collection.metadata, "filter_operation": operation_name},
+        provenance={**collection.provenance, "filter_operation": operation_name},
+    )
+    return CollectorResult(
+        output,
+        skipped=tuple(skipped),
+        skip_policy=skip_policy,
+        metadata=output.metadata,
+        provenance=output.provenance,
+    )
+
+
+def concat_sample_collection_fields(
+    collection: SampleCollection,
+    plan: SampleCollectionConcatPlan,
+    *,
+    payload_joiner: Callable[[tuple[object, ...]], object] | None = None,
+) -> Sample:
+    """Concatenate collection member field payloads into a revised sample."""
+
+    if not isinstance(collection, SampleCollection):
+        raise InvalidCollectionContextError(
+            "concat_sample_collection_fields requires a SampleCollection.",
+            owner="concat_sample_collection_fields",
+            field="collection",
+            expected="SampleCollection",
+            actual=type(collection).__name__,
+        )
+    if not isinstance(plan, SampleCollectionConcatPlan):
+        raise InvalidCollectionViewPlanError(
+            "concat_sample_collection_fields requires a SampleCollectionConcatPlan.",
+            owner="concat_sample_collection_fields",
+            field="plan",
+            expected="SampleCollectionConcatPlan",
+            actual=type(plan).__name__,
+        )
+    if not collection and plan.empty_policy == "error":
+        raise InvalidCollectionContextError(
+            "Sample collection concatenation input must not be empty.",
+            owner="concat_sample_collection_fields",
+            field="collection",
+            empty_policy=plan.empty_policy,
+        )
+    joiner = tuple if payload_joiner is None else payload_joiner
+    if not callable(joiner):
+        raise InvalidCollectionViewPlanError(
+            "concat_sample_collection_fields payload_joiner must be callable.",
+            owner="concat_sample_collection_fields",
+            field="payload_joiner",
+            expected="callable",
+            actual=type(joiner).__name__,
+        )
+    fields: dict[FieldLocator, FieldValue] = {}
+    for source, target in plan.field_map.items():
+        payloads = tuple(entry.value.require(source) for entry in collection.entries)
+        try:
+            payload = joiner(payloads)
+        except Exception as exc:
+            raise InvalidCollectionContextError(
+                "Sample collection payload joiner failed.",
+                owner="concat_sample_collection_fields",
+                field="payload_joiner",
+                source=str(source),
+                target=str(target),
+            ) from exc
+        fields[target] = FieldValue(
+            payload,
+            metadata={
+                **plan.metadata,
+                "collection.operation": plan.name,
+                "collection.source_field": str(source),
+                "collection.source_count": len(collection),
+                "collection.joiner": getattr(joiner, "__name__", joiner.__class__.__name__),
+            },
+        )
+    return Sample(fields)
+
+
 class PlannedSampleCollectionView:
     """Concrete view executor for descriptor-driven test/sample behavior.
 
@@ -385,9 +886,6 @@ class PlannedSampleCollectionView:
             metadata={**collection.metadata, "view": self.plan.name},
             provenance={**collection.provenance, "view": self.plan.name},
         )
-
-
-__all__.append("PlannedSampleCollectionView")
 
 
 def _coerce_entries(
@@ -554,6 +1052,80 @@ def _coerce_locator_tuple(
     return locators
 
 
+def _coerce_locator_mapping(
+    value: Mapping[object, FieldLocator | str] | None,
+    *,
+    owner: str,
+    field: str,
+) -> Mapping[str, FieldLocator]:
+    if value is None:
+        return MappingProxyType({})
+    if not isinstance(value, Mapping):
+        raise InvalidCollectionViewPlanError(
+            f"{owner} {field} must be a mapping.",
+            owner=owner,
+            field=field,
+            expected="mapping of group name to FieldLocator | str",
+            actual=type(value).__name__,
+        )
+    resolved: dict[str, FieldLocator] = {}
+    for key, locator in value.items():
+        name = _coerce_non_empty_string(
+            key,
+            owner=owner,
+            field=field,
+            error_type=InvalidCollectionViewPlanError,
+        )
+        if name in resolved:
+            raise InvalidCollectionViewPlanError(
+                f"{owner} {field} must not contain duplicate names.",
+                owner=owner,
+                field=field,
+                duplicate=name,
+            )
+        resolved[name] = locator if isinstance(locator, FieldLocator) else FieldLocator.parse(locator)
+    return MappingProxyType(resolved)
+
+
+def _coerce_field_map(
+    value: Mapping[FieldLocator | str, FieldLocator | str],
+    *,
+    owner: str,
+) -> Mapping[FieldLocator, FieldLocator]:
+    if not isinstance(value, Mapping):
+        raise InvalidCollectionViewPlanError(
+            f"{owner} field_map must be a mapping.",
+            owner=owner,
+            field="field_map",
+            expected="mapping of source locator to target locator",
+            actual=type(value).__name__,
+        )
+    if not value:
+        raise InvalidCollectionViewPlanError(
+            f"{owner} field_map must not be empty.",
+            owner=owner,
+            field="field_map",
+            expected="non-empty mapping",
+            actual="empty mapping",
+        )
+    resolved: dict[FieldLocator, FieldLocator] = {}
+    targets: list[FieldLocator] = []
+    for source, target in value.items():
+        source_locator = source if isinstance(source, FieldLocator) else FieldLocator.parse(source)
+        target_locator = target if isinstance(target, FieldLocator) else FieldLocator.parse(target)
+        resolved[source_locator] = target_locator
+        targets.append(target_locator)
+    duplicates = sorted({str(locator) for locator in targets if targets.count(locator) > 1})
+    if duplicates:
+        raise InvalidCollectionViewPlanError(
+            f"{owner} field_map target locators must be unique.",
+            owner=owner,
+            field="field_map",
+            duplicates=tuple(duplicates),
+        )
+    return MappingProxyType(resolved)
+
+
 def _coerce_policy(value: str | None, *, allowed: frozenset[str | None], owner: str, field: str) -> str | None:
     if value not in allowed:
         raise InvalidCollectionViewPlanError(
@@ -564,6 +1136,82 @@ def _coerce_policy(value: str | None, *, allowed: frozenset[str | None], owner: 
             actual=value,
         )
     return value
+
+
+def _group_entry_metadata(
+    entry: CollectionItem[Sample],
+    plan: SampleCollectionGroupPlan,
+) -> Mapping[str, object]:
+    metadata: dict[str, object] = {}
+    for key in plan.group_keys:
+        if key not in entry.metadata:
+            if plan.missing_policy == "allow":
+                metadata[key] = None
+                continue
+            raise InvalidCollectionContextError(
+                "Sample collection entry is missing group metadata.",
+                owner="group_sample_collections",
+                field="group_keys",
+                missing=(key,),
+            )
+        metadata[key] = entry.metadata[key]
+    for key, locator in plan.field_group_keys.items():
+        if not entry.value.has(locator):
+            if plan.missing_policy == "allow":
+                metadata[key] = None
+                continue
+            raise InvalidCollectionContextError(
+                "Sample collection entry is missing field group key.",
+                owner="group_sample_collections",
+                field="field_group_keys",
+                missing=(str(locator),),
+            )
+        metadata[key] = entry.value.get(locator)
+    return MappingProxyType(metadata)
+
+
+def _validate_hashable_group_key(key: tuple[object, ...], *, owner: str) -> None:
+    try:
+        hash(key)
+    except TypeError as exc:
+        raise InvalidCollectionContextError(
+            "Sample grouping keys must be hashable values.",
+            owner=owner,
+            field="group_keys",
+            actual=tuple(type(value).__name__ for value in key),
+        ) from exc
+
+
+def _sort_entry_key(
+    entry: CollectionItem[Sample],
+    plan: SampleCollectionSortPlan,
+) -> tuple[object, ...]:
+    values: list[object] = []
+    for key in plan.sort_keys:
+        if key not in entry.metadata:
+            if plan.missing_policy == "allow":
+                values.append(None)
+                continue
+            raise InvalidCollectionContextError(
+                "Sample collection entry is missing sort metadata.",
+                owner="sort_sample_collection",
+                field="sort_keys",
+                missing=(key,),
+            )
+        values.append(entry.metadata[key])
+    for locator in plan.field_sort_keys:
+        if not entry.value.has(locator):
+            if plan.missing_policy == "allow":
+                values.append(None)
+                continue
+            raise InvalidCollectionContextError(
+                "Sample collection entry is missing sort field.",
+                owner="sort_sample_collection",
+                field="field_sort_keys",
+                missing=(str(locator),),
+            )
+        values.append(entry.value.get(locator))
+    return tuple(values)
 
 
 def _validate_required_metadata(
@@ -650,3 +1298,6 @@ def _view_entry_metadata(
 
 SampleCollection.__hash__ = None  # type: ignore[assignment]
 SampleCollectionViewPlan.__hash__ = None  # type: ignore[assignment]
+SampleCollectionGroupPlan.__hash__ = None  # type: ignore[assignment]
+SampleCollectionSortPlan.__hash__ = None  # type: ignore[assignment]
+SampleCollectionConcatPlan.__hash__ = None  # type: ignore[assignment]

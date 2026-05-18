@@ -10,7 +10,7 @@ from .events import (
     emit_training_event,
 )
 from .experimental import run_train
-from .plan import TrainingPlan
+from .plan import TrainingOutputSpec, TrainingPlan
 from .profiling import (
     ProfileSpanSummary,
     TrainingProfiler,
@@ -37,6 +37,7 @@ __all__ = [
     "TrainingEventSummary",
     "TrainingEventSink",
     "TrainingMetricSummary",
+    "TrainingOutputSpec",
     "TrainingPlan",
     "TrainingProfiler",
     "TrainingResult",

@@ -188,11 +188,11 @@ class RemotePhysTrainingError(RemotePhysError):
 
 
 class RemotePhysEvaluationError(RemotePhysError):
-    """Base error for evaluation and reporting failures."""
+    """Base catch point for evaluation and report recipe failures."""
 
 
 class RemotePhysAnalysisError(RemotePhysError):
-    """Base error for analysis and derived-result failures."""
+    """Base catch point for analysis, visualization, and renderer failures."""
 
 
 class RemotePhysDependencyError(RemotePhysError):

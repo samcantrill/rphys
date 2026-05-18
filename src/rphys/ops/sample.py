@@ -21,11 +21,19 @@ automatic enforcement boundary.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from types import MappingProxyType
 
 from rphys.data import Sample
+from rphys.data.collections import (
+    SampleCollection,
+    SampleCollectionConcatPlan,
+    SampleCollectionGroupPlan,
+    SampleCollectionView,
+    concat_sample_collection_fields,
+    group_sample_collections,
+)
 from rphys.data.fields import FieldValue
 from rphys.data.locators import FieldLocator
 from rphys.errors import (
@@ -66,6 +74,9 @@ __all__ = [
     "SampleCheck",
     "SampleDecision",
     "SampleRoute",
+    "SampleCollectionGroupOperation",
+    "SampleCollectionViewOperation",
+    "SampleCollectionConcatOperation",
 ]
 
 
@@ -630,6 +641,255 @@ class SampleOperation(OperationStep):
     ) -> OperationResult:
         """Execute and return a normalized :class:`OperationResult`."""
 
+        return self.run(input_value, context=context)
+
+
+class SampleCollectionGroupOperation(OperationStep):
+    """Operation adapter for grouping sample streams into collections."""
+
+    def __init__(
+        self,
+        plan: SampleCollectionGroupPlan,
+        *,
+        name: str | None = None,
+    ) -> None:
+        if not isinstance(plan, SampleCollectionGroupPlan):
+            raise InvalidOperationContractError(
+                "sample collection group operation plan must be a SampleCollectionGroupPlan.",
+                owner="SampleCollectionGroupOperation",
+                field="plan",
+                expected="SampleCollectionGroupPlan",
+                actual=type(plan).__name__,
+            )
+        self.plan = plan
+        self._name = name or plan.name
+        self._contract = OperationContract(
+            input_type=Iterable,
+            output_type=tuple,
+            failure_modes=(
+                "missing_group_metadata",
+                "missing_group_field",
+                "empty_sample_stream",
+                "unhashable_group_key",
+            ),
+        )
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def contract(self) -> OperationContract:
+        return self._contract
+
+    def run(
+        self,
+        input_value: object,
+        context: OperationContext | None = None,
+    ) -> OperationResult:
+        execution_context = _coerce_collection_operation_context(context, operation_name=self.name)
+        try:
+            collections = group_sample_collections(input_value, self.plan)  # type: ignore[arg-type]
+        except Exception as exc:
+            raise OperationExecutionError(
+                "sample collection grouping failed during execution.",
+                operation_name=self.name,
+                role=self.contract.role.value,
+                phase="run",
+            ) from exc
+        return OperationResult(
+            collections,
+            operation_name=self.name,
+            role=OperationRole.GENERIC,
+            metadata={
+                **execution_context.metadata,
+                "collection_operation": self.plan.name,
+                "collection_count": len(collections),
+            },
+            provenance={**execution_context.provenance, "collection_operation": self.plan.name},
+        )
+
+    def __call__(
+        self,
+        input_value: object,
+        context: OperationContext | None = None,
+    ) -> OperationResult:
+        return self.run(input_value, context=context)
+
+
+class SampleCollectionViewOperation(OperationStep):
+    """Operation adapter for existing ``SampleCollectionView`` instances."""
+
+    def __init__(
+        self,
+        view: SampleCollectionView,
+        *,
+        name: str | None = None,
+    ) -> None:
+        if not isinstance(view, SampleCollectionView):
+            raise InvalidOperationContractError(
+                "sample collection view operation requires a SampleCollectionView.",
+                owner="SampleCollectionViewOperation",
+                field="view",
+                expected="SampleCollectionView",
+                actual=type(view).__name__,
+            )
+        self.view = view
+        self._name = name or view.plan.name
+        self._contract = OperationContract(
+            input_type=SampleCollection,
+            output_type=SampleCollection,
+            failure_modes=(
+                "missing_group_metadata",
+                "missing_sort_metadata",
+                "invalid_stitch_output",
+            ),
+        )
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def contract(self) -> OperationContract:
+        return self._contract
+
+    def run(
+        self,
+        input_value: object,
+        context: OperationContext | None = None,
+    ) -> OperationResult:
+        execution_context = _coerce_collection_operation_context(context, operation_name=self.name)
+        if not isinstance(input_value, SampleCollection):
+            raise InvalidOperationInputError(
+                "sample collection view operation input must be a SampleCollection.",
+                operation_name=self.name,
+                field="input_value",
+                expected="SampleCollection",
+                actual=type(input_value).__name__,
+            )
+        try:
+            output = self.view(input_value)
+        except Exception as exc:
+            raise OperationExecutionError(
+                "sample collection view failed during execution.",
+                operation_name=self.name,
+                role=self.contract.role.value,
+                phase="run",
+            ) from exc
+        return OperationResult(
+            output,
+            operation_name=self.name,
+            role=OperationRole.GENERIC,
+            metadata={
+                **execution_context.metadata,
+                "collection_operation": self.view.plan.name,
+                "source_count": len(input_value),
+                "output_count": len(output),
+            },
+            provenance={**execution_context.provenance, "collection_operation": self.view.plan.name},
+        )
+
+    def __call__(
+        self,
+        input_value: object,
+        context: OperationContext | None = None,
+    ) -> OperationResult:
+        return self.run(input_value, context=context)
+
+
+class SampleCollectionConcatOperation(OperationStep):
+    """Operation adapter for field-wise collection concatenation."""
+
+    def __init__(
+        self,
+        plan: SampleCollectionConcatPlan,
+        *,
+        payload_joiner: Callable[[tuple[object, ...]], object] | None = None,
+        name: str | None = None,
+    ) -> None:
+        if not isinstance(plan, SampleCollectionConcatPlan):
+            raise InvalidOperationContractError(
+                "sample collection concat operation plan must be a SampleCollectionConcatPlan.",
+                owner="SampleCollectionConcatOperation",
+                field="plan",
+                expected="SampleCollectionConcatPlan",
+                actual=type(plan).__name__,
+            )
+        if payload_joiner is not None and not callable(payload_joiner):
+            raise InvalidOperationContractError(
+                "sample collection concat operation payload_joiner must be callable.",
+                owner="SampleCollectionConcatOperation",
+                field="payload_joiner",
+                expected="callable",
+                actual=type(payload_joiner).__name__,
+            )
+        self.plan = plan
+        self.payload_joiner = payload_joiner
+        self._name = name or plan.name
+        self._contract = OperationContract(
+            input_type=SampleCollection,
+            output_type=Sample,
+            failure_modes=(
+                "missing_source_field",
+                "empty_collection",
+                "payload_joiner_failed",
+            ),
+        )
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def contract(self) -> OperationContract:
+        return self._contract
+
+    def run(
+        self,
+        input_value: object,
+        context: OperationContext | None = None,
+    ) -> OperationResult:
+        execution_context = _coerce_collection_operation_context(context, operation_name=self.name)
+        if not isinstance(input_value, SampleCollection):
+            raise InvalidOperationInputError(
+                "sample collection concat operation input must be a SampleCollection.",
+                operation_name=self.name,
+                field="input_value",
+                expected="SampleCollection",
+                actual=type(input_value).__name__,
+            )
+        try:
+            output = concat_sample_collection_fields(
+                input_value,
+                self.plan,
+                payload_joiner=self.payload_joiner,
+            )
+        except Exception as exc:
+            raise OperationExecutionError(
+                "sample collection concatenation failed during execution.",
+                operation_name=self.name,
+                role=self.contract.role.value,
+                phase="run",
+            ) from exc
+        return OperationResult(
+            output,
+            operation_name=self.name,
+            role=OperationRole.GENERIC,
+            metadata={
+                **execution_context.metadata,
+                "collection_operation": self.plan.name,
+                "source_count": len(input_value),
+                "output_fields": tuple(str(locator) for locator in self.plan.field_map.values()),
+            },
+            provenance={**execution_context.provenance, "collection_operation": self.plan.name},
+        )
+
+    def __call__(
+        self,
+        input_value: object,
+        context: OperationContext | None = None,
+    ) -> OperationResult:
         return self.run(input_value, context=context)
 
 
@@ -1594,6 +1854,24 @@ def _validate_non_overlapping_permissions(
             expected="disjoint dynamic_writes and writes",
             actual=dynamic_write_overlap,
         )
+
+
+def _coerce_collection_operation_context(
+    context: OperationContext | None,
+    *,
+    operation_name: str,
+) -> OperationContext:
+    if context is None:
+        return OperationContext()
+    if isinstance(context, OperationContext):
+        return context
+    raise InvalidOperationContextError(
+        "sample collection operation context must be None or OperationContext.",
+        operation_name=operation_name,
+        field="context",
+        expected="OperationContext | None",
+        actual=type(context).__name__,
+    )
 
 
 def _coerce_sample_operation_context(

@@ -7,7 +7,6 @@ from typing import Protocol, runtime_checkable
 from rphys.data import Batch
 
 from .context import PredictionContext
-from .output import MethodOutput
 from .state import ParameterView, StateLoadResult, StateView
 
 __all__ = ["Method", "StatefulMethod", "TrainableMethod"]
@@ -17,10 +16,10 @@ __all__ = ["Method", "StatefulMethod", "TrainableMethod"]
 class Method(Protocol):
     """Batch-level prediction or representation contract.
 
-    Implementations consume a runtime ``Batch`` and return a patch-like
-    ``MethodOutput``. The protocol does not require inheritance and does not
-    define loss, metric, export, training, device, checkpoint, or split
-    behavior.
+    Implementations consume a runtime ``Batch`` and return an ordinary ``Batch``
+    carrying prediction or representation fields. The protocol does not require
+    inheritance and does not define loss, metric, export, training, device,
+    checkpoint, or split behavior.
     """
 
     def predict(
@@ -28,7 +27,7 @@ class Method(Protocol):
         batch: Batch,
         *,
         context: PredictionContext | None = None,
-    ) -> MethodOutput:
+    ) -> Batch:
         ...
 
 

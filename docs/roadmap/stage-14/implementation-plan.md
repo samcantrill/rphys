@@ -55,6 +55,27 @@ recipe behavior is code-backed and approved.
 | None for implementation-plan drafting. | Plan quality gate passed with prerequisite gate and was revised on 2026-05-18 for Stage 13 Sample/Batch-native alignment. | Keep the Stage 13-dependent smoke tail as a blocked/prerequisite-gated Phase 4 in checkouts where revised Stage 13 behavior is not code-backed; do not fake Sample/Batch-native artifact, collection/metric, visualization/report, or recipe behavior. | resolved for planning |
 | Full scan-to-report tail cannot be implemented in this checkout yet. | FQ-14-3, DD-14-5, plan quality gate, current empty `rphys.prediction`, `rphys.evaluation`, and `rphys.analysis` public exports. | Revised Stage 13 behavior must land, be code-backed, and be approved in the active checkout before Phase 4 starts. | blocked for Phase 4 in this checkout |
 
+## Stage 13 Code-Backed Recheck
+
+Rechecked on 2026-05-18 against the active checkout. The Stage 13 planning
+artifacts are present and revised toward Sample/Batch-native behavior, but the
+source tree is not yet code-backed enough to unblock Stage 14 Phase 4.
+
+| Area | Recheck evidence | Phase 4 impact |
+| --- | --- | --- |
+| Prediction/evaluation/analysis package homes | `src/rphys/prediction/__init__.py`, `src/rphys/evaluation/__init__.py`, and `src/rphys/analysis/__init__.py` still export empty `__all__` lists. | No Phase 4 smoke tail may claim public Stage 13 prediction, evaluation, analysis, visualization, or report coverage from these package homes yet. |
+| Method prediction output | `rphys.methods` still exports `MethodOutput`, `MethodOutputSpec`, `MethodOutputAdapter`, and `apply_method_output`; `Method.predict` still returns `MethodOutput`. | Stage 13 Phase 2 has not landed in this checkout. Phase 4 cannot exercise returned-`Batch` prediction fields until this is refactored and package tests are updated. |
+| Learner output | `rphys.learning` still exports `StepOutput` and `StepPrediction`; learner tests still consume `StepOutput`. | Stage 13 returned-`Batch` learner behavior and plan-owned training-output validation are not code-backed yet. |
+| Uncollation substrate | `rphys.data.collation.uncollate_batch` is code-backed and tested for LIST-collated batches. | This is a usable prerequisite piece, but Phase 4 still needs Stage 13's explicit artifact handoff policy around predicted/test/evaluation fields. |
+| Sample collections | `rphys.data.collections` exports `SampleCollection`, `SampleCollector`, `SampleCollectionViewPlan`, and `PlannedSampleCollectionView`. | Collection snapshots/views are usable substrates, but Stage 13 runtime collection/metric operation adapters are not complete by themselves. |
+| Metrics | `rphys.metrics` still publicly exports `MetricObservation`, `MetricObservationCollection`, `MetricObservationView`, `MetricObservationViewPlan`, `MetricResult`, and `PlannedMetricObservationView`. | Stage 13 Phase 4 has not removed or privatized the old metric-observation surfaces. Phase 4 must not build the smoke tail on those rejected public shapes. |
+| Reports and visualization | `src/rphys/analysis` has no code-backed report, visualization, diagnostic renderer, or report-field exports in this checkout. | Stage 13 Phase 5 has not landed, so Phase 4 cannot complete report evidence. |
+| Package tests | `tests/package/test_import.py` still asserts Stage 10/11/12 exports, including old method, learner, and metric observation surfaces. | Phase 4 prerequisite review must include package-test updates proving only revised code-backed Stage 13 exports are public. |
+
+Phase 4 therefore remains blocked in this checkout. Earlier Stage 14 phases may
+still proceed, and Phase 3 may use the code-backed Stage 5-12 upstream slice,
+but it must stop before claiming revised Stage 13 coverage.
+
 ## Phase 1: Private Synthetic Catalog And Governance
 
 Status: pending
@@ -292,12 +313,34 @@ Workflow path: expanded path
 - Future-roadmap/reuse constraints: Stage 13 owns Sample/Batch-native artifact, collection/metric, visualization/report, and recipe behavior; Stage 14 consumes only public Stage 13 APIs; Stage 15 profiling stays separate.
 - Examples or demos covered: full scan-to-report smoke through returned `Batch` fields, uncollation, sample artifact reload, collection/metric operations, and report records/fields.
 - Out of scope: private Stage 13 stand-ins, skipped fake tail treated as success, placeholder production modules, broad production refactors, real/acceptance datasets, or rejected Stage 13 public runner/record surfaces.
-- Dependencies: Phases 1-3 plus approved, code-backed revised Stage 13 behavior. This checkout still has empty public exports for `rphys.prediction`, `rphys.evaluation`, and `rphys.analysis`, so this phase must not start here until the active tree changes or the Stage 13 implementation lands.
+- Dependencies: Phases 1-3 plus approved, code-backed revised Stage 13 behavior.
+  In this checkout, the 2026-05-18 recheck shows only partial substrates
+  (`uncollate_batch`, sample collections, export/save/derived datasource
+  pieces) and not the revised Stage 13 contract. Phase 4 must not start here
+  until the active tree includes returned-`Batch` method/learner behavior,
+  explicit sample artifact handoff, metric-as-operation fields, report records
+  or fields, and package tests for revised code-backed exports.
 
 ### Tasks
 
 - Recheck Stage 13 implementation and approval status before opening the phase.
 - Verify revised Stage 13 Sample/Batch-native behavior is code-backed; if not, keep the phase blocked in that checkout.
+- Confirm `Method.predict` and learner step behavior return/consume ordinary
+  `Batch` values or an approved equivalent, and that old `MethodOutput*`,
+  `apply_method_output`, `StepOutput`, and `StepPrediction` public surfaces are
+  removed, made private, or explicitly retained by a later approved Stage 13
+  revision.
+- Confirm sample artifact handoff is code-backed: predicted/test/evaluation
+  fields are explicitly uncollated to per-sample artifacts, exported through
+  existing export/save and derived datasource behavior, and reload through
+  generic datasource/sample paths.
+- Confirm metric/evaluation-like behavior is expressed through ordinary fields
+  and collection/metric operations rather than public `MetricObservation*`,
+  `MetricResult`, or evaluator-runner surfaces, unless a later Stage 13
+  approval reopens those names.
+- Confirm analysis/report behavior is code-backed as dependency-light report
+  records, report fields, visualization descriptors, or recipe examples, with
+  no plotting/dataframe/file-writer dependency in core imports.
 - Extend the upstream smoke through real Stage 13 public APIs only.
 - Refresh package/import checks for code-backed Stage 13 exports without freezing placeholders.
 - Capture final validation summaries and residual risks.
@@ -307,7 +350,8 @@ Workflow path: expanded path
 
 | Command/check | Purpose | Required before phase complete |
 | --- | --- | --- |
-| Stage 13 public-contract prerequisite check | Confirm revised Stage 13 behavior is code-backed and approved in the active checkout, including returned-`Batch` field semantics, uncollation, sample artifact reload, collection/metric operations, and report records/fields where exported. | yes |
+| Stage 13 public-contract prerequisite check | Confirm revised Stage 13 behavior is code-backed and approved in the active checkout, including returned-`Batch` field semantics, uncollation, sample artifact export/reload, collection/metric operations, and report records/fields where exported. | yes |
+| Legacy-surface absence or approval check | Confirm old public `MethodOutput*`, `apply_method_output`, `StepOutput`, `StepPrediction`, `MetricObservation*`, `MetricResult`, and evaluator/runner-style names are absent from public exports or explicitly retained by an approved Stage 13 revision. | yes |
 | `make test-package` | Validate code-backed imports and forbidden package/import absences. | yes |
 | `make test-contract` | Validate Stage 14 contract hardening plus Stage 13 public-contract consumers. | yes |
 | `make test-integration` | Validate scan-to-report smoke or its integration placement. | yes |
@@ -320,7 +364,8 @@ Workflow path: expanded path
 ### Acceptance Evidence
 
 - Behavior evidence: complete scan-to-report flow uses real Stage 13 public APIs and public loader/materialization paths.
-- Design-decision evidence: no fake tail, placeholders, or private Stage 13 stand-ins are present.
+- Design-decision evidence: no fake tail, placeholders, private Stage 13
+  stand-ins, or unapproved legacy public surfaces are present.
 - Future-roadmap/reuse evidence: Stage 13 remains the contract owner and Stage 15 profiling remains deferred.
 - Example/demo evidence: full root synthetic smoke example is executable and validated.
 - Documentation evidence: final validation notes record prerequisite satisfaction and accepted risks.
@@ -338,8 +383,15 @@ Workflow path: expanded path
 
 ### Risks And Stop Conditions
 
-- Risks: accidental fake completion, freezing placeholder Stage 13 exports, reintroducing rejected Stage 13 runner/record surfaces, or broad production refactors under a test-hardening phase.
-- Stop conditions: revised Stage 13 behavior remains absent, unapproved, or ambiguous in the active checkout; full tail requires private stand-ins; implementation requires real datasets or heavy optional dependencies.
+- Risks: accidental fake completion, freezing placeholder Stage 13 exports,
+  building on old public method/learner/metric observation surfaces, or broad
+  production refactors under a test-hardening phase.
+- Stop conditions: revised Stage 13 behavior remains absent, unapproved, or
+  ambiguous in the active checkout; full tail requires private stand-ins;
+  implementation relies on `MethodOutput*`, `StepOutput`,
+  `MetricObservation*`, `MetricResult`, or evaluator/runner surfaces without a
+  later approved Stage 13 revision; implementation requires real datasets or
+  heavy optional dependencies.
 - Assumptions: Stage 13 defines the Sample/Batch-native artifact, collection/metric, visualization/report, and recipe behavior consumed by the final tail.
 
 ### Completion Summary

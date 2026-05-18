@@ -2,39 +2,39 @@
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from collections.abc import Mapping
+from typing import Protocol, TypeAlias, runtime_checkable
 
+from rphys.data import FieldValue
+from rphys.data.locators import FieldLocator
 from .context import MetricContext
-from .results import MetricObservationCollection, MetricResult
-from .specs import MetricContract, MetricObservationViewPlan
+from .results import MetricValue
+from .specs import MetricContract
 
-__all__ = ["Metric", "MetricObservationView"]
+MetricOutput: TypeAlias = (
+    Mapping[FieldLocator | str, FieldValue | MetricValue | object]
+    | FieldValue
+    | MetricValue
+    | object
+)
+
+__all__ = ["Metric", "MetricOutput"]
 
 
 @runtime_checkable
 class Metric(Protocol):
-    """Backend-neutral metric behavior returning detached observations."""
+    """Backend-neutral metric behavior returning field-native outputs.
+
+    Metrics declare their writable ``metrics/*`` fields on
+    :class:`MetricContract`. Callables may return a mapping from declared
+    locators to ``FieldValue`` or ``MetricValue`` payloads, or a single value
+    when the contract declares exactly one write. Public observation/result
+    records are intentionally absent in Stage 13.
+    """
 
     @property
     def contract(self) -> MetricContract:
         ...
 
-    def __call__(self, context: MetricContext) -> MetricResult:
-        ...
-
-
-@runtime_checkable
-class MetricObservationView(Protocol):
-    """Structural observation view that returns metric observations.
-
-    The public contract has no evaluator lifecycle methods such as ``reset``
-    or ``update``. Stateful streaming, distributed synchronization, report
-    tables, and dataframe adapters are future evaluator concerns.
-    """
-
-    @property
-    def plan(self) -> MetricObservationViewPlan:
-        ...
-
-    def __call__(self, collection: MetricObservationCollection) -> MetricObservationCollection:
+    def __call__(self, context: MetricContext) -> MetricOutput:
         ...

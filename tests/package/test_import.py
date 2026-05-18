@@ -21,6 +21,112 @@ PLANNED_PACKAGE_NAMES = [
     "rphys.training",
 ]
 
+STAGE_13_SCAFFOLD_PACKAGES = [
+    "rphys.prediction",
+    "rphys.evaluation",
+]
+
+STAGE_13_FORBIDDEN_PUBLIC_NAMES = [
+    "PredictionRecord",
+    "PredictionCollection",
+    "PredictionCollector",
+    "PredictionRunner",
+    "PredictionResult",
+    "PredictionDataSource",
+    "EvaluationProtocol",
+    "EvaluationPlan",
+    "EvaluationResult",
+    "EvaluationEngine",
+    "InferenceEngine",
+    "EvaluationRunner",
+    "Evaluator",
+    "ComparisonSpec",
+    "PipelineJob",
+    "JobPlan",
+    "JobRunner",
+    "AnalysisOp",
+    "AnalysisContext",
+    "AnalysisResult",
+    "Report",
+    "ReportTable",
+    "DiagnosticRenderer",
+]
+
+STAGE_13_REMOVED_OUTPUT_NAMES = [
+    "MethodOutput",
+    "MethodOutputSpec",
+    "MethodOutputAdapter",
+    "apply_method_output",
+    "StepOutput",
+    "StepPrediction",
+]
+
+STAGE_13_ANALYSIS_EXPORTS = [
+    "DiagnosticRenderOutput",
+    "DiagnosticRenderer",
+    "Report",
+    "ReportCell",
+    "ReportOperation",
+    "ReportRow",
+    "ReportSection",
+    "ReportTable",
+    "VisualizationOperation",
+    "VisualizationOutput",
+    "attach_visualization_fields",
+]
+
+STAGE_13_ANALYSIS_MODULES = {
+    "rphys.analysis.reports": [
+        "DiagnosticRenderOutput",
+        "DiagnosticRenderer",
+        "Report",
+        "ReportCell",
+        "ReportOperation",
+        "ReportRow",
+        "ReportSection",
+        "ReportTable",
+    ],
+    "rphys.analysis.visualization": [
+        "VisualizationOperation",
+        "VisualizationOutput",
+        "attach_visualization_fields",
+    ],
+}
+
+STAGE_13_FINAL_FORBIDDEN_PUBLIC_NAMES = [
+    "PredictionRecord",
+    "PredictionCollection",
+    "PredictionCollector",
+    "PredictionRunner",
+    "PredictionResult",
+    "PredictionDataSource",
+    "BatchCollection",
+    "BatchCollector",
+    "EvaluationProtocol",
+    "EvaluationPlan",
+    "EvaluationResult",
+    "EvaluationEngine",
+    "InferenceEngine",
+    "EvaluationRunner",
+    "Evaluator",
+    "ComparisonSpec",
+    "PipelineJob",
+    "JobPlan",
+    "JobRunner",
+    "AnalysisOp",
+    "AnalysisContext",
+    "AnalysisResult",
+    "MethodOutput",
+    "StepOutput",
+    "MetricObservation",
+    "MetricObservationCollection",
+    "MetricObservationView",
+    "MetricResult",
+    "ReportWriter",
+    "ReportRenderer",
+    "ReportOutputDirectory",
+]
+
 STAGE_11_COLLECTION_EXPORTS = [
     "Collection",
     "CollectionContext",
@@ -35,8 +141,16 @@ STAGE_11_DATA_COLLECTION_EXPORTS = [
     "SampleCollection",
     "SampleCollectionView",
     "SampleCollectionViewPlan",
+    "SampleCollectionConcatPlan",
+    "SampleCollectionGroupPlan",
+    "SampleCollectionSortPlan",
     "SampleCollector",
     "PlannedSampleCollectionView",
+    "concat_sample_collection_fields",
+    "filter_sample_collection",
+    "group_sample_collections",
+    "project_sample_collection",
+    "sort_sample_collection",
 ]
 
 STAGE_11_LOSS_EXPORTS = [
@@ -74,33 +188,31 @@ STAGE_11_OBJECTIVE_MODULES = {
 STAGE_11_METRIC_EXPORTS = [
     "GroupBySpec",
     "Metric",
+    "MetricCollectionOperation",
     "MetricContext",
     "MetricContract",
     "MetricInputSpec",
-    "MetricObservation",
-    "MetricObservationCollection",
-    "MetricObservationView",
-    "MetricObservationViewPlan",
-    "MetricResult",
+    "MetricOutput",
+    "MetricSampleOperation",
     "MetricValue",
-    "PlannedMetricObservationView",
+    "collect_metric_fields",
 ]
 
 STAGE_11_METRIC_MODULES = {
     "rphys.metrics.context": ["MetricContext"],
-    "rphys.metrics.core": ["Metric", "MetricObservationView"],
+    "rphys.metrics.core": ["Metric", "MetricOutput"],
+    "rphys.metrics.operations": [
+        "MetricCollectionOperation",
+        "MetricSampleOperation",
+        "collect_metric_fields",
+    ],
     "rphys.metrics.results": [
-        "MetricObservation",
-        "MetricObservationCollection",
-        "MetricResult",
         "MetricValue",
-        "PlannedMetricObservationView",
     ],
     "rphys.metrics.specs": [
         "GroupBySpec",
         "MetricContract",
         "MetricInputSpec",
-        "MetricObservationViewPlan",
     ],
 }
 
@@ -109,8 +221,6 @@ STAGE_12_LEARNING_EXPORTS = [
     "Learner",
     "LoopContext",
     "LoopMode",
-    "StepOutput",
-    "StepPrediction",
     "SupervisedLearner",
     "require_backwardable_scalar",
 ]
@@ -121,8 +231,6 @@ STAGE_12_LEARNING_MODULES = {
     "rphys.learning.modes": ["LoopMode"],
     "rphys.learning.output": [
         "BackwardableScalar",
-        "StepOutput",
-        "StepPrediction",
         "require_backwardable_scalar",
     ],
     "rphys.learning.supervised": ["SupervisedLearner"],
@@ -140,6 +248,7 @@ STAGE_12_TRAINING_EXPORTS = [
     "TrainingEventSummary",
     "TrainingEventSink",
     "TrainingMetricSummary",
+    "TrainingOutputSpec",
     "TrainingPlan",
     "TrainingProfiler",
     "TrainingResult",
@@ -161,7 +270,7 @@ STAGE_12_TRAINING_MODULES = {
         "emit_training_event",
     ],
     "rphys.training.experimental": ["run_train"],
-    "rphys.training.plan": ["TrainingPlan"],
+    "rphys.training.plan": ["TrainingOutputSpec", "TrainingPlan"],
     "rphys.training.profiling": [
         "ProfileSpanSummary",
         "TrainingProfiler",
@@ -178,12 +287,11 @@ STAGE_12_TRAINING_MODULES = {
 }
 
 STAGE_10_METHOD_EXPORTS = [
+    "BatchOutputFieldSpec",
+    "BatchOutputSpec",
     "Method",
     "MethodInputAdapter",
     "MethodInputSpec",
-    "MethodOutput",
-    "MethodOutputAdapter",
-    "MethodOutputSpec",
     "ParameterView",
     "PredictionContext",
     "StateEntry",
@@ -191,19 +299,21 @@ STAGE_10_METHOD_EXPORTS = [
     "StateView",
     "StatefulMethod",
     "TrainableMethod",
-    "apply_method_output",
+    "project_batch_fields",
 ]
 
 STAGE_10_METHOD_MODULES = {
     "rphys.methods.adapters": [
         "MethodInputAdapter",
         "MethodInputSpec",
-        "MethodOutputAdapter",
-        "MethodOutputSpec",
     ],
     "rphys.methods.context": ["PredictionContext"],
     "rphys.methods.core": ["Method", "StatefulMethod", "TrainableMethod"],
-    "rphys.methods.output": ["MethodOutput", "apply_method_output"],
+    "rphys.methods.output": [
+        "BatchOutputFieldSpec",
+        "BatchOutputSpec",
+        "project_batch_fields",
+    ],
     "rphys.methods.state": [
         "ParameterView",
         "StateEntry",
@@ -283,6 +393,8 @@ STAGE_1_DATA_MODULES = {
 STAGE_2_DATA_EXPORTS = [
     "Batch",
     "BatchCollater",
+    "BatchOutputFieldSpec",
+    "BatchOutputSpec",
     "FieldContainer",
     "CollateContext",
     "CollatePolicy",
@@ -294,8 +406,13 @@ STAGE_2_DATA_EXPORTS = [
     "Sample",
     "SampleContract",
     *STAGE_11_DATA_COLLECTION_EXPORTS,
+    "UncollateFieldSpec",
+    "UncollatePlan",
+    "UncollatePolicy",
     "collate_samples",
+    "project_batch_fields",
     "uncollate_batch",
+    "uncollate_batch_fields",
 ]
 
 STAGE_2_COLLATION_EXPORTS = [
@@ -542,6 +659,9 @@ STAGE_8_EXPORT_EXPORTS = [
     "RecordExportRequest",
     "SaveOperation",
     "SelectedFieldExport",
+    "build_sample_artifact_record",
+    "export_record_requests",
+    "sample_artifact_export_request",
 ]
 
 STAGE_6_OPERATION_ERROR_NAMES = [
@@ -615,6 +735,9 @@ def test_import_ops_public_all_exports() -> None:
         "SampleCheck",
         "SampleDecision",
         "SampleRoute",
+        "SampleCollectionGroupOperation",
+        "SampleCollectionViewOperation",
+        "SampleCollectionConcatOperation",
         "BatchParameterScope",
         "BatchEquivalenceClaim",
         "BatchFieldEffects",
@@ -647,6 +770,9 @@ def test_import_ops_public_all_exports() -> None:
     assert not hasattr(rphys, "SampleCheck")
     assert not hasattr(rphys, "SampleDecision")
     assert not hasattr(rphys, "SampleRoute")
+    assert not hasattr(rphys, "SampleCollectionGroupOperation")
+    assert not hasattr(rphys, "SampleCollectionViewOperation")
+    assert not hasattr(rphys, "SampleCollectionConcatOperation")
     assert not hasattr(rphys, "BatchParameterScope")
     assert not hasattr(rphys, "BatchEquivalenceClaim")
     assert not hasattr(rphys, "BatchFieldEffects")
@@ -689,6 +815,9 @@ def test_import_ops_sample_module_exports() -> None:
         "SampleCheck",
         "SampleDecision",
         "SampleRoute",
+        "SampleCollectionGroupOperation",
+        "SampleCollectionViewOperation",
+        "SampleCollectionConcatOperation",
     ]
 
 
@@ -805,6 +934,12 @@ def test_stage_11_does_not_expose_rejected_metric_table_names() -> None:
     import rphys.metrics
 
     for public_name in [
+        "MetricObservation",
+        "MetricObservationCollection",
+        "MetricObservationView",
+        "MetricObservationViewPlan",
+        "MetricResult",
+        "PlannedMetricObservationView",
         "MetricResultRow",
         "MetricResultTable",
         "MetricAggregationResult",
@@ -827,6 +962,7 @@ def test_deferred_package_homes_import_with_empty_public_surfaces() -> None:
             "rphys.metrics",
             "rphys.objectives",
             "rphys.ops",
+            "rphys.analysis",
             "rphys.training",
         }:
             continue
@@ -834,6 +970,90 @@ def test_deferred_package_homes_import_with_empty_public_surfaces() -> None:
 
         assert package.__doc__
         assert package.__all__ == []
+
+
+def test_stage_13_scaffold_packages_are_empty_and_code_backed() -> None:
+    for package_name in STAGE_13_SCAFFOLD_PACKAGES:
+        package = importlib.import_module(package_name)
+
+        assert package.__doc__
+        assert package.__all__ == []
+        for public_name in STAGE_13_FORBIDDEN_PUBLIC_NAMES:
+            assert not hasattr(package, public_name)
+
+
+def test_stage_13_scaffold_uses_existing_broad_error_categories() -> None:
+    from rphys import errors
+
+    assert errors.RemotePhysEvaluationError.__doc__
+    assert errors.RemotePhysAnalysisError.__doc__
+    assert "RemotePhysEvaluationError" in errors.__all__
+    assert "RemotePhysAnalysisError" in errors.__all__
+    assert "RemotePhysPredictionError" not in errors.__all__
+    assert not hasattr(errors, "RemotePhysPredictionError")
+
+
+def test_stage_13_analysis_package_exports_only_code_backed_names() -> None:
+    import rphys
+    import rphys.analysis
+
+    assert rphys.analysis.__all__ == STAGE_13_ANALYSIS_EXPORTS
+    for public_name in STAGE_13_ANALYSIS_EXPORTS:
+        assert hasattr(rphys.analysis, public_name)
+        assert not hasattr(rphys, public_name)
+
+    for rejected_name in ["AnalysisOp", "AnalysisContext", "AnalysisResult"]:
+        assert rejected_name not in rphys.analysis.__all__
+        assert not hasattr(rphys.analysis, rejected_name)
+
+
+def test_stage_13_analysis_modules_export_only_code_backed_names() -> None:
+    for module_name, expected_all in STAGE_13_ANALYSIS_MODULES.items():
+        module = importlib.import_module(module_name)
+
+        assert module.__doc__
+        assert module.__all__ == expected_all
+        for public_name in expected_all:
+            assert hasattr(module, public_name)
+
+
+def test_stage_13_final_forbidden_public_surfaces_remain_absent() -> None:
+    modules = (
+        importlib.import_module("rphys"),
+        importlib.import_module("rphys.analysis"),
+        importlib.import_module("rphys.evaluation"),
+        importlib.import_module("rphys.learning"),
+        importlib.import_module("rphys.methods"),
+        importlib.import_module("rphys.metrics"),
+        importlib.import_module("rphys.prediction"),
+    )
+
+    for public_name in STAGE_13_FINAL_FORBIDDEN_PUBLIC_NAMES:
+        for module in modules:
+            assert public_name not in getattr(module, "__all__", ())
+            assert not hasattr(module, public_name)
+
+
+def test_stage_13_removed_method_and_learner_output_names_are_absent() -> None:
+    import rphys
+    import rphys.learning
+    import rphys.learning.output
+    import rphys.methods
+    import rphys.methods.adapters
+    import rphys.methods.output
+
+    modules = (
+        rphys,
+        rphys.methods,
+        rphys.methods.output,
+        rphys.methods.adapters,
+        rphys.learning,
+        rphys.learning.output,
+    )
+    for public_name in STAGE_13_REMOVED_OUTPUT_NAMES:
+        for module in modules:
+            assert public_name not in getattr(module, "__all__", ())
+            assert not hasattr(module, public_name)
 
 
 def test_stage_12_learning_package_exports_only_code_backed_contract_names() -> None:

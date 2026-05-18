@@ -3,12 +3,7 @@
 from .context import LoopContext
 from .core import Learner
 from .modes import LoopMode
-from .output import (
-    BackwardableScalar,
-    StepOutput,
-    StepPrediction,
-    require_backwardable_scalar,
-)
+from .output import BackwardableScalar, require_backwardable_scalar
 from .supervised import SupervisedLearner
 
 __all__ = [
@@ -16,8 +11,6 @@ __all__ = [
     "Learner",
     "LoopContext",
     "LoopMode",
-    "StepOutput",
-    "StepPrediction",
     "SupervisedLearner",
     "require_backwardable_scalar",
 ]

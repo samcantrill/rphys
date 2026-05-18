@@ -5,30 +5,30 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 
-from rphys.data import Batch
+from rphys.data import Batch, FieldValue
 from rphys.errors import RemotePhysLearningError
-from rphys.losses import Loss, LossContext, LossResult, LossTerm
-from rphys.methods import Method, MethodOutput, PredictionContext, apply_method_output
-from rphys.metrics import Metric, MetricContext, MetricResult, MetricValue
-from rphys.objectives import Objective, ObjectiveContext, ObjectiveResult, ObjectiveTerm
+from rphys.losses import Loss, LossContext, LossResult
+from rphys.methods import Method, PredictionContext
+from rphys.metrics import Metric, MetricContext, collect_metric_fields
+from rphys.objectives import Objective, ObjectiveContext, ObjectiveResult
 
 from .context import LoopContext
 from .modes import LoopMode
-from .output import StepOutput
 
 __all__ = ["SupervisedLearner"]
+
+_DEFAULT_OBJECTIVE_LOCATOR = "objectives/custom.training.total"
 
 
 @dataclass(frozen=True, slots=True)
 class SupervisedLearner:
     """Compose a batch-level method with optional supervised scoring.
 
-    ``method.predict`` is always the source of predictions. When losses,
-    objectives, or metrics are configured and the method returns a
-    ``MethodOutput`` patch, the patch is applied to a shallow local batch copy
-    for those calculations only. The returned ``StepOutput.predictions`` keeps
-    the raw ``MethodOutput`` by default, so trainers do not materialize,
-    uncollate, export, or route prediction fields.
+    ``method.predict`` is always the source of predictions and must return a
+    ``Batch``. Loss, objective, and metric records are converted to ordinary
+    ``losses/*``, ``objectives/*``, and ``metrics/*`` fields on the returned
+    batch. Training engines decide which fields to read through a
+    ``TrainingPlan``-owned output spec.
     """
 
     method: Method
@@ -51,7 +51,7 @@ class SupervisedLearner:
         object.__setattr__(self, "losses", _coerce_callables(losses, field="losses"))
         object.__setattr__(self, "metrics", _coerce_callables(metrics, field="metrics"))
 
-    def step(self, batch: Batch, context: LoopContext) -> StepOutput:
+    def step(self, batch: Batch, context: LoopContext) -> Batch:
         """Run one supervised learner step for the requested loop mode."""
 
         if not isinstance(batch, Batch):
@@ -85,49 +85,26 @@ class SupervisedLearner:
                 provenance=context.provenance,
             ),
         )
-        if context.mode is LoopMode.PREDICT:
-            return StepOutput(
-                predictions=predictions,
-                diagnostics=_diagnostics(
-                    predictions=predictions,
-                    loss_results=(),
-                    objective_result=None,
-                    metric_results=(),
-                ),
-                metadata={
-                    "mode": context.mode.value,
-                    "split": context.split,
-                },
-                provenance={"learner": "SupervisedLearner"},
+        if not isinstance(predictions, Batch):
+            raise RemotePhysLearningError(
+                "SupervisedLearner method.predict must return a Batch.",
+                owner="SupervisedLearner",
+                field="method",
+                expected="Batch",
+                actual=type(predictions).__name__,
             )
-        working_batch = self._working_batch(batch, predictions)
+        if context.mode is LoopMode.PREDICT:
+            return predictions
+        working_batch = predictions
         loss_results = self._evaluate_losses(working_batch, context)
         objective_result = self._evaluate_objective(loss_results, context)
         metric_results = self._evaluate_metrics(working_batch, context)
 
-        return StepOutput(
-            predictions=predictions,
-            objective=None if objective_result is None else objective_result.total.value,
-            loss_terms=_loss_terms(loss_results),
-            objective_terms=_objective_terms(objective_result),
-            metric_values=_metric_values(metric_results),
-            diagnostics=_diagnostics(
-                predictions=predictions,
-                loss_results=loss_results,
-                objective_result=objective_result,
-                metric_results=metric_results,
-            ),
-            metadata={
-                "mode": context.mode.value,
-                "split": context.split,
-            },
-            provenance={"learner": "SupervisedLearner"},
-        )
-
-    def _working_batch(self, batch: Batch, predictions: MethodOutput) -> Batch:
-        if not self.losses and self.objective is None and not self.metrics:
-            return batch
-        return apply_method_output(predictions, batch, copy_batch=True, on_conflict="error")
+        output = predictions.shallow_copy()
+        _add_loss_fields(output, loss_results)
+        _add_objective_fields(output, objective_result)
+        _add_metric_fields(output, metric_results)
+        return output
 
     def _evaluate_losses(
         self,
@@ -182,25 +159,19 @@ class SupervisedLearner:
         self,
         fields: Batch,
         context: LoopContext,
-    ) -> tuple[MetricResult, ...]:
-        results: list[MetricResult] = []
+    ) -> tuple[Mapping[object, FieldValue], ...]:
+        results: list[Mapping[object, FieldValue]] = []
         for metric in self.metrics:
-            result = metric(
+            fields = collect_metric_fields(
+                metric,
                 MetricContext(
                     metric.contract,
                     fields=fields,
                     metadata=_context_metadata(context),
                     provenance=context.provenance,
-                )
+                ),
             )
-            if not isinstance(result, MetricResult):
-                raise RemotePhysLearningError(
-                    "Metric callable must return a MetricResult.",
-                    owner="SupervisedLearner",
-                    field="metrics",
-                    actual=type(result).__name__,
-                )
-            results.append(result)
+            results.append(fields)
         return tuple(results)
 
 
@@ -268,40 +239,80 @@ def _context_metadata(context: LoopContext) -> Mapping[str, object]:
     return metadata
 
 
-def _loss_terms(results: Iterable[LossResult]) -> tuple[LossTerm, ...]:
-    return tuple(term for result in results for term in result.terms)
-
-
-def _objective_terms(result: ObjectiveResult | None) -> tuple[ObjectiveTerm, ...]:
-    if result is None:
-        return ()
-    return (result.total, *result.terms)
-
-
-def _metric_values(results: Iterable[MetricResult]) -> Mapping[str, MetricValue]:
-    values: dict[str, MetricValue] = {}
+def _add_loss_fields(batch: Batch, results: Iterable[LossResult]) -> None:
     for result in results:
-        for index, observation in enumerate(result.observations):
-            key = observation.name
-            if key in values:
-                key = f"{observation.name}#{index}"
-            values[key] = observation.value
-    return values
+        for locator, field_value in result.fields.items():
+            _set_new_field(batch, locator, field_value)
+        for term in result.terms:
+            _set_new_field(
+                batch,
+                f"losses/custom.training.{_field_key_suffix(term.name)}",
+                FieldValue(
+                    term.value,
+                    metadata={
+                        "name": term.name,
+                        "backend": term.backend,
+                        "reduction": term.reduction,
+                        "differentiable": term.differentiable,
+                    },
+                ),
+            )
 
 
-def _diagnostics(
-    *,
-    predictions: MethodOutput,
-    loss_results: tuple[LossResult, ...],
-    objective_result: ObjectiveResult | None,
-    metric_results: tuple[MetricResult, ...],
-) -> Mapping[str, object]:
-    diagnostics = dict(predictions.diagnostics)
-    diagnostics.update(
-        {
-            "loss_result_count": len(loss_results),
-            "objective_present": objective_result is not None,
-            "metric_result_count": len(metric_results),
-        }
+def _add_objective_fields(batch: Batch, result: ObjectiveResult | None) -> None:
+    if result is None:
+        return
+    for locator, field_value in result.fields.items():
+        _set_new_field(batch, locator, field_value)
+    _set_new_field(
+        batch,
+        _DEFAULT_OBJECTIVE_LOCATOR,
+        FieldValue(
+            result.total.value,
+            metadata={
+                "name": result.total.name,
+                "backend": result.total.backend,
+                "weight": result.total.weight,
+                "reduction": result.total.reduction,
+                "differentiable": result.total.differentiable,
+            },
+        ),
     )
-    return diagnostics
+    for term in result.terms:
+        _set_new_field(
+            batch,
+            f"objectives/custom.training.{_field_key_suffix(term.name)}",
+            FieldValue(
+                term.value,
+                metadata={
+                    "name": term.name,
+                    "backend": term.backend,
+                    "weight": term.weight,
+                    "reduction": term.reduction,
+                    "differentiable": term.differentiable,
+                },
+            ),
+        )
+
+
+def _add_metric_fields(batch: Batch, results: Iterable[Mapping[object, FieldValue]]) -> None:
+    for fields in results:
+        for locator, field_value in fields.items():
+            _set_new_field(batch, locator, field_value)
+
+
+def _set_new_field(batch: Batch, locator: object, field_value: FieldValue) -> None:
+    if batch.has(locator):  # type: ignore[arg-type]
+        raise RemotePhysLearningError(
+            "SupervisedLearner output field conflicts with an existing batch field.",
+            owner="SupervisedLearner",
+            locator=str(locator),
+        )
+    batch.set_field(locator, field_value)  # type: ignore[arg-type]
+
+
+def _field_key_suffix(name: str) -> str:
+    lowered = name.lower()
+    chars = [char if "a" <= char <= "z" or "0" <= char <= "9" else "." for char in lowered]
+    tokens = [token for token in "".join(chars).split(".") if token]
+    return ".".join(tokens) if tokens else "value"

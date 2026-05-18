@@ -6,7 +6,7 @@ from collections.abc import Iterable, Mapping
 
 from rphys.data import Batch
 from rphys.errors import RemotePhysTrainingError
-from rphys.learning import Learner, LoopContext, LoopMode, StepOutput
+from rphys.learning import Learner, LoopContext, LoopMode
 from rphys.metrics import MetricValue
 
 from .events import TrainingEvent, TrainingEventPhase, emit_training_event
@@ -164,7 +164,6 @@ class NativeTrainingEngine:
             if max_steps is not None and state.step_count >= max_steps:
                 return True
             working_batch = _move_batch(plan, batch)
-            _zero_grad(plan, mode)
             context = LoopContext(
                 mode,
                 split=split,
@@ -176,16 +175,17 @@ class NativeTrainingEngine:
             )
             _emit_step_event(plan, context, TrainingEventPhase.STEP_STARTED)
             output = learner.step(working_batch, context)
-            if not isinstance(output, StepOutput):
+            if not isinstance(output, Batch):
                 raise RemotePhysTrainingError(
-                    "Learner.step must return a StepOutput.",
+                    "Learner.step must return a Batch.",
                     owner="NativeTrainingEngine",
                     field="learner",
-                    expected="StepOutput",
+                    expected="Batch",
                     actual=type(output).__name__,
                 )
+            plan.output_spec.validate_batch(output, mode)
             _train_step(plan, mode, output)
-            state.record(output, context)
+            state.record(output, context, plan)
             _emit_step_event(plan, context, TrainingEventPhase.STEP_COMPLETED, status="completed")
         return False
 
@@ -201,24 +201,26 @@ class _LoopState:
         self.metrics: dict[str, TrainingMetricSummary] = {}
         self.profiles: list[ProfileSummary] = []
 
-    def record(self, output: StepOutput, context: LoopContext) -> None:
+    def record(self, output: Batch, context: LoopContext, plan: TrainingPlan) -> None:
         self.step_count += 1
         self.batch_count += 1
         if context.epoch_index is not None:
             self.epoch_count = max(self.epoch_count, context.epoch_index + 1)
-        step_metrics = _step_metric_mapping(output.metric_values)
+        objective = plan.output_spec.objective_value(output, context.mode)
+        metric_values = plan.output_spec.metric_values(output)
+        step_metrics = _step_metric_mapping(metric_values)
         self.last_step = TrainingStepSummary(
             context.mode,
             epoch_index=context.epoch_index,
             step_index=context.step_index,
             batch_index=context.batch_index,
             split=context.split,
-            objective=_primitive_scalar(output.objective),
+            objective=_primitive_scalar(objective),
             metrics=step_metrics,
-            metadata=output.metadata,
-            provenance=output.provenance,
+            metadata={"output_field_count": len(output.field_items())},
+            provenance={"engine": "NativeTrainingEngine"},
         )
-        self.metrics.update(_metric_summaries(output.metric_values))
+        self.metrics.update(_metric_summaries(metric_values, output, plan))
         self.profiles.append(
             ProfileSummary(
                 "native.step",
@@ -312,18 +314,20 @@ def _zero_grad(plan: TrainingPlan, mode: LoopMode) -> None:
         zero_grad()
 
 
-def _train_step(plan: TrainingPlan, mode: LoopMode, output: StepOutput) -> None:
+def _train_step(plan: TrainingPlan, mode: LoopMode, output: Batch) -> None:
     if mode is not LoopMode.TRAIN:
         return
-    if output.objective is None:
+    objective = plan.output_spec.objective_value(output, mode)
+    if objective is None:
         raise RemotePhysTrainingError(
-            "Train steps require StepOutput.objective for native backward execution.",
+            "Train steps require the TrainingOutputSpec objective field for native backward execution.",
             owner="NativeTrainingEngine",
             field="objective",
             expected="BackwardableScalar",
             actual="None",
         )
-    _backward(plan, output.objective)
+    _zero_grad(plan, mode)
+    _backward(plan, objective)
     _optimizer_step(plan)
     _scheduler_step(plan)
 
@@ -374,21 +378,40 @@ def _scheduler_step(plan: TrainingPlan) -> None:
     step()
 
 
-def _step_metric_mapping(values: Mapping[str, MetricValue]) -> Mapping[str, PrimitiveValue]:
-    return {name: _primitive_scalar(metric.value) for name, metric in values.items()}
-
-
-def _metric_summaries(values: Mapping[str, MetricValue]) -> dict[str, TrainingMetricSummary]:
+def _step_metric_mapping(values: Mapping[str, object]) -> Mapping[str, PrimitiveValue]:
     return {
-        name: TrainingMetricSummary(
-            name,
-            _primitive_scalar(metric.value),
-            unit=metric.unit,
-            metadata=metric.metadata,
-            provenance=metric.provenance,
-        )
+        name: _primitive_scalar(metric.value if isinstance(metric, MetricValue) else metric)
         for name, metric in values.items()
     }
+
+
+def _metric_summaries(
+    values: Mapping[str, object],
+    output: Batch,
+    plan: TrainingPlan,
+) -> dict[str, TrainingMetricSummary]:
+    summaries: dict[str, TrainingMetricSummary] = {}
+    for name, metric in values.items():
+        locator = name
+        field_value = plan.output_spec.field_value(output, locator)
+        if isinstance(metric, MetricValue):
+            summaries[name] = TrainingMetricSummary(
+                name,
+                _primitive_scalar(metric.value),
+                unit=metric.unit,
+                metadata=metric.metadata,
+                provenance=metric.provenance,
+            )
+        else:
+            metadata = None
+            if field_value is not None and field_value.schema is not None:
+                metadata = {"schema": str(field_value.schema)}
+            summaries[name] = TrainingMetricSummary(
+                name,
+                _primitive_scalar(metric),
+                metadata=metadata,
+            )
+    return summaries
 
 
 def _primitive_scalar(value: object) -> PrimitiveValue:

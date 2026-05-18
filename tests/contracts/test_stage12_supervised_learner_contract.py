@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from rphys.data import Batch, FieldValue
 from rphys.learning import Learner, LoopContext, SupervisedLearner
-from rphys.methods import MethodOutput
 
 
 class PredictOnlyMethod:
-    def predict(self, batch: Batch, *, context: object | None = None) -> MethodOutput:
-        return MethodOutput(fields={"predictions/signal.bvp": FieldValue(batch.require("inputs/signal.bvp"))})
+    def predict(self, batch: Batch, *, context: object | None = None) -> Batch:
+        output = batch.shallow_copy()
+        output.set_field("predictions/signal.bvp", FieldValue(batch.require("inputs/signal.bvp")))
+        return output
 
 
 def test_supervised_learner_is_a_structural_learner_with_prediction_pass_through() -> None:
@@ -17,9 +18,8 @@ def test_supervised_learner_is_a_structural_learner_with_prediction_pass_through
     output = learner.step(batch, LoopContext("predict", split="heldout"))
 
     assert isinstance(learner, Learner)
-    assert isinstance(output.predictions, MethodOutput)
-    assert output.predictions.fields
-    assert output.objective is None
+    assert isinstance(output, Batch)
+    assert output.require("predictions/signal.bvp") == [0.1, 0.2]
     assert not batch.has("predictions/signal.bvp")
 
 

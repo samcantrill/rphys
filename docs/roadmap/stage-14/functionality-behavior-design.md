@@ -168,6 +168,15 @@ Stage 14 originally planned the final smoke tail in generic
 prediction/evaluation/analysis/report terms. Stage 13 has since been revised to
 a Sample/Batch-native design, so Stage 14 consumes that shape.
 
+Code-backed recheck on 2026-05-18 found that this checkout has useful
+substrates, but not the complete revised Stage 13 contract. `uncollate_batch`,
+`SampleCollection`, export/save, and derived datasource pieces exist. However,
+`rphys.methods` still exports `MethodOutput*` and `apply_method_output`,
+`rphys.learning` still exports `StepOutput` and `StepPrediction`,
+`rphys.metrics` still exports `MetricObservation*` and `MetricResult`, and
+`rphys.prediction`, `rphys.evaluation`, and `rphys.analysis` have empty public
+exports. Therefore Phase 4 remains blocked in this checkout.
+
 The Stage 13-aligned smoke path is:
 
 ```text
