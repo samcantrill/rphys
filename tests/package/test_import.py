@@ -706,6 +706,14 @@ def test_import_rphys() -> None:
 
     assert rphys.__doc__
     assert rphys.__all__ == []
+    for public_name in [
+        "SyntheticScenario",
+        "SyntheticEdgeVariant",
+        "make_synthetic_scenario",
+        "make_edge_variant",
+        "assert_index_manifest_round_trips",
+    ]:
+        assert not hasattr(rphys, public_name)
 
 
 def test_import_ops_public_all_exports() -> None:
