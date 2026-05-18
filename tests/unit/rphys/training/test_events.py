@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import asdict
+
 import pytest
 
 from rphys.errors import RemotePhysTrainingError
@@ -93,6 +95,7 @@ def test_training_event_preserves_extended_timeline_and_timestamps() -> None:
     assert event.clock_name == "monotonic"
     assert event.process_id == 0
     assert event.local_rank == 1
+    assert asdict(event)["metadata"] == {"loss": 0.2}
 
 
 def test_emit_training_event_is_observe_only_for_sinks_and_callbacks() -> None:
@@ -130,6 +133,10 @@ def test_training_event_log_is_append_only_and_validates_sequence_ids() -> None:
         updated.append(TrainingEvent("step_completed", "train", sequence_id=0, timeline_id="timeline-1", run_id="run-1"))
     assert out_of_order_error.value.context["field"] == "sequence_id"
 
+    with pytest.raises(RemotePhysTrainingError) as missing_sequence_error:
+        TrainingEventLog("timeline-1", events=(TrainingEvent("step_started", "train", timeline_id="timeline-1"),))
+    assert missing_sequence_error.value.context["field"] == "sequence_id"
+
     with pytest.raises(RemotePhysTrainingError) as timeline_error:
         updated.append(
             TrainingEvent("step_completed", "train", sequence_id=2, timeline_id="timeline-2", run_id="run-1"),
@@ -147,6 +154,11 @@ def test_training_events_reject_invalid_context_and_observers() -> None:
     with pytest.raises(RemotePhysTrainingError) as metadata_error:
         TrainingEvent("step_started", "train", metadata={"raw": object()})
     assert metadata_error.value.context["field"] == "metadata"
+
+    for timestamp in (float("nan"), float("inf")):
+        with pytest.raises(RemotePhysTrainingError) as timestamp_error:
+            TrainingEvent("step_started", "train", timestamp=timestamp)
+        assert timestamp_error.value.context["field"] == "timestamp"
 
     with pytest.raises(RemotePhysTrainingError) as sink_error:
         emit_training_event(TrainingEvent("step_started", "train"), sinks=(object(),))  # type: ignore[arg-type]

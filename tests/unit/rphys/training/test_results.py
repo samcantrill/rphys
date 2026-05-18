@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import asdict
+
 import pytest
 
 from rphys.errors import RemotePhysTrainingError
@@ -54,6 +56,9 @@ def test_training_result_preserves_primitive_summaries() -> None:
     assert result.profiles[0].duration_seconds == 0.01
     assert result.metadata == {"engine": "fake"}
     assert result.provenance == {"test": "unit"}
+    inspected = asdict(result)
+    assert inspected["metrics"]["mae"]["value"] == 0.4
+    assert inspected["metadata"] == {"engine": "fake"}
 
     with pytest.raises(TypeError):
         result.metrics["rmse"] = metric  # type: ignore[index]
@@ -120,7 +125,7 @@ def test_training_result_keeps_profiles_when_explicitly_passed_with_training_pro
         event_logs=(
             TrainingEventLog(
                 "timeline-1",
-                events=(TrainingEvent("loop_started", "train", timeline_id="timeline-1"),),
+                events=(TrainingEvent("loop_started", "train", timeline_id="timeline-1", sequence_id=0),),
             ),
         ),
         scalar_spans=(ProfileSpanSummary("forward", status="available"),),

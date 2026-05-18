@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
+from math import isfinite
 from typing import Protocol, runtime_checkable
 
 from rphys.errors import RemotePhysTrainingError
@@ -438,6 +439,7 @@ def _coerce_optional_timestamp(
         isinstance(value, bool)
         or not isinstance(value, (int, float))
         or value < 0
+        or not isfinite(value)
     ):
         raise RemotePhysTrainingError(
             f"{owner} {field} must be a non-negative number when provided.",
@@ -497,18 +499,25 @@ def _coerce_event_records(
                 event_run_id=event.run_id,
                 index=index,
             )
-        if event.sequence_id is not None:
-            if last_sequence is not None and event.sequence_id <= last_sequence:
-                raise RemotePhysTrainingError(
-                    f"{owner} {field} sequence ids must be strictly increasing.",
-                    owner=owner,
-                    field="sequence_id",
-                    expected="strictly increasing non-negative integer",
-                    index=index,
-                    sequence_id=event.sequence_id,
-                    previous_sequence_id=last_sequence,
-                )
-            last_sequence = event.sequence_id
+        if event.sequence_id is None:
+            raise RemotePhysTrainingError(
+                f"{owner} {field} entries must include sequence_id.",
+                owner=owner,
+                field="sequence_id",
+                expected="non-negative integer",
+                index=index,
+            )
+        if last_sequence is not None and event.sequence_id <= last_sequence:
+            raise RemotePhysTrainingError(
+                f"{owner} {field} sequence ids must be strictly increasing.",
+                owner=owner,
+                field="sequence_id",
+                expected="strictly increasing non-negative integer",
+                index=index,
+                sequence_id=event.sequence_id,
+                previous_sequence_id=last_sequence,
+            )
+        last_sequence = event.sequence_id
 
     return events
 

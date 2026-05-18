@@ -26,8 +26,7 @@
   compatibility, import-boundary, timestamp/timeline, result compatibility, and
   Phase 3 resource-trace boundary risks
 - Draft pass: complete
-- Refine pass: complete; limited to the assigned expanded-path triggers, with
-  phase implementation refinement and PR review budgets left unused
+- Refine pass: complete; limited to the assigned expanded-path triggers
 - Setup limitations: existing manager-created worktree was verified instead of
   creating a new branch/worktree; no push or PR action was performed in this
   planning pass
@@ -552,8 +551,8 @@ git diff --check
   expanded-path triggers
 - Phase implementation refinement: 1/3 used on 2026-05-18 for additive
   lifecycle event phase coverage
-- PR review: unused
-- Blocker resolution: 1/3 used
+- PR review: consumed by bounded Phase 1 PR review on 2026-05-18
+- Blocker resolution: 2/3 used
 
 ## Completion Notes
 
@@ -567,7 +566,7 @@ git diff --check
   for the new public Phase 1 names.
 - Implementation validation: completed for targeted phase artifacts using explicit pass/fail
   evidence:
-  - `uv run pytest tests/unit/rphys/training/test_events.py tests/unit/rphys/training/test_profiling.py tests/unit/rphys/training/test_results.py` (17 passed after manager-local pre-submit timing fix)
+  - `uv run pytest tests/unit/rphys/training/test_events.py tests/unit/rphys/training/test_profiling.py tests/unit/rphys/training/test_results.py` (18 passed after pre-submit blocker fixes)
   - `uv run pytest tests/contracts/test_stage12_observability_contract.py tests/contracts/test_stage12_training_result_contract.py tests/contracts/test_stage15_training_profile_contract.py` (8 passed)
   - `make test-package` (72 passed)
 - Refinement summary: clarified the public provisional schema, primitive
@@ -595,6 +594,17 @@ git diff --check
   rerun:
   - `uv run pytest tests/unit/rphys/training/test_profiling.py tests/unit/rphys/training/test_events.py tests/unit/rphys/training/test_results.py`
     (17 passed)
+  - `git diff --check` (passed)
+- PR review blocker-resolution evidence: fixed primitive dataclass inspection
+  by replacing metadata/provenance mapping proxies with immutable dict-compatible
+  mappings, rejected non-finite timestamp/duration values, and made recorder
+  event logs assign monotonic per-log sequence ids when callers omit them.
+  Narrow validation rerun:
+  - `uv run pytest tests/unit/rphys/training/test_events.py tests/unit/rphys/training/test_profiling.py tests/unit/rphys/training/test_results.py`
+    (18 passed)
+  - `uv run pytest tests/contracts/test_stage12_observability_contract.py tests/contracts/test_stage12_training_result_contract.py tests/contracts/test_stage15_training_profile_contract.py`
+    (10 passed)
+  - `make test-package` (72 passed)
   - `git diff --check` (passed)
 - Merge result: pending local PR review completion and merge gate.
 - Cleanup: pending implementation phase.
@@ -634,7 +644,43 @@ git diff --check
 ## Files Changed
 
 - `src/rphys/training/events.py`
+- `src/rphys/training/_validation.py`
+- `src/rphys/training/profiling.py`
+- `src/rphys/training/results.py`
 - `tests/unit/rphys/training/test_events.py`
+- `tests/unit/rphys/training/test_profiling.py`
+- `tests/unit/rphys/training/test_results.py`
 - `tests/contracts/test_stage12_observability_contract.py`
+- `tests/contracts/test_stage12_training_result_contract.py`
 - `tests/contracts/test_stage15_training_profile_contract.py`
 - `docs/roadmap/stage-15/phases/core-timeline-profile-records.md`
+
+## Phase PR Review Blocker Resolution: Primitive Inspection, Finite Timing, And Sequence IDs
+
+## Assigned Blockers
+
+- Blocker 1: dataclass inspection over Stage 15 records failed when
+  metadata/provenance used `MappingProxyType`.
+- Blocker 2: non-finite timestamp and duration values were accepted.
+- Blocker 3: recorder-created event logs could contain omitted sequence ids.
+- Source: bounded Phase 1 PR review on 2026-05-18.
+- Budget use: blocker resolution 2/3; PR review budget consumed.
+
+## Resolution
+
+- Changes made: added a private immutable dict-compatible `FrozenMapping` for
+  primitive mapping fields and result metric maps; rejected non-finite
+  timestamps and durations; required explicit sequence ids in event logs while
+  letting `TrainingProfileRecorder` assign monotonic per-log sequence ids when
+  callers omit them.
+- Tests or docs updated: unit and contract tests now cover `dataclasses.asdict`
+  inspection, non-finite timing rejection, direct log sequence-id validation,
+  and recorder-assigned sequence ids.
+- Validation rerun: focused unit/contract/package checks and `git diff --check`
+  passed; broad validation rerun is pending after this artifact update.
+
+## Result
+
+- Blocker resolved: yes.
+- Remaining blocker: none known.
+- Recommended next gate: rerun broad PR validation and open the Phase 1 PR.

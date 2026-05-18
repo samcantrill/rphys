@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import asdict
+
 import pytest
 
 from rphys.errors import RemotePhysTrainingError
@@ -49,6 +51,7 @@ def test_profile_span_summary_records_timing_stage_and_timeline_metadata() -> No
     assert span.duration_seconds == 0.01
     assert span.overhead_seconds == 0.001
     assert span.metadata == {"clock": "cpu"}
+    assert asdict(span)["metadata"] == {"clock": "cpu"}
 
 
 def test_unavailable_probe_converts_to_unavailable_span() -> None:
@@ -99,6 +102,15 @@ def test_training_profiler_protocol_and_validation() -> None:
         ProfileSpanSummary("bad", duration_seconds=-1.0)
     assert duration_error.value.context["field"] == "duration_seconds"
 
+    for value in (float("nan"), float("inf")):
+        with pytest.raises(RemotePhysTrainingError) as finite_error:
+            ProfileSpanSummary("bad", duration_seconds=value)
+        assert finite_error.value.context["field"] == "duration_seconds"
+
+        with pytest.raises(RemotePhysTrainingError) as timestamp_error:
+            ProfileSpanSummary("bad", start_timestamp=value)
+        assert timestamp_error.value.context["field"] == "start_timestamp"
+
     with pytest.raises(RemotePhysTrainingError) as reason_error:
         UnavailableProfileProbe("bad", reason="")
     assert reason_error.value.context["field"] == "reason"
@@ -124,6 +136,7 @@ def test_training_profile_recorder_snapshots_immutable_state_and_injects_clock()
     assert first is not second
     assert first.event_logs[0].timeline_id == "timeline-1"
     assert first.event_logs[0].events[0].timestamp == 1.0
+    assert first.event_logs[0].events[0].sequence_id == 0
     assert first.scalar_spans[0].start_timestamp == 2.0
     assert first.scalar_spans[0].end_timestamp == 2.25
     assert first.scalar_spans[1].start_timestamp == 3.0
@@ -135,6 +148,19 @@ def test_training_profile_recorder_snapshots_immutable_state_and_injects_clock()
         summary for summary in first.as_profile_summaries() if summary.status == "unavailable"
     ]
     assert unavailable_summaries[0].metadata["reason"] == "disabled"
+
+
+def test_training_profile_recorder_assigns_monotonic_event_sequence_ids() -> None:
+    recorder = TrainingProfileRecorder(clock=lambda: 1.0)
+
+    recorder.record_event(TrainingEvent("loop_started", "train", timeline_id="timeline-1"))
+    recorder.record_event(TrainingEvent("step_started", "train", timeline_id="timeline-1"))
+    recorder.record_event(TrainingEvent("loop_started", "validate", timeline_id="timeline-2", sequence_id=5))
+
+    first_log, second_log = recorder.snapshot().event_logs
+
+    assert [event.sequence_id for event in first_log.events] == [0, 1]
+    assert [event.sequence_id for event in second_log.events] == [5]
 
 
 def test_training_profile_recorder_preserves_duration_with_partial_timestamps() -> None:

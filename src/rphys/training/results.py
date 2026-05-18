@@ -5,13 +5,13 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
-from types import MappingProxyType
 
 from rphys.errors import RemotePhysTrainingError
 from rphys.learning import LoopMode
 
 from .profiling import TrainingProfile
 from ._validation import (
+    FrozenMapping,
     PrimitiveMapping,
     PrimitiveValue,
     coerce_non_negative_int,
@@ -545,7 +545,7 @@ def _coerce_metric_summaries(
                 name=summary.name,
             )
         by_name[summary.name] = summary
-    return MappingProxyType(by_name)
+    return FrozenMapping(by_name)
 
 
 def _coerce_records(

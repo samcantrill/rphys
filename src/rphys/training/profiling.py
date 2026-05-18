@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
+from math import isfinite
 from time import monotonic
 from typing import Protocol, runtime_checkable
 
@@ -586,14 +587,15 @@ class TrainingProfileRecorder:
                 expected="TrainingEvent",
                 actual=type(event).__name__,
             )
-        event = self._with_timestamp(event)
         timeline_id = event.timeline_id or "default"
         event_logs = list(self._event_logs)
         for index, event_log in enumerate(event_logs):
             if event_log.timeline_id == timeline_id:
+                event = self._with_event_log_evidence(event, event_log=event_log)
                 event_logs[index] = event_log.append(event)
                 break
         else:
+            event = self._with_event_log_evidence(event, timeline_id=timeline_id)
             event_logs.append(TrainingEventLog(timeline_id, run_id=event.run_id, events=(event,)))
         self._event_logs = tuple(event_logs)
 
@@ -644,10 +646,25 @@ class TrainingProfileRecorder:
             decisions=self._decisions,
         )
 
-    def _with_timestamp(self, event: TrainingEvent) -> TrainingEvent:
-        if event.timestamp is not None:
-            return event
-        timestamp = self._clock()
+    def _with_event_log_evidence(
+        self,
+        event: TrainingEvent,
+        *,
+        timeline_id: str | None = None,
+        event_log: TrainingEventLog | None = None,
+    ) -> TrainingEvent:
+        if event_log is not None:
+            timeline_id = event_log.timeline_id
+            previous_sequences = [
+                logged_event.sequence_id
+                for logged_event in event_log.events
+                if logged_event.sequence_id is not None
+            ]
+        else:
+            previous_sequences = []
+        sequence_id = event.sequence_id
+        if sequence_id is None:
+            sequence_id = max(previous_sequences, default=-1) + 1
         return TrainingEvent(
             event.phase,
             event.mode,
@@ -657,9 +674,9 @@ class TrainingProfileRecorder:
             batch_index=event.batch_index,
             split=event.split,
             run_id=event.run_id,
-            timeline_id=event.timeline_id,
-            sequence_id=event.sequence_id,
-            timestamp=timestamp,
+            timeline_id=event.timeline_id or timeline_id,
+            sequence_id=sequence_id,
+            timestamp=event.timestamp if event.timestamp is not None else self._clock(),
             clock_name=event.clock_name,
             clock_origin=event.clock_origin,
             process_id=event.process_id,
@@ -756,6 +773,7 @@ def _coerce_optional_timestamp(
         isinstance(value, bool)
         or not isinstance(value, (int, float))
         or value < 0
+        or not isfinite(value)
     ):
         raise RemotePhysTrainingError(
             f"{owner} {field} must be a non-negative number when provided.",
@@ -779,6 +797,7 @@ def _coerce_optional_duration(
         isinstance(value, bool)
         or not isinstance(value, (int, float))
         or value < 0
+        or not isfinite(value)
     ):
         raise RemotePhysTrainingError(
             f"{owner} {field} must be a non-negative number when provided.",

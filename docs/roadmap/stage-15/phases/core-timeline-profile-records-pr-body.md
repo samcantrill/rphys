@@ -41,7 +41,7 @@ This phase creates the shared primitive record target for later profiling phases
 Commands run:
 
 ```text
-targeted unit coverage for training events/profiling/results: 17 passed
+targeted unit coverage for training events/profiling/results: 18 passed
 targeted contract coverage for Stage 12/15 training observability/results/profile contracts: 10 passed
 make test-package: 72 passed
 uv lock --check: passed after cache escalation
@@ -52,3 +52,5 @@ make validate-pr: passed, including uv build and git diff --check
 # Risks And Follow-Up
 
 Phase 1 intentionally leaves resource trace schemas and persistence to Phase 3, probe/checkpoint/policy records to Phase 2 and later, native engine wiring to Phase 4, data-path profiling producers to Phase 5, and Lightning integration to Phases 6 and 7. The new profile aggregate is provisional and primitive-inspection friendly, but it does not define a durable file, JSON, or schema-versioned export format in this phase.
+
+Pre-submit review blockers around dataclass inspection, non-finite timing values, and recorder-created sequence ids were resolved with focused unit/contract coverage before PR opening.

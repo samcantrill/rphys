@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from types import MappingProxyType
 from typing import TypeAlias
 
 from rphys.errors import RemotePhysTrainingError
@@ -14,6 +13,43 @@ PrimitiveMapping: TypeAlias = Mapping[str, PrimitiveValue]
 _PRIMITIVE_TYPES = (str, int, float, bool)
 
 
+class FrozenMapping(dict[object, object]):
+    """Dict-compatible immutable mapping for dataclass inspection."""
+
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        super().__init__(*args, **kwargs)
+        self._frozen = True
+
+    def _blocked(self, *args: object, **kwargs: object) -> None:
+        raise TypeError("FrozenMapping does not support mutation.")
+
+    def __setitem__(self, key: object, value: object) -> None:
+        if getattr(self, "_frozen", False):
+            self._blocked()
+        super().__setitem__(key, value)
+
+    def __delitem__(self, key: object) -> None:
+        self._blocked()
+
+    def clear(self) -> None:  # type: ignore[override]
+        self._blocked()
+
+    def pop(self, key: object, default: object = None) -> object:  # type: ignore[override]
+        self._blocked()
+
+    def popitem(self) -> tuple[object, object]:  # type: ignore[override]
+        self._blocked()
+
+    def setdefault(self, key: object, default: object = None) -> object:  # type: ignore[override]
+        self._blocked()
+
+    def update(self, *args: object, **kwargs: object) -> None:  # type: ignore[override]
+        self._blocked()
+
+    def copy(self) -> "FrozenMapping":  # type: ignore[override]
+        return type(self)(self)
+
+
 def freeze_primitive_mapping(
     value: Mapping[object, object] | None,
     *,
@@ -21,7 +57,7 @@ def freeze_primitive_mapping(
     field: str,
 ) -> PrimitiveMapping:
     if value is None:
-        return MappingProxyType({})
+        return FrozenMapping({})
     if not isinstance(value, Mapping):
         raise RemotePhysTrainingError(
             f"{owner} {field} must be a mapping.",
@@ -48,7 +84,7 @@ def freeze_primitive_mapping(
                 actual=type(item).__name__,
             )
         frozen[key] = item
-    return MappingProxyType(frozen)
+    return FrozenMapping(frozen)
 
 
 def coerce_optional_non_empty_string(

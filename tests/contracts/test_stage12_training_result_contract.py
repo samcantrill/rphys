@@ -47,7 +47,15 @@ def test_training_result_contract_preserves_training_profile_summary_compatibili
             TrainingEventLog(
                 "timeline-1",
                 run_id="run-1",
-                events=(TrainingEvent("loop_started", "test", timeline_id="timeline-1", run_id="run-1"),),
+                events=(
+                    TrainingEvent(
+                        "loop_started",
+                        "test",
+                        timeline_id="timeline-1",
+                        run_id="run-1",
+                        sequence_id=0,
+                    ),
+                ),
             ),
         ),
         scalar_spans=(ProfileSpanSummary("forward", status="available", duration_seconds=0.1),),
