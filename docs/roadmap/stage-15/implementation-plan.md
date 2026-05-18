@@ -1,11 +1,11 @@
 # Roadmap Stage 15 Implementation Plan
 
-Status: in implementation; Phase 1 merged.
+Status: in implementation; Phase 1 and Phase 2 merged.
 Roadmap version: `v15`
 Planning document: `docs/roadmap/stage-15/planning.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 2 pending
+Current phase: Phase 3 pending
 Blockers: none for implementation-plan approval. Before Lightning and
 fixture-dependent code work, refresh Lightning public API/security evidence and
 verify whether Stage 14 synthetic fixtures are available in the target branch.
@@ -195,7 +195,7 @@ The implementation plan is reshaped into eight phases below.
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | `core-timeline-profile-records` | merged | `agent/stage-15-training-profiling-p1-core-timeline-profile-records` | [#95](https://github.com/samcantrill/rphys/pull/95) | `src/rphys/training/events.py`, `profiling.py`, `results.py`, package exports, unit/contract/package tests | Define timestamped events, append-only event logs, scalar spans, profile recorder basics, result attachment, and compatibility summaries. | Event/profile/result unit tests, Stage 12 contract tests, package import checks. | Per-rank event log, scalar span summary, unavailable profile evidence. |
-| 2 | `probe-checkpoint-policy-contracts` | pending | `agent/stage-15-training-profiling-p2-probe-checkpoint-policy-contracts` | pending | new or updated `src/rphys/training/probes.py`, `checkpoint.py`, `policies.py`, shared tests/docs | Define generic probes, model/data probe records, pipeline-stage hook names, checkpoint policies/catalogs, restart selectors, and precision/compile/kernel policy records. | Probe/checkpoint/policy unit and contract tests; primitive serialization checks. | Gradient probe record, batch NaN probe record, latest/best/rewind checkpoint selection. |
+| 2 | `probe-checkpoint-policy-contracts` | merged | `agent/stage-15-training-profiling-p2-probe-checkpoint-policy-contracts` | [#96](https://github.com/samcantrill/rphys/pull/96) | new or updated `src/rphys/training/probes.py`, `checkpoint.py`, `policies.py`, shared tests/docs | Define generic probes, model/data probe records, pipeline-stage hook names, checkpoint policies/catalogs, restart selectors, and precision/compile/kernel policy records. | Probe/checkpoint/policy unit and contract tests; primitive serialization checks. | Gradient probe record, batch NaN probe record, latest/best/rewind checkpoint selection. |
 | 3 | `resource-monitoring-profile-persistence` | pending | `agent/stage-15-training-profiling-p3-resource-monitoring-profile-persistence` | pending | resource profiler helpers, async writer contracts, fake sampler tests | Implement engine-neutral resource traces, fake CPU/GPU/disk/network probes, background thread/process sampler contracts, async profile writer contracts, and drop/backpressure evidence. | Fake resource probe tests, fake process/thread tests, async writer tests, package checks. | GPU idle trace, disk IO trace, dropped samples, writer flush lifecycle. |
 | 4 | `native-engine-observability-checkpoints` | pending | `agent/stage-15-training-profiling-p4-native-engine-observability-checkpoints` | pending | `src/rphys/training/backend.py`, `plan.py`, `checkpoint.py`, native integration tests | Wire Native setup/teardown, spans, event logs, probes, checkpoint save/restore/prune, restart selectors, async writer, and failure evidence. | Native unit/integration tests, checkpoint retention/catalog tests, fake probe tests. | Native whole-path profile, keep-last checkpoints, rewind two epochs, model/data probes. |
 | 5 | `datapath-pipeline-probes-batch-evidence` | pending | `agent/stage-15-training-profiling-p5-datapath-pipeline-probes-batch-evidence` | pending | `src/rphys/datasources/datapath.py`, Stage 9 source/cache/prepared helpers, `src/rphys/ops/batch.py` tests/docs as needed | Add Stage 9 aligned pipeline-stage probe contexts, data-path benchmark/profile producers, data-quality probes, and BatchOperation equivalence evidence. | Data-path contract/integration tests, dataset-stage hook tests, BatchOperation tests, package import checks. | Process-cache-augment-process, cache/prepared-load-augment-process, queue starvation, batch NaNs. |
@@ -340,11 +340,11 @@ Workflow path: expanded path
 
 ## Phase 2: Probe, Checkpoint, Pipeline, And Policy Contracts
 
-Status: pending
+Status: merged
 Slug: `probe-checkpoint-policy-contracts`
 Branch: `agent/stage-15-training-profiling-p2-probe-checkpoint-policy-contracts`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-15-training-profiling-p2-probe-checkpoint-policy-contracts`
-PR: pending
+PR: [#96](https://github.com/samcantrill/rphys/pull/96)
 Base branch: `develop`
 Target branch: `develop`
 Workflow path: expanded path
@@ -390,13 +390,16 @@ Workflow path: expanded path
 
 ### Phase Workflow State
 
-- Phase execution plan: pending
+- Phase execution plan: complete in
+  `docs/roadmap/stage-15/phases/probe-checkpoint-policy-contracts.md`
 - Planning/refinement budget: 1 planner/reviewer cycle
-- Implementation/refinement budget: 1 implementation pass plus scoped failure-order refinements
-- PR review budget: probe/checkpoint/policy contract review
-- Blocker-resolution budget: escalate if checkpoint hook shape cannot record resume evidence without owning serialization
-- Pre-submit blocker gate: no default artifact store, no mandatory monitor process, no hidden datasource import
-- Merge record: pending
+- Implementation/refinement budget: 1 implementation pass plus scoped
+  post-implementation and PR-review blocker refinements
+- PR review budget: completed; automated review blockers resolved
+- Blocker-resolution budget: 2/3 used for Phase 2 contract refinements
+- Pre-submit blocker gate: passed; no default artifact store, no mandatory
+  monitor process, no hidden datasource import
+- Merge record: recorded below
 
 ### Risks And Stop Conditions
 
@@ -406,11 +409,65 @@ Workflow path: expanded path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: complete in PR #96; added dependency-light probe,
+  checkpoint, restart-selection, pipeline-stage, and optimization-policy
+  records with public exports and primitive/dataclass inspection tests.
+- Validation: targeted Phase 2 unit/contract/package checks passed;
+  `make test-package`, `uv lock --check`, `git diff --check`,
+  `make test-summary`, and `make validate-pr` passed.
+- PR: [#96](https://github.com/samcantrill/rphys/pull/96) opened against
+  `develop` and merged.
+- Merge: merged to `develop` on 2026-05-18 with squash commit
+  `5f1c65b01e70965c5798c3b8f30fe1b7c97fa55b`.
+- Follow-up: Phase 3 owns concrete resource traces and profile persistence;
+  Phase 4 owns Native loop/checkpoint/probe wiring.
+
+### Merge Record
+
+## Merge Facts
+
+- Phase: Phase 2, `probe-checkpoint-policy-contracts`
+- Branch: `agent/stage-15-training-profiling-p2-probe-checkpoint-policy-contracts`
+- PR: [#96](https://github.com/samcantrill/rphys/pull/96)
+- Base branch: `develop`
+- Merge command: `gh pr merge 96 --squash --delete-branch --subject "Stage 15 Training Performance Profiling And Data-Path Optimization - Phase 2: Probe, Checkpoint, Pipeline, And Policy Contracts"`
+- Merge result: merged; GitHub reported no CI checks for the branch, with
+  local `make validate-pr` and `make test-summary` passing before merge.
+- Merge commit: `5f1c65b01e70965c5798c3b8f30fe1b7c97fa55b`
+- Branch cleanup: pending local worktree cleanup.
+- Worktree cleanup: pending.
+
+## Completion Summary
+
+- Behavior implemented: provisional engine-neutral probe contracts, model/data
+  diagnostic summaries, Stage 9-aligned pipeline stage strings, checkpoint
+  refs/catalog selectors, save/restore/prune evidence, restart selection
+  semantics, and precision/compile/kernel policy records.
+- Tests and validation: targeted Stage 15 profile/probe/checkpoint/policy
+  checks passed (27 passed before PR); focused post-review checks passed (94
+  passed); `make test-package` passed (72 passed); `uv lock --check`,
+  `git diff --check`, `make test-summary`, and `make validate-pr` passed.
+  Final `make validate-pr` reported package 72, unit 779, contract 187, and
+  integration 30 tests passing; e2e and acceptance suites were not present.
+- Documentation: phase execution plan and PR body artifacts were added under
+  `docs/roadmap/stage-15/phases/`.
+- Scientific contract implications: probe and checkpoint records remain
+  primitive and dataclass-inspectable; checkpoint selection ordering is
+  deterministic; disabled checkpoint policies are explicit no-op records; no
+  checkpoint IO, artifact store, raw tensor/batch payload, datasource runtime
+  import, Native wiring, or Lightning wiring was added.
+- Follow-up notes for later phases: Phase 3 adds resource traces/profile
+  persistence; Phase 4 invokes these records from Native checkpoint/probe
+  hooks; Phase 5 maps Stage 9 producers to the locked pipeline-stage strings.
+
+## Implementation Plan Update
+
+- Phase status: `merged`
+- Completion summary recorded: yes
+- Validation evidence recorded: yes
+- Remaining blockers: none for Phase 2; Phase 6/7 Lightning and fixture
+  preflights remain phase-local.
+- Metadata commit: pending direct `develop` metadata commit.
 
 ## Phase 3: Resource Monitoring And Profile Persistence
 
