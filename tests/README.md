@@ -81,3 +81,9 @@ datasource descriptors, codecs, manifests, sample builders, operations,
 collaters, methods, and export/reload paths as the focused contract and
 integration tests. Upstream smoke coverage is explicitly incomplete until the
 Stage 13 scan-to-report tail is exercised in its own phase.
+
+Stage 15 exposes `ExperimentTierSpec` as descriptive evidence for debug,
+smoke, signal, comparison, and full validation breadths. These specs do not
+schedule jobs or define performance thresholds; they record scale knobs and
+expected profile, checkpoint, restart, and data-path evidence for the same
+execution path.
