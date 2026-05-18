@@ -6,6 +6,7 @@ import pytest
 
 from rphys.errors import RemotePhysTrainingError
 from rphys.training import CompilePolicy, KernelPolicy, PrecisionPolicy, PolicyStatus
+from rphys.training.lightning import map_lightning_policies
 
 
 def test_precision_policy_records_requested_applied_fallback_state() -> None:
@@ -76,3 +77,34 @@ def test_kernel_policy_disabled_and_fallback_validation() -> None:
     with pytest.raises(RemotePhysTrainingError) as status_error:
         KernelPolicy("in1d", status=PolicyStatus.DISABLED, applied_kernel="in1d")
     assert status_error.value.context["field"] == "status"
+
+
+def test_lightning_policy_mapping_applies_precision_and_records_unsupported_boundaries() -> None:
+    mapping = map_lightning_policies(
+        trainer_kwargs={"max_epochs": 2},
+        precision_policy=PrecisionPolicy("bf16"),
+        compile_policy=CompilePolicy("enabled"),
+        kernel_policy=KernelPolicy("flash-attention"),
+    )
+
+    assert mapping.trainer_kwargs["precision"] == "bf16-mixed"
+    assert mapping.precision_policy is not None
+    assert mapping.precision_policy.status is PolicyStatus.APPLIED
+    assert mapping.compile_policy is not None
+    assert mapping.compile_policy.status is PolicyStatus.UNSUPPORTED
+    assert mapping.kernel_policy is not None
+    assert mapping.kernel_policy.status is PolicyStatus.UNSUPPORTED
+    assert "compile.unsupported:trainer_kwarg_absent" in mapping.diagnostics
+
+    unsupported_precision = map_lightning_policies(
+        precision_policy=PrecisionPolicy("tf32"),
+    )
+    assert unsupported_precision.precision_policy is not None
+    assert unsupported_precision.precision_policy.status is PolicyStatus.UNSUPPORTED
+
+    with pytest.raises(RemotePhysTrainingError) as conflict_error:
+        map_lightning_policies(
+            trainer_kwargs={"precision": "16-mixed"},
+            precision_policy=PrecisionPolicy("32"),
+        )
+    assert conflict_error.value.context["field"] == "precision"
