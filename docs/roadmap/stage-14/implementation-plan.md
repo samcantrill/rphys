@@ -7,7 +7,7 @@ Functionality/design explainer:
 `docs/roadmap/stage-14/functionality-behavior-design.md`
 Workflow: `.codex/workflows/roadmap-version-implementation.md`
 Target branch: `develop`
-Current phase: Phase 1 PR open
+Current phase: Phase 2 pending execution
 Blockers: Phase 4 is blocked in this checkout until the revised Stage 13
 Sample/Batch-native artifact, collection/metric, visualization/report, and
 recipe behavior is code-backed and approved.
@@ -43,7 +43,7 @@ recipe behavior is code-backed and approved.
 
 | Phase | Slug | Status | Branch | PR | Ownership | Goal | Validation | Examples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `private-synthetic-catalog-governance` | pr_open | `agent/stage-14-synthetic-smoke-hardening-p1-private-synthetic-catalog-governance` | [#91](https://github.com/samcantrill/rphys/pull/91) | `tests/support`, first consuming tests, concise support governance docs | Establish private fixture catalog, edge variants, deterministic payload evidence, URI refs, optional fields, and helper privacy governance. | Focused support-consuming tests, `make test-package`, `git diff --check` | Positive catalog and edge fixture examples |
+| 1 | `private-synthetic-catalog-governance` | merged | `agent/stage-14-synthetic-smoke-hardening-p1-private-synthetic-catalog-governance` | [#91](https://github.com/samcantrill/rphys/pull/91) | `tests/support`, first consuming tests, concise support governance docs | Established private fixture catalog, edge variants, deterministic payload evidence, URI refs, optional fields, and helper privacy governance. | Focused support-consuming tests, `make test-package`, `make test-contract`, `make test-integration`, `make validate-pr`, `make test-summary`, `git diff --check` | Positive catalog and edge fixture examples |
 | 2 | `contract-boundaries-goldens` | pending | `agent/stage-14-synthetic-smoke-hardening-p2-contract-boundaries-goldens` | pending | `tests/support` assertion helpers, `tests/contracts`, `tests/package`, targeted integration/golden tests | Turn fixtures into reusable public-object invariants, package/import guardrails, and narrow durable-manifest goldens. | `make test-contract`, `make test-package`, targeted integration checks, `git diff --check` | Contract assertion, import-boundary, and golden manifest examples |
 | 3 | `upstream-smoke-validation-tiers` | pending | `agent/stage-14-synthetic-smoke-hardening-p3-upstream-smoke-validation-tiers` | pending | Integration/e2e smoke slice, tier docs/markers, existing Stage 5-12 flow composition | Compose code-backed Stage 5-12 surfaces through one public loader/materialization path and record debug/smoke/signal tier semantics. | `make test-integration`, `make test` if default smoke remains cheap, `make test-e2e` if introduced, `git diff --check` | Upstream root-smoke slice before Stage 13 tail |
 | 4 | `stage13-scan-to-report-tail` | blocked in this checkout | `agent/stage-14-synthetic-smoke-hardening-p4-stage13-scan-to-report-tail` | pending | Stage 13-dependent smoke tail, package checks for code-backed Stage 13 exports, final validation evidence | Complete scan-to-report smoke only after revised Stage 13 Sample/Batch-native behavior is code-backed and approved. | `make test-package`, `make test-contract`, `make test-integration`, `make test-e2e` if present, `make test-summary`, `make validate-pr`, `uv lock --check`, `git diff --check` | Full scan-to-report smoke through returned `Batch` fields, uncollation, sample artifact reload, collection/metric operations, and report records/fields |
@@ -78,7 +78,7 @@ but it must stop before claiming revised Stage 13 coverage.
 
 ## Phase 1: Private Synthetic Catalog And Governance
 
-Status: pr_open
+Status: merged
 Slug: `private-synthetic-catalog-governance`
 Branch: `agent/stage-14-synthetic-smoke-hardening-p1-private-synthetic-catalog-governance`
 Worktree: `/home/samcantrill/work/rphys-worktrees/stage-14-synthetic-smoke-hardening-p1-private-synthetic-catalog-governance`
@@ -142,11 +142,22 @@ Workflow path: fast path
 
 ### Completion Summary
 
-- Implementation: pending
-- Validation: pending
-- PR: pending
-- Merge: pending
-- Follow-up: pending
+- Implementation: added private deterministic synthetic catalog and edge
+  helpers under `tests/support`, first contract and integration consumers, a
+  Phase 1 execution plan, PR body, and concise support-governance notes in
+  `tests/README.md`.
+- Validation: focused catalog contract and integration tests passed;
+  `make test-package`, `make test-contract`, `make test-integration`,
+  `make validate-pr`, `make test-summary`, and `git diff --check` passed.
+  `make test-summary` reported 1024 passed tests across package, unit,
+  contract, and integration suites; e2e and acceptance suites were not present.
+- PR: [#91](https://github.com/samcantrill/rphys/pull/91), opened against
+  `develop` with the required title and verified base/head metadata.
+- Merge: squash-merged to `develop` on 2026-05-18 as
+  `cc958fb2864cb4b9d864a8bcf3a2bab3444502c5`.
+- Follow-up: Phase 2 should add only private assertion helpers and narrow
+  durable manifest/fingerprint goldens where repeated public-object invariants
+  justify them.
 
 ## Phase 2: Contract Boundaries And Durable Goldens
 
