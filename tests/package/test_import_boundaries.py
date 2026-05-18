@@ -108,10 +108,13 @@ STAGE_12_TRAINING_IMPORTS = [
     "rphys.training",
     "rphys.training.backend",
     "rphys.training.core",
+    "rphys.training.checkpoint",
     "rphys.training.events",
     "rphys.training.experimental",
     "rphys.training.plan",
     "rphys.training.profiling",
+    "rphys.training.policies",
+    "rphys.training.probes",
     "rphys.training.results",
 ]
 
